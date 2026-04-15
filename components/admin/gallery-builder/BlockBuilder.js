@@ -61,6 +61,7 @@ export default function BlockBuilder({
   onPickThumbnail,
   expanded,
   onToggleExpand,
+  pages,
 }) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -269,6 +270,7 @@ export default function BlockBuilder({
                             onRemove={() => removeBlock(index)}
                             onAddPhotos={() => onAddPhotosToBlock(index)}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
+                            pages={pages}
                           />
                         </div>
                       )}

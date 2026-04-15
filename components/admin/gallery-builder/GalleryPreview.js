@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Gallery from "../../image-displays/gallery/Gallery";
 
-export default function GalleryPreview({ gallery }) {
+export default function GalleryPreview({ gallery, pages }) {
   const [debouncedGallery, setDebouncedGallery] = useState(gallery);
 
   useEffect(() => {
@@ -11,7 +11,6 @@ export default function GalleryPreview({ gallery }) {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-      {/* Live preview */}
       <div className="flex-1 overflow-y-auto bg-white">
         {(debouncedGallery.blocks || []).length > 0 ? (
           <Gallery
@@ -19,6 +18,7 @@ export default function GalleryPreview({ gallery }) {
             description={debouncedGallery.description}
             blocks={debouncedGallery.blocks}
             enableSlideshow={false}
+            pages={pages}
             onBackClick={() => {}}
             onSlideshowClick={() => {}}
             onClientLoginClick={() => {}}
