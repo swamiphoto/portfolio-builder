@@ -52,8 +52,10 @@ export function createDefaultSiteConfig(userId) {
 export async function readSiteConfig(userId) {
   try {
     return await downloadJSON(getUserSiteConfigPath(userId))
-  } catch {
-    return null
+  } catch (err) {
+    // Only treat "file doesn't exist yet" as a normal case
+    if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return null
+    throw err
   }
 }
 
