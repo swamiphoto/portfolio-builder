@@ -1,18 +1,6 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
 
-const PAGE_TYPE_ICONS = {
-  cover: '⌂',
-  gallery: '▦',
-  single: '☰',
-}
-
-const PAGE_TYPE_LABELS = {
-  cover: 'Cover',
-  gallery: 'Gallery',
-  single: 'Page',
-}
-
 function SaveBadge({ status }) {
   if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
   if (status === 'saved') return <span className="text-xs text-green-500">Saved</span>
@@ -36,7 +24,6 @@ function PublishBadge({ publishedAt }) {
 }
 
 export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange, onSignOut, selectedPageId, onSelectPage }) {
-  const [addingPage, setAddingPage] = useState(false)
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [menuOpenId, setMenuOpenId] = useState(null)
@@ -74,7 +61,6 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
   }
 
   function handleDelete(pageId) {
-    if (pageId === 'cover') return
     if (!confirm('Delete this page? This cannot be undone.')) return
     onConfigChange(prev => ({
       ...prev,
@@ -82,28 +68,19 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
     }))
   }
 
-  function handleAddPage(type) {
-    const title = type === 'gallery' ? 'New Gallery' : 'New Page'
-    const baseId = title.toLowerCase().replace(/\s+/g, '-')
-
-    setAddingPage(false)
+  function handleAddPage() {
+    const title = 'New Page'
+    const baseId = 'new-page'
 
     onConfigChange(prev => {
       const existingIds = new Set(prev.pages.map(p => p.id))
       let id = baseId
       let n = 2
       while (existingIds.has(id)) { id = `${baseId}-${n++}` }
-
-      const newPage = type === 'gallery'
-        ? { id, type: 'gallery', title, showInNav: true, layout: '2col', albums: [] }
-        : { id, type: 'single', title, showInNav: true, blocks: [] }
-
+      const newPage = { id, title, showInNav: true, thumbnailUrl: '', blocks: [] }
       return { ...prev, pages: [...prev.pages, newPage] }
     })
 
-    // Note: We can't read the new id from inside the updater here,
-    // so we compute it from current siteConfig for the rename state.
-    // This is safe because rename is cosmetic only (title, not id logic).
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     let id = baseId
     let n = 2
@@ -159,21 +136,13 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <span className={`mr-2 text-xs w-4 text-center ${selectedPageId === page.id ? 'text-gray-300' : 'text-gray-400'}`}>
-                  {PAGE_TYPE_ICONS[page.type] || '☰'}
-                </span>
                 <span className="flex-1 truncate">{page.title}</span>
-                <span className={`text-xs mr-1 hidden group-hover:inline ${selectedPageId === page.id ? 'text-gray-400' : 'text-gray-400'}`}>
-                  {PAGE_TYPE_LABELS[page.type]}
-                </span>
-                {page.id !== 'cover' && (
-                  <button
-                    onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                    className={`ml-1 hover:text-gray-300 opacity-0 group-hover:opacity-100 px-1 ${selectedPageId === page.id ? 'text-gray-400' : 'text-gray-400'}`}
-                  >
-                    ···
-                  </button>
-                )}
+                <button
+                  onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
+                  className={`ml-1 opacity-0 group-hover:opacity-100 px-1 ${selectedPageId === page.id ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  ···
+                </button>
               </div>
             )}
 
@@ -196,36 +165,12 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
           </div>
         ))}
 
-        {addingPage ? (
-          <div className="mt-1 border border-gray-200 rounded-md bg-white p-2">
-            <div className="text-xs text-gray-500 mb-1 px-1">Choose type:</div>
-            <button
-              onClick={() => handleAddPage('gallery')}
-              className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 rounded"
-            >
-              ▦ Gallery
-            </button>
-            <button
-              onClick={() => handleAddPage('single')}
-              className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 rounded"
-            >
-              ☰ Page
-            </button>
-            <button
-              onClick={() => setAddingPage(false)}
-              className="w-full text-left px-3 py-1.5 text-sm text-gray-400 hover:bg-gray-50 rounded mt-1"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setAddingPage(true)}
-            className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md mt-1"
-          >
-            <span className="mr-2">+</span> Add Page
-          </button>
-        )}
+        <button
+          onClick={handleAddPage}
+          className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md mt-1"
+        >
+          <span className="mr-2">+</span> Add Page
+        </button>
       </div>
 
       {/* Footer */}
