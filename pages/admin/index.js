@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
+import PageEditor from '../../components/admin/platform/PageEditor'
 
 const AUTOSAVE_DELAY = 1500
 
@@ -13,6 +14,7 @@ export default function AdminIndex() {
   const [siteConfig, setSiteConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('idle')
+  const [selectedPageId, setSelectedPageId] = useState(null)
   const autosaveTimer = useRef(null)
 
   useEffect(() => {
@@ -62,6 +64,14 @@ export default function AdminIndex() {
     })
   }, [save])
 
+  // Update a specific page's data within the site config
+  const updatePage = useCallback((pageId, updatedPage) => {
+    updateConfig(prev => ({
+      ...prev,
+      pages: prev.pages.map(p => p.id === pageId ? updatedPage : p),
+    }))
+  }, [updateConfig])
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
@@ -72,6 +82,8 @@ export default function AdminIndex() {
 
   if (!session || !siteConfig) return null
 
+  const selectedPage = siteConfig.pages.find(p => p.id === selectedPageId) || null
+
   return (
     <AdminLayout
       sidebar={
@@ -80,12 +92,17 @@ export default function AdminIndex() {
           saveStatus={saveStatus}
           onConfigChange={updateConfig}
           onSignOut={() => signOut({ callbackUrl: '/auth/signin' })}
+          selectedPageId={selectedPageId}
+          onSelectPage={setSelectedPageId}
         />
       }
     >
-      <div className="flex items-center justify-center h-full text-gray-300 text-sm">
-        Select a page to edit
-      </div>
+      <PageEditor
+        page={selectedPage}
+        siteConfig={siteConfig}
+        saveStatus={saveStatus}
+        onPageChange={(updated) => updatePage(selectedPageId, updated)}
+      />
     </AdminLayout>
   )
 }
