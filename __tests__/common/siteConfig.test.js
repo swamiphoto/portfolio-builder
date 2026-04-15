@@ -17,13 +17,16 @@ import {
 } from '../../common/siteConfig'
 
 describe('createDefaultSiteConfig', () => {
-  it('returns a config with one cover page', () => {
+  it('returns a config with one home page', () => {
     const config = createDefaultSiteConfig('user-123')
     expect(config.userId).toBe('user-123')
     expect(config.pages).toHaveLength(1)
-    expect(config.pages[0].type).toBe('cover')
-    expect(config.pages[0].id).toBe('cover')
+    expect(config.pages[0].id).toBe('home')
+    expect(config.pages[0].title).toBe('Home')
     expect(config.pages[0].showInNav).toBe(false)
+    expect(config.pages[0].thumbnailUrl).toBe('')
+    expect(config.pages[0]).not.toHaveProperty('type')
+    expect(config.pages[0]).not.toHaveProperty('albums')
   })
 
   it('sets default theme to minimal-light', () => {

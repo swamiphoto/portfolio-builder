@@ -33,10 +33,10 @@ export function createDefaultSiteConfig(userId) {
     publishedAt: null,
     pages: [
       {
-        id: 'cover',
-        type: 'cover',
+        id: 'home',
         title: 'Home',
         showInNav: false,
+        thumbnailUrl: '',
         blocks: [],
       },
     ],
