@@ -38,16 +38,18 @@ export default function AdminIndex() {
   const save = useCallback(async (config) => {
     setSaveStatus('saving')
     try {
-      await fetch('/api/admin/site-config', {
+      const res = await fetch('/api/admin/site-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),
       })
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
       console.error('Autosave failed:', err)
-      setSaveStatus('idle')
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus('idle'), 3000)
     }
   }, [])
 

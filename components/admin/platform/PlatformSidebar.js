@@ -16,6 +16,7 @@ const PAGE_TYPE_LABELS = {
 function SaveBadge({ status }) {
   if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
   if (status === 'saved') return <span className="text-xs text-green-500">Saved</span>
+  if (status === 'error') return <span className="text-xs text-red-500">Save failed</span>
   return null
 }
 
@@ -84,17 +85,29 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
   function handleAddPage(type) {
     const title = type === 'gallery' ? 'New Gallery' : 'New Page'
     const baseId = title.toLowerCase().replace(/\s+/g, '-')
+
+    setAddingPage(false)
+
+    onConfigChange(prev => {
+      const existingIds = new Set(prev.pages.map(p => p.id))
+      let id = baseId
+      let n = 2
+      while (existingIds.has(id)) { id = `${baseId}-${n++}` }
+
+      const newPage = type === 'gallery'
+        ? { id, type: 'gallery', title, showInNav: true, layout: '2col', albums: [] }
+        : { id, type: 'single', title, showInNav: true, blocks: [] }
+
+      return { ...prev, pages: [...prev.pages, newPage] }
+    })
+
+    // Note: We can't read the new id from inside the updater here,
+    // so we compute it from current siteConfig for the rename state.
+    // This is safe because rename is cosmetic only (title, not id logic).
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     let id = baseId
     let n = 2
     while (existingIds.has(id)) { id = `${baseId}-${n++}` }
-
-    const newPage = type === 'gallery'
-      ? { id, type: 'gallery', title, showInNav: true, layout: '2col', albums: [] }
-      : { id, type: 'single', title, showInNav: true, blocks: [] }
-
-    onConfigChange(prev => ({ ...prev, pages: [...prev.pages, newPage] }))
-    setAddingPage(false)
     setRenamingId(id)
     setRenameValue(title)
   }
