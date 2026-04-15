@@ -35,7 +35,7 @@ function PublishBadge({ publishedAt }) {
   )
 }
 
-export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange, onSignOut }) {
+export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange, onSignOut, selectedPageId, onSelectPage }) {
   const [addingPage, setAddingPage] = useState(false)
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
@@ -151,18 +151,25 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
                 className="w-full px-3 py-1.5 text-sm border border-blue-400 rounded-md outline-none bg-white"
               />
             ) : (
-              <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700 hover:bg-gray-100 group">
-                <span className="mr-2 text-gray-400 text-xs w-4 text-center">
+              <div
+                onClick={() => onSelectPage?.(page.id)}
+                className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer group ${
+                  selectedPageId === page.id
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span className={`mr-2 text-xs w-4 text-center ${selectedPageId === page.id ? 'text-gray-300' : 'text-gray-400'}`}>
                   {PAGE_TYPE_ICONS[page.type] || '☰'}
                 </span>
                 <span className="flex-1 truncate">{page.title}</span>
-                <span className="text-xs text-gray-400 mr-1 hidden group-hover:inline">
+                <span className={`text-xs mr-1 hidden group-hover:inline ${selectedPageId === page.id ? 'text-gray-400' : 'text-gray-400'}`}>
                   {PAGE_TYPE_LABELS[page.type]}
                 </span>
                 {page.id !== 'cover' && (
                   <button
                     onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                    className="ml-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 px-1"
+                    className={`ml-1 hover:text-gray-300 opacity-0 group-hover:opacity-100 px-1 ${selectedPageId === page.id ? 'text-gray-400' : 'text-gray-400'}`}
                   >
                     ···
                   </button>
