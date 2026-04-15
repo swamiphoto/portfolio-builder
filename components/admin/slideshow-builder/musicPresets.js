@@ -1,0 +1,23 @@
+// components/admin/slideshow-builder/musicPresets.js
+export const MUSIC_PRESETS = [
+  { label: "Eléana — Richard Clayderman", url: "https://www.youtube.com/watch?v=IvoAT-5HKwM" },
+  { label: "Piano Relaxing", url: "https://www.youtube.com/watch?v=PYujyluMxMU" },
+  { label: "Soft Piano", url: "https://www.youtube.com/watch?v=qj4RiKoARPk" },
+  { label: "Calm Instrumental", url: "https://www.youtube.com/watch?v=BciS5krYL80" },
+  { label: "Gentle Piano", url: "https://www.youtube.com/watch?v=_iktURk0X-A" },
+  { label: "Peaceful Music", url: "https://www.youtube.com/watch?v=BeUSuSXBqMQ" },
+  { label: "Ambient Piano", url: "https://www.youtube.com/watch?v=JkfSV51U-64" },
+  { label: "Relaxing Piano", url: "https://www.youtube.com/watch?v=puOnVzlkrQM" },
+  { label: "Soft Instrumental", url: "https://www.youtube.com/watch?v=hzGHrQBq_i4" },
+  { label: "Tranquil Music", url: "https://www.youtube.com/watch?v=6P5zx_rxlhI" },
+  { label: "Calm Piano", url: "https://www.youtube.com/watch?v=Kpjo3Cxc_90" },
+  { label: "Peaceful Instrumental", url: "https://www.youtube.com/watch?v=OBUauvQLrQQ" },
+  { label: "Soft Ambient", url: "https://www.youtube.com/watch?v=OhswLOVzXNc" },
+  { label: "Gentle Instrumental", url: "https://www.youtube.com/watch?v=S61L1fpqFXE" },
+  { label: "Relaxing Ambient", url: "https://www.youtube.com/watch?v=ZTmF2v59CtI" },
+  { label: "Calm Instrumental 2", url: "https://www.youtube.com/watch?v=LD5W8W7-0II" },
+  { label: "Piano Meditation", url: "https://www.youtube.com/watch?v=U1FZVpcKhGg" },
+  { label: "Soft Piano 2", url: "https://www.youtube.com/watch?v=qmBW9-fUvag" },
+  { label: "Ambient 2", url: "https://www.youtube.com/watch?v=g4M0hH1R2eU" },
+  { label: "Gentle Ambient", url: "https://www.youtube.com/watch?v=mVsmFCgxc1o" },
+];

@@ -1,0 +1,15 @@
+.stacked-gallery img {
+  transition: opacity 0.5s ease-in;
+}
+
+.stacked-gallery img.lazy-load {
+  opacity: 0;
+}
+
+.stacked-gallery img.lazy-load.loaded {
+  opacity: 1;
+}
+
+.stacked-gallery img.lazy-load.hidden {
+  display: none;
+}

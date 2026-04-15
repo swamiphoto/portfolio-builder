@@ -1,0 +1,45 @@
+.horizontal-gallery {
+  /* Additional Horizontal Gallery specific styles here */
+}
+
+.horizontal-gallery .lazy-load {
+  opacity: 0;
+  transition: opacity 0.5s ease-in;
+}
+
+.horizontal-gallery .lazy-load.loaded {
+  opacity: 1;
+}
+
+.horizontal-gallery .lazy-load.hidden {
+  display: none;
+}
+
+.horizontal-gallery .horizontal-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #6b7280;
+}
+
+.horizontal-gallery .horizontal-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.horizontal-gallery .horizontal-scroll::-webkit-scrollbar-track {
+  background: #6b7280;
+  border-radius: 10px;
+}
+
+.horizontal-gallery .horizontal-scroll::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 10px;
+  transition: background-color 0.2s, height 0.2s;
+}
+
+.horizontal-gallery .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #1f2937;
+  height: 20px;
+}

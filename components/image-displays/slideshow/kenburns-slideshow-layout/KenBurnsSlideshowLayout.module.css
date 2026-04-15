@@ -1,0 +1,105 @@
+/* Ken Burns Layout Styles */
+.kenburns-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kenburns-image,
+.kenburns-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 3s ease-in-out; /* Same transition for images and text */
+}
+
+/* Ken Burns image styles */
+.kenburns-image img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  object-fit: cover;
+  animation: kenburns-zoom 20s ease-in-out infinite;
+}
+
+/* Ken Burns zoom effect for text */
+.kenburns-zoom-text {
+  animation: kenburns-zoom-text 20s ease-in-out infinite;
+}
+
+/* Keyframes for text zoom effect */
+@keyframes kenburns-zoom-text {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Ken Burns zoom effect for horizontal images */
+@keyframes kenburns-zoom-horizontal {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Ken Burns zoom effect for vertical images */
+@keyframes kenburns-zoom-vertical {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.kenburns-image.vertical img {
+  width: auto;
+  height: calc(100% - 40px);
+  object-fit: contain;
+  animation: kenburns-zoom-vertical 20s ease-in-out infinite;
+}
+
+.kenburns-image.horizontal img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  animation: kenburns-zoom-horizontal 20s ease-in-out infinite;
+}
+
+/* Visibility and transition for both image and text slides */
+.kenburns-visible {
+  opacity: 1;
+  transition: opacity 3s ease-in-out;
+}
+
+.kenburns-hidden {
+  opacity: 0;
+}
+
+/* Fading out slide effect */
+.kenburns-slide-out {
+  opacity: 0;
+  transition: opacity 3s ease-in-out;
+}

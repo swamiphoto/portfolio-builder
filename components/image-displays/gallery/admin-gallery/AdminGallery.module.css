@@ -1,0 +1,61 @@
+.masonry-gallery,
+.admin-gallery {
+  /* Additional Masonry Gallery specific styles here */
+}
+
+.masonry-gallery .lazy-load,
+.admin-gallery .lazy-load {
+  opacity: 0;
+  transition: opacity 0.5s ease-in;
+}
+
+.masonry-gallery .lazy-load.loaded,
+.admin-gallery .lazy-load.loaded {
+  opacity: 1;
+}
+
+.masonry-gallery .lazy-load.hidden,
+.admin-gallery .lazy-load.hidden {
+  display: none;
+}
+
+.gallery-content,
+.admin-gallery .gallery-content {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #6b7280;
+}
+
+.gallery-content::-webkit-scrollbar,
+.admin-gallery .gallery-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gallery-content::-webkit-scrollbar-track,
+.admin-gallery .gallery-content::-webkit-scrollbar-track {
+  background: #6b7280;
+  border-radius: 10px;
+}
+
+.gallery-content::-webkit-scrollbar-thumb,
+.admin-gallery .gallery-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 10px;
+  transition: background-color 0.2s, height 0.2s;
+}
+
+.gallery-content::-webkit-scrollbar-thumb:hover,
+.admin-gallery .gallery-content::-webkit-scrollbar-thumb:hover {
+  background: #1f2937;
+  height: 20px;
+}
+
+.admin-gallery .filename {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}

@@ -1,0 +1,23 @@
+.photo {
+  box-shadow: -11px 11px 5px -9px rgba(0, 0, 0, 0.25);
+}
+
+.photo-with-mat {
+  box-shadow: 0 0 0 30px white; /* This creates the white mat effect */
+  max-width: calc(100% - 60px); /* Adjust the width to account for the mat */
+  margin: 15px; /* This will simulate the frame inside the mat area */
+  @apply shadow-xl;
+}
+
+.photo-frame-perspective {
+  perspective: 1000px;
+  width: 100%;
+  height: auto;
+}
+
+.photo-frame-perspective img {
+  transform: rotateY(10deg); /* Rotate the image towards the text */
+  box-shadow: 0 0 0 30px black; /* White mat effect */
+  border: solid 20px white; /* Black frame */
+  transition: transform 0.3s ease-in-out;
+}
