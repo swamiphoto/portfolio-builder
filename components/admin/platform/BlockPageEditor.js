@@ -4,17 +4,12 @@ import BlockBuilder from '../gallery-builder/BlockBuilder'
 import GalleryPreview from '../gallery-builder/GalleryPreview'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
 
-/**
- * Adapts a platform page (cover/single) to the BlockBuilder interface.
- * Platform page shape: { id, type, title, blocks, showInNav }
- * BlockBuilder gallery shape: { name, description, blocks, thumbnailUrl, enableSlideshow, showCover }
- */
 function pageToGallery(page) {
   return {
     name: page.title,
     description: '',
     blocks: page.blocks || [],
-    thumbnailUrl: '',
+    thumbnailUrl: page.thumbnailUrl || '',
     enableSlideshow: false,
     showCover: false,
   }
@@ -25,10 +20,11 @@ function galleryToPage(page, gallery) {
     ...page,
     title: gallery.name || page.title,
     blocks: gallery.blocks || [],
+    thumbnailUrl: gallery.thumbnailUrl || page.thumbnailUrl || '',
   }
 }
 
-export default function BlockPageEditor({ page, saveStatus, onPageChange }) {
+export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageChange }) {
   const [libraryImages, setLibraryImages] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
@@ -36,6 +32,7 @@ export default function BlockPageEditor({ page, saveStatus, onPageChange }) {
   const [expanded, setExpanded] = useState(false)
 
   const gallery = pageToGallery(page)
+  const pages = siteConfig?.pages || []
 
   const handleGalleryChange = useCallback((updatedGallery) => {
     onPageChange(galleryToPage(page, updatedGallery))
@@ -92,9 +89,10 @@ export default function BlockPageEditor({ page, saveStatus, onPageChange }) {
         onPickThumbnail={null}
         expanded={expanded}
         onToggleExpand={() => setExpanded(v => !v)}
+        pages={pages}
       />
 
-      <GalleryPreview gallery={gallery} />
+      <GalleryPreview gallery={gallery} pages={pages} />
 
       {photoPickerOpen && (
         <PhotoPickerModal
