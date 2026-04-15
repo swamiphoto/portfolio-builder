@@ -1,6 +1,5 @@
 // components/admin/platform/PageEditor.js
 import BlockPageEditor from './BlockPageEditor'
-import GalleryPageEditor from './GalleryPageEditor'
 
 export default function PageEditor({ page, siteConfig, saveStatus, onPageChange }) {
   if (!page) {
@@ -11,20 +10,10 @@ export default function PageEditor({ page, siteConfig, saveStatus, onPageChange 
     )
   }
 
-  if (page.type === 'gallery') {
-    return (
-      <GalleryPageEditor
-        page={page}
-        saveStatus={saveStatus}
-        onPageChange={onPageChange}
-      />
-    )
-  }
-
-  // cover and single pages — block-based editing
   return (
     <BlockPageEditor
       page={page}
+      siteConfig={siteConfig}
       saveStatus={saveStatus}
       onPageChange={onPageChange}
     />
