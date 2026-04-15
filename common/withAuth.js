@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth/next'
+import { authOptions } from '../pages/api/auth/[...nextauth]'
 
 /**
  * Wraps an API handler, injecting the authenticated user or returning 401.
@@ -14,16 +15,6 @@ import { getServerSession } from 'next-auth/next'
 export function withAuth(handler) {
   return async function (req, res) {
     try {
-      // Try to load authOptions from nextauth config
-      let authOptions = {}
-      try {
-        const mod = require('../pages/api/auth/[...nextauth]')
-        authOptions = mod.authOptions
-      } catch (err) {
-        // File doesn't exist yet (e.g., during tests before Task 3)
-        // getServerSession will use empty config for now
-      }
-
       const session = await getServerSession(req, res, authOptions)
       if (!session) {
         return res.status(401).json({ error: 'Unauthorized' })

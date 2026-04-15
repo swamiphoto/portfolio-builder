@@ -1,3 +1,8 @@
+// Mock the nextauth config file FIRST (before any imports)
+jest.mock('../../pages/api/auth/[...nextauth]', () => ({
+  authOptions: { providers: [] },
+}))
+
 // Mock next-auth/next BEFORE importing withAuth
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
@@ -17,6 +22,10 @@ function makeReqRes() {
 }
 
 describe('withAuth', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
   afterEach(() => jest.clearAllMocks())
 
   it('calls handler with session user when authenticated', async () => {
@@ -28,6 +37,7 @@ describe('withAuth', () => {
 
     await withAuth(handler)(req, res)
 
+    expect(getServerSession).toHaveBeenCalledWith(req, res, { providers: [] })
     expect(handler).toHaveBeenCalledWith(req, res, session.user)
   })
 
