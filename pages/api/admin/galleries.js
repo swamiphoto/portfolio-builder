@@ -1,17 +1,14 @@
 // pages/api/admin/galleries.js
-import { bucket } from "../../../common/gcsClient";
+import { listFiles, PUBLIC_URL } from '../../../common/gcsClient'
 import { readGalleriesConfig, writeGalleriesConfig } from "../../../common/galleriesConfig";
 import { galleryData } from "../../../common/galleryData";
 import { withAuth } from "../../../common/withAuth";
 
-const BUCKET_URL = "https://storage.googleapis.com/swamiphoto";
-
 async function listGcsFolder(folderPath) {
-  // folderPath like "landscapes/arizona/canyon" — relative to "photos/"
-  const [files] = await bucket.getFiles({ prefix: `photos/${folderPath}/` });
-  return files
-    .filter((f) => /\.(jpg|jpeg|png|gif)$/i.test(f.name))
-    .map((f) => `${BUCKET_URL}/${f.name}`);
+  const keys = await listFiles(`photos/${folderPath}/`)
+  return keys
+    .filter(k => /\.(jpg|jpeg|png|gif)$/i.test(k))
+    .map(k => `${PUBLIC_URL}/${k}`)
 }
 
 async function seedGalleriesConfig() {

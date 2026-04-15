@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1030.0",
+    "@aws-sdk/s3-presigned-post": "^3.1030.0",
     "@geist-ui/react": "^2.2.5",
     "@geist-ui/react-icons": "^1.0.1",
-    "@google-cloud/storage": "^7.19.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.0.18",
     "@testing-library/react": "^13.4.0",
