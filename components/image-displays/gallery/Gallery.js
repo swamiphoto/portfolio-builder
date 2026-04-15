@@ -7,19 +7,28 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, onBackClick, onSlideshowClick, onClientLoginClick }) => {
-  // Check if the screen size is small
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, onBackClick, onSlideshowClick, onClientLoginClick }) => {
   const isSmallScreen = useMediaQuery({ query: "(max-width: 768px)" });
 
   return (
     <div className="gallery-container">
-      {/* Render the GalleryCover */}
       <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} />
 
-      {/* Render the blocks */}
       <div className="space-y-10">
         {blocks.map((block, index) => {
           switch (block.type) {
+            case "photos": {
+              const usemasonry = block.layout === "masonry" || isSmallScreen;
+              return (
+                <div key={`block-${index}`} className="photos-block">
+                  {usemasonry
+                    ? <MasonryGallery imageUrls={block.imageUrls || []} />
+                    : <StackedGallery imageUrls={block.imageUrls || []} />}
+                  <WiggleLine />
+                </div>
+              );
+            }
+
             case "stacked":
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block">
@@ -59,6 +68,35 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <WiggleLine />
                 </div>
               );
+
+            case "page-gallery": {
+              const linkedPages = (block.pageIds || [])
+                .map(id => (pages || []).find(p => p.id === id))
+                .filter(Boolean);
+              if (linkedPages.length === 0) return null;
+              return (
+                <div key={`block-${index}`} className="page-gallery-block px-8 py-4">
+                  <div className="grid grid-cols-2 gap-6">
+                    {linkedPages.map(p => (
+                      <a key={p.id} href="#" className="block group">
+                        {p.thumbnailUrl ? (
+                          <img
+                            src={p.thumbnailUrl}
+                            alt={p.title}
+                            className="w-full aspect-[4/3] object-cover"
+                          />
+                        ) : (
+                          <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center text-gray-300 text-sm">
+                            No thumbnail
+                          </div>
+                        )}
+                        <div className="mt-2 text-sm text-gray-800 font-medium">{p.title}</div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
 
             default:
               console.error(`Unsupported block type: ${block.type}`);
