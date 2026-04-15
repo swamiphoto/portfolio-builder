@@ -2,6 +2,7 @@
 import { bucket } from "../../../common/gcsClient";
 import { readGalleriesConfig, writeGalleriesConfig } from "../../../common/galleriesConfig";
 import { galleryData } from "../../../common/galleryData";
+import { withAuth } from "../../../common/withAuth";
 
 const BUCKET_URL = "https://storage.googleapis.com/swamiphoto";
 
@@ -76,7 +77,7 @@ async function seedGalleriesConfig() {
   return { galleries };
 }
 
-export default async function handler(req, res) {
+async function handler(req, res, user) {
   if (req.method === "GET") {
     try {
       let config = await readGalleriesConfig();
@@ -107,3 +108,5 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 }
+
+export default withAuth(handler)

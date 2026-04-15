@@ -1,5 +1,6 @@
 import { bucket, CONFIG_PATH } from "../../../common/gcsClient";
 import { seedConfig, mergeLibraryData } from "../../../common/adminConfig";
+import { withAuth } from "../../../common/withAuth";
 
 const BUCKET_URL = "https://storage.googleapis.com/swamiphoto";
 
@@ -40,7 +41,7 @@ async function writeConfig(config) {
   });
 }
 
-export default async function handler(req, res) {
+async function handler(req, res, user) {
   if (req.method === "GET") {
     try {
       const [allImages, existingConfig] = await Promise.all([
@@ -78,3 +79,5 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 }
+
+export default withAuth(handler)

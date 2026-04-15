@@ -1,6 +1,7 @@
 import { bucket, FALLBACK_FOLDER } from "../../../common/gcsClient";
+import { withAuth } from "../../../common/withAuth";
 
-export default async function handler(req, res) {
+async function handler(req, res, user) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -34,3 +35,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
+export default withAuth(handler)

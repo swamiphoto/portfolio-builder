@@ -1,5 +1,6 @@
 import { bucket, CONFIG_PATH } from "../../../common/gcsClient";
 import { removeFromAllAlbums } from "../../../common/adminConfig";
+import { withAuth } from "../../../common/withAuth";
 
 const BUCKET_URL = "https://storage.googleapis.com/swamiphoto";
 
@@ -19,7 +20,7 @@ async function writeConfig(config) {
   });
 }
 
-export default async function handler(req, res) {
+async function handler(req, res, user) {
   if (req.method !== "DELETE") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -48,3 +49,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
+export default withAuth(handler)
