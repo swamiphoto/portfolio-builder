@@ -1,6 +1,7 @@
 // pages/api/auth/[...nextauth].js
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import { readUserProfile } from '../../../common/userProfile'
 
 export const authOptions = {
   providers: [
@@ -10,17 +11,23 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    // Expose the Google sub (stable user ID) on the session and token
     async jwt({ token, account, profile }) {
       if (account && profile) {
         token.userId = profile.sub
       }
+      if (token.userId) {
+        try {
+          const userProfile = await readUserProfile(token.userId)
+          token.username = userProfile?.username || null
+        } catch {
+          token.username = null
+        }
+      }
       return token
     },
     async session({ session, token }) {
-      if (token.userId) {
-        session.user.id = token.userId
-      }
+      if (token.userId) session.user.id = token.userId
+      if (token.username) session.user.username = token.username
       return session
     },
   },
