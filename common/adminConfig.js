@@ -1,102 +1,368 @@
-import IMAGES, { bucketUrl } from "./images";
-import { galleryData } from "../pages/galleries";
+export const LIBRARY_CONFIG_VERSION = 2;
 
-const BUCKET_URL = bucketUrl; // "https://storage.googleapis.com/swamiphoto"
+function uniqueStrings(values = []) {
+  return [...new Set((values || []).filter((value) => typeof value === "string" && value.trim()))];
+}
 
-/**
- * Recursively collect all string URL values from a (possibly nested) object.
- * Used to extract URLs from IMAGES.landscapes, IMAGES.portraits etc.
- */
-export function collectUrls(obj) {
-  const urls = [];
-  for (const val of Object.values(obj)) {
-    if (typeof val === "string" && val.startsWith("http")) {
-      urls.push(val);
-    } else if (typeof val === "object" && val !== null) {
-      urls.push(...collectUrls(val));
-    }
+function normalizeLegacySection(section = {}) {
+  const normalized = {};
+  for (const [key, urls] of Object.entries(section || {})) {
+    normalized[key] = uniqueStrings(urls);
   }
-  return urls;
+  return normalized;
+}
+
+function normalizeCollections(collections = {}) {
+  const normalized = {};
+  for (const [collectionId, collection] of Object.entries(collections || {})) {
+    if (!collection || typeof collection !== "object") continue;
+    normalized[collectionId] = {
+      collectionId,
+      name: collection.name || collectionId,
+      kind: collection.kind || "manual",
+      assetIds: uniqueStrings(collection.assetIds),
+      rule: collection.rule || null,
+      createdAt: collection.createdAt || null,
+      updatedAt: collection.updatedAt || null,
+    };
+  }
+  return normalized;
+}
+
+function normalizeSavedViews(savedViews = {}) {
+  const normalized = {};
+  for (const [viewId, view] of Object.entries(savedViews || {})) {
+    if (!view || typeof view !== "object") continue;
+    normalized[viewId] = {
+      name: view.name || viewId,
+      filters: view.filters && typeof view.filters === "object" ? view.filters : {},
+    };
+  }
+  return normalized;
+}
+
+function extractStorageKeyFromUrl(url) {
+  if (!url || typeof url !== "string") return "";
+
+  try {
+    const parsed = new URL(url);
+    return decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+  } catch {
+    return url;
+  }
+}
+
+function inferOrientation(width, height) {
+  if (!width || !height) return "unknown";
+  if (width === height) return "square";
+  return width > height ? "landscape" : "portrait";
+}
+
+function stableHash(input) {
+  let hash = 2166136261;
+
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0).toString(36).padStart(7, "0");
+}
+
+export function createAssetIdFromUrl(url) {
+  return `ast_${stableHash(url || "unknown")}`;
+}
+
+function normalizeImageRecord(image) {
+  if (typeof image === "string") {
+    return {
+      url: image,
+      name: extractStorageKeyFromUrl(image),
+      timeCreated: null,
+      updated: null,
+      size: 0,
+      width: null,
+      height: null,
+      mimeType: null,
+    };
+  }
+
+  if (!image || typeof image !== "object" || !image.url) {
+    return null;
+  }
+
+  return {
+    url: image.url,
+    name: image.name || extractStorageKeyFromUrl(image.url),
+    timeCreated: image.timeCreated ?? null,
+    updated: image.updated ?? null,
+    size: image.size ?? 0,
+    width: image.width ?? null,
+    height: image.height ?? null,
+    mimeType: image.mimeType ?? null,
+  };
+}
+
+function normalizeUsage(usage = {}) {
+  const cover = Boolean(usage.cover);
+  const pageIds = uniqueStrings(usage.pageIds);
+  const galleryIds = uniqueStrings(usage.galleryIds);
+  const blockIds = uniqueStrings(usage.blockIds);
+
+  return {
+    cover,
+    pageIds,
+    galleryIds,
+    blockIds,
+    usageCount: (cover ? 1 : 0) + pageIds.length + galleryIds.length + blockIds.length,
+    lastUsedAt: usage.lastUsedAt || null,
+  };
+}
+
+function buildUsageForUrl(imageUrl, portfolios, galleries, existingUsage = {}) {
+  const pageIds = [
+    ...(existingUsage.pageIds || []),
+    ...Object.entries(portfolios)
+      .filter(([, urls]) => urls.includes(imageUrl))
+      .map(([key]) => key),
+  ];
+
+  const galleryIds = [
+    ...(existingUsage.galleryIds || []),
+    ...Object.entries(galleries)
+      .filter(([, urls]) => urls.includes(imageUrl))
+      .map(([key]) => key),
+  ];
+
+  return normalizeUsage({
+    ...existingUsage,
+    pageIds,
+    galleryIds,
+  });
+}
+
+function createAssetRecord(assetId, imageRecord, existingAsset = {}, portfolios = {}, galleries = {}) {
+  const publicUrl = existingAsset.publicUrl || imageRecord.url;
+  const width = imageRecord.width ?? existingAsset.width ?? null;
+  const height = imageRecord.height ?? existingAsset.height ?? null;
+  const storageKey = existingAsset.storageKey || extractStorageKeyFromUrl(publicUrl);
+  const bytes = imageRecord.size > 0 ? imageRecord.size : existingAsset.bytes ?? 0;
+  const orientation =
+    existingAsset.orientation && existingAsset.orientation !== "unknown"
+      ? existingAsset.orientation
+      : inferOrientation(width, height);
+
+  return {
+    assetId,
+    storageKey,
+    publicUrl,
+    originalFilename: existingAsset.originalFilename || imageRecord.name || storageKey,
+    mimeType: existingAsset.mimeType || imageRecord.mimeType || null,
+    bytes,
+    width,
+    height,
+    aspectRatio: width && height ? Number((width / height).toFixed(4)) : null,
+    orientation,
+    caption: existingAsset.caption || "",
+    alt: existingAsset.alt || "",
+    tags: uniqueStrings(existingAsset.tags),
+    collectionIds: uniqueStrings(existingAsset.collectionIds),
+    source: {
+      type: existingAsset.source?.type || "upload",
+      provider: existingAsset.source?.provider || "manual",
+      label: existingAsset.source?.label ?? null,
+      sourceUrl: existingAsset.source?.sourceUrl ?? null,
+      importBatchId: existingAsset.source?.importBatchId ?? null,
+      externalAssetId: existingAsset.source?.externalAssetId ?? null,
+      externalCollectionId: existingAsset.source?.externalCollectionId ?? null,
+      syncMode: existingAsset.source?.syncMode ?? null,
+      lastSyncedAt: existingAsset.source?.lastSyncedAt ?? null,
+    },
+    capture: {
+      capturedAt: existingAsset.capture?.capturedAt ?? null,
+      timezone: existingAsset.capture?.timezone ?? null,
+      cameraMake: existingAsset.capture?.cameraMake ?? null,
+      cameraModel: existingAsset.capture?.cameraModel ?? null,
+      lens: existingAsset.capture?.lens ?? null,
+      focalLengthMm: existingAsset.capture?.focalLengthMm ?? null,
+      aperture: existingAsset.capture?.aperture ?? null,
+      shutterSpeed: existingAsset.capture?.shutterSpeed ?? null,
+      iso: existingAsset.capture?.iso ?? null,
+      locationName: existingAsset.capture?.locationName ?? null,
+      latitude: existingAsset.capture?.latitude ?? null,
+      longitude: existingAsset.capture?.longitude ?? null,
+    },
+    hashes: {
+      exact: existingAsset.hashes?.exact ?? null,
+      perceptual: existingAsset.hashes?.perceptual ?? null,
+    },
+    duplicateStatus: {
+      exactOf: existingAsset.duplicateStatus?.exactOf ?? null,
+      possibleDuplicateIds: uniqueStrings(existingAsset.duplicateStatus?.possibleDuplicateIds),
+    },
+    usage: buildUsageForUrl(publicUrl, portfolios, galleries, existingAsset.usage),
+    createdAt: existingAsset.createdAt || imageRecord.timeCreated || null,
+    updatedAt: existingAsset.updatedAt || imageRecord.updated || imageRecord.timeCreated || null,
+  };
+}
+
+export function createEmptyLibraryConfig() {
+  return {
+    version: LIBRARY_CONFIG_VERSION,
+    assets: {},
+    assetOrder: [],
+    collections: {},
+    savedViews: {},
+    portfolios: {},
+    galleries: {},
+  };
 }
 
 /**
- * Build the initial library config from hardcoded data.
- * For gallery blocks that use imagesFolderUrl, listGcsFolder is called to get URLs.
- * @param {Function} listGcsFolder - async (folderPath: string) => string[] of full GCS URLs
- * @returns {Promise<LibraryConfig>}
- *
- * LibraryConfig shape:
- * {
- *   portfolios: { landscapes: string[], portraits: string[], ... },
- *   galleries: { arizona: string[], "naga-sunol": string[], ... }
- * }
+ * Returns an empty library config for new users.
+ * The old seedConfig seeded from hardcoded static site data — not applicable
+ * in the multi-tenant platform where each user starts fresh.
  */
-export async function seedConfig(listGcsFolder) {
-  const portfolios = {
-    landscapes: collectUrls(IMAGES.landscapes),
-    portraits: collectUrls(IMAGES.portraits),
-    bollywood: collectUrls(IMAGES.bollywood),
-    tennis: collectUrls(IMAGES.tennis),
-    headshots: collectUrls(IMAGES.headshots),
+export async function seedConfig() {
+  return createEmptyLibraryConfig();
+}
+
+export function normalizeLibraryConfig(config = {}, allImages = []) {
+  const raw = config && typeof config === "object" ? config : {};
+  const normalized = {
+    ...createEmptyLibraryConfig(),
+    version: LIBRARY_CONFIG_VERSION,
+    portfolios: normalizeLegacySection(raw.portfolios),
+    galleries: normalizeLegacySection(raw.galleries),
+    collections: normalizeCollections(raw.collections),
+    savedViews: normalizeSavedViews(raw.savedViews),
   };
 
-  const galleries = {};
+  const seenAssetIds = new Set();
+  const assetIdsByUrl = new Map();
 
-  for (const gallery of galleryData) {
-    if (gallery.isHidden) continue;
-    const slug = gallery.slug;
-    const urls = new Set();
+  for (const [key, asset] of Object.entries(raw.assets || {})) {
+    if (!asset || typeof asset !== "object") continue;
 
-    for (const block of gallery.blocks || []) {
-      if (block.type === "photo" && block.imageUrl) {
-        urls.add(block.imageUrl);
-      } else if (
-        (block.type === "stacked" || block.type === "masonry") &&
-        block.imagesFolderUrl
-      ) {
-        const folderUrls = await listGcsFolder(block.imagesFolderUrl);
-        for (const u of folderUrls) urls.add(u);
-      } else if (
-        (block.type === "stacked" || block.type === "masonry") &&
-        block.imageUrls
-      ) {
-        for (const u of block.imageUrls) urls.add(u);
+    const publicUrl = asset.publicUrl || asset.url;
+    if (!publicUrl) continue;
+
+    const assetId = asset.assetId || key || createAssetIdFromUrl(publicUrl);
+    const imageRecord = normalizeImageRecord({
+      url: publicUrl,
+      name: asset.originalFilename || asset.storageKey || extractStorageKeyFromUrl(publicUrl),
+      timeCreated: asset.createdAt || null,
+      updated: asset.updatedAt || null,
+      size: asset.bytes ?? 0,
+      width: asset.width ?? null,
+      height: asset.height ?? null,
+      mimeType: asset.mimeType ?? null,
+    });
+
+    normalized.assets[assetId] = createAssetRecord(
+      assetId,
+      imageRecord,
+      asset,
+      normalized.portfolios,
+      normalized.galleries
+    );
+    assetIdsByUrl.set(publicUrl, assetId);
+
+    if (!seenAssetIds.has(assetId)) {
+      normalized.assetOrder.push(assetId);
+      seenAssetIds.add(assetId);
+    }
+  }
+
+  for (const image of allImages || []) {
+    const imageRecord = normalizeImageRecord(image);
+    if (!imageRecord) continue;
+
+    const existingAssetId = assetIdsByUrl.get(imageRecord.url);
+    const assetId = existingAssetId || createAssetIdFromUrl(imageRecord.url);
+    const existingAsset = normalized.assets[assetId] || {};
+
+    normalized.assets[assetId] = createAssetRecord(
+      assetId,
+      imageRecord,
+      existingAsset,
+      normalized.portfolios,
+      normalized.galleries
+    );
+    assetIdsByUrl.set(imageRecord.url, assetId);
+
+    if (!seenAssetIds.has(assetId)) {
+      normalized.assetOrder.push(assetId);
+      seenAssetIds.add(assetId);
+    }
+  }
+
+  if (Array.isArray(raw.assetOrder)) {
+    const preferredOrder = [];
+    for (const assetId of raw.assetOrder) {
+      if (normalized.assets[assetId] && !preferredOrder.includes(assetId)) {
+        preferredOrder.push(assetId);
       }
     }
 
-    if (urls.size > 0) galleries[slug] = [...urls];
+    for (const assetId of normalized.assetOrder) {
+      if (!preferredOrder.includes(assetId)) preferredOrder.push(assetId);
+    }
+
+    normalized.assetOrder = preferredOrder;
   }
 
-  return { portfolios, galleries };
+  return normalized;
 }
 
 /**
  * Given the full list of GCS image URLs and the library config,
- * compute what to show for each view.
- *
- * @param {string[]} allImages - every image URL in the bucket
- * @param {LibraryConfig} config
- * @returns {{ allImages: string[], portfolios: Record<string,string[]>, galleries: Record<string,string[]>, counts: Record<string,number> }}
- */
-/**
- * allImages is now an array of { url, name, timeCreated, updated, size } objects.
- * portfolios/galleries remain string[] of URLs in the config.
+ * compute what to show for each view while preserving the current
+ * URL-based contract for the existing admin UI.
  */
 export function mergeLibraryData(allImages, config) {
-  const portfolios = config.portfolios || {};
-  const galleries = config.galleries || {};
+  const normalized = normalizeLibraryConfig(config, allImages);
+  const orderedAssets = normalized.assetOrder
+    .map((assetId) => normalized.assets[assetId])
+    .filter(Boolean);
 
-  const counts = { all: allImages.length };
-  for (const [key, urls] of Object.entries(portfolios)) counts[key] = urls.length;
-  for (const [key, urls] of Object.entries(galleries)) counts[key] = urls.length;
+  const counts = { all: orderedAssets.length };
+  for (const [key, urls] of Object.entries(normalized.portfolios)) counts[key] = urls.length;
+  for (const key of Object.keys(normalized.galleries)) counts[key] = getRollupCount(key, normalized.galleries);
 
-  // Build a metadata map keyed by URL for fast lookup in the UI
   const metadata = {};
-  for (const img of allImages) {
-    metadata[img.url] = { name: img.name, timeCreated: img.timeCreated, updated: img.updated, size: img.size };
+  const assetIdByUrl = {};
+
+  for (const asset of orderedAssets) {
+    metadata[asset.publicUrl] = {
+      assetId: asset.assetId,
+      name: asset.originalFilename,
+      timeCreated: asset.createdAt,
+      updated: asset.updatedAt,
+      size: asset.bytes,
+      width: asset.width,
+      height: asset.height,
+      orientation: asset.orientation,
+      usageCount: asset.usage.usageCount,
+      source: asset.source,
+    };
+    assetIdByUrl[asset.publicUrl] = asset.assetId;
   }
 
-  return { allImages: allImages.map((i) => i.url), portfolios, galleries, counts, metadata };
+  return {
+    version: normalized.version,
+    allImages: orderedAssets.map((asset) => asset.publicUrl),
+    images: orderedAssets,
+    assets: normalized.assets,
+    assetOrder: normalized.assetOrder,
+    assetIdByUrl,
+    collections: normalized.collections,
+    savedViews: normalized.savedViews,
+    portfolios: normalized.portfolios,
+    galleries: normalized.galleries,
+    counts,
+    metadata,
+  };
 }
 
 /**
@@ -104,15 +370,16 @@ export function mergeLibraryData(allImages, config) {
  * Returns a new config object (does not mutate).
  */
 export function removeFromAllAlbums(config, imageUrl) {
+  const normalized = normalizeLibraryConfig(config);
   const portfolios = {};
-  for (const [key, urls] of Object.entries(config.portfolios || {})) {
+  for (const [key, urls] of Object.entries(normalized.portfolios)) {
     portfolios[key] = urls.filter((u) => u !== imageUrl);
   }
   const galleries = {};
-  for (const [key, urls] of Object.entries(config.galleries || {})) {
+  for (const [key, urls] of Object.entries(normalized.galleries)) {
     galleries[key] = urls.filter((u) => u !== imageUrl);
   }
-  return { portfolios, galleries };
+  return { ...normalized, portfolios, galleries };
 }
 
 /**
@@ -121,9 +388,10 @@ export function removeFromAllAlbums(config, imageUrl) {
  * albumKey: e.g. 'landscapes', 'arizona'
  */
 export function removeFromAlbum(config, albumType, albumKey, imageUrl) {
-  const section = { ...(config[albumType] || {}) };
+  const normalized = normalizeLibraryConfig(config);
+  const section = { ...(normalized[albumType] || {}) };
   section[albumKey] = (section[albumKey] || []).filter((u) => u !== imageUrl);
-  return { ...config, [albumType]: section };
+  return { ...normalized, [albumType]: section };
 }
 
 /**
@@ -131,9 +399,22 @@ export function removeFromAlbum(config, albumType, albumKey, imageUrl) {
  * De-duplicates automatically.
  */
 export function addToAlbum(config, albumType, albumKey, imageUrls) {
-  const section = { ...(config[albumType] || {}) };
+  const normalized = normalizeLibraryConfig(config);
+  const section = { ...(normalized[albumType] || {}) };
   const existing = new Set(section[albumKey] || []);
-  for (const u of imageUrls) existing.add(u);
+  for (const url of imageUrls) existing.add(url);
   section[albumKey] = [...existing];
-  return { ...config, [albumType]: section };
+  return { ...normalized, [albumType]: section };
+}
+
+export function getRollupUrls(key, galleries) {
+  const prefix = key + '/'
+  const matchingKeys = Object.keys(galleries).filter(
+    (k) => k === key || k.startsWith(prefix)
+  )
+  return [...new Set(matchingKeys.flatMap((k) => galleries[k] || []))]
+}
+
+export function getRollupCount(key, galleries) {
+  return getRollupUrls(key, galleries).length
 }
