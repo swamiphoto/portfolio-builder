@@ -11,6 +11,11 @@ export default function AdminLibrary() {
   // { allImages, portfolios, galleries, counts }
 
   const [selectedAlbum, setSelectedAlbum] = useState({ type: "all", key: "all" });
+  const [filters, setFilters] = useState({
+    source: "all",
+    orientation: "all",
+    usage: "all",
+  });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
@@ -44,13 +49,75 @@ export default function AdminLibrary() {
     await fetchLibrary();
   }, [fetchLibrary]);
 
-  // Get images for the currently selected album
-  const currentImages = () => {
+  const getFallbackAsset = useCallback((imageUrl) => {
+    if (!imageUrl) return null;
+
+    const meta = libraryData?.metadata?.[imageUrl] || {};
+
+    return {
+      assetId: meta.assetId || imageUrl,
+      publicUrl: imageUrl,
+      originalFilename: meta.name || imageUrl.split("/").pop() || imageUrl,
+      bytes: meta.size || 0,
+      width: meta.width || null,
+      height: meta.height || null,
+      orientation: meta.orientation || "unknown",
+      caption: "",
+      tags: [],
+      source: meta.source || { provider: "manual", type: "upload" },
+      usage: { usageCount: meta.usageCount || 0 },
+      createdAt: meta.timeCreated || null,
+      updatedAt: meta.updated || null,
+    };
+  }, [libraryData]);
+
+  const getAssetByUrl = useCallback((imageUrl) => {
+    if (!imageUrl) return null;
+
+    const assetId = libraryData?.assetIdByUrl?.[imageUrl];
+    if (assetId && libraryData?.assets?.[assetId]) {
+      return libraryData.assets[assetId];
+    }
+
+    return getFallbackAsset(imageUrl);
+  }, [libraryData, getFallbackAsset]);
+
+  const applyFilters = useCallback((assets) => {
+    return assets.filter((asset) => {
+      if (filters.source !== "all" && asset.source?.provider !== filters.source) {
+        return false;
+      }
+
+      if (filters.orientation !== "all" && asset.orientation !== filters.orientation) {
+        return false;
+      }
+
+      const usageCount = asset.usage?.usageCount || 0;
+      if (filters.usage === "unused" && usageCount > 0) {
+        return false;
+      }
+      if (filters.usage === "used" && usageCount === 0) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [filters]);
+
+  // Get assets for the currently selected album
+  const currentAssets = () => {
     if (!libraryData) return [];
-    if (selectedAlbum.type === "all") return libraryData.allImages;
-    if (selectedAlbum.type === "portfolio") return libraryData.portfolios[selectedAlbum.key] || [];
-    if (selectedAlbum.type === "gallery") return libraryData.galleries[selectedAlbum.key] || [];
-    return [];
+
+    if (selectedAlbum.type === "all") {
+      return applyFilters(libraryData.images || []);
+    }
+
+    const urls =
+      selectedAlbum.type === "portfolio"
+        ? libraryData.portfolios[selectedAlbum.key] || []
+        : libraryData.galleries[selectedAlbum.key] || [];
+
+    return applyFilters(urls.map(getAssetByUrl).filter(Boolean));
   };
 
   const currentConfig = () => ({
@@ -83,7 +150,7 @@ export default function AdminLibrary() {
       },
     };
     await saveConfig(updated);
-  }, [selectedAlbum, libraryData, saveConfig]);
+  }, [selectedAlbum, saveConfig]);
 
   const handleDelete = useCallback(async (imageUrl) => {
     const res = await fetch("/api/admin/delete", {
@@ -114,7 +181,7 @@ export default function AdminLibrary() {
     } else {
       await fetchLibrary();
     }
-  }, [selectedAlbum, libraryData, saveConfig, fetchLibrary]);
+  }, [selectedAlbum, saveConfig, fetchLibrary]);
 
   // "Add to another album" from PhotoTile ⋯ menu
   const handleAddToAlbum = useCallback((imageUrl) => {
@@ -156,7 +223,7 @@ export default function AdminLibrary() {
       };
       await saveConfig(updated);
     }
-  }, [selectedAlbum, libraryData, addLibraryTarget, saveConfig]);
+  }, [selectedAlbum, addLibraryTarget, saveConfig]);
 
   if (loading) {
     return (
@@ -180,20 +247,40 @@ export default function AdminLibrary() {
     );
   }
 
-  const images = currentImages();
+  const assets = currentAssets();
+  const allAssets = (libraryData?.images || []).map((asset) => asset || null).filter(Boolean);
   const counts = libraryData?.counts || {};
+  const sourceCounts = allAssets.reduce((acc, asset) => {
+    const source = asset.source?.provider || "manual";
+    acc[source] = (acc[source] || 0) + 1;
+    return acc;
+  }, {});
+  const orientationCounts = allAssets.reduce((acc, asset) => {
+    const orientation = asset.orientation || "unknown";
+    acc[orientation] = (acc[orientation] || 0) + 1;
+    return acc;
+  }, {});
+  const usageCounts = allAssets.reduce((acc, asset) => {
+    if ((asset.usage?.usageCount || 0) > 0) acc.used += 1;
+    else acc.unused += 1;
+    return acc;
+  }, { used: 0, unused: 0 });
 
   return (
-    <div className="flex h-screen overflow-hidden font-sans">
+    <div className="flex h-full overflow-hidden font-sans bg-white">
       <AlbumSidebar
         counts={counts}
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
         onUploadClick={() => setUploadOpen(true)}
+        sourceCounts={sourceCounts}
+        orientationCounts={orientationCounts}
+        usageCounts={usageCounts}
+        filters={filters}
+        onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
       />
       <PhotoGrid
-        images={images}
-        metadata={libraryData?.metadata || {}}
+        assets={assets}
         selectedAlbum={selectedAlbum}
         onRemove={handleRemove}
         onDelete={handleDelete}
@@ -212,8 +299,8 @@ export default function AdminLibrary() {
 
       {addLibraryOpen && (
         <AddFromLibraryModal
-          allImages={libraryData?.allImages || []}
-          currentAlbumImages={addLibraryTarget ? [] : images}
+          allAssets={allAssets}
+          currentAlbumAssets={addLibraryTarget ? [] : assets}
           onClose={() => setAddLibraryOpen(false)}
           onAdd={handleAddConfirm}
         />

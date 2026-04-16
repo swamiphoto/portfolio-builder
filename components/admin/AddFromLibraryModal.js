@@ -1,31 +1,55 @@
 import { useState, useMemo } from "react";
 
-export default function AddFromLibraryModal({ allImages, currentAlbumImages, onClose, onAdd }) {
+function getSearchText(asset) {
+  return [
+    asset.originalFilename,
+    asset.caption,
+    asset.publicUrl,
+    asset.source?.provider,
+    ...(asset.tags || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+export default function AddFromLibraryModal({ allAssets, currentAlbumAssets, onClose, onAdd }) {
   const [selected, setSelected] = useState(new Set());
   const [search, setSearch] = useState("");
 
-  const currentSet = useMemo(() => new Set(currentAlbumImages), [currentAlbumImages]);
+  const currentSet = useMemo(
+    () => new Set((currentAlbumAssets || []).map((asset) => asset.assetId || asset.publicUrl)),
+    [currentAlbumAssets]
+  );
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return allImages.filter((url) => !currentSet.has(url) && url.toLowerCase().includes(q));
-  }, [allImages, currentSet, search]);
+    const query = search.toLowerCase();
+    return (allAssets || []).filter((asset) => {
+      const key = asset.assetId || asset.publicUrl;
+      return !currentSet.has(key) && getSearchText(asset).includes(query);
+    });
+  }, [allAssets, currentSet, search]);
 
-  const toggle = (url) => {
+  const toggle = (asset) => {
+    const key = asset.assetId || asset.publicUrl;
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(url) ? next.delete(url) : next.add(url);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   };
 
   const handleAdd = () => {
-    onAdd([...selected]);
+    const selectedUrls = (allAssets || [])
+      .filter((asset) => selected.has(asset.assetId || asset.publicUrl))
+      .map((asset) => asset.publicUrl);
+
+    onAdd(selectedUrls);
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "85vh" }}>
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl flex flex-col" style={{ maxHeight: "85vh" }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Add from Library</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
@@ -34,9 +58,9 @@ export default function AddFromLibraryModal({ allImages, currentAlbumImages, onC
         <div className="px-5 py-3 border-b border-gray-200">
           <input
             type="text"
-            placeholder="Search by filename…"
+            placeholder="Search by filename, caption, tag, or source…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500"
           />
           {selected.size > 0 && (
@@ -50,22 +74,23 @@ export default function AddFromLibraryModal({ allImages, currentAlbumImages, onC
               {search ? "No images match your search" : "All library images are already in this album"}
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {filtered.map((url) => {
-                const isSelected = selected.has(url);
+            <div className="columns-3 sm:columns-4 gap-2">
+              {filtered.map((asset) => {
+                const key = asset.assetId || asset.publicUrl;
+                const isSelected = selected.has(key);
                 return (
                   <button
-                    key={url}
-                    onClick={() => toggle(url)}
-                    className={`relative rounded-lg overflow-hidden border-2 transition-colors ${
+                    key={key}
+                    onClick={() => toggle(asset)}
+                    className={`relative mb-2 block w-full break-inside-avoid overflow-hidden rounded-lg border-2 bg-white text-left transition-colors ${
                       isSelected ? "border-blue-500" : "border-transparent"
                     }`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={url}
-                      alt={url.split("/").pop()}
-                      className="w-full aspect-square object-cover bg-gray-100"
+                      src={asset.publicUrl}
+                      alt={asset.caption || asset.originalFilename}
+                      className="block w-full h-auto bg-gray-100"
                       loading="lazy"
                     />
                     {isSelected && (
@@ -73,8 +98,11 @@ export default function AddFromLibraryModal({ allImages, currentAlbumImages, onC
                         ✓
                       </div>
                     )}
-                    <div className="text-xs text-gray-400 px-1 py-0.5 bg-white truncate text-left">
-                      {url.split("/").pop()}
+                    <div className="px-2 py-1.5 bg-white">
+                      <div className="text-xs text-gray-500 truncate">{asset.originalFilename}</div>
+                      {asset.caption && (
+                        <div className="text-[11px] text-gray-400 truncate">{asset.caption}</div>
+                      )}
                     </div>
                   </button>
                 );

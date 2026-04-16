@@ -8,11 +8,37 @@ const SORT_OPTIONS = [
   { value: "name-desc", label: "Name Z → A" },
   { value: "largest", label: "Largest file" },
   { value: "smallest", label: "Smallest file" },
+  { value: "most-used", label: "Most used" },
 ];
 
+function formatAlbumLabel(selectedAlbum) {
+  if (selectedAlbum.type === "all") return "All Photos";
+  return selectedAlbum.key
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getSearchText(asset) {
+  return [
+    asset.originalFilename,
+    asset.caption,
+    asset.publicUrl,
+    asset.source?.provider,
+    ...(asset.tags || []),
+    ...(asset.collectionIds || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function getDateValue(value) {
+  return value ? new Date(value).getTime() : 0;
+}
+
 export default function PhotoGrid({
-  images,
-  metadata,
+  assets,
   selectedAlbum,
   onRemove,
   onDelete,
@@ -24,53 +50,49 @@ export default function PhotoGrid({
   const [search, setSearch] = useState("");
 
   const inAlbum = selectedAlbum.type !== "all";
-  const albumLabel =
-    selectedAlbum.type === "all"
-      ? "All Photos"
-      : selectedAlbum.key.charAt(0).toUpperCase() + selectedAlbum.key.slice(1);
+  const albumLabel = formatAlbumLabel(selectedAlbum);
 
-  const processedImages = useMemo(() => {
-    let result = images;
+  const processedAssets = useMemo(() => {
+    let result = assets;
 
-    // Filter by search (matches filename or path)
     if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((url) => url.toLowerCase().includes(q));
+      const query = search.toLowerCase();
+      result = result.filter((asset) => getSearchText(asset).includes(query));
     }
 
-    // Sort
     result = [...result].sort((a, b) => {
-      const ma = metadata[a] || {};
-      const mb = metadata[b] || {};
       switch (sort) {
         case "newest":
-          return new Date(mb.timeCreated || 0) - new Date(ma.timeCreated || 0);
+          return getDateValue(b.createdAt || b.updatedAt) - getDateValue(a.createdAt || a.updatedAt);
         case "oldest":
-          return new Date(ma.timeCreated || 0) - new Date(mb.timeCreated || 0);
+          return getDateValue(a.createdAt || a.updatedAt) - getDateValue(b.createdAt || b.updatedAt);
         case "name-asc":
-          return (ma.name || a).localeCompare(mb.name || b);
+          return (a.originalFilename || a.publicUrl).localeCompare(b.originalFilename || b.publicUrl);
         case "name-desc":
-          return (mb.name || b).localeCompare(ma.name || a);
+          return (b.originalFilename || b.publicUrl).localeCompare(a.originalFilename || a.publicUrl);
         case "largest":
-          return (mb.size || 0) - (ma.size || 0);
+          return (b.bytes || 0) - (a.bytes || 0);
         case "smallest":
-          return (ma.size || 0) - (mb.size || 0);
+          return (a.bytes || 0) - (b.bytes || 0);
+        case "most-used":
+          return (b.usage?.usageCount || 0) - (a.usage?.usageCount || 0);
         default:
           return 0;
       }
     });
 
     return result;
-  }, [images, metadata, sort, search]);
+  }, [assets, sort, search]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white">
-      {/* Header */}
       <div className="px-5 py-4 border-b border-gray-200 flex items-center gap-3">
         <div>
           <div className="font-semibold text-gray-900 text-base">{albumLabel}</div>
           <div className="text-xs text-gray-400 mt-0.5">
-            {processedImages.length}{images.length !== processedImages.length ? ` of ${images.length}` : ""} photo{images.length !== 1 ? "s" : ""}
+            {processedAssets.length}
+            {assets.length !== processedAssets.length ? ` of ${assets.length}` : ""}
+            {` photo${assets.length !== 1 ? "s" : ""}`}
             {selectedAlbum.type !== "all" && ` · ${selectedAlbum.type === "portfolio" ? "Portfolio" : "Gallery"}`}
           </div>
         </div>
@@ -91,11 +113,10 @@ export default function PhotoGrid({
         </button>
       </div>
 
-      {/* Filter / sort toolbar */}
       <div className="px-5 py-2 border-b border-gray-100 flex items-center gap-3">
         <input
           type="text"
-          placeholder="Search by filename or path…"
+          placeholder="Search by filename, caption, tag, or source…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-gray-400"
@@ -105,27 +126,24 @@ export default function PhotoGrid({
           onChange={(e) => setSort(e.target.value)}
           className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 outline-none focus:border-gray-400 bg-white"
         >
-          {SORT_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+          {SORT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
       </div>
 
-      {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4">
-        {processedImages.length === 0 ? (
+        {processedAssets.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
             {search ? "No photos match your search" : "No photos in this album"}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {processedImages.map((url) => (
+          <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3">
+            {processedAssets.map((asset) => (
               <PhotoTile
-                key={url}
-                imageUrl={url}
-                metadata={metadata[url]}
+                key={asset.assetId || asset.publicUrl}
+                asset={asset}
                 albumType={selectedAlbum.type}
-                albumKey={selectedAlbum.key}
                 onRemove={onRemove}
                 onDelete={onDelete}
                 onAddToAlbum={onAddToAlbum}

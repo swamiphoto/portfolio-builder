@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { normalizeImageRef } from "../../../common/assetRefs";
 
 const KNOWN_FOLDERS = [
   "photos/library",
@@ -13,33 +14,124 @@ const KNOWN_FOLDERS = [
   "photos/portraits/naga-sunflowers",
 ];
 
-function extractFolder(url) {
-  const match = url.match(/\/photos\/(.+)\/[^/]+$/);
-  return match ? match[1] : "other";
+function normalizePickerAsset(image) {
+  const ref = normalizeImageRef(image);
+  if (typeof image === "string" && ref) {
+    return {
+      assetId: ref.assetId,
+      publicUrl: ref.url,
+      originalFilename: ref.url.split("/").pop() || ref.url,
+      caption: "",
+      tags: [],
+      collectionIds: [],
+      source: { provider: "manual", type: "upload" },
+      orientation: "unknown",
+      usage: { usageCount: 0 },
+      createdAt: null,
+      updatedAt: null,
+    };
+  }
+
+  if (!image || typeof image !== "object" || !image.publicUrl) return null;
+
+  return {
+    assetId: image.assetId || image.publicUrl,
+    publicUrl: image.publicUrl,
+    originalFilename: image.originalFilename || image.publicUrl.split("/").pop() || image.publicUrl,
+    caption: image.caption || "",
+    tags: image.tags || [],
+    collectionIds: image.collectionIds || [],
+    source: image.source || { provider: "manual", type: "upload" },
+    orientation: image.orientation || "unknown",
+    usage: image.usage || { usageCount: 0 },
+    createdAt: image.createdAt || null,
+    updatedAt: image.updatedAt || null,
+  };
 }
 
-function LibraryTab({ images, loading, blockType, onConfirm, defaultFolder }) {
-  const [search, setSearch] = useState("");
-  const [folder, setFolder] = useState(defaultFolder || "all");
-  const [selected, setSelected] = useState([]);
-  const isMulti = blockType === "stacked" || blockType === "masonry";
+function getSearchText(asset) {
+  return [
+    asset.originalFilename,
+    asset.caption,
+    asset.publicUrl,
+    asset.source?.provider,
+    ...(asset.tags || []),
+    ...(asset.collectionIds || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
 
-  const folders = useMemo(() => {
+function getDateValue(value) {
+  return value ? new Date(value).getTime() : 0;
+}
+
+function LibraryTab({ images, loading, blockType, onConfirm }) {
+  const [search, setSearch] = useState("");
+  const [collection, setCollection] = useState("all");
+  const [source, setSource] = useState("all");
+  const [orientation, setOrientation] = useState("all");
+  const [selected, setSelected] = useState([]);
+  const isMulti = blockType === "photos" || blockType === "stacked" || blockType === "masonry";
+
+  const assets = useMemo(
+    () => (images || []).map(normalizePickerAsset).filter(Boolean),
+    [images]
+  );
+
+  const collections = useMemo(() => {
     const set = new Set();
-    images.forEach((url) => set.add(extractFolder(url)));
+    assets.forEach((asset) => {
+      (asset.collectionIds || []).forEach((collectionId) => set.add(collectionId));
+    });
     return ["all", ...Array.from(set).sort()];
-  }, [images]);
+  }, [assets]);
+
+  const sources = useMemo(() => {
+    const set = new Set();
+    assets.forEach((asset) => {
+      if (asset.source?.provider) set.add(asset.source.provider);
+    });
+    return ["all", ...Array.from(set).sort()];
+  }, [assets]);
 
   const filtered = useMemo(() => {
-    let result = images;
-    if (folder !== "all") result = result.filter((url) => extractFolder(url) === folder);
-    if (search.trim()) result = result.filter((url) => url.toLowerCase().includes(search.toLowerCase()));
-    return result;
-  }, [images, folder, search]);
+    let result = assets;
 
-  const toggle = (url) => {
-    if (!isMulti) { onConfirm([url]); return; }
-    setSelected((prev) => prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]);
+    if (collection !== "all") {
+      result = result.filter((asset) => (asset.collectionIds || []).includes(collection));
+    }
+
+    if (source !== "all") {
+      result = result.filter((asset) => asset.source?.provider === source);
+    }
+
+    if (orientation !== "all") {
+      result = result.filter((asset) => asset.orientation === orientation);
+    }
+
+    if (search.trim()) {
+      const query = search.toLowerCase();
+      result = result.filter((asset) => getSearchText(asset).includes(query));
+    }
+
+    return [...result].sort(
+      (a, b) => getDateValue(b.createdAt || b.updatedAt) - getDateValue(a.createdAt || a.updatedAt)
+    );
+  }, [assets, collection, source, orientation, search]);
+
+  const toggle = (asset) => {
+    const ref = normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl });
+    const key = asset.assetId || asset.publicUrl;
+    if (!isMulti) {
+      onConfirm(ref ? [ref] : []);
+      return;
+    }
+
+    setSelected((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
   };
 
   return (
@@ -51,15 +143,42 @@ function LibraryTab({ images, loading, blockType, onConfirm, defaultFolder }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
-          className="w-full border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
-          value={folder}
-          onChange={(e) => setFolder(e.target.value)}
-        >
-          {folders.map((f) => (
-            <option key={f} value={f}>{f === "all" ? "All folders" : f}</option>
-          ))}
-        </select>
+        <div className="grid grid-cols-3 gap-2">
+          <select
+            className="border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
+            value={collection}
+            onChange={(e) => setCollection(e.target.value)}
+          >
+            <option value="all">All collections</option>
+            {collections
+              .filter((value) => value !== "all")
+              .map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+          </select>
+          <select
+            className="border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+          >
+            <option value="all">All sources</option>
+            {sources
+              .filter((value) => value !== "all")
+              .map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+          </select>
+          <select
+            className="border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
+            value={orientation}
+            onChange={(e) => setOrientation(e.target.value)}
+          >
+            <option value="all">All shapes</option>
+            <option value="landscape">Landscape</option>
+            <option value="portrait">Portrait</option>
+            <option value="square">Square</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2">
@@ -69,24 +188,32 @@ function LibraryTab({ images, loading, blockType, onConfirm, defaultFolder }) {
           <div className="text-center text-stone-400 text-xs py-12">No photos found</div>
         ) : (
           <div style={{ columns: "3", gap: "4px" }}>
-            {filtered.map((url) => {
-              const isSelected = selected.includes(url);
+            {filtered.map((asset) => {
+              const key = asset.assetId || asset.publicUrl;
+              const isSelected = selected.includes(key);
               return (
                 <div
-                  key={url}
+                  key={key}
                   className={`relative overflow-hidden cursor-pointer mb-1 break-inside-avoid ring-2 transition-all ${
                     isSelected ? "ring-stone-700" : "ring-transparent hover:ring-stone-300"
                   }`}
-                  onClick={() => toggle(url)}
+                  onClick={() => toggle(asset)}
                   draggable
-                  onDragStart={(e) => e.dataTransfer.setData("text/plain", url)}
+                  onDragStart={(e) => e.dataTransfer.setData("text/plain", asset.publicUrl)}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/_next/image?url=${encodeURIComponent(url)}&w=256&q=65`}
-                    alt=""
-                    className="w-full h-auto block"
+                    src={asset.publicUrl}
+                    alt={asset.caption || asset.originalFilename}
+                    className="w-full h-auto block bg-stone-100"
                     loading="lazy"
                   />
+                  <div className="px-1.5 py-1 bg-white">
+                    <div className="truncate text-[10px] text-stone-500">{asset.originalFilename}</div>
+                    {asset.source?.provider && (
+                      <div className="truncate text-[10px] text-stone-300">{asset.source.provider}</div>
+                    )}
+                  </div>
                   {isSelected && (
                     <div className="absolute top-1 right-1 w-4 h-4 bg-stone-900 rounded-full flex items-center justify-center">
                       <span className="text-white text-[8px] font-bold">✓</span>
@@ -105,7 +232,14 @@ function LibraryTab({ images, loading, blockType, onConfirm, defaultFolder }) {
             {selected.length > 0 ? `${selected.length} selected` : `${filtered.length} photos`}
           </span>
           <button
-            onClick={() => onConfirm(selected)}
+            onClick={() =>
+              onConfirm(
+                filtered
+                  .filter((asset) => selected.includes(asset.assetId || asset.publicUrl))
+                  .map((asset) => normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl }))
+                  .filter(Boolean)
+              )
+            }
             disabled={selected.length === 0}
             className="bg-stone-900 text-white text-xs px-3 py-1.5 disabled:opacity-40 hover:bg-stone-700 transition-colors"
           >
@@ -155,7 +289,9 @@ function UploadTab({ onUploaded }) {
       }
     }
     setUploading(false);
-    if (uploadedUrls.length > 0) onUploaded(uploadedUrls);
+    if (uploadedUrls.length > 0) {
+      onUploaded(uploadedUrls.map((url) => normalizeImageRef(url)).filter(Boolean));
+    }
   };
 
   return (
@@ -192,7 +328,7 @@ function UploadTab({ onUploaded }) {
       )}
 
       <div>
-        <div className="text-xs text-stone-400 mb-1">Folder <span className="text-stone-300">(optional)</span></div>
+        <div className="text-xs text-stone-400 mb-1">Folder <span className="text-stone-300">(advanced)</span></div>
         <input
           list="upload-folder-options"
           value={folder}
@@ -216,13 +352,11 @@ function UploadTab({ onUploaded }) {
   );
 }
 
-export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, defaultFolder }) {
+export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose }) {
   const [tab, setTab] = useState("library");
-
-  // Dragging state
   const panelRef = useRef(null);
   const dragState = useRef(null);
-  const [pos, setPos] = useState({ x: 300, y: 60 }); // initial: just right of sidebar
+  const [pos, setPos] = useState({ x: 300, y: 60 });
 
   useEffect(() => {
     const onMove = (e) => {
@@ -234,7 +368,10 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
     const onUp = () => { dragState.current = null; };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
   }, []);
 
   const startDrag = (e) => {
@@ -246,14 +383,12 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
     <div
       ref={panelRef}
       className="fixed z-50 bg-white border border-stone-200 shadow-xl flex flex-col"
-      style={{ left: pos.x, top: pos.y, width: 300, height: 520 }}
+      style={{ left: pos.x, top: pos.y, width: 320, height: 560 }}
     >
-      {/* Title bar — drag handle */}
       <div
         className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100 cursor-grab select-none flex-shrink-0"
         onMouseDown={startDrag}
       >
-        {/* Tabs */}
         <button
           onClick={() => setTab("library")}
           className={`text-xs font-medium transition-colors ${tab === "library" ? "text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
@@ -278,7 +413,7 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
 
       <div className="flex-1 min-h-0">
         {tab === "library" ? (
-          <LibraryTab images={images} loading={loading} blockType={blockType} onConfirm={onConfirm} defaultFolder={defaultFolder} />
+          <LibraryTab images={images} loading={loading} blockType={blockType} onConfirm={onConfirm} />
         ) : (
           <UploadTab onUploaded={onConfirm} />
         )}

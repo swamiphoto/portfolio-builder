@@ -3,12 +3,10 @@ import DesignPopover from "./DesignPopover";
 
 const TYPE_LABELS = {
   photo: "Photo",
-  photos: "Photos",
   stacked: "Photos",
   masonry: "Photos",
   text: "Text",
   video: "Video",
-  "page-gallery": "Page Gallery",
 };
 
 const INPUT = "w-full border-b border-stone-200 pb-1.5 text-sm text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent";
@@ -28,11 +26,10 @@ export default function BlockCard({
   onRemove,
   onAddPhotos,
   onRemovePhoto,
-  pages,
 }) {
-  const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
+  const isPhotoBlock = block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
-  const hasDesign = block.type === "photo" || isPhotoBlock || block.type === "text" || block.type === "video";
+  const hasDesign = block.type === "photo" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
 
   const [expanded, setExpanded] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
@@ -195,7 +192,7 @@ export default function BlockCard({
             </>
           )}
 
-          {/* Photos block (photos, stacked, or masonry — all treated as multi-photo) */}
+          {/* Photos block (stacked or masonry) */}
           {isPhotoBlock && (
             <>
               {(block.imageUrls || []).length === 0 ? (
@@ -215,6 +212,7 @@ export default function BlockCard({
                       onDragStart={(e) => {
                         dragPhotoIndex.current = i;
                         e.dataTransfer.effectAllowed = "move";
+                        // Prevent the block-level drop handler from treating this as a new photo
                         e.stopPropagation();
                       }}
                       onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -279,33 +277,6 @@ export default function BlockCard({
               />
             </>
           )}
-
-          {/* Page Gallery */}
-          {block.type === "page-gallery" && (
-            <div className="space-y-1.5">
-              {(!pages || pages.length === 0) ? (
-                <p className="text-xs text-stone-400">No other pages yet.</p>
-              ) : (
-                pages.map(p => (
-                  <label key={p.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(block.pageIds || []).includes(p.id)}
-                      onChange={e => {
-                        const pageIds = e.target.checked
-                          ? [...(block.pageIds || []), p.id]
-                          : (block.pageIds || []).filter(id => id !== p.id)
-                        onUpdate({ ...block, pageIds })
-                      }}
-                      className="w-3 h-3 accent-stone-700 flex-shrink-0"
-                    />
-                    <span className="text-xs text-stone-700 truncate">{p.title}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          )}
-
         </div>
       )}
     </div>

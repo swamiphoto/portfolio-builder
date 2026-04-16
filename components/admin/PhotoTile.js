@@ -1,18 +1,31 @@
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 
-export default function PhotoTile({ imageUrl, metadata, albumType, albumKey, onRemove, onDelete, onCopyUrl, onAddToAlbum }) {
+function formatBytes(bytes) {
+  if (!bytes) return null;
+  if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${(bytes / 1024).toFixed(0)} KB`;
+}
+
+function formatSourceLabel(source) {
+  if (!source?.provider) return null;
+  return source.provider.charAt(0).toUpperCase() + source.provider.slice(1);
+}
+
+export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const filename = imageUrl.split("/").pop();
+  const imageUrl = asset.publicUrl;
+  const filename = asset.originalFilename || imageUrl.split("/").pop();
   const inAlbum = albumType !== "all";
+  const sizeLabel = formatBytes(asset.bytes);
+  const sourceLabel = formatSourceLabel(asset.source);
+  const usageCount = asset.usage?.usageCount || 0;
 
-  // Close menu when clicking outside
   useEffect(() => {
     if (!menuOpen) return;
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const handleClick = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
     };
@@ -41,41 +54,38 @@ export default function PhotoTile({ imageUrl, metadata, albumType, albumKey, onR
     onAddToAlbum(imageUrl);
   };
 
-  const sizeLabel = metadata?.size
-    ? metadata.size > 1024 * 1024
-      ? `${(metadata.size / 1024 / 1024).toFixed(1)} MB`
-      : `${(metadata.size / 1024).toFixed(0)} KB`
-    : null;
-
   return (
-    <div className="relative rounded-lg overflow-hidden shadow-sm border border-gray-100 group">
-      {/* Thumbnail via Next.js Image (auto-resized + cached) */}
-      <div className="relative w-full aspect-square bg-gray-100">
-        <Image
+    <div className="relative mb-3 break-inside-avoid rounded-lg overflow-hidden shadow-sm border border-gray-100 group bg-white">
+      <div className="relative bg-gray-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={imageUrl}
-          alt={filename}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          className="object-cover"
+          alt={asset.caption || filename}
+          className="block w-full h-auto"
           loading="lazy"
         />
       </div>
 
-      {/* ⋯ menu button */}
       <button
-        onClick={() => setMenuOpen((v) => !v)}
+        onClick={() => setMenuOpen((value) => !value)}
         className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
       >
         ⋯
       </button>
 
-      {/* filename + size label */}
-      <div className="px-2 py-1 text-xs text-gray-500 bg-white flex items-center gap-1">
-        <span className="truncate flex-1">{filename}</span>
-        {sizeLabel && <span className="text-gray-300 flex-shrink-0">{sizeLabel}</span>}
+      <div className="px-2.5 py-2 bg-white space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <span className="truncate flex-1">{filename}</span>
+          {sizeLabel && <span className="text-gray-300 flex-shrink-0">{sizeLabel}</span>}
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+          {sourceLabel && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500">{sourceLabel}</span>}
+          {usageCount > 0 && <span>{usageCount} use{usageCount !== 1 ? "s" : ""}</span>}
+          {asset.orientation && asset.orientation !== "unknown" && <span>{asset.orientation}</span>}
+        </div>
+        {asset.caption && <div className="text-xs text-gray-500">{asset.caption}</div>}
       </div>
 
-      {/* context menu */}
       {menuOpen && (
         <div
           ref={menuRef}
