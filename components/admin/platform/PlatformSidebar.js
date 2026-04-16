@@ -3,46 +3,41 @@ import { useState, useEffect, useRef } from 'react'
 
 function SaveBadge({ status }) {
   if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
-  if (status === 'saved') return <span className="text-xs text-green-500">Saved</span>
-  if (status === 'error') return <span className="text-xs text-red-500">Save failed</span>
+  if (status === 'saved') return <span className="text-xs text-green-600">Saved</span>
+  if (status === 'error') return <span className="text-xs text-red-600">Save failed</span>
   return null
 }
 
-function PublishBadge({ publishedAt }) {
-  if (publishedAt) {
-    return (
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-        Published
-      </span>
-    )
-  }
-  return (
-    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-      Draft
-    </span>
-  )
-}
-
-export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange, onSignOut, selectedPageId, onSelectPage }) {
+export default function PlatformSidebar({
+  siteConfig,
+  saveStatus,
+  onConfigChange,
+  onSignOut,
+  selectedPageId,
+  onSelectPage,
+  onShowLibrary,
+  username,
+}) {
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [menuOpenId, setMenuOpenId] = useState(null)
+  const [siteMenuOpen, setSiteMenuOpen] = useState(false)
   const menuRef = useRef(null)
+  const siteMenuRef = useRef(null)
 
   useEffect(() => {
-    if (!menuOpenId) return
+    if (!menuOpenId && !siteMenuOpen) return
     function handleClickOutside(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpenId(null)
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpenId(null)
+      if (siteMenuRef.current && !siteMenuRef.current.contains(e.target)) setSiteMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuOpenId])
+  }, [menuOpenId, siteMenuOpen])
 
   if (!siteConfig) return null
 
-  const { pages = [], siteName, publishedAt } = siteConfig
+  const { pages = [], siteName } = siteConfig
 
   function handleRenameStart(page) {
     setRenamingId(page.id)
@@ -77,7 +72,7 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
       let id = baseId
       let n = 2
       while (existingIds.has(id)) { id = `${baseId}-${n++}` }
-      const newPage = { id, title, showInNav: true, thumbnailUrl: '', blocks: [] }
+      const newPage = { id, title, showInNav: true, thumbnail: null, thumbnailUrl: '', blocks: [] }
       return { ...prev, pages: [...prev.pages, newPage] }
     })
 
@@ -85,34 +80,65 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
     let id = baseId
     let n = 2
     while (existingIds.has(id)) { id = `${baseId}-${n++}` }
+    onSelectPage?.(id)
     setRenamingId(id)
     setRenameValue(title)
   }
 
-  function handlePublishToggle() {
-    onConfigChange(prev => ({
-      ...prev,
-      publishedAt: prev.publishedAt ? null : new Date().toISOString(),
-    }))
-  }
-
   return (
-    <div className="flex flex-col h-full bg-gray-50 select-none">
+    <div className="flex flex-col h-full select-none text-sm">
       {/* Header */}
-      <div className="px-4 py-4 border-b border-gray-200 flex-shrink-0">
-        <div className="font-bold text-gray-900 text-base truncate">{siteName || 'My Portfolio'}</div>
-        <div className="flex items-center gap-2 mt-1">
-          <PublishBadge publishedAt={publishedAt} />
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-200">
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-gray-900 truncate">{siteName || 'My Portfolio'}</div>
+          {username && (
+            <a
+              href={`http://${username}.${(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-400 hover:text-gray-600 truncate block mt-0.5"
+            >
+              {username}.{(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')} ↗
+            </a>
+          )}
           <SaveBadge status={saveStatus} />
+        </div>
+        <div className="relative" ref={siteMenuRef}>
+          <button
+            onClick={() => setSiteMenuOpen(v => !v)}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 transition-colors"
+          >
+            ···
+          </button>
+          {siteMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-popup z-20 py-1 w-40">
+              <button
+                onClick={() => { setSiteMenuOpen(false); onSignOut?.() }}
+                className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Pages list */}
-      <div className="flex-1 overflow-y-auto p-2">
-        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 py-1 mb-1">
-          Pages
-        </div>
+      {/* Theme */}
+      <div className="px-4 py-2.5 border-b border-gray-200">
+        <div className="text-xs font-medium text-gray-500 mb-1">Theme</div>
+        <select
+          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm outline-none focus:border-purple-500 bg-white"
+          value={siteConfig.theme || 'minimal-light'}
+          onChange={e => onConfigChange(prev => ({ ...prev, theme: e.target.value }))}
+        >
+          <option value="minimal-light">Minimal Light</option>
+          <option value="minimal-dark">Minimal Dark</option>
+          <option value="editorial">Editorial</option>
+        </select>
+      </div>
 
+      {/* Pages */}
+      <div className="flex-1 overflow-y-auto px-2 py-2">
         {pages.map(page => (
           <div key={page.id} className="relative">
             {renamingId === page.id ? (
@@ -125,21 +151,19 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
                   if (e.key === 'Enter') handleRenameCommit(page.id)
                   if (e.key === 'Escape') setRenamingId(null)
                 }}
-                className="w-full px-3 py-1.5 text-sm border border-blue-400 rounded-md outline-none bg-white"
+                className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
               />
             ) : (
               <div
                 onClick={() => onSelectPage?.(page.id)}
-                className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer group ${
-                  selectedPageId === page.id
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
+                  selectedPageId === page.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <span className="flex-1 truncate">{page.title}</span>
                 <button
                   onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                  className={`ml-1 opacity-0 group-hover:opacity-100 px-1 ${selectedPageId === page.id ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`}
+                  className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
                 >
                   ···
                 </button>
@@ -147,7 +171,7 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
             )}
 
             {menuOpenId === page.id && (
-              <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-md shadow-md py-1 w-32">
+              <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
                 <button
                   onClick={() => handleRenameStart(page)}
                   className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
@@ -167,32 +191,19 @@ export default function PlatformSidebar({ siteConfig, saveStatus, onConfigChange
 
         <button
           onClick={handleAddPage}
-          className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md mt-1"
+          className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50 mt-1"
         >
-          <span className="mr-2">+</span> Add Page
+          <span className="mr-1.5">+</span> Add Page
         </button>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 p-3 flex-shrink-0 space-y-1">
+      <div className="border-t border-gray-200 px-4 py-3">
         <button
-          onClick={handlePublishToggle}
-          className={`w-full py-1.5 rounded-md text-sm font-medium transition-colors ${
-            publishedAt
-              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              : 'bg-gray-900 text-white hover:bg-gray-700'
-          }`}
+          onClick={onShowLibrary}
+          className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
-          {publishedAt ? 'Unpublish' : 'Publish'}
-        </button>
-        <div className="flex items-center px-3 py-1.5 text-sm text-gray-400 rounded-md">
-          <span className="flex-1">Theme: Minimal Light</span>
-        </div>
-        <button
-          onClick={onSignOut}
-          className="w-full text-left px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 rounded-md"
-        >
-          Sign out
+          Library
         </button>
       </div>
     </div>

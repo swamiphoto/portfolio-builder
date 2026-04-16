@@ -4,7 +4,9 @@ import { useRouter } from 'next/router'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
-import PageEditor from '../../components/admin/platform/PageEditor'
+import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
+import GalleryPreview from '../../components/admin/gallery-builder/GalleryPreview'
+import AdminLibrary from '../../components/admin/AdminLibrary'
 
 const AUTOSAVE_DELAY = 1500
 
@@ -15,6 +17,7 @@ export default function AdminIndex() {
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('idle')
   const [selectedPageId, setSelectedPageId] = useState(null)
+  const [showLibrary, setShowLibrary] = useState(false)
   const autosaveTimer = useRef(null)
 
   useEffect(() => {
@@ -64,7 +67,6 @@ export default function AdminIndex() {
     })
   }, [save])
 
-  // Update a specific page's data within the site config
   const updatePage = useCallback((pageId, updatedPage) => {
     updateConfig(prev => ({
       ...prev,
@@ -72,9 +74,14 @@ export default function AdminIndex() {
     }))
   }, [updateConfig])
 
+  const handleSelectPage = useCallback((pageId) => {
+    setSelectedPageId(pageId)
+    setShowLibrary(false)
+  }, [])
+
   if (status === 'loading' || loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
+      <div className="flex items-center justify-center h-screen text-sm text-gray-400">
         Loading...
       </div>
     )
@@ -82,27 +89,59 @@ export default function AdminIndex() {
 
   if (!session || !siteConfig) return null
 
-  const selectedPage = siteConfig.pages.find(p => p.id === selectedPageId) || null
+  const selectedPage = selectedPageId
+    ? siteConfig.pages.find(p => p.id === selectedPageId) || null
+    : null
+
+  const sidebar = (
+    <PlatformSidebar
+      siteConfig={siteConfig}
+      saveStatus={saveStatus}
+      onConfigChange={updateConfig}
+      onSignOut={() => signOut({ callbackUrl: '/auth/signin' })}
+      selectedPageId={selectedPageId}
+      onSelectPage={handleSelectPage}
+      onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
+      libraryActive={showLibrary}
+      username={session?.user?.username}
+    />
+  )
+
+  const panel = selectedPage ? (
+    <PageEditorSidebar
+      page={selectedPage}
+      siteConfig={siteConfig}
+      saveStatus={saveStatus}
+      onPageChange={(updated) => updatePage(selectedPageId, updated)}
+      onBack={null}
+    />
+  ) : null
+
+  let content
+  if (showLibrary) {
+    content = <AdminLibrary />
+  } else if (selectedPage) {
+    content = (
+      <GalleryPreview
+        gallery={{
+          name: selectedPage.title,
+          description: selectedPage.description || '',
+          blocks: selectedPage.blocks || [],
+        }}
+        pages={siteConfig.pages}
+      />
+    )
+  } else {
+    content = (
+      <div className="flex items-center justify-center h-full text-sm text-gray-300">
+        Select a page to edit
+      </div>
+    )
+  }
 
   return (
-    <AdminLayout
-      sidebar={
-        <PlatformSidebar
-          siteConfig={siteConfig}
-          saveStatus={saveStatus}
-          onConfigChange={updateConfig}
-          onSignOut={() => signOut({ callbackUrl: '/auth/signin' })}
-          selectedPageId={selectedPageId}
-          onSelectPage={setSelectedPageId}
-        />
-      }
-    >
-      <PageEditor
-        page={selectedPage}
-        siteConfig={siteConfig}
-        saveStatus={saveStatus}
-        onPageChange={(updated) => updatePage(selectedPageId, updated)}
-      />
+    <AdminLayout sidebar={sidebar} panel={panel}>
+      {content}
     </AdminLayout>
   )
 }
