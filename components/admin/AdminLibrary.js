@@ -112,12 +112,19 @@ export default function AdminLibrary() {
       return applyFilters(libraryData.images || []);
     }
 
-    const urls =
-      selectedAlbum.type === "portfolio"
-        ? libraryData.portfolios[selectedAlbum.key] || []
-        : libraryData.galleries[selectedAlbum.key] || [];
+    if (selectedAlbum.type === "portfolio") {
+      const urls = libraryData.portfolios[selectedAlbum.key] || []
+      return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
+    }
 
-    return applyFilters(urls.map(getAssetByUrl).filter(Boolean));
+    // Gallery rollup: own + all descendants, deduped
+    const galleries = libraryData.galleries || {}
+    const prefix = selectedAlbum.key + '/'
+    const matchingKeys = Object.keys(galleries).filter(
+      (k) => k === selectedAlbum.key || k.startsWith(prefix)
+    )
+    const urls = [...new Set(matchingKeys.flatMap((k) => galleries[k] || []))]
+    return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
   };
 
   const currentConfig = () => ({
@@ -182,6 +189,17 @@ export default function AdminLibrary() {
       await fetchLibrary();
     }
   }, [selectedAlbum, saveConfig, fetchLibrary]);
+
+  const handleCreateCollection = useCallback(async (name, parentKey = null) => {
+    const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+    if (!slug) return
+    const key = parentKey ? `${parentKey}/${slug}` : slug
+    const config = currentConfig()
+    if (config.galleries[key]) return
+    const updated = { ...config, galleries: { ...config.galleries, [key]: [] } }
+    await saveConfig(updated)
+    setSelectedAlbum({ type: "gallery", key })
+  }, [saveConfig]);
 
   // "Add to another album" from PhotoTile ⋯ menu
   const handleAddToAlbum = useCallback((imageUrl) => {
@@ -272,6 +290,7 @@ export default function AdminLibrary() {
         counts={counts}
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
+        onCreateCollection={handleCreateCollection}
         onUploadClick={() => setUploadOpen(true)}
         sourceCounts={sourceCounts}
         orientationCounts={orientationCounts}
