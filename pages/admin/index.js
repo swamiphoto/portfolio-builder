@@ -75,6 +75,26 @@ export default function AdminIndex() {
     }))
   }, [updateConfig])
 
+  const handleMoveBlockToPage = useCallback((sourcePageId, blockIndex, targetPageId) => {
+    if (sourcePageId === targetPageId) return
+    updateConfig(prev => {
+      const pages = [...prev.pages]
+      const sourcePage = pages.find(p => p.id === sourcePageId)
+      const targetPage = pages.find(p => p.id === targetPageId)
+      if (!sourcePage || !targetPage) return prev
+      const sourceBlocks = [...(sourcePage.blocks || [])]
+      const [movedBlock] = sourceBlocks.splice(blockIndex, 1)
+      return {
+        ...prev,
+        pages: pages.map(p => {
+          if (p.id === sourcePageId) return { ...p, blocks: sourceBlocks }
+          if (p.id === targetPageId) return { ...p, blocks: [...(p.blocks || []), movedBlock] }
+          return p
+        }),
+      }
+    })
+  }, [updateConfig])
+
   const handleSelectPage = useCallback((pageId) => {
     setSelectedPageId(pageId)
     setShowLibrary(false)
@@ -115,6 +135,7 @@ export default function AdminIndex() {
       saveStatus={saveStatus}
       onPageChange={(updated) => updatePage(selectedPageId, updated)}
       onBack={null}
+      onMoveBlockToPage={handleMoveBlockToPage}
     />
   ) : null
 

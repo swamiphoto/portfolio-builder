@@ -1,8 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { getSizedUrl } from "../../../common/imageUtils";
+import { useDrag } from '../../../common/dragContext';
 import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
+import { buildMultiImageFields, removeImageRef } from "../../../common/assetRefs";
 
 function AutoGrowTextarea({ className, value, onChange, placeholder, ...props }) {
   const ref = useRef(null);
@@ -62,11 +65,24 @@ export default function BlockBuilder({
   expanded,
   onToggleExpand,
   pages,
+  getAssetByUrl,
+  allCollections,
+  collectionsByUrl,
+  onToggleCollection,
+  headerLabel = 'GALLERY',
+  infoLabel = 'Gallery Info',
+  namePlaceholder = 'Gallery name',
+  onBack,
+  sourcePageId,
+  onMoveBlockToPage,
+  className,
 }) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
   const [menuAnchorRect, setMenuAnchorRect] = useState(null);
   const [infoExpanded, setInfoExpanded] = useState(true);
+
+  const { startDrag, endDrag, dropTargetPageId } = useDrag()
 
   const updateField = (key, value) => onChange({ ...gallery, [key]: value });
 
@@ -92,11 +108,13 @@ export default function BlockBuilder({
     onChange({ ...gallery, blocks });
   };
 
-  const removePhotoFromBlock = (blockIndex, url) => {
+  const removePhotoFromBlock = (blockIndex, imageRef) => {
     const blocks = [...(gallery.blocks || [])];
     blocks[blockIndex] = {
       ...blocks[blockIndex],
-      imageUrls: (blocks[blockIndex].imageUrls || []).filter((u) => u !== url),
+      ...buildMultiImageFields(
+        removeImageRef(blocks[blockIndex].images || blocks[blockIndex].imageUrls || [], imageRef)
+      ),
     };
     onChange({ ...gallery, blocks });
   };
@@ -111,46 +129,49 @@ export default function BlockBuilder({
 
   return (
     <div
-      className="w-72 flex-shrink-0 flex flex-col h-full bg-stone-50 relative z-10 text-left font-sans"
-      style={{ boxShadow: "1px 0 0 #e7e5e3, 4px 0 20px rgba(0,0,0,0.05)" }}
+      className={className || "w-72 flex-shrink-0 flex flex-col h-full bg-stone-50 border-r border-stone-200 relative z-10 text-left font-sans"}
     >
       {/* Header bar */}
       <div className="px-3 pt-3 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-stone-200">
-        <button onClick={onToggleExpand} className="text-stone-400 hover:text-stone-700 transition-colors text-sm leading-none">←</button>
-        <span className="text-xs tracking-widest font-medium text-stone-400 flex-1">GALLERY</span>
+        <button onClick={onBack || onToggleExpand} className="text-stone-400 hover:text-stone-700 transition-colors text-sm leading-none">←</button>
+        <span className="text-xs tracking-widest font-medium text-stone-400 flex-1">{headerLabel}</span>
         <span className="text-[10px] text-stone-400">
           {autosaveStatus === "saving" && "Saving…"}
           {autosaveStatus === "saved" && "Saved"}
           {autosaveStatus === "unsaved" && "Unsaved"}
         </span>
-        <button
-          onClick={onToggleExpand}
-          className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
-          title="Collapse sidebar"
-        >
-          <svg className="w-3.5 h-3.5 -rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          </svg>
-        </button>
-        <button
-          onClick={onPublish}
-          disabled={publishing || (isPublished && !hasDraft)}
-          className="text-xs font-semibold bg-stone-900 text-white px-4 py-1.5 hover:bg-stone-700 disabled:opacity-40 transition-colors"
-        >
-          {publishing ? "Publishing…" : "Publish"}
-        </button>
+        {!onBack && (
+          <button
+            onClick={onToggleExpand}
+            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
+            title="Collapse sidebar"
+          >
+            <svg className="w-3.5 h-3.5 -rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+        )}
+        {onPublish && (
+          <button
+            onClick={onPublish}
+            disabled={publishing || (isPublished && !hasDraft)}
+            className="text-xs font-semibold bg-stone-900 text-white px-4 py-1.5 hover:bg-stone-700 disabled:opacity-40 transition-colors"
+          >
+            {publishing ? "Publishing…" : "Publish"}
+          </button>
+        )}
       </div>
 
       {/* All blocks — scrollable */}
       <div className="flex-1 overflow-y-auto px-3 py-3">
 
-        {/* Gallery Info card */}
+        {/* Info card */}
         <div className="bg-white border border-stone-200 rounded-lg shadow-sm overflow-hidden mb-1.5">
           <button
             className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
             onClick={() => setInfoExpanded((v) => !v)}
           >
-            <span className="text-xs font-semibold text-stone-600 flex-1 tracking-wide">Gallery Info</span>
+            <span className="text-xs font-semibold text-stone-600 flex-1 tracking-wide">{infoLabel}</span>
             <svg className={`w-3.5 h-3.5 text-stone-400 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
             </svg>
@@ -162,7 +183,7 @@ export default function BlockBuilder({
                 <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Name</div>
                 <input
                   className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug font-medium text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
-                  placeholder="Gallery name"
+                  placeholder={namePlaceholder}
                   value={gallery.name || ""}
                   onChange={(e) => updateField("name", e.target.value)}
                 />
@@ -195,23 +216,20 @@ export default function BlockBuilder({
                   className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center border border-stone-200 cursor-pointer hover:border-stone-400 transition-colors ${gallery.thumbnailUrl ? "" : "bg-stone-50"}`}
                 >
                   {gallery.thumbnailUrl ? (
-                    <img src={`/_next/image?url=${encodeURIComponent(gallery.thumbnailUrl)}&w=200&q=70`} alt="Cover" className="w-full h-full object-cover" />
+                    <img src={getSizedUrl(gallery.thumbnailUrl, 'thumbnail')} alt="Cover" className="w-full h-full object-cover" onError={(e) => { if (e.target.src !== gallery.thumbnailUrl) e.target.src = gallery.thumbnailUrl }} />
                   ) : (
                     <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5" />
                     </svg>
                   )}
                 </div>
-                <button
-                  onClick={onPickThumbnail}
-                  className="text-xs text-stone-600 hover:text-stone-900 text-left transition-colors leading-none"
-                >
+                <button onClick={onPickThumbnail} className="text-xs text-stone-600 hover:text-stone-900 text-left transition-colors leading-none">
                   Select from library
                 </button>
               </div>
               </div>
 
-              {/* Unlisted row — separate */}
+              {/* Unlisted toggle */}
               <div
                 className="flex items-center gap-2 cursor-pointer pt-0.5"
                 onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
@@ -222,7 +240,7 @@ export default function BlockBuilder({
                 <span className="text-xs text-stone-500 select-none">Unlisted</span>
               </div>
 
-              {/* Slideshow row */}
+              {/* Slideshow toggle */}
               <div className="flex items-center justify-between pt-0.5">
                 <div
                   className="flex items-center gap-2 cursor-pointer"
@@ -247,7 +265,26 @@ export default function BlockBuilder({
         </div>
 
         {/* Content blocks */}
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext
+          onDragStart={(start) => {
+            const block = (gallery.blocks || [])[start.source.index]
+            if (block && sourcePageId) {
+              startDrag({ type: 'block', block, sourcePageId })
+            }
+          }}
+          onDragEnd={(result) => {
+            const targetPageId = dropTargetPageId
+            endDrag()
+            if (!result.destination) {
+              if (targetPageId && targetPageId !== sourcePageId && onMoveBlockToPage) {
+                const block = (gallery.blocks || [])[result.source.index]
+                if (block) onMoveBlockToPage(sourcePageId, result.source.index, targetPageId)
+              }
+              return
+            }
+            handleDragEnd(result)
+          }}
+        >
           <Droppable droppableId="blocks">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps}>
@@ -271,6 +308,10 @@ export default function BlockBuilder({
                             onAddPhotos={() => onAddPhotosToBlock(index)}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
+                            getAssetByUrl={getAssetByUrl}
+                            allCollections={allCollections}
+                            collectionsByUrl={collectionsByUrl}
+                            onToggleCollection={onToggleCollection}
                           />
                         </div>
                       )}
