@@ -2,6 +2,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { DragProvider } from '../../common/dragContext'
+import { buildMultiImageFields, buildSingleImageFields } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -95,6 +96,22 @@ export default function AdminIndex() {
     })
   }, [updateConfig])
 
+  const handleDropImagesToPage = useCallback((targetPageId, imageRefs, sourceBlockType) => {
+    if (!imageRefs?.length) return
+    const isMultiBlock = sourceBlockType === 'photos' || sourceBlockType === 'stacked' || sourceBlockType === 'masonry'
+    const newBlock = isMultiBlock
+      ? { type: sourceBlockType, ...buildMultiImageFields(imageRefs) }
+      : { type: 'photo', ...buildSingleImageFields(imageRefs[0]) }
+    updateConfig(prev => ({
+      ...prev,
+      pages: prev.pages.map(p =>
+        p.id === targetPageId
+          ? { ...p, blocks: [...(p.blocks || []), newBlock] }
+          : p
+      ),
+    }))
+  }, [updateConfig])
+
   const handleSelectPage = useCallback((pageId) => {
     setSelectedPageId(pageId)
     setShowLibrary(false)
@@ -125,6 +142,7 @@ export default function AdminIndex() {
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
       libraryActive={showLibrary}
       username={session?.user?.username}
+      onDropImagesToPage={handleDropImagesToPage}
     />
   )
 

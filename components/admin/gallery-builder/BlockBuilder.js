@@ -312,6 +312,7 @@ export default function BlockBuilder({
                             allCollections={allCollections}
                             collectionsByUrl={collectionsByUrl}
                             onToggleCollection={onToggleCollection}
+                            sourcePageId={sourcePageId}
                           />
                         </div>
                       )}

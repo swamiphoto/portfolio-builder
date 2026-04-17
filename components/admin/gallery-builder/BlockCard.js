@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
+import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
 
@@ -103,10 +104,12 @@ export default function BlockCard({
   allCollections,
   collectionsByUrl,
   onToggleCollection,
+  sourcePageId,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
+  const { startDrag, endDrag } = useDrag()
   const hasDesign = block.type === "photo" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
 
   const [expanded, setExpanded] = useState(true);
@@ -366,6 +369,9 @@ export default function BlockCard({
                           };
                           e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
                           e.dataTransfer.setData('text/plain', blockImageRefs[i].url);
+                          if (sourcePageId) {
+                            startDrag({ type: 'images', imageRefs: dragging, sourceBlockType: block.type, sourcePageId })
+                          }
                         },
                         onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },
                         onDrop: (e) => {
@@ -385,7 +391,11 @@ export default function BlockCard({
                           dragPhotoIndex.current = null;
                           onUpdate({ ...block, ...buildMultiImageFields(refs) });
                         },
-                        onDragEnd: () => { dragPhotoIndex.current = null; },
+                        onDragEnd: () => {
+                          dragPhotoIndex.current = null
+                          endDrag()
+                          setSelectedIndices(new Set())
+                        },
                       }}
                       onRemove={() => onRemovePhoto(ref)}
                       onUpdateCaption={(caption) => {

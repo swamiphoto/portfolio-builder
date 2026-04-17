@@ -1,5 +1,9 @@
 import { render, fireEvent } from '@testing-library/react'
 
+jest.mock('../../common/dragContext', () => ({
+  useDrag: () => ({ startDrag: jest.fn(), endDrag: jest.fn(), drag: null, dropTargetPageId: null, setDropTargetPageId: jest.fn() }),
+  DragProvider: ({ children }) => children,
+}))
 jest.mock('../../common/imageUtils', () => ({ getSizedUrl: (url) => url }))
 jest.mock('../../common/assetRefs', () => ({
   normalizeImageRefs: (x) => Array.isArray(x) ? x : [],
