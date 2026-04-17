@@ -1,6 +1,5 @@
 // pages/admin/index.js
 import { useSession, signOut } from 'next-auth/react'
-import { useRouter } from 'next/router'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { DragProvider } from '../../common/dragContext'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
@@ -13,7 +12,6 @@ const AUTOSAVE_DELAY = 1500
 
 export default function AdminIndex() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const [siteConfig, setSiteConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('idle')
