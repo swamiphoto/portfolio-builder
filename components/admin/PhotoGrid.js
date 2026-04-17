@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import PhotoTile from "./PhotoTile";
-import PhotoLightbox from "../image-displays/PhotoLightbox";
+import AdminPhotoLightbox from "./AdminPhotoLightbox";
 
 const GAP = 12;
 const INFO_HEIGHT = 84; // px for caption input + filename + metadata strip
@@ -245,11 +245,25 @@ export default function PhotoGrid({
       </div>
 
       {lightboxIndex !== null && (
-        <PhotoLightbox
-          images={processedAssets.map(a => ({ url: a.publicUrl, caption: a.caption || '' }))}
+        <AdminPhotoLightbox
+          images={processedAssets.map(a => ({
+            url: a.publicUrl,
+            caption: a.caption || '',
+            originalFilename: a.originalFilename,
+            bytes: a.bytes,
+            source: a.source,
+            capture: a.capture,
+            usage: a.usage,
+            orientation: a.orientation,
+            assetId: a.assetId,
+          }))}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}
+          onCaptionChange={(i, newCaption) => {
+            const asset = processedAssets[i];
+            if (asset && onCaptionChange) onCaptionChange(asset.assetId, newCaption);
+          }}
         />
       )}
     </div>

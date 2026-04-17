@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
 import DesignPopover from "./DesignPopover";
-import PhotoLightbox from "../../image-displays/PhotoLightbox";
+import AdminPhotoLightbox from "../AdminPhotoLightbox";
 
 const TYPE_LABELS = {
   photo: "Photo",
@@ -375,13 +375,22 @@ export default function BlockCard({
         </div>
       )}
 
-      {/* Lightbox for block image previews */}
+      {/* Admin inspector lightbox for block image previews */}
       {lightboxIndex !== null && (
-        <PhotoLightbox
+        <AdminPhotoLightbox
           images={isPhotoBlock ? blockImageRefs : singlePhotoImages}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}
+          onCaptionChange={(i, newCaption) => {
+            if (isPhotoBlock) {
+              const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+              const updated = refs.map((r, j) => j === i ? { ...r, caption: newCaption } : r);
+              onUpdate({ ...block, ...buildMultiImageFields(updated) });
+            } else {
+              onUpdate({ ...block, caption: newCaption });
+            }
+          }}
         />
       )}
     </div>
