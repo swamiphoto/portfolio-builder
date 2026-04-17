@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/router";
 import GalleryCover from "./gallery-cover/GalleryCover";
 import MasonryGallery from "./masonry-gallery/MasonryGallery";
 import StackedGallery from "./stacked-gallery/StackedGallery";
@@ -6,44 +7,100 @@ import { useMediaQuery } from "react-responsive";
 import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
+import PhotoLightbox from "../PhotoLightbox";
+import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 
 const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, onBackClick, onSlideshowClick, onClientLoginClick }) => {
   const isSmallScreen = useMediaQuery({ query: "(max-width: 768px)" });
+  const router = useRouter();
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+
+  // Build flat image list + per-block offsets
+  const { allImages, blockOffsets } = useMemo(() => {
+    const allImages = [];
+    const blockOffsets = [];
+    (blocks || []).forEach((block) => {
+      blockOffsets.push(allImages.length);
+      if (block.type === "photos" || block.type === "stacked" || block.type === "masonry") {
+        const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+        allImages.push(...refs);
+      } else if (block.type === "photo") {
+        const url = getImageRefUrl(block.image || block.imageUrl);
+        if (url) allImages.push({ url, caption: block.caption || "" });
+      }
+    });
+    return { allImages, blockOffsets };
+  }, [blocks]);
+
+  // Sync lightboxIndex from URL query
+  useEffect(() => {
+    const n = parseInt(router.query.photo, 10);
+    if (!isNaN(n) && n >= 0 && n < allImages.length) {
+      setLightboxIndex(n);
+    } else {
+      setLightboxIndex(null);
+    }
+  }, [router.query.photo, allImages.length]);
+
+  const openLightbox = (globalIndex) => {
+    router.push({ query: { ...router.query, photo: globalIndex } }, undefined, { shallow: true });
+  };
+
+  const closeLightbox = () => {
+    const q = { ...router.query };
+    delete q.photo;
+    router.push({ query: q }, undefined, { shallow: true });
+  };
+
+  const navigateLightbox = (globalIndex) => {
+    router.push({ query: { ...router.query, photo: globalIndex } }, undefined, { shallow: true });
+  };
+
+  const makeClickHandler = (blockIdx) => (localIndex) => {
+    openLightbox(blockOffsets[blockIdx] + localIndex);
+  };
 
   return (
     <div className="gallery-container">
       <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} />
 
       <div className="space-y-10">
-        {blocks.map((block, index) => {
+        {(blocks || []).map((block, index) => {
           switch (block.type) {
             case "photos": {
               const usemasonry = block.layout === "masonry" || isSmallScreen;
+              const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               return (
                 <div key={`block-${index}`} className="photos-block">
                   {usemasonry
-                    ? <MasonryGallery imageUrls={block.imageUrls || []} />
-                    : <StackedGallery imageUrls={block.imageUrls || []} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
                   <WiggleLine />
                 </div>
               );
             }
 
-            case "stacked":
+            case "stacked": {
+              const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block">
-                  {isSmallScreen ? <MasonryGallery imageUrls={block.imageUrls || []} /> : <StackedGallery imageUrls={block.imageUrls || []} />}
+                  {isSmallScreen
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
                   <WiggleLine />
                 </div>
               );
+            }
 
-            case "masonry":
+            case "masonry": {
+              const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block">
-                  <MasonryGallery imageUrls={block.imageUrls || []} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
                   <WiggleLine />
                 </div>
               );
+            }
 
             case "text":
               return (
@@ -52,22 +109,31 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 </div>
               );
 
-            case "photo":
-              if (!block.imageUrl) return null;
+            case "photo": {
+              if (!getImageRefUrl(block.image || block.imageUrl)) return null;
+              const photoVariant = block.layout === "Centered" ? 2 : (block.variant || 1);
               return (
                 <div key={`block-${index}`} className="photo-block">
-                  <PhotoBlock imageUrl={block.imageUrl} caption={block.caption} variant={block.variant || 1} />
+                  <PhotoBlock
+                    imageUrl={getImageRefUrl(block.image || block.imageUrl)}
+                    caption={block.caption}
+                    variant={photoVariant}
+                    onImageClick={makeClickHandler(index)}
+                  />
                   <WiggleLine />
                 </div>
               );
+            }
 
-            case "video":
+            case "video": {
+              const videoVariant = block.layout === "Centered" ? 2 : (block.variant || 1);
               return (
                 <div key={`block-${index}`} className="video-block">
-                  <VideoBlock url={block.url} caption={block.caption} variant={block.variant || 1} />
+                  <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} />
                   <WiggleLine />
                 </div>
               );
+            }
 
             case "page-gallery": {
               const linkedPages = (block.pageIds || [])
@@ -79,9 +145,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div className="grid grid-cols-2 gap-6">
                     {linkedPages.map(p => (
                       <a key={p.id} href="#" className="block group">
-                        {p.thumbnailUrl ? (
+                        {getImageRefUrl(p.thumbnail || p.thumbnailUrl) ? (
                           <img
-                            src={p.thumbnailUrl}
+                            src={getImageRefUrl(p.thumbnail || p.thumbnailUrl)}
                             alt={p.title}
                             className="w-full aspect-[4/3] object-cover"
                           />
@@ -104,6 +170,15 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
           }
         })}
       </div>
+
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          images={allImages}
+          index={lightboxIndex}
+          onClose={closeLightbox}
+          onNavigate={navigateLightbox}
+        />
+      )}
     </div>
   );
 };
