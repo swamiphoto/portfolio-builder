@@ -24,7 +24,7 @@ function PaintbrushIcon() {
   );
 }
 
-function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPreview }) {
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPreview, selected }) {
   const [editing, setEditing] = useState(false);
   const [caption, setCaption] = useState(imageRef.caption || '');
   const inputRef = useRef(null);
@@ -39,8 +39,8 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPr
   return (
     <div
       {...dragHandleProps}
-      className="relative group/thumb aspect-square bg-stone-100 overflow-hidden cursor-grab"
-      onClick={() => !editing && onPreview && onPreview()}
+      className={`relative group/thumb aspect-square bg-stone-100 overflow-hidden cursor-grab ${selected ? 'ring-2 ring-inset ring-blue-500' : ''}`}
+      onClick={(e) => !editing && onPreview && onPreview(e)}
     >
       <img
         src={getSizedUrl(imageRef.url, 'thumbnail')}
@@ -49,6 +49,11 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPr
         loading="lazy"
         onError={(e) => { if (e.target.src !== imageRef.url) e.target.src = imageRef.url }}
       />
+      {selected && (
+        <div className="absolute top-0.5 left-0.5 bg-blue-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full z-10 leading-none pointer-events-none">
+          ✓
+        </div>
+      )}
       {/* Caption overlay — shows current caption on hover, click to edit */}
       {!editing && (
         <div
@@ -94,6 +99,10 @@ export default function BlockCard({
   onAddPhotos,
   onRemovePhoto,
   pages,
+  getAssetByUrl,
+  allCollections,
+  collectionsByUrl,
+  onToggleCollection,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -103,8 +112,29 @@ export default function BlockCard({
   const [showMenu, setShowMenu] = useState(false);
   const [showDesign, setShowDesign] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [selectedIndices, setSelectedIndices] = useState(new Set());
+  const lastSelectedRef = useRef(null);
   const menuRef = useRef(null);
   const designBtnRef = useRef(null);
+
+  const handleThumbClick = (e, i) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.stopPropagation();
+      setSelectedIndices(prev => {
+        const next = new Set(prev);
+        next.has(i) ? next.delete(i) : next.add(i);
+        lastSelectedRef.current = i;
+        return next;
+      });
+    } else if (e.shiftKey && lastSelectedRef.current !== null) {
+      e.stopPropagation();
+      const min = Math.min(lastSelectedRef.current, i);
+      const max = Math.max(lastSelectedRef.current, i);
+      setSelectedIndices(new Set(Array.from({ length: max - min + 1 }, (_, k) => min + k)));
+    } else {
+      lastSelectedRef.current = i;
+    }
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -112,6 +142,12 @@ export default function BlockCard({
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') setSelectedIndices(new Set()); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
   const handleDragOver = (e) => e.preventDefault();
@@ -288,7 +324,11 @@ export default function BlockCard({
                     <PhotoThumb
                       key={ref.url}
                       imageRef={ref}
-                      onPreview={() => setLightboxIndex(i)}
+                      selected={selectedIndices.has(i)}
+                      onPreview={(e) => {
+                        handleThumbClick(e, i);
+                        if (!e.metaKey && !e.ctrlKey && !e.shiftKey) setLightboxIndex(i);
+                      }}
                       dragHandleProps={{
                         draggable: true,
                         onDragStart: (e) => { dragPhotoIndex.current = i; e.dataTransfer.effectAllowed = "move"; e.stopPropagation(); },
@@ -376,23 +416,50 @@ export default function BlockCard({
       )}
 
       {/* Admin inspector lightbox for block image previews */}
-      {lightboxIndex !== null && (
-        <AdminPhotoLightbox
-          images={isPhotoBlock ? blockImageRefs : singlePhotoImages}
-          index={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-          onNavigate={setLightboxIndex}
-          onCaptionChange={(i, newCaption) => {
-            if (isPhotoBlock) {
-              const refs = normalizeImageRefs(block.images || block.imageUrls || []);
-              const updated = refs.map((r, j) => j === i ? { ...r, caption: newCaption } : r);
-              onUpdate({ ...block, ...buildMultiImageFields(updated) });
-            } else {
-              onUpdate({ ...block, caption: newCaption });
-            }
-          }}
-        />
-      )}
+      {lightboxIndex !== null && (() => {
+        const baseImages = isPhotoBlock ? blockImageRefs : singlePhotoImages;
+        const enriched = baseImages.map(ref => {
+          const asset = getAssetByUrl ? getAssetByUrl(ref.url) : null;
+          return asset ? {
+            url: asset.publicUrl,
+            caption: ref.caption ?? asset.caption ?? '',
+            originalFilename: asset.originalFilename,
+            bytes: asset.bytes,
+            width: asset.width,
+            height: asset.height,
+            source: asset.source,
+            capture: asset.capture,
+            usage: asset.usage,
+            orientation: asset.orientation,
+            assetId: asset.assetId,
+            createdAt: asset.createdAt,
+            updatedAt: asset.updatedAt,
+            collections: collectionsByUrl?.[ref.url] || [],
+          } : { ...ref, collections: collectionsByUrl?.[ref.url] || [] };
+        });
+        return (
+          <AdminPhotoLightbox
+            images={enriched}
+            allCollections={allCollections}
+            index={lightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+            onNavigate={setLightboxIndex}
+            onCaptionChange={(i, newCaption) => {
+              if (isPhotoBlock) {
+                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                const updated = refs.map((r, j) => j === i ? { ...r, caption: newCaption } : r);
+                onUpdate({ ...block, ...buildMultiImageFields(updated) });
+              } else {
+                onUpdate({ ...block, caption: newCaption });
+              }
+            }}
+            onToggleCollection={(slug, type, add) => {
+              const img = enriched[lightboxIndex];
+              if (img && onToggleCollection) onToggleCollection(img.url, slug, type, add);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
