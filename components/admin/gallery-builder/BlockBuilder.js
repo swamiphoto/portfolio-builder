@@ -124,8 +124,12 @@ export default function BlockBuilder({
     const block = blocks[blockIndex];
     if (!block) return;
     const urls = new Set(imageRefs.map(r => r.url));
-    const remaining = normalizeImageRefs(block.images || block.imageUrls || []).filter(r => !urls.has(r.url));
-    blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
+    if (block.type === 'photo') {
+      if (urls.has(block.imageUrl)) blocks[blockIndex] = { ...block, imageUrl: '' };
+    } else {
+      const remaining = normalizeImageRefs(block.images || block.imageUrls || []).filter(r => !urls.has(r.url));
+      blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
+    }
     onChange({ ...gallery, blocks });
   };
 

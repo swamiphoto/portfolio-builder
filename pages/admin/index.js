@@ -123,8 +123,12 @@ export default function AdminIndex() {
           const blocks = [...(p.blocks || [])]
           const src = blocks[sourceBlockIndex]
           if (src) {
-            const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter(r => !droppedUrls.has(r.url))
-            blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) }
+            if (src.type === 'photo') {
+              if (droppedUrls.has(src.imageUrl)) blocks[sourceBlockIndex] = { ...src, imageUrl: '' }
+            } else {
+              const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter(r => !droppedUrls.has(r.url))
+              blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) }
+            }
           }
           return { ...p, blocks }
         }

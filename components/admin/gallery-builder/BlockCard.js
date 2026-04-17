@@ -302,19 +302,45 @@ export default function BlockCard({
                   e.preventDefault();
                   const raw = e.dataTransfer.getData('application/x-photo-drag');
                   let url = null;
+                  let srcIdx = null;
+                  let srcRefs = null;
                   if (raw) {
-                    try { url = JSON.parse(raw).imageRefs?.[0]?.url; } catch {}
+                    try {
+                      const parsed = JSON.parse(raw);
+                      if (parsed.sourceBlockKey === blockKeyRef.current) return;
+                      url = parsed.imageRefs?.[0]?.url ?? null;
+                      srcIdx = parsed.sourceBlockIndex ?? null;
+                      srcRefs = parsed.imageRefs ?? null;
+                    } catch {}
                   }
                   if (!url) url = e.dataTransfer.getData('text/plain');
-                  if (url) onUpdate({ ...block, imageUrl: url });
+                  if (url) {
+                    onUpdate({ ...block, imageUrl: url });
+                    if (srcIdx !== null && srcRefs && onRemoveImagesFromBlock) {
+                      onRemoveImagesFromBlock(srcIdx, srcRefs);
+                    }
+                  }
                 }}
               >
                 {block.imageUrl ? (
-                  <div className="relative group/img cursor-pointer" onClick={() => setLightboxIndex(0)}>
+                  <div
+                    className="relative group/img cursor-grab"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.effectAllowed = 'move';
+                      const ref = { url: block.imageUrl, caption: block.caption || '', assetId: null };
+                      const payload = { imageRefs: [ref], sourceBlockType: block.type, sourceBlockKey: blockKeyRef.current, sourceBlockIndex: blockIndex };
+                      e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
+                      e.dataTransfer.setData('text/plain', block.imageUrl);
+                      if (sourcePageId) startDrag({ type: 'images', imageRefs: [ref], sourceBlockType: block.type, sourcePageId, sourceBlockIndex: blockIndex });
+                    }}
+                    onDragEnd={() => { endDrag(); }}
+                    onClick={() => setLightboxIndex(0)}
+                  >
                     <img
                       src={getSizedUrl(block.imageUrl, 'thumbnail')}
                       alt=""
-                      className="w-full aspect-video object-cover"
+                      className="w-full aspect-video object-cover pointer-events-none"
                       onError={(e) => { if (e.target.src !== block.imageUrl) e.target.src = block.imageUrl }}
                     />
                     <button
