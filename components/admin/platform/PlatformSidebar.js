@@ -154,6 +154,7 @@ export default function PlatformSidebar({
               onDragLeave={() => drag && setDropTargetPageId(null)}
               onDrop={(e) => {
                 e.preventDefault()
+                e.stopPropagation()
                 setDropTargetPageId(null)
                 if (!drag) return
                 if (drag.type === 'images') {
