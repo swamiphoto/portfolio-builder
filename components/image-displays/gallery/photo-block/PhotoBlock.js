@@ -1,13 +1,22 @@
 import React from "react";
-import { useRouter } from "next/router";
-import { getCloudimageUrl, handleImageClick } from "../../../../common/images";
+import { getSizedUrl } from "../../../../common/imageUtils";
 
-const PhotoBlock = ({ imageUrl, caption = "", variant = 1, allPhotos = [] }) => {
-  const router = useRouter();
-  const [isVertical, setIsVertical] = React.useState(false);
+const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick }) => {
+  const [aspectRatio, setAspectRatio] = React.useState(null);
+  const imgRef = React.useRef(null);
 
   const handleImageLoad = (e) => {
-    setIsVertical(e.target.naturalHeight > e.target.naturalWidth);
+    setAspectRatio(e.target.naturalWidth / e.target.naturalHeight);
+  };
+
+  React.useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth) {
+      setAspectRatio(imgRef.current.naturalWidth / imgRef.current.naturalHeight);
+    }
+  }, [imageUrl]);
+
+  const handleClick = () => {
+    if (onImageClick) onImageClick(0);
   };
 
   const renderCaption = () => {
@@ -16,15 +25,14 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, allPhotos = [] }) => 
 
   const renderImage = () => {
     if (variant === 1) {
-      // Edge-to-edge layout without horizontal scroll
       return (
         <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
-          <img 
-            src={getCloudimageUrl(imageUrl, { width: 1400, quality: 75 })} 
-            alt={caption || "Photo"} 
-            className="w-full h-auto object-cover cursor-pointer" 
-            loading="lazy" 
-            onClick={() => handleImageClick(imageUrl, allPhotos, router)}
+          <img
+            src={getSizedUrl(imageUrl, 'display')}
+            alt={caption || "Photo"}
+            className="w-full h-auto object-cover cursor-pointer"
+            loading="lazy"
+            onClick={handleClick}
             onError={(e) => {
               console.error("Failed to load image in PhotoBlock:", imageUrl);
               e.target.style.display = 'none';
@@ -35,15 +43,19 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, allPhotos = [] }) => 
     }
 
     if (variant === 2) {
-      // Normal-width layout
+      const displayWidth = aspectRatio !== null && aspectRatio < 1
+        ? `${(72 * aspectRatio).toFixed(1)}%`
+        : '72%';
       return (
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center py-2">
           <img
-            src={getCloudimageUrl(imageUrl, { width: 900, quality: 75 })}
+            ref={imgRef}
+            src={getSizedUrl(imageUrl, 'display')}
             alt={caption || "Photo"}
-            className={`w-full md:w-[72%] ${isVertical ? "md:w-[40%]" : ""} max-h-[calc(100vw * 0.35)] object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer`}
+            className="h-auto shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer"
+            style={{ width: displayWidth }}
             loading="lazy"
-            onClick={() => handleImageClick(imageUrl, allPhotos, router)}
+            onClick={handleClick}
             onLoad={handleImageLoad}
             onError={(e) => {
               console.error("Failed to load image in PhotoBlock:", imageUrl);
@@ -54,15 +66,14 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, allPhotos = [] }) => 
       );
     }
 
-    // Default fallback (variant 1)
     return (
       <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden">
-        <img 
-          src={getCloudimageUrl(imageUrl, { width: 1400, quality: 75 })} 
-          alt={caption || "Photo"} 
-          className="w-full h-auto object-cover cursor-pointer" 
-          loading="lazy" 
-          onClick={() => handleImageClick(imageUrl, allPhotos, router)}
+        <img
+          src={getSizedUrl(imageUrl, 'display')}
+          alt={caption || "Photo"}
+          className="w-full h-auto object-cover cursor-pointer"
+          loading="lazy"
+          onClick={handleClick}
           onError={(e) => {
             console.error("Failed to load image in PhotoBlock:", imageUrl);
             e.target.style.display = 'none';
@@ -74,9 +85,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, allPhotos = [] }) => 
 
   return (
     <div className="w-full relative overflow-x-hidden">
-      {/* Render Image Based on Variant */}
       {renderImage()}
-      {/* Caption */}
       {caption && renderCaption()}
     </div>
   );
