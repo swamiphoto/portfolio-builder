@@ -133,6 +133,7 @@ export default function BlockCard({
       setSelectedIndices(new Set(Array.from({ length: max - min + 1 }, (_, k) => min + k)));
     } else {
       lastSelectedRef.current = i;
+      setSelectedIndices(new Set());
     }
   };
 
