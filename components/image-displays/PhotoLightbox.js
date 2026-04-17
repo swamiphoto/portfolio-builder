@@ -20,6 +20,8 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       data-testid="lightbox-backdrop"
       className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center"
       onClick={onClose}
@@ -27,8 +29,9 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
       {/* Close */}
       <button
         aria-label="Close lightbox"
+        autoFocus
         className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none"
-        onClick={onClose}
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
       >
         ×
       </button>

@@ -80,5 +80,7 @@ test('calls onNavigate on ArrowLeft key', () => {
 
 test('does not show caption when image has none', () => {
   render(<PhotoLightbox images={images} index={2} onClose={jest.fn()} onNavigate={jest.fn()} />);
-  expect(screen.queryByRole('paragraph')).toBeNull();
+  // images[2] has no caption — no italic caption paragraph should appear
+  expect(screen.queryByText('Alpha')).toBeNull();
+  expect(screen.queryByText('Beta')).toBeNull();
 });
