@@ -162,7 +162,7 @@ export default function BlockCard({
       try {
         const parsed = JSON.parse(raw);
         if (parsed.sourceBlockKey === blockKeyRef.current) return; // within-block, handled by thumb
-        incomingRefs = parsed.imageRefs;
+        incomingRefs = Array.isArray(parsed.imageRefs) && parsed.imageRefs.length ? parsed.imageRefs : null;
       } catch { incomingRefs = null; }
     }
     if (!incomingRefs) {
@@ -375,7 +375,7 @@ export default function BlockCard({
                             try {
                               const parsed = JSON.parse(raw);
                               if (parsed.sourceBlockKey !== blockKeyRef.current) return; // cross-block drag — let grid handle
-                            } catch {}
+                            } catch { return; }
                           }
                           const from = dragPhotoIndex.current;
                           if (from === null || from === i) return;
