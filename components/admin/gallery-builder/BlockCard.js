@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from "react";
+import { getSizedUrl } from "../../../common/imageUtils";
+import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
 import DesignPopover from "./DesignPopover";
+import PhotoLightbox from "../../image-displays/PhotoLightbox";
 
 const TYPE_LABELS = {
   photo: "Photo",
+  photos: "Photos",
   stacked: "Photos",
   masonry: "Photos",
   text: "Text",
   video: "Video",
+  "page-gallery": "Page Gallery",
 };
 
 const INPUT = "w-full border-b border-stone-200 pb-1.5 text-sm text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent";
@@ -19,6 +24,68 @@ function PaintbrushIcon() {
   );
 }
 
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPreview }) {
+  const [editing, setEditing] = useState(false);
+  const [caption, setCaption] = useState(imageRef.caption || '');
+  const inputRef = useRef(null);
+
+  useEffect(() => { setCaption(imageRef.caption || ''); }, [imageRef.caption]);
+
+  const commit = () => {
+    setEditing(false);
+    if (caption !== (imageRef.caption || '')) onUpdateCaption(caption);
+  };
+
+  return (
+    <div
+      {...dragHandleProps}
+      className="relative group/thumb aspect-square bg-stone-100 overflow-hidden cursor-grab"
+      onClick={() => !editing && onPreview && onPreview()}
+    >
+      <img
+        src={getSizedUrl(imageRef.url, 'thumbnail')}
+        alt=""
+        className="w-full h-full object-cover pointer-events-none"
+        loading="lazy"
+        onError={(e) => { if (e.target.src !== imageRef.url) e.target.src = imageRef.url }}
+      />
+      {/* Caption overlay — shows current caption on hover, click to edit */}
+      {!editing && (
+        <div
+          className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-[9px] px-1.5 py-1 opacity-0 group-hover/thumb:opacity-100 transition-opacity cursor-text leading-tight"
+          onClick={(e) => { e.stopPropagation(); setEditing(true); setTimeout(() => inputRef.current?.focus(), 30); }}
+        >
+          {caption || <span className="italic text-white/50">caption…</span>}
+        </div>
+      )}
+      {editing && (
+        <div className="absolute inset-x-0 bottom-0 z-20 bg-white p-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit();
+              if (e.key === 'Escape') { setCaption(imageRef.caption || ''); setEditing(false); }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full text-[9px] text-stone-800 outline-none border-b border-stone-400 pb-0.5 bg-transparent"
+            placeholder="Caption…"
+          />
+        </div>
+      )}
+      <button
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        className="absolute top-0.5 right-0.5 bg-black/50 text-white text-[9px] px-1 py-0.5 opacity-0 group-hover/thumb:opacity-100 transition-opacity leading-none z-10"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 export default function BlockCard({
   block,
   dragHandleProps,
@@ -26,14 +93,16 @@ export default function BlockCard({
   onRemove,
   onAddPhotos,
   onRemovePhoto,
+  pages,
 }) {
-  const isPhotoBlock = block.type === "stacked" || block.type === "masonry";
+  const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
   const hasDesign = block.type === "photo" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
 
   const [expanded, setExpanded] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [showDesign, setShowDesign] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const menuRef = useRef(null);
   const designBtnRef = useRef(null);
 
@@ -49,10 +118,19 @@ export default function BlockCard({
   const handleDrop = (e) => {
     e.preventDefault();
     const url = e.dataTransfer.getData("text/plain");
-    if (url && isPhotoBlock && !(block.imageUrls || []).includes(url)) {
-      onUpdate({ ...block, imageUrls: [...(block.imageUrls || []), url] });
-    }
+    if (!url || !isPhotoBlock) return;
+    const existingRefs = normalizeImageRefs(block.images || block.imageUrls || []);
+    if (existingRefs.some(r => r.url === url)) return;
+    onUpdate({ ...block, ...buildMultiImageFields([...existingRefs, { assetId: null, url }]) });
   };
+
+  const blockImageRefs = isPhotoBlock
+    ? normalizeImageRefs(block.images || block.imageUrls || [])
+    : [];
+
+  const singlePhotoImages = block.type === "photo" && (block.imageUrl || block.image)
+    ? [{ url: block.imageUrl || block.image?.url || '', caption: block.caption || '' }]
+    : [];
 
   return (
     <div
@@ -119,7 +197,7 @@ export default function BlockCard({
               ⋯
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-stone-200 shadow-lg z-20 py-1 w-28">
+              <div className="absolute right-0 top-full mt-1 bg-white border border-stone-200 shadow-lg z-20 py-1 w-36">
                 <button
                   onClick={() => { setShowMenu(false); onRemove(); }}
                   className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-stone-50 transition-colors whitespace-nowrap"
@@ -160,14 +238,15 @@ export default function BlockCard({
                 }}
               >
                 {block.imageUrl ? (
-                  <div className="relative group/img">
+                  <div className="relative group/img cursor-pointer" onClick={() => setLightboxIndex(0)}>
                     <img
-                      src={`/_next/image?url=${encodeURIComponent(block.imageUrl)}&w=400&q=70`}
+                      src={getSizedUrl(block.imageUrl, 'thumbnail')}
                       alt=""
                       className="w-full aspect-video object-cover"
+                      onError={(e) => { if (e.target.src !== block.imageUrl) e.target.src = block.imageUrl }}
                     />
                     <button
-                      onClick={() => onUpdate({ ...block, imageUrl: "" })}
+                      onClick={(e) => { e.stopPropagation(); onUpdate({ ...block, imageUrl: "" }); }}
                       className="absolute top-1.5 right-1.5 bg-black/50 text-white text-[10px] px-2 py-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
                     >
                       × Remove
@@ -195,7 +274,7 @@ export default function BlockCard({
           {/* Photos block (stacked or masonry) */}
           {isPhotoBlock && (
             <>
-              {(block.imageUrls || []).length === 0 ? (
+              {blockImageRefs.length === 0 ? (
                 <div
                   onClick={onAddPhotos}
                   className="flex flex-col items-center justify-center h-16 bg-stone-50 border border-dashed border-stone-200 hover:border-stone-400 cursor-pointer transition-colors gap-0.5"
@@ -205,44 +284,34 @@ export default function BlockCard({
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-px bg-stone-200">
-                  {(block.imageUrls || []).map((url, i) => (
-                    <div
-                      key={url}
-                      draggable
-                      onDragStart={(e) => {
-                        dragPhotoIndex.current = i;
-                        e.dataTransfer.effectAllowed = "move";
-                        // Prevent the block-level drop handler from treating this as a new photo
-                        e.stopPropagation();
+                  {blockImageRefs.map((ref, i) => (
+                    <PhotoThumb
+                      key={ref.url}
+                      imageRef={ref}
+                      onPreview={() => setLightboxIndex(i)}
+                      dragHandleProps={{
+                        draggable: true,
+                        onDragStart: (e) => { dragPhotoIndex.current = i; e.dataTransfer.effectAllowed = "move"; e.stopPropagation(); },
+                        onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },
+                        onDrop: (e) => {
+                          e.preventDefault(); e.stopPropagation();
+                          const from = dragPhotoIndex.current;
+                          if (from === null || from === i) return;
+                          const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                          const [moved] = refs.splice(from, 1);
+                          refs.splice(i, 0, moved);
+                          dragPhotoIndex.current = null;
+                          onUpdate({ ...block, ...buildMultiImageFields(refs) });
+                        },
+                        onDragEnd: () => { dragPhotoIndex.current = null; },
                       }}
-                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const from = dragPhotoIndex.current;
-                        if (from === null || from === i) return;
-                        const urls = [...(block.imageUrls || [])];
-                        const [moved] = urls.splice(from, 1);
-                        urls.splice(i, 0, moved);
-                        dragPhotoIndex.current = null;
-                        onUpdate({ ...block, imageUrls: urls });
+                      onRemove={() => onRemovePhoto(ref)}
+                      onUpdateCaption={(caption) => {
+                        const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                        const updated = refs.map((r, j) => j === i ? { ...r, caption } : r);
+                        onUpdate({ ...block, ...buildMultiImageFields(updated) });
                       }}
-                      onDragEnd={() => { dragPhotoIndex.current = null; }}
-                      className="relative group/thumb aspect-square bg-stone-100 overflow-hidden cursor-grab"
-                    >
-                      <img
-                        src={`/_next/image?url=${encodeURIComponent(url)}&w=200&q=65`}
-                        alt=""
-                        className="w-full h-full object-cover pointer-events-none"
-                        loading="lazy"
-                      />
-                      <button
-                        onClick={() => onRemovePhoto(url)}
-                        className="absolute top-0.5 right-0.5 bg-black/50 text-white text-[9px] px-1 py-0.5 opacity-0 group-hover/thumb:opacity-100 transition-opacity leading-none"
-                      >
-                        ×
-                      </button>
-                    </div>
+                    />
                   ))}
                 </div>
               )}
@@ -277,7 +346,43 @@ export default function BlockCard({
               />
             </>
           )}
+
+          {/* Page Gallery */}
+          {block.type === "page-gallery" && (
+            <div className="space-y-1.5">
+              {(!pages || pages.length === 0) ? (
+                <p className="text-xs text-stone-400">No other pages yet.</p>
+              ) : (
+                pages.map(p => (
+                  <label key={p.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(block.pageIds || []).includes(p.id)}
+                      onChange={e => {
+                        const pageIds = e.target.checked
+                          ? [...(block.pageIds || []), p.id]
+                          : (block.pageIds || []).filter(id => id !== p.id)
+                        onUpdate({ ...block, pageIds })
+                      }}
+                      className="w-3 h-3 flex-shrink-0"
+                    />
+                    <span className="text-xs text-stone-700 truncate">{p.title}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Lightbox for block image previews */}
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          images={isPhotoBlock ? blockImageRefs : singlePhotoImages}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
       )}
     </div>
   );

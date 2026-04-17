@@ -11,11 +11,18 @@ function formatSourceLabel(source) {
   return source.provider.charAt(0).toUpperCase() + source.provider.slice(1);
 }
 
-export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum }) {
+export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [captionValue, setCaptionValue] = useState(asset.caption || "");
   const menuRef = useRef(null);
 
+  useEffect(() => {
+    setCaptionValue(asset.caption || "");
+  }, [asset.caption]);
+
   const imageUrl = asset.publicUrl;
+  const thumbnailUrl = imageUrl.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg');
   const filename = asset.originalFilename || imageUrl.split("/").pop();
   const inAlbum = albumType !== "all";
   const sizeLabel = formatBytes(asset.bytes);
@@ -55,14 +62,20 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
   };
 
   return (
-    <div className="relative mb-3 break-inside-avoid rounded-lg overflow-hidden shadow-sm border border-gray-100 group bg-white">
-      <div className="relative bg-gray-100">
+    <div className="relative rounded-lg overflow-hidden shadow-sm border border-gray-100 group bg-white w-full h-full flex flex-col">
+      <div
+        className="relative bg-gray-100 flex-1 overflow-hidden cursor-pointer"
+        onClick={() => onImageClick && onImageClick()}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl}
+          src={thumbnailUrl}
           alt={asset.caption || filename}
-          className="block w-full h-auto"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+          style={{ opacity: loaded ? 1 : 0 }}
           loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={e => { if (e.target.src !== imageUrl) e.target.src = imageUrl }}
         />
       </div>
 
@@ -73,17 +86,34 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
         ⋯
       </button>
 
-      <div className="px-2.5 py-2 bg-white space-y-1.5">
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="truncate flex-1">{filename}</span>
-          {sizeLabel && <span className="text-gray-300 flex-shrink-0">{sizeLabel}</span>}
+      <div className="bg-white">
+        <input
+          type="text"
+          value={captionValue}
+          placeholder="Add a caption…"
+          className="w-full px-2.5 py-1.5 text-xs text-gray-700 border-b border-gray-100 outline-none focus:border-gray-400 placeholder-gray-300 bg-white"
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => setCaptionValue(e.target.value)}
+          onBlur={() => {
+            if (captionValue !== (asset.caption || "") && onCaptionChange) {
+              onCaptionChange(asset.assetId, captionValue);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.target.blur();
+          }}
+        />
+        <div className="px-2.5 py-1.5 space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="truncate flex-1">{filename}</span>
+            {sizeLabel && <span className="text-gray-300 flex-shrink-0">{sizeLabel}</span>}
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+            {sourceLabel && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500">{sourceLabel}</span>}
+            {usageCount > 0 && <span>{usageCount} use{usageCount !== 1 ? "s" : ""}</span>}
+            {asset.orientation && asset.orientation !== "unknown" && <span>{asset.orientation}</span>}
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
-          {sourceLabel && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500">{sourceLabel}</span>}
-          {usageCount > 0 && <span>{usageCount} use{usageCount !== 1 ? "s" : ""}</span>}
-          {asset.orientation && asset.orientation !== "unknown" && <span>{asset.orientation}</span>}
-        </div>
-        {asset.caption && <div className="text-xs text-gray-500">{asset.caption}</div>}
       </div>
 
       {menuOpen && (
