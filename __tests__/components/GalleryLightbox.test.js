@@ -1,10 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
 const mockPush = jest.fn();
+let mockQuery = {};
 
 jest.mock('next/router', () => ({
   useRouter: () => ({
-    query: {},
+    get query() { return mockQuery; },
     push: mockPush,
     pathname: '/test',
   }),
@@ -14,7 +15,6 @@ jest.mock('react-responsive', () => ({
   useMediaQuery: () => false,
 }));
 
-// Mock child gallery components to expose click
 jest.mock('../../components/image-displays/gallery/masonry-gallery/MasonryGallery', () => ({
   __esModule: true,
   default: ({ onImageClick }) => (
@@ -75,6 +75,7 @@ const blocks = [
 
 beforeEach(() => {
   mockPush.mockClear();
+  mockQuery = {};
 });
 
 test('clicking first image in masonry block calls router.push with photo=0', () => {
@@ -105,4 +106,45 @@ test('clicking photo block calls router.push with photo=2 (offset by masonry blo
     undefined,
     { shallow: true }
   );
+});
+
+test('closing lightbox calls router.push without photo param', () => {
+  mockQuery = { photo: '0', someOther: 'param' };
+  render(<Gallery name="Test" description="" blocks={blocks} />);
+  fireEvent.click(screen.getByText('close'));
+  expect(mockPush).toHaveBeenCalledWith(
+    expect.objectContaining({ query: expect.not.objectContaining({ photo: expect.anything() }) }),
+    undefined,
+    { shallow: true }
+  );
+});
+
+test('preserves other query params when closing lightbox', () => {
+  mockQuery = { photo: '0', someOther: 'param' };
+  render(<Gallery name="Test" description="" blocks={blocks} />);
+  fireEvent.click(screen.getByText('close'));
+  expect(mockPush).toHaveBeenCalledWith(
+    expect.objectContaining({ query: expect.objectContaining({ someOther: 'param' }) }),
+    undefined,
+    { shallow: true }
+  );
+});
+
+test('renders lightbox when router.query.photo is a valid index', () => {
+  mockQuery = { photo: '1' };
+  render(<Gallery name="Test" description="" blocks={blocks} />);
+  expect(screen.getByTestId('lightbox')).toBeInTheDocument();
+  expect(screen.getByTestId('lightbox-index').textContent).toBe('1');
+});
+
+test('does not render lightbox when router.query.photo is absent', () => {
+  mockQuery = {};
+  render(<Gallery name="Test" description="" blocks={blocks} />);
+  expect(screen.queryByTestId('lightbox')).toBeNull();
+});
+
+test('does not render lightbox when router.query.photo is out of range', () => {
+  mockQuery = { photo: '99' };
+  render(<Gallery name="Test" description="" blocks={blocks} />);
+  expect(screen.queryByTestId('lightbox')).toBeNull();
 });

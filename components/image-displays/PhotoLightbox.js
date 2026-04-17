@@ -7,6 +7,11 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
   const hasNext = index < images.length - 1;
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight" && hasNext) onNavigate(index + 1);
