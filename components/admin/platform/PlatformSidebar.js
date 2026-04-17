@@ -159,7 +159,7 @@ export default function PlatformSidebar({
                 if (!drag) return
                 if (drag.type === 'images') {
                   if (page.id === drag.sourcePageId) return
-                  onDropImagesToPage?.(page.id, drag.imageRefs, drag.sourceBlockType)
+                  onDropImagesToPage?.(page.id, drag.imageRefs, drag.sourceBlockType, drag.sourcePageId, drag.sourceBlockIndex)
                 }
               }}
             >

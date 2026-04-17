@@ -105,6 +105,8 @@ export default function BlockCard({
   collectionsByUrl,
   onToggleCollection,
   sourcePageId,
+  blockIndex,
+  onRemoveImagesFromBlock,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -166,11 +168,13 @@ export default function BlockCard({
     if (!isPhotoBlock) return;
     const raw = e.dataTransfer.getData('application/x-photo-drag');
     let incomingRefs;
+    let sourceBlockIndexFromDrop = null;
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         if (parsed.sourceBlockKey === blockKeyRef.current) return; // within-block, handled by thumb
         incomingRefs = Array.isArray(parsed.imageRefs) && parsed.imageRefs.length ? parsed.imageRefs : null;
+        sourceBlockIndexFromDrop = parsed.sourceBlockIndex ?? null;
       } catch { incomingRefs = null; }
     }
     if (!incomingRefs) {
@@ -182,6 +186,9 @@ export default function BlockCard({
     const toAdd = incomingRefs.filter(r => !existingRefs.some(ex => ex.url === r.url));
     if (!toAdd.length) return;
     onUpdate({ ...block, ...buildMultiImageFields([...existingRefs, ...toAdd]) });
+    if (sourceBlockIndexFromDrop !== null && onRemoveImagesFromBlock) {
+      onRemoveImagesFromBlock(sourceBlockIndexFromDrop, incomingRefs);
+    }
   };
 
   const blockImageRefs = isPhotoBlock
@@ -371,11 +378,12 @@ export default function BlockCard({
                             imageRefs: dragging,
                             sourceBlockType: block.type,
                             sourceBlockKey: blockKeyRef.current,
+                            sourceBlockIndex: blockIndex,
                           };
                           e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
                           e.dataTransfer.setData('text/plain', blockImageRefs[i].url);
                           if (sourcePageId) {
-                            startDrag({ type: 'images', imageRefs: dragging, sourceBlockType: block.type, sourcePageId })
+                            startDrag({ type: 'images', imageRefs: dragging, sourceBlockType: block.type, sourcePageId, sourceBlockIndex: blockIndex })
                           }
                         },
                         onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },

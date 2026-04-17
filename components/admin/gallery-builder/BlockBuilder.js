@@ -5,7 +5,7 @@ import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
-import { buildMultiImageFields, removeImageRef } from "../../../common/assetRefs";
+import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 
 function AutoGrowTextarea({ className, value, onChange, placeholder, ...props }) {
   const ref = useRef(null);
@@ -116,6 +116,16 @@ export default function BlockBuilder({
         removeImageRef(blocks[blockIndex].images || blocks[blockIndex].imageUrls || [], imageRef)
       ),
     };
+    onChange({ ...gallery, blocks });
+  };
+
+  const removeImagesFromBlock = (blockIndex, imageRefs) => {
+    const blocks = [...(gallery.blocks || [])];
+    const block = blocks[blockIndex];
+    if (!block) return;
+    const urls = new Set(imageRefs.map(r => r.url));
+    const remaining = normalizeImageRefs(block.images || block.imageUrls || []).filter(r => !urls.has(r.url));
+    blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
     onChange({ ...gallery, blocks });
   };
 
@@ -313,6 +323,8 @@ export default function BlockBuilder({
                             collectionsByUrl={collectionsByUrl}
                             onToggleCollection={onToggleCollection}
                             sourcePageId={sourcePageId}
+                            blockIndex={index}
+                            onRemoveImagesFromBlock={(srcIdx, refs) => removeImagesFromBlock(srcIdx, refs)}
                           />
                         </div>
                       )}

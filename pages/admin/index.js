@@ -2,7 +2,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { DragProvider } from '../../common/dragContext'
-import { buildMultiImageFields, buildSingleImageFields } from '../../common/assetRefs'
+import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -96,20 +96,42 @@ export default function AdminIndex() {
     })
   }, [updateConfig])
 
-  const handleDropImagesToPage = useCallback((targetPageId, imageRefs, sourceBlockType) => {
+  const handleDropImagesToPage = useCallback((targetPageId, imageRefs, sourceBlockType, sourcePageId, sourceBlockIndex) => {
     if (!imageRefs?.length) return
     const isMultiBlock = sourceBlockType === 'photos' || sourceBlockType === 'stacked' || sourceBlockType === 'masonry'
-    const newBlock = isMultiBlock
-      ? { type: sourceBlockType, ...buildMultiImageFields(imageRefs) }
-      : { type: 'photo', ...buildSingleImageFields(imageRefs[0]) }
-    updateConfig(prev => ({
-      ...prev,
-      pages: prev.pages.map(p =>
-        p.id === targetPageId
-          ? { ...p, blocks: [...(p.blocks || []), newBlock] }
-          : p
-      ),
-    }))
+    const droppedUrls = new Set(imageRefs.map(r => r.url))
+    updateConfig(prev => {
+      const pages = prev.pages.map(p => {
+        if (p.id === targetPageId) {
+          const blocks = [...(p.blocks || [])]
+          const lastBlock = blocks[blocks.length - 1]
+          if (isMultiBlock && lastBlock && lastBlock.type === sourceBlockType) {
+            const existing = normalizeImageRefs(lastBlock.images || lastBlock.imageUrls || [])
+            const toAdd = imageRefs.filter(r => !existing.some(ex => ex.url === r.url))
+            if (toAdd.length) {
+              blocks[blocks.length - 1] = { ...lastBlock, ...buildMultiImageFields([...existing, ...toAdd]) }
+            }
+          } else {
+            const newBlock = isMultiBlock
+              ? { type: sourceBlockType, ...buildMultiImageFields(imageRefs) }
+              : { type: 'photo', ...buildSingleImageFields(imageRefs[0]) }
+            blocks.push(newBlock)
+          }
+          return { ...p, blocks }
+        }
+        if (p.id === sourcePageId && sourceBlockIndex != null) {
+          const blocks = [...(p.blocks || [])]
+          const src = blocks[sourceBlockIndex]
+          if (src) {
+            const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter(r => !droppedUrls.has(r.url))
+            blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) }
+          }
+          return { ...p, blocks }
+        }
+        return p
+      })
+      return { ...prev, pages }
+    })
   }, [updateConfig])
 
   const handleSelectPage = useCallback((pageId) => {
