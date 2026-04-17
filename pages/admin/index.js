@@ -2,6 +2,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { DragProvider } from '../../common/dragContext'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -22,9 +23,11 @@ export default function AdminIndex() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.replace('/auth/signin')
+      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+      const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
+      window.location.href = `${protocol}://${rootDomain}/auth/signin`
     }
-  }, [status, router])
+  }, [status])
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -140,8 +143,10 @@ export default function AdminIndex() {
   }
 
   return (
-    <AdminLayout sidebar={sidebar} panel={panel}>
-      {content}
-    </AdminLayout>
+    <DragProvider>
+      <AdminLayout sidebar={sidebar} panel={panel}>
+        {content}
+      </AdminLayout>
+    </DragProvider>
   )
 }
