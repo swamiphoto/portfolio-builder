@@ -106,6 +106,7 @@ export default function BlockCard({
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
+  const blockKeyRef = useRef(Math.random().toString(36).slice(2));
   const hasDesign = block.type === "photo" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
 
   const [expanded, setExpanded] = useState(true);
@@ -154,11 +155,25 @@ export default function BlockCard({
   const handleDragOver = (e) => e.preventDefault();
   const handleDrop = (e) => {
     e.preventDefault();
-    const url = e.dataTransfer.getData("text/plain");
-    if (!url || !isPhotoBlock) return;
+    if (!isPhotoBlock) return;
+    const raw = e.dataTransfer.getData('application/x-photo-drag');
+    let incomingRefs;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.sourceBlockKey === blockKeyRef.current) return; // within-block, handled by thumb
+        incomingRefs = parsed.imageRefs;
+      } catch { incomingRefs = null; }
+    }
+    if (!incomingRefs) {
+      const url = e.dataTransfer.getData('text/plain');
+      if (!url) return;
+      incomingRefs = [{ assetId: null, url }];
+    }
     const existingRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-    if (existingRefs.some(r => r.url === url)) return;
-    onUpdate({ ...block, ...buildMultiImageFields([...existingRefs, { assetId: null, url }]) });
+    const toAdd = incomingRefs.filter(r => !existingRefs.some(ex => ex.url === r.url));
+    if (!toAdd.length) return;
+    onUpdate({ ...block, ...buildMultiImageFields([...existingRefs, ...toAdd]) });
   };
 
   const blockImageRefs = isPhotoBlock
@@ -270,7 +285,12 @@ export default function BlockCard({
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
-                  const url = e.dataTransfer.getData("text/plain");
+                  const raw = e.dataTransfer.getData('application/x-photo-drag');
+                  let url = null;
+                  if (raw) {
+                    try { url = JSON.parse(raw).imageRefs?.[0]?.url; } catch {}
+                  }
+                  if (!url) url = e.dataTransfer.getData('text/plain');
                   if (url) onUpdate({ ...block, imageUrl: url });
                 }}
               >
@@ -332,10 +352,31 @@ export default function BlockCard({
                       }}
                       dragHandleProps={{
                         draggable: true,
-                        onDragStart: (e) => { dragPhotoIndex.current = i; e.dataTransfer.effectAllowed = "move"; e.stopPropagation(); },
+                        onDragStart: (e) => {
+                          dragPhotoIndex.current = i;
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.stopPropagation();
+                          const dragging = selectedIndices.size > 1 && selectedIndices.has(i)
+                            ? blockImageRefs.filter((_, j) => selectedIndices.has(j))
+                            : [blockImageRefs[i]];
+                          const payload = {
+                            imageRefs: dragging,
+                            sourceBlockType: block.type,
+                            sourceBlockKey: blockKeyRef.current,
+                          };
+                          e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
+                          e.dataTransfer.setData('text/plain', blockImageRefs[i].url);
+                        },
                         onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },
                         onDrop: (e) => {
                           e.preventDefault(); e.stopPropagation();
+                          const raw = e.dataTransfer.getData('application/x-photo-drag');
+                          if (raw) {
+                            try {
+                              const parsed = JSON.parse(raw);
+                              if (parsed.sourceBlockKey !== blockKeyRef.current) return; // cross-block drag — let grid handle
+                            } catch {}
+                          }
                           const from = dragPhotoIndex.current;
                           if (from === null || from === i) return;
                           const refs = normalizeImageRefs(block.images || block.imageUrls || []);
