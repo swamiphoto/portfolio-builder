@@ -143,7 +143,7 @@ export default function PlatformSidebar({
       {/* Pages */}
       <div className="flex-1 overflow-y-auto px-2 py-2">
         {pages.map(page => {
-          const isDropTarget = drag !== null && dropTargetPageId === page.id
+          const isDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag.sourcePageId
           return (
             <div
               key={page.id}
@@ -151,7 +151,7 @@ export default function PlatformSidebar({
               onPointerEnter={() => drag && setDropTargetPageId(page.id)}
               onPointerLeave={() => drag && setDropTargetPageId(null)}
               onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTargetPageId(page.id) } }}
-              onDragLeave={() => drag && setDropTargetPageId(null)}
+              onDragLeave={(e) => { if (drag && !e.currentTarget.contains(e.relatedTarget)) setDropTargetPageId(null) }}
               onDrop={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

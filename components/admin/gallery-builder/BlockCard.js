@@ -150,7 +150,12 @@ export default function BlockCard({
   }, []);
 
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') setSelectedIndices(new Set()); };
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedIndices(new Set());
+        lastSelectedRef.current = null;
+      }
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
