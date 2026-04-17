@@ -1,5 +1,6 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
+import { useDrag } from '../../../common/dragContext'
 
 function SaveBadge({ status }) {
   if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
@@ -17,6 +18,7 @@ export default function PlatformSidebar({
   onSelectPage,
   onShowLibrary,
   username,
+  onDropImagesToPage,
 }) {
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
@@ -24,6 +26,7 @@ export default function PlatformSidebar({
   const [siteMenuOpen, setSiteMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const siteMenuRef = useRef(null)
+  const { drag, dropTargetPageId, setDropTargetPageId } = useDrag()
 
   useEffect(() => {
     if (!menuOpenId && !siteMenuOpen) return
@@ -139,55 +142,79 @@ export default function PlatformSidebar({
 
       {/* Pages */}
       <div className="flex-1 overflow-y-auto px-2 py-2">
-        {pages.map(page => (
-          <div key={page.id} className="relative">
-            {renamingId === page.id ? (
-              <input
-                autoFocus
-                value={renameValue}
-                onChange={e => setRenameValue(e.target.value)}
-                onBlur={() => handleRenameCommit(page.id)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleRenameCommit(page.id)
-                  if (e.key === 'Escape') setRenamingId(null)
-                }}
-                className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
-              />
-            ) : (
-              <div
-                onClick={() => onSelectPage?.(page.id)}
-                className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
-                  selectedPageId === page.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <span className="flex-1 truncate">{page.title}</span>
-                <button
-                  onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                  className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
+        {pages.map(page => {
+          const isDropTarget = drag !== null && dropTargetPageId === page.id
+          return (
+            <div
+              key={page.id}
+              className="relative"
+              onPointerEnter={() => drag && setDropTargetPageId(page.id)}
+              onPointerLeave={() => drag && setDropTargetPageId(null)}
+              onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTargetPageId(page.id) } }}
+              onDragLeave={() => drag && setDropTargetPageId(null)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setDropTargetPageId(null)
+                if (!drag) return
+                if (drag.type === 'images') {
+                  if (page.id === drag.sourcePageId) return
+                  onDropImagesToPage?.(page.id, drag.imageRefs, drag.sourceBlockType)
+                }
+              }}
+            >
+              {renamingId === page.id ? (
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={e => setRenameValue(e.target.value)}
+                  onBlur={() => handleRenameCommit(page.id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleRenameCommit(page.id)
+                    if (e.key === 'Escape') setRenamingId(null)
+                  }}
+                  className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
+                />
+              ) : (
+                <div
+                  onClick={() => onSelectPage?.(page.id)}
+                  className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
+                    isDropTarget
+                      ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700'
+                      : selectedPageId === page.id
+                      ? 'bg-gray-100 text-gray-900 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
-                  ···
-                </button>
-              </div>
-            )}
+                  <span className="flex-1 truncate">{page.title}</span>
+                  {isDropTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">Drop</span>}
+                  <button
+                    onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
+                    className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
+                  >
+                    ···
+                  </button>
+                </div>
+              )}
 
-            {menuOpenId === page.id && (
-              <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
-                <button
-                  onClick={() => handleRenameStart(page)}
-                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Rename
-                </button>
-                <button
-                  onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+              {menuOpenId === page.id && (
+                <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
+                  <button
+                    onClick={() => handleRenameStart(page)}
+                    className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
+                    className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         <button
           onClick={handleAddPage}
