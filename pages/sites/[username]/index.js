@@ -1,9 +1,9 @@
-import { lookupUserByUsername } from '../../common/userProfile'
-import { readSiteConfig } from '../../common/siteConfig'
-import { readLibraryConfig } from '../../common/adminConfig'
-import { resolveCaption } from '../../common/captionResolver'
-import Gallery from '../../components/image-displays/gallery/Gallery'
-import PageCover from '../../components/image-displays/page/PageCover'
+import { lookupUserByUsername } from '../../../common/userProfile'
+import { readSiteConfig } from '../../../common/siteConfig'
+import { readLibraryConfig } from '../../../common/adminConfig'
+import { resolveCaption } from '../../../common/captionResolver'
+import Gallery from '../../../components/image-displays/gallery/Gallery'
+import PageCover from '../../../components/image-displays/page/PageCover'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -60,6 +60,16 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
       </header>
       <main>
         <PageCover cover={homePage?.cover} title={homePage?.title} />
+        {homePage?.slideshow?.enabled && (
+          <div className="px-6 py-2">
+            <a
+              href={`/sites/${username}/${homePage.slug || homePage.id}/slideshow`}
+              className="text-sm text-stone-500 hover:text-stone-900 underline"
+            >
+              View slideshow ↗
+            </a>
+          </div>
+        )}
         {homePage ? (
           <Gallery
             blocks={resolvedBlocks}
