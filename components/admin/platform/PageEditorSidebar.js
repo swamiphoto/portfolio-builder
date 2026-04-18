@@ -133,7 +133,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     if (photoPickerBlockIndex === 'cover') {
       onPageChange({
         ...page,
-        cover: { ...(page.cover || { height: 'full', overlayText: '' }), imageUrl: refs[0].url || refs[0] },
+        cover: { ...(page.cover || { height: 'full', overlayText: '' }), imageUrl: refs[0].url },
       })
       setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null); return
     }
