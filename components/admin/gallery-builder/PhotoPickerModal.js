@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { normalizeImageRef } from "../../../common/assetRefs";
+import { getSizedUrl } from "../../../common/imageUtils";
 
 const KNOWN_FOLDERS = [
   "photos/library",
@@ -46,6 +47,8 @@ function normalizePickerAsset(image) {
     usage: image.usage || { usageCount: 0 },
     createdAt: image.createdAt || null,
     updatedAt: image.updatedAt || null,
+    width: image.width || null,
+    height: image.height || null,
   };
 }
 
@@ -203,10 +206,15 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={asset.publicUrl}
+                    src={getSizedUrl(asset.publicUrl, 'thumbnail')}
                     alt={asset.caption || asset.originalFilename}
-                    className="w-full h-auto block bg-stone-100"
+                    className="w-full block bg-stone-100"
+                    style={{
+                      aspectRatio: asset.width && asset.height ? `${asset.width} / ${asset.height}` : '3 / 2',
+                      objectFit: 'cover',
+                    }}
                     loading="lazy"
+                    onError={(e) => { if (e.target.src !== asset.publicUrl) e.target.src = asset.publicUrl }}
                   />
                   <div className="px-1.5 py-1 bg-white">
                     <div className="truncate text-[10px] text-stone-500">{asset.originalFilename}</div>
@@ -232,14 +240,12 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
             {selected.length > 0 ? `${selected.length} selected` : `${filtered.length} photos`}
           </span>
           <button
-            onClick={() =>
+            onClick={() => {
+              const selectedAssets = filtered.filter((asset) => selected.includes(asset.assetId || asset.publicUrl));
               onConfirm(
-                filtered
-                  .filter((asset) => selected.includes(asset.assetId || asset.publicUrl))
-                  .map((asset) => normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl }))
-                  .filter(Boolean)
-              )
-            }
+                selectedAssets.map((asset) => normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl })).filter(Boolean)
+              );
+            }}
             disabled={selected.length === 0}
             className="bg-stone-900 text-white text-xs px-3 py-1.5 disabled:opacity-40 hover:bg-stone-700 transition-colors"
           >

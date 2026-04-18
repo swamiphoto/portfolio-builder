@@ -4,6 +4,10 @@ import { useRouter } from "next/router";
 import BlockBuilder from "./BlockBuilder";
 import GalleryPreview from "./GalleryPreview";
 import PhotoPickerModal from "./PhotoPickerModal";
+import {
+  buildMultiImageFields,
+  normalizeImageRefs,
+} from "../../../common/assetRefs";
 
 function generateSlug(name) {
   return name
@@ -12,17 +16,6 @@ function generateSlug(name) {
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-function getDefaultFolder(blocks) {
-  for (const block of blocks || []) {
-    const url = block.type === "photo" ? block.imageUrl : (block.imageUrls || [])[0];
-    if (url) {
-      const match = url.match(/\/photos\/(.+)\/[^/]+$/);
-      if (match) return match[1];
-    }
-  }
-  return undefined;
 }
 
 export default function GalleryBuilder({ initialGallery, galleryIndex, allGalleries, isNew }) {
@@ -121,7 +114,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
     setLibraryLoading(true);
     fetch("/api/admin/library")
       .then((r) => r.json())
-      .then((data) => setLibraryImages(data.allImages || []))
+      .then((data) => setLibraryImages(data.images || []))
       .catch(() => setLibraryImages([]))
       .finally(() => setLibraryLoading(false));
   }, [libraryImages]);
@@ -132,27 +125,35 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
     fetchLibrary();
   };
 
-  const handlePhotoPickerConfirm = (urls) => {
+  const handlePhotoPickerConfirm = (refs) => {
     setPhotoPickerOpen(false);
-    if (photoPickerBlockIndex === null || urls.length === 0) return;
+    if (photoPickerBlockIndex === null || refs.length === 0) return;
     setGallery((prev) => {
       const blocks = [...(prev.blocks || [])];
       const block = blocks[photoPickerBlockIndex];
       if (!block) return prev;
       if (block.type === "photo") {
-        blocks[photoPickerBlockIndex] = { ...block, imageUrl: urls[0] };
-      } else if (block.type === "stacked" || block.type === "masonry") {
-        const existing = block.imageUrls || [];
-        const merged = [...existing, ...urls.filter((u) => !existing.includes(u))];
-        blocks[photoPickerBlockIndex] = { ...block, imageUrls: merged };
+        const first = refs[0];
+        if (first) blocks[photoPickerBlockIndex] = { ...block, imageUrl: first.url };
+      } else {
+        const existing = normalizeImageRefs(block.images || block.imageUrls || []);
+        const merged = [...existing, ...refs];
+        blocks[photoPickerBlockIndex] = { ...block, ...buildMultiImageFields(merged) };
       }
       return { ...prev, blocks };
     });
   };
 
-  const handleThumbnailConfirm = (urls) => {
+  const handleThumbnailConfirm = (refs) => {
     setThumbnailPickerOpen(false);
-    if (urls.length > 0) setGallery((prev) => ({ ...prev, thumbnailUrl: urls[0] }));
+    if (refs.length > 0) {
+      const thumbnail = refs[0];
+      setGallery((prev) => ({
+        ...prev,
+        thumbnail,
+        thumbnailUrl: getImageRefUrl(thumbnail),
+      }));
+    }
   };
 
   // Publish: promote draft → published fields, clear draft
@@ -217,7 +218,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
   const isPublished = initialGallery.status === "published";
 
   return (
-    <div className="flex h-screen bg-stone-50">
+    <div className="flex h-screen bg-desk">
       {!expanded ? (
         <BlockBuilder
           gallery={gallery}
@@ -235,7 +236,8 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
       ) : (
         <button
           onClick={() => setExpanded(false)}
-          className="absolute left-3 top-3 z-20 w-7 h-7 flex items-center justify-center bg-white border border-stone-200 text-stone-400 hover:text-stone-800 shadow-sm transition-colors text-sm leading-none"
+          className="absolute left-3 top-3 z-20 w-7 h-7 flex items-center justify-center bg-parchment border shadow-card rounded-md transition-colors text-sm leading-none"
+          style={{ borderColor: 'var(--border-warm)', color: 'var(--text-muted)' }}
         >
           →
         </button>
@@ -259,7 +261,6 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
           blockType="photo"
           onConfirm={handleThumbnailConfirm}
           onClose={() => setThumbnailPickerOpen(false)}
-          defaultFolder={getDefaultFolder(gallery.blocks)}
         />
       )}
     </div>
