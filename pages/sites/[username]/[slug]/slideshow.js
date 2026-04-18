@@ -7,8 +7,11 @@ function collectImages(blocks) {
   const urls = []
   for (const b of blocks || []) {
     if (b.type === 'photo' && b.imageUrl) urls.push(b.imageUrl)
-    if ((b.type === 'photos' || b.type === 'stacked' || b.type === 'masonry')) {
-      for (const u of (b.imageUrls || [])) urls.push(u)
+    if (b.type === 'photos' || b.type === 'stacked' || b.type === 'masonry') {
+      const images = (b.images || []).length
+        ? b.images.map(img => img.url)
+        : (b.imageUrls || [])
+      for (const u of images) if (u) urls.push(u)
     }
   }
   return urls
@@ -20,7 +23,7 @@ export async function getServerSideProps({ params }) {
   if (!lookup) return { notFound: true }
   const siteConfig = await readSiteConfig(lookup.userId)
   if (!siteConfig) return { notFound: true }
-  const page = siteConfig.pages.find(p => p.slug === slug || p.id === slug)
+  const page = (siteConfig.pages || []).find(p => p.slug === slug || p.id === slug)
   if (!page || !page.slideshow?.enabled) return { notFound: true }
   return {
     props: {
