@@ -32,7 +32,7 @@ function galleryToPage(page, gallery) {
   }
 }
 
-export default function PageEditorSidebar({ page, siteConfig, saveStatus, onPageChange, onBack, onMoveBlockToPage }) {
+export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onBack, onMoveBlockToPage, onUpdateLibraryCaption }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
@@ -180,6 +180,7 @@ export default function PageEditorSidebar({ page, siteConfig, saveStatus, onPage
         onBack={null}
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}
+        onUpdateLibraryCaption={onUpdateLibraryCaption}
         className="flex flex-col h-full bg-stone-50 text-left font-sans"
       />
 

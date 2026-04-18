@@ -108,6 +108,8 @@ export default function BlockCard({
   blockIndex,
   onRemoveImagesFromBlock,
   onMoveImagesAcrossBlocks,
+  assetsByUrl,
+  onUpdateLibraryCaption,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -121,6 +123,7 @@ export default function BlockCard({
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [selectedIndices, setSelectedIndices] = useState(new Set());
   const [photoDropHover, setPhotoDropHover] = useState(false);
+  const [gridDropHover, setGridDropHover] = useState(false);
   const lastSelectedRef = useRef(null);
   const menuRef = useRef(null);
   const designBtnRef = useRef(null);
@@ -164,9 +167,11 @@ export default function BlockCard({
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const handleDragOver = (e) => e.preventDefault();
+  const handleDragOver = (e) => { e.preventDefault(); setGridDropHover(true); };
+  const handleDragLeave = (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setGridDropHover(false); };
   const handleDrop = (e) => {
     e.preventDefault();
+    setGridDropHover(false);
     if (!isPhotoBlock) return;
     const raw = e.dataTransfer.getData('application/x-photo-drag');
     let incomingRefs;
@@ -206,7 +211,9 @@ export default function BlockCard({
   return (
     <div
       className="bg-white border border-stone-200 rounded-lg shadow-sm group/card mb-1.5"
+      onDragEnter={isPhotoBlock ? (e) => { e.preventDefault(); setGridDropHover(true); } : undefined}
       onDragOver={isPhotoBlock ? handleDragOver : undefined}
+      onDragLeave={isPhotoBlock ? handleDragLeave : undefined}
       onDrop={isPhotoBlock ? handleDrop : undefined}
     >
       {/* Card header */}
@@ -301,6 +308,7 @@ export default function BlockCard({
           {block.type === "photo" && (
             <>
               <div
+                onDragEnter={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
                 onDragOver={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setPhotoDropHover(false); }}
                 onDrop={(e) => {
@@ -332,7 +340,7 @@ export default function BlockCard({
               >
                 {block.imageUrl ? (
                   <div
-                    className={`relative group/img cursor-grab transition-all ${photoDropHover ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
+                    className={`relative group/img cursor-grab transition-opacity ${photoDropHover ? 'opacity-40' : ''}`}
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
@@ -361,10 +369,10 @@ export default function BlockCard({
                 ) : (
                   <div
                     onClick={onAddPhotos}
-                    className={`flex flex-col items-center justify-center h-20 bg-stone-50 border border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'border-stone-200 hover:border-stone-400'}`}
+                    className={`flex flex-col items-center justify-center h-20 border border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'bg-stone-50 border-stone-200 hover:border-stone-400'}`}
                   >
-                    <span className="text-xs text-stone-500">Drag a photo here</span>
-                    <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>
+                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : 'text-stone-500'}`}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
+                    {!photoDropHover && <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>}
                   </div>
                 )}
               </div>
@@ -383,13 +391,13 @@ export default function BlockCard({
               {blockImageRefs.length === 0 ? (
                 <div
                   onClick={onAddPhotos}
-                  className="flex flex-col items-center justify-center h-16 bg-stone-50 border border-dashed border-stone-200 hover:border-stone-400 cursor-pointer transition-colors gap-0.5"
+                  className={`flex flex-col items-center justify-center h-16 border border-dashed cursor-pointer transition-colors gap-0.5 ${gridDropHover ? 'border-blue-400 bg-blue-50' : 'bg-stone-50 border-stone-200 hover:border-stone-400'}`}
                 >
-                  <span className="text-xs text-stone-500">Drag photos here</span>
-                  <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>
+                  <span className={`text-xs ${gridDropHover ? 'text-blue-600' : 'text-stone-500'}`}>{gridDropHover ? 'Drop photos here' : 'Drag photos here'}</span>
+                  {!gridDropHover && <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>}
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-px bg-stone-200">
+                <div className={`grid grid-cols-3 gap-px transition-all ${gridDropHover ? 'bg-blue-400 opacity-60' : 'bg-stone-200'}`}>
                   {blockImageRefs.map((ref, i) => (
                     <PhotoThumb
                       key={ref.url}

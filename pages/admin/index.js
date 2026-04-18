@@ -1,6 +1,6 @@
 // pages/admin/index.js
 import { useSession, signOut } from 'next-auth/react'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { DragProvider } from '../../common/dragContext'
 import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
@@ -14,11 +14,42 @@ const AUTOSAVE_DELAY = 1500
 export default function AdminIndex() {
   const { data: session, status } = useSession()
   const [siteConfig, setSiteConfig] = useState(null)
+  const [libraryConfig, setLibraryConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('idle')
   const [selectedPageId, setSelectedPageId] = useState(null)
   const [showLibrary, setShowLibrary] = useState(false)
   const autosaveTimer = useRef(null)
+
+  useEffect(() => {
+    if (status !== 'authenticated') return
+    fetch('/api/admin/library').then(r => r.json()).then(setLibraryConfig).catch(() => {})
+  }, [status])
+
+  const handleUpdateLibraryCaption = useCallback(async (assetId, caption) => {
+    if (!assetId) return
+    setLibraryConfig(prev => prev ? {
+      ...prev,
+      assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), caption } }
+    } : prev)
+    try {
+      await fetch('/api/admin/library', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId, patch: { caption } }),
+      })
+    } catch (err) {
+      console.error('Library caption update failed:', err)
+    }
+  }, [])
+
+  const assetsByUrl = useMemo(() => {
+    const map = {}
+    for (const a of Object.values(libraryConfig?.assets || {})) {
+      if (a?.publicUrl) map[a.publicUrl] = a
+    }
+    return map
+  }, [libraryConfig])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -176,10 +207,12 @@ export default function AdminIndex() {
     <PageEditorSidebar
       page={selectedPage}
       siteConfig={siteConfig}
+      libraryConfig={libraryConfig}
       saveStatus={saveStatus}
       onPageChange={(updated) => updatePage(selectedPageId, updated)}
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
+      onUpdateLibraryCaption={handleUpdateLibraryCaption}
     />
   ) : null
 

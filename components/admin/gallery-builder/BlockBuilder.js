@@ -75,6 +75,8 @@ export default function BlockBuilder({
   onBack,
   sourcePageId,
   onMoveBlockToPage,
+  assetsByUrl,
+  onUpdateLibraryCaption,
   className,
 }) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
@@ -346,6 +348,8 @@ export default function BlockBuilder({
                             blockIndex={index}
                             onRemoveImagesFromBlock={(srcIdx, refs) => removeImagesFromBlock(srcIdx, refs)}
                             onMoveImagesAcrossBlocks={(srcIdx, refs, tgtIdx, updatedTgt) => moveImagesBetweenBlocks(srcIdx, refs, tgtIdx, updatedTgt)}
+                            assetsByUrl={assetsByUrl}
+                            onUpdateLibraryCaption={onUpdateLibraryCaption}
                           />
                         </div>
                       )}
