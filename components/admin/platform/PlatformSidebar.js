@@ -1,6 +1,9 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
 import { useDrag } from '../../../common/dragContext'
+import SidebarSection from './SidebarSection'
+import { buildNavTree, flattenForOtherPages } from '../../../common/pagesTree'
+import { defaultPage } from '../../../common/siteConfig'
 
 function SaveBadge({ status }) {
   if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
@@ -75,7 +78,8 @@ export default function PlatformSidebar({
       let id = baseId
       let n = 2
       while (existingIds.has(id)) { id = `${baseId}-${n++}` }
-      const newPage = { id, title, showInNav: true, thumbnail: null, thumbnailUrl: '', blocks: [] }
+      const sortOrder = Math.max(0, ...prev.pages.filter(p => p.showInNav).map(p => p.sortOrder ?? 0)) + 1
+      const newPage = defaultPage({ id, title, sortOrder, showInNav: true, parentId: null })
       return { ...prev, pages: [...prev.pages, newPage] }
     })
 
@@ -86,6 +90,80 @@ export default function PlatformSidebar({
     onSelectPage?.(id)
     setRenamingId(id)
     setRenameValue(title)
+  }
+
+  function renderPageRow(page) {
+    const isDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag.sourcePageId
+    return (
+      <div
+        className="relative"
+        onPointerEnter={() => drag && setDropTargetPageId(page.id)}
+        onPointerLeave={() => drag && setDropTargetPageId(null)}
+        onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTargetPageId(page.id) } }}
+        onDragLeave={(e) => { if (drag && !e.currentTarget.contains(e.relatedTarget)) setDropTargetPageId(null) }}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setDropTargetPageId(null)
+          if (!drag) return
+          if (drag.type === 'images') {
+            if (page.id === drag.sourcePageId) return
+            onDropImagesToPage?.(page.id, drag.imageRefs, drag.sourceBlockType, drag.sourcePageId, drag.sourceBlockIndex)
+          }
+        }}
+      >
+        {renamingId === page.id ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={e => setRenameValue(e.target.value)}
+            onBlur={() => handleRenameCommit(page.id)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleRenameCommit(page.id)
+              if (e.key === 'Escape') setRenamingId(null)
+            }}
+            className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
+          />
+        ) : (
+          <div
+            onClick={() => onSelectPage?.(page.id)}
+            className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
+              isDropTarget
+                ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700'
+                : selectedPageId === page.id
+                ? 'bg-gray-100 text-gray-900 font-medium'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex-1 truncate">{page.title}</span>
+            {isDropTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">Drop</span>}
+            <button
+              onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
+              className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
+            >
+              ···
+            </button>
+          </div>
+        )}
+
+        {menuOpenId === page.id && (
+          <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
+            <button
+              onClick={() => handleRenameStart(page)}
+              className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Rename
+            </button>
+            <button
+              onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
+              className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -141,85 +219,20 @@ export default function PlatformSidebar({
       </div>
 
       {/* Pages */}
-      <div className="flex-1 overflow-y-auto px-2 py-2">
-        {pages.map(page => {
-          const isDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag.sourcePageId
-          return (
-            <div
-              key={page.id}
-              className="relative"
-              onPointerEnter={() => drag && setDropTargetPageId(page.id)}
-              onPointerLeave={() => drag && setDropTargetPageId(null)}
-              onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTargetPageId(page.id) } }}
-              onDragLeave={(e) => { if (drag && !e.currentTarget.contains(e.relatedTarget)) setDropTargetPageId(null) }}
-              onDrop={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setDropTargetPageId(null)
-                if (!drag) return
-                if (drag.type === 'images') {
-                  if (page.id === drag.sourcePageId) return
-                  onDropImagesToPage?.(page.id, drag.imageRefs, drag.sourceBlockType, drag.sourcePageId, drag.sourceBlockIndex)
-                }
-              }}
-            >
-              {renamingId === page.id ? (
-                <input
-                  autoFocus
-                  value={renameValue}
-                  onChange={e => setRenameValue(e.target.value)}
-                  onBlur={() => handleRenameCommit(page.id)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleRenameCommit(page.id)
-                    if (e.key === 'Escape') setRenamingId(null)
-                  }}
-                  className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
-                />
-              ) : (
-                <div
-                  onClick={() => onSelectPage?.(page.id)}
-                  className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
-                    isDropTarget
-                      ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700'
-                      : selectedPageId === page.id
-                      ? 'bg-gray-100 text-gray-900 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="flex-1 truncate">{page.title}</span>
-                  {isDropTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">Drop</span>}
-                  <button
-                    onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                    className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
-                  >
-                    ···
-                  </button>
-                </div>
-              )}
-
-              {menuOpenId === page.id && (
-                <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
-                  <button
-                    onClick={() => handleRenameStart(page)}
-                    className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Rename
-                  </button>
-                  <button
-                    onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
-                    className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )
-        })}
-
+      <div className="flex-1 overflow-y-auto">
+        <SidebarSection
+          label="Main Nav"
+          pages={buildNavTree(pages)}
+          renderRow={renderPageRow}
+        />
+        <SidebarSection
+          label="Other Pages"
+          pages={flattenForOtherPages(pages)}
+          renderRow={renderPageRow}
+        />
         <button
           onClick={handleAddPage}
-          className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50 mt-1"
+          className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50 mt-1 mx-2"
         >
           <span className="mr-1.5">+</span> Add Page
         </button>
