@@ -111,14 +111,14 @@ Two sections. Drag pages between them to change nav status. Nesting is expressed
 
 Rendered from pages where `showInNav: true`, ordered by `sortOrder`, nested by `parentId`. Rendering style is a site-level design setting (see below), not per-page.
 
-### Nav Style (site-level)
+### Nav Style (theme-owned)
 
-Two rendering styles are offered at the site level:
+Nav rendering style is a theme-variant option, not a separate setting. Two styles are offered:
 
 - **Cover-embedded** — nav links appear on the cover page (the current swamiphoto.com approach)
 - **Header dropdown** — nav links render in a top-right header dropdown across all pages
 
-This is a single site-level `navStyle` setting that applies to the whole site, not per-page. Lives in Site Settings (the UI for Site Settings is out of scope for this spec; the data reservation is in scope).
+A theme exposes nav style as one of its variant options (alongside typography, colors, layout defaults). Picking a theme picks the nav rendering. If a single theme needs both, it ships two variants. No top-level `navStyle` setting on the site — the theme owns it.
 
 ### Naming rationale
 
@@ -246,7 +246,7 @@ Two independent systems. They share only Stripe checkout and Buy button visual d
 9. Move `slug` into Advanced disclosure, auto-generate from title
 10. Reserve `clientFeatures` in the page schema and `clientOnly` on blocks; no UI (toggle shows "Coming soon")
 11. Reserve `forSale` in the library asset schema; no UI
-12. Reserve site-level `navStyle: 'cover-embedded' | 'header-dropdown'` setting; rendering the published nav respects this flag (Site Settings UI is out of scope)
+12. Published nav rendering respects the active theme's nav-style variant (cover-embedded vs. header-dropdown). No top-level `navStyle` setting; the theme owns it.
 
 ## Out of Scope for V1
 
@@ -266,4 +266,4 @@ Two independent systems. They share only Stripe checkout and Buy button visual d
 
 ## Migration / Compatibility
 
-The existing data model already uses a single `pages[]` array and block composition, so the structural change is additive. Fields being added to `Page`: `parentId`, `showInNav` (existing pages default to `true`), `cover`, `thumbnail.useCover`, `slideshow.*` (align with existing slideshow impl fields), `password` (optional), `clientFeatures` (reserved, empty), `clientOnly` on blocks (reserved). Site-level addition: `navStyle`. No breaking rename of existing fields. Sidebar refactor is UI-only and does not migrate data.
+The existing data model already uses a single `pages[]` array and block composition, so the structural change is additive. Fields being added to `Page`: `parentId`, `showInNav` (existing pages default to `true`), `cover`, `thumbnail.useCover`, `slideshow.*` (align with existing slideshow impl fields), `password` (optional), `clientFeatures` (reserved, empty), `clientOnly` on blocks (reserved). Nav rendering style is owned by the theme, not a top-level site field. No breaking rename of existing fields. Sidebar refactor is UI-only and does not migrate data.

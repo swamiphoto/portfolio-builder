@@ -185,6 +185,34 @@ Library is source of truth for captions. When a block references an image URL, t
 5. Auto-generation: score images, pick hero, group into collections, generate cover + gallery pages + about stub
 6. Published immediately, user lands in editor
 
+### Lightroom Integration
+
+Lightroom should be a first-class publishing path into the library, not just a one-time import source.
+
+Recommended model:
+
+- Lightroom publishes to the Library as canonical assets
+- Lightroom can optionally publish into a specific gallery or collection destination
+- republishing the same Lightroom photo should update the same asset, not create duplicates
+
+The important product boundary is:
+
+- Lightroom manages photos and metadata
+- the app manages pages, layout, block placement, and site structure
+
+So v1 Lightroom destinations should be:
+
+- Library only
+- Library + collection
+- Library + gallery album
+
+Not v1:
+
+- direct publish to cover
+- direct publish to arbitrary page blocks
+
+This keeps the integration stable and makes the picker, library page, and gallery builders all reuse the same asset model.
+
 ### Theme System
 
 One theme initially (current site's visual language). Theme controls typography, colors, layout defaults, component styles. Implementation: CSS custom properties + theme config JSON. Theme dropdown in sidebar footer.
