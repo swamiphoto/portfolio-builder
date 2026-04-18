@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
+import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
@@ -527,9 +528,10 @@ export default function BlockCard({
         const baseImages = isPhotoBlock ? blockImageRefs : singlePhotoImages;
         const enriched = baseImages.map(ref => {
           const asset = getAssetByUrl ? getAssetByUrl(ref.url) : null;
+          const effectiveCaption = resolveCaption(ref, assetsByUrl || {});
           return asset ? {
             url: asset.publicUrl,
-            caption: ref.caption ?? asset.caption ?? '',
+            caption: effectiveCaption,
             originalFilename: asset.originalFilename,
             bytes: asset.bytes,
             width: asset.width,
@@ -542,7 +544,7 @@ export default function BlockCard({
             createdAt: asset.createdAt,
             updatedAt: asset.updatedAt,
             collections: collectionsByUrl?.[ref.url] || [],
-          } : { ...ref, collections: collectionsByUrl?.[ref.url] || [] };
+          } : { ...ref, caption: effectiveCaption, collections: collectionsByUrl?.[ref.url] || [] };
         });
         return (
           <AdminPhotoLightbox
@@ -551,13 +553,64 @@ export default function BlockCard({
             index={lightboxIndex}
             onClose={() => setLightboxIndex(null)}
             onNavigate={setLightboxIndex}
+            isOverride={(i) => {
+              if (isPhotoBlock) {
+                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                return isCaptionOverridden(refs[i]);
+              }
+              return isCaptionOverridden(block);
+            }}
+            onToggleOverride={(i, checked) => {
+              if (isPhotoBlock) {
+                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                const updated = refs.map((r, j) => {
+                  if (j !== i) return r;
+                  if (checked) {
+                    const asset = assetsByUrl?.[r.url];
+                    return { ...r, caption: asset?.caption ?? '' };
+                  }
+                  const { caption: _cap, ...rest } = r;
+                  return rest;
+                });
+                onUpdate({ ...block, ...buildMultiImageFields(updated) });
+              } else {
+                if (checked) {
+                  const asset = assetsByUrl?.[block.imageUrl];
+                  onUpdate({ ...block, caption: asset?.caption ?? '' });
+                } else {
+                  const { caption: _cap, ...rest } = block;
+                  onUpdate(rest);
+                }
+              }
+            }}
+            onRevertToLibrary={(i) => {
+              if (isPhotoBlock) {
+                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                const updated = refs.map((r, j) => {
+                  if (j !== i) return r;
+                  const { caption: _cap, ...rest } = r;
+                  return rest;
+                });
+                onUpdate({ ...block, ...buildMultiImageFields(updated) });
+              } else {
+                const { caption: _cap, ...rest } = block;
+                onUpdate(rest);
+              }
+            }}
             onCaptionChange={(i, newCaption) => {
+              // override path: write to block ref
               if (isPhotoBlock) {
                 const refs = normalizeImageRefs(block.images || block.imageUrls || []);
                 const updated = refs.map((r, j) => j === i ? { ...r, caption: newCaption } : r);
                 onUpdate({ ...block, ...buildMultiImageFields(updated) });
               } else {
                 onUpdate({ ...block, caption: newCaption });
+              }
+            }}
+            onCaptionChangeToLibrary={(i, newCaption) => {
+              const img = enriched[i];
+              if (img?.assetId && onUpdateLibraryCaption) {
+                onUpdateLibraryCaption(img.assetId, newCaption);
               }
             }}
             onToggleCollection={(slug, type, add) => {
