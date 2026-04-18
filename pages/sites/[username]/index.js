@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -5,6 +6,7 @@ import { resolveCaption } from '../../../common/captionResolver'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
+import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -51,6 +53,11 @@ export async function getServerSideProps({ params }) {
 
 export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
+
+  const [unlocked, setUnlocked] = useState(!homePage?.password)
+  if (!unlocked) {
+    return <PasswordGate pageTitle={homePage?.title || 'Protected'} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
+  }
 
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 

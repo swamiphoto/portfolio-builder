@@ -1,4 +1,5 @@
 // pages/sites/[username]/[slug].js
+import { useState } from 'react'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -6,6 +7,7 @@ import { resolveCaption } from '../../../common/captionResolver'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
+import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -49,6 +51,12 @@ export async function getServerSideProps({ params }) {
 }
 
 export default function PublicPage({ siteConfig, page, assetsByUrl, username }) {
+  // Client-side gate only — not a security boundary. Real protection lives in clientFeatures.
+  const [unlocked, setUnlocked] = useState(!page.password)
+  if (!unlocked) {
+    return <PasswordGate pageTitle={page.title} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
+  }
+
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   const navVariant = page?.cover?.imageUrl ? undefined : 'header-dropdown'
   return (
