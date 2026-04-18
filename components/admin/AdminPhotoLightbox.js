@@ -352,27 +352,6 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
 
           {/* Caption */}
           <Section title="Caption">
-            {/* Override toggle */}
-            <div className="flex items-center justify-between text-xs mb-2">
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isOverride?.(index) ?? false}
-                  onChange={(e) => onToggleOverride?.(index, e.target.checked)}
-                  className="w-3 h-3 accent-blue-600"
-                />
-                <span className="text-stone-500">Override for this page</span>
-              </label>
-              {(isOverride?.(index)) && (
-                <button
-                  type="button"
-                  onClick={() => onRevertToLibrary?.(index)}
-                  className="text-blue-600 text-[10px] hover:underline"
-                >
-                  Revert to library
-                </button>
-              )}
-            </div>
             <textarea
               value={caption}
               rows={3}
