@@ -53,3 +53,29 @@ describe('createDefaultSiteConfig — unified page model', () => {
     expect(home.showInNav).toBe(false)
   })
 })
+
+import { defaultPage } from '../../common/siteConfig'
+
+describe('defaultPage — no overrides', () => {
+  const p = defaultPage()
+
+  it('defaults showInNav to true', () => {
+    expect(p.showInNav).toBe(true)
+  })
+
+  it('defaults id to "page"', () => {
+    expect(p.id).toBe('page')
+  })
+
+  it('defaults slug to "page"', () => {
+    expect(p.slug).toBe('page')
+  })
+
+  it('defaults title to "New Page"', () => {
+    expect(p.title).toBe('New Page')
+  })
+
+  it('lets explicit slug override id-derived default', () => {
+    expect(defaultPage({ id: 'about', slug: 'about-us' }).slug).toBe('about-us')
+  })
+})
