@@ -1,3 +1,4 @@
+// pages/sites/[username]/[slug].js
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -23,62 +24,45 @@ function resolveBlock(block, assetsByUrl) {
 }
 
 export async function getServerSideProps({ params }) {
-  const { username } = params
-
+  const { username, slug } = params
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
-
   const [siteConfig, libraryConfig] = await Promise.all([
     readSiteConfig(lookup.userId),
     readLibraryConfig(lookup.userId).catch(() => ({ assets: {} })),
   ])
-
   if (!siteConfig) return { notFound: true }
-
+  const page = (siteConfig.pages || []).find(p => p.slug === slug || p.id === slug)
+  if (!page) return { notFound: true }
   const assetsByUrl = {}
   for (const a of Object.values(libraryConfig?.assets || {})) {
     if (a?.publicUrl) assetsByUrl[a.publicUrl] = { assetId: a.assetId, caption: a.caption }
   }
-
   return {
     props: {
       siteConfig: JSON.parse(JSON.stringify(siteConfig)),
+      page: JSON.parse(JSON.stringify(page)),
       assetsByUrl,
       username,
     },
   }
 }
 
-export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
-  const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
-
-  const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
-
+export default function PublicPage({ siteConfig, page, assetsByUrl, username }) {
+  const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   return (
     <div className="min-h-screen bg-white font-sans">
       <SiteNav siteConfig={siteConfig} username={username} />
       <main>
-        <PageCover cover={homePage?.cover} title={homePage?.title} />
-        {homePage?.slideshow?.enabled && (
+        <PageCover cover={page.cover} title={page.title} />
+        {page.slideshow?.enabled && (
           <div className="px-6 py-2">
-            <a
-              href={`/sites/${username}/${homePage.slug || homePage.id}/slideshow`}
-              className="text-sm text-stone-500 hover:text-stone-900 underline"
-            >
+            <a href={`/sites/${username}/${page.slug || page.id}/slideshow`} className="text-sm text-stone-500 hover:text-stone-900 underline">
               View slideshow ↗
             </a>
           </div>
         )}
-        {homePage ? (
-          <Gallery
-            blocks={resolvedBlocks}
-            pages={siteConfig.pages}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-64 text-sm text-gray-400">
-            No content yet.
-          </div>
-        )}
+        <Gallery blocks={resolvedBlocks} pages={siteConfig.pages} />
       </main>
     </div>
   )
