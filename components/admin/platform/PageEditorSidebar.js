@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import BlockBuilder from '../gallery-builder/BlockBuilder'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
-import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs } from '../../../common/assetRefs'
+import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail } from '../../../common/assetRefs'
 import PageSettingsPanel from './PageSettingsPanel'
 
 function pageToGallery(page) {
@@ -13,7 +13,7 @@ function pageToGallery(page) {
     description: page.description || '',
     blocks: page.blocks || [],
     thumbnail: page.thumbnail || null,
-    thumbnailUrl: page.thumbnailUrl || '',
+    thumbnailUrl: pageDisplayThumbnail(page),
     visibility: page.visibility || 'public',
     enableSlideshow: page.enableSlideshow || false,
     showCover: false,
@@ -27,7 +27,7 @@ function galleryToPage(page, gallery) {
     description: gallery.description || '',
     blocks: gallery.blocks || [],
     thumbnail: gallery.thumbnail || page.thumbnail || null,
-    thumbnailUrl: gallery.thumbnailUrl || page.thumbnailUrl || '',
+    thumbnailUrl: gallery.thumbnailUrl || pageDisplayThumbnail(page),
     visibility: gallery.visibility || 'public',
     enableSlideshow: gallery.enableSlideshow || false,
   }

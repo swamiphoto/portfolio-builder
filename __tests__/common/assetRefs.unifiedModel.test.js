@@ -1,4 +1,4 @@
-import { normalizeBlockImageFields } from '../../common/assetRefs'
+import { normalizeBlockImageFields, pageDisplayThumbnail } from '../../common/assetRefs'
 
 describe('normalizeBlockImageFields — clientOnly reserved', () => {
   it('defaults clientOnly to false on a photo block when missing', () => {
@@ -24,5 +24,17 @@ describe('normalizeBlockImageFields — clientOnly reserved', () => {
   it('defaults clientOnly to false on a video block', () => {
     const out = normalizeBlockImageFields({ id: 'b4', type: 'video', youtubeUrl: 'https://y/v' })
     expect(out.clientOnly).toBe(false)
+  })
+})
+
+describe('pageDisplayThumbnail', () => {
+  it('returns cover url when useCover is true', () => {
+    expect(pageDisplayThumbnail({ thumbnail: { useCover: true }, cover: { imageUrl: 'C' } })).toBe('C')
+  })
+  it('falls back to explicit thumbnail when useCover is false', () => {
+    expect(pageDisplayThumbnail({ thumbnail: { useCover: false, imageUrl: 'T' }, cover: { imageUrl: 'C' } })).toBe('T')
+  })
+  it('returns empty string when nothing is set', () => {
+    expect(pageDisplayThumbnail({ thumbnail: { useCover: true }, cover: null })).toBe('')
   })
 })

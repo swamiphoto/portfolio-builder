@@ -2,6 +2,7 @@
 import { lookupUserByUsername } from '../../../../common/userProfile'
 import { readSiteConfig } from '../../../../common/siteConfig'
 import Slideshow from '../../../../components/image-displays/slideshow/Slideshow'
+import { pageDisplayThumbnail } from '../../../../common/assetRefs'
 
 function collectImages(blocks) {
   const urls = []
@@ -45,7 +46,7 @@ export default function PageSlideshow({ page, siteName }) {
       title={page.title}
       subtitle={page.description || siteName}
       youtubeUrl={page.slideshow?.musicUrl || ''}
-      thumbnailUrl={page.cover?.imageUrl || page.thumbnail?.imageUrl || ''}
+      thumbnailUrl={pageDisplayThumbnail(page)}
       slug={page.slug || page.id}
     />
   )

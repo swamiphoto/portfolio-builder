@@ -119,6 +119,11 @@ export function normalizeGalleryEntity(gallery) {
   };
 }
 
+export function pageDisplayThumbnail(page) {
+  if (page.thumbnail?.useCover) return page.cover?.imageUrl || ''
+  return page.thumbnail?.imageUrl || page.thumbnailUrl || ''
+}
+
 export function normalizePageEntity(page) {
   if (!page || typeof page !== "object") return page;
 

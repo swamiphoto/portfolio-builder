@@ -8,7 +8,7 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
-import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from "../../../common/assetRefs";
 
 const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, onBackClick, onSlideshowClick, onClientLoginClick }) => {
   const isSmallScreen = useMediaQuery({ query: "(max-width: 768px)" });
@@ -145,9 +145,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div className="grid grid-cols-2 gap-6">
                     {linkedPages.map(p => (
                       <a key={p.id} href="#" className="block group">
-                        {getImageRefUrl(p.thumbnail || p.thumbnailUrl) ? (
+                        {pageDisplayThumbnail(p) ? (
                           <img
-                            src={getImageRefUrl(p.thumbnail || p.thumbnailUrl)}
+                            src={pageDisplayThumbnail(p)}
                             alt={p.title}
                             className="w-full aspect-[4/3] object-cover"
                           />
