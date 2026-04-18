@@ -1,7 +1,7 @@
 // components/admin/platform/SidebarSection.js
 import { Droppable, Draggable } from '@hello-pangea/dnd'
 
-export default function SidebarSection({ label, pages, depth = 0, renderRow, droppableId }) {
+export default function SidebarSection({ label, pages, depth = 0, renderRow, droppableId, nestable = false }) {
   if (!pages.length && depth === 0) {
     return (
       <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-stone-400">
@@ -30,17 +30,16 @@ export default function SidebarSection({ label, pages, depth = 0, renderRow, dro
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.draggableProps}>
                     <div style={{ paddingLeft: depth * 12 }}>
-                      <div {...provided.dragHandleProps}>
-                        {renderRow(p)}
-                      </div>
+                      {renderRow(p, provided.dragHandleProps)}
                     </div>
-                    {p.children && p.children.length > 0 && (
+                    {nestable && (
                       <SidebarSection
                         label=""
-                        pages={p.children}
+                        pages={p.children || []}
                         depth={depth + 1}
                         renderRow={renderRow}
                         droppableId={p.id}
+                        nestable={true}
                       />
                     )}
                   </div>

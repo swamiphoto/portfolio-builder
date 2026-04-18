@@ -110,11 +110,11 @@ export default function PlatformSidebar({
     onConfigChange(prev => ({ ...prev, pages: movePage(prev.pages, pageId, patch) }))
   }
 
-  function renderPageRow(page) {
+  function renderPageRow(page, dragHandleProps) {
     const isDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag.sourcePageId
     return (
       <div
-        className="relative"
+        className="relative flex items-start"
         onPointerEnter={() => drag && setDropTargetPageId(page.id)}
         onPointerLeave={() => drag && setDropTargetPageId(null)}
         onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTargetPageId(page.id) } }}
@@ -130,6 +130,22 @@ export default function PlatformSidebar({
           }
         }}
       >
+        {dragHandleProps && (
+          <div
+            {...dragHandleProps}
+            className="flex-shrink-0 flex items-center justify-center w-3 self-stretch cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-500 transition-colors"
+          >
+            <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor">
+              <circle cx="1.5" cy="1.5" r="1" />
+              <circle cx="4.5" cy="1.5" r="1" />
+              <circle cx="1.5" cy="5" r="1" />
+              <circle cx="4.5" cy="5" r="1" />
+              <circle cx="1.5" cy="8.5" r="1" />
+              <circle cx="4.5" cy="8.5" r="1" />
+            </svg>
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
         {renamingId === page.id ? (
           <input
             autoFocus
@@ -180,6 +196,7 @@ export default function PlatformSidebar({
             </button>
           </div>
         )}
+        </div>
       </div>
     )
   }
@@ -244,6 +261,7 @@ export default function PlatformSidebar({
             pages={buildNavTree(pages)}
             renderRow={renderPageRow}
             droppableId="main-nav"
+            nestable={true}
           />
           <SidebarSection
             label="Other Pages"
