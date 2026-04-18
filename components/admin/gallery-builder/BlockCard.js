@@ -120,6 +120,7 @@ export default function BlockCard({
   const [showDesign, setShowDesign] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [selectedIndices, setSelectedIndices] = useState(new Set());
+  const [photoDropHover, setPhotoDropHover] = useState(false);
   const lastSelectedRef = useRef(null);
   const menuRef = useRef(null);
   const designBtnRef = useRef(null);
@@ -300,8 +301,10 @@ export default function BlockCard({
           {block.type === "photo" && (
             <>
               <div
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setPhotoDropHover(false); }}
                 onDrop={(e) => {
+                  setPhotoDropHover(false);
                   e.preventDefault();
                   const raw = e.dataTransfer.getData('application/x-photo-drag');
                   let url = null;
@@ -329,7 +332,7 @@ export default function BlockCard({
               >
                 {block.imageUrl ? (
                   <div
-                    className="relative group/img cursor-grab"
+                    className={`relative group/img cursor-grab transition-all ${photoDropHover ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
@@ -358,7 +361,7 @@ export default function BlockCard({
                 ) : (
                   <div
                     onClick={onAddPhotos}
-                    className="flex flex-col items-center justify-center h-20 bg-stone-50 border border-dashed border-stone-200 hover:border-stone-400 cursor-pointer transition-colors gap-0.5"
+                    className={`flex flex-col items-center justify-center h-20 bg-stone-50 border border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'border-stone-200 hover:border-stone-400'}`}
                   >
                     <span className="text-xs text-stone-500">Drag a photo here</span>
                     <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>
