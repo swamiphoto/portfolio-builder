@@ -54,9 +54,11 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
 
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
+  const navVariant = homePage?.cover?.imageUrl ? undefined : 'header-dropdown'
+
   return (
     <div className="min-h-screen bg-white font-sans">
-      <SiteNav siteConfig={siteConfig} username={username} />
+      <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
         <PageCover cover={homePage?.cover} title={homePage?.title} />
         {homePage?.slideshow?.enabled && (

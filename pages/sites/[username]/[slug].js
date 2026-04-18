@@ -50,9 +50,10 @@ export async function getServerSideProps({ params }) {
 
 export default function PublicPage({ siteConfig, page, assetsByUrl, username }) {
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
+  const navVariant = page?.cover?.imageUrl ? undefined : 'header-dropdown'
   return (
     <div className="min-h-screen bg-white font-sans">
-      <SiteNav siteConfig={siteConfig} username={username} />
+      <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
         <PageCover cover={page.cover} title={page.title} />
         {page.slideshow?.enabled && (
