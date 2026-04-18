@@ -34,6 +34,18 @@ export const authOptions = {
   pages: {
     signIn: '/auth/signin',
   },
+  cookies: {
+    sessionToken: {
+      name: 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN,
+      },
+    },
+  },
 }
 
 export default NextAuth(authOptions)

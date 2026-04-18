@@ -1,13 +1,20 @@
 import React from "react";
 
-function SidebarSection({ title, children, action }) {
+function SidebarSection({ title, children, action, collapsible = false }) {
+  const [open, setOpen] = React.useState(!collapsible)
   return (
     <div className="mt-3">
       <div className="flex items-center justify-between px-3 py-1">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{title}</span>
+        <button
+          className="flex items-center gap-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
+          onClick={() => collapsible && setOpen(v => !v)}
+        >
+          {collapsible && <span className="text-gray-300">{open ? '▾' : '▸'}</span>}
+          {title}
+        </button>
         {action}
       </div>
-      <div className="space-y-0.5">{children}</div>
+      {open && <div className="space-y-0.5">{children}</div>}
     </div>
   )
 }
@@ -49,9 +56,14 @@ export default function AlbumSidebar({
   onSelect,
   onUploadClick,
   onCreateCollection,
+  onDeleteCollection,
   sourceCounts,
   orientationCounts,
   usageCounts,
+  cameraCounts,
+  lensCounts,
+  focalLengthCounts,
+  isoCounts,
   filters,
   onFilterChange,
 }) {
@@ -121,6 +133,75 @@ export default function AlbumSidebar({
           </SidebarSection>
         )}
 
+        {Object.keys(cameraCounts).length > 0 && (
+          <SidebarSection title="Camera" collapsible>
+            {Object.entries(cameraCounts).sort((a, b) => b[1] - a[1]).map(([cam, count]) => (
+              <SidebarButton
+                key={cam}
+                active={filters.camera === cam}
+                label={cam}
+                count={count}
+                onClick={() => onFilterChange("camera", filters.camera === cam ? "all" : cam)}
+                subtle
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(lensCounts).length > 0 && (
+          <SidebarSection title="Lens" collapsible>
+            {Object.entries(lensCounts).sort((a, b) => b[1] - a[1]).map(([lens, count]) => (
+              <SidebarButton
+                key={lens}
+                active={filters.lens === lens}
+                label={lens}
+                count={count}
+                onClick={() => onFilterChange("lens", filters.lens === lens ? "all" : lens)}
+                subtle
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(focalLengthCounts).length > 0 && (
+          <SidebarSection title="Focal Length" collapsible>
+            {[
+              { key: 'wide', label: 'Wide ≤35mm' },
+              { key: 'normal', label: 'Normal 35–85mm' },
+              { key: 'tele', label: 'Tele 85–200mm' },
+              { key: 'super', label: 'Super >200mm' },
+            ].filter(r => focalLengthCounts[r.key]).map(({ key, label }) => (
+              <SidebarButton
+                key={key}
+                active={filters.focalLength === key}
+                label={label}
+                count={focalLengthCounts[key]}
+                onClick={() => onFilterChange("focalLength", filters.focalLength === key ? "all" : key)}
+                subtle
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(isoCounts).length > 0 && (
+          <SidebarSection title="ISO" collapsible>
+            {[
+              { key: 'low', label: 'Low ≤400' },
+              { key: 'mid', label: 'Mid 400–1600' },
+              { key: 'high', label: 'High >1600' },
+            ].filter(r => isoCounts[r.key]).map(({ key, label }) => (
+              <SidebarButton
+                key={key}
+                active={filters.iso === key}
+                label={label}
+                count={isoCounts[key]}
+                onClick={() => onFilterChange("iso", filters.iso === key ? "all" : key)}
+                subtle
+              />
+            ))}
+          </SidebarSection>
+        )}
+
         {(() => {
   const nodes = buildCollectionTree(galleryKeys)
   const [collapsed, setCollapsed] = React.useState(new Set())
@@ -171,6 +252,15 @@ export default function AlbumSidebar({
                 className="text-gray-400 hover:text-gray-700 text-xs px-1"
                 title={`New sub-collection under ${node.label}`}
               >+</button>
+              <button
+                onClick={() => {
+                  if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its sub-collections' : ''}?`)) {
+                    onDeleteCollection(node.key)
+                  }
+                }}
+                className="text-gray-400 hover:text-red-500 text-xs px-1"
+                title={`Delete ${node.label}`}
+              >×</button>
               {node.hasChildren && (
                 <button
                   onClick={() => setCollapsed((prev) => {

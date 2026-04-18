@@ -5,6 +5,7 @@ const BLOCK_TYPES = [
   { type: "photos", label: "Photos", desc: "Multi-photo layout" },
   { type: "text", label: "Text", desc: "Text between photos" },
   { type: "video", label: "Video", desc: "YouTube video embed" },
+  { type: "page-gallery", label: "Page Gallery", desc: "Thumbnail links to other pages" },
 ];
 
 export function defaultBlock(type) {
@@ -12,15 +13,17 @@ export function defaultBlock(type) {
     case "photo":
       return { type: "photo", imageUrl: "", caption: "", variant: 1 };
     case "photos":
-      return { type: "stacked", imageUrls: [], layout: "stacked" };
+      return { type: "photos", images: [], imageUrls: [], layout: "stacked" };
     case "stacked":
-      return { type: "stacked", imageUrls: [], layout: "stacked" };
+      return { type: "photos", images: [], imageUrls: [], layout: "stacked" };
     case "masonry":
-      return { type: "masonry", imageUrls: [], layout: "masonry" };
+      return { type: "photos", images: [], imageUrls: [], layout: "masonry" };
     case "text":
       return { type: "text", content: "", variant: 1 };
     case "video":
       return { type: "video", url: "", caption: "", variant: 1 };
+    case "page-gallery":
+      return { type: "page-gallery", pageIds: [] };
     default:
       return { type };
   }

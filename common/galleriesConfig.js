@@ -1,16 +1,15 @@
 // common/galleriesConfig.js
 import { downloadJSON, uploadJSON } from './gcsClient'
+import { getUserGalleriesConfigPath } from './gcsUser'
 
-const GALLERIES_CONFIG_PATH = 'galleries-config.json'
-
-export async function readGalleriesConfig() {
+export async function readGalleriesConfig(userId) {
   try {
-    return await downloadJSON(GALLERIES_CONFIG_PATH)
+    return await downloadJSON(getUserGalleriesConfigPath(userId))
   } catch {
     return null // file doesn't exist yet (normal on first run)
   }
 }
 
-export async function writeGalleriesConfig(config) {
-  await uploadJSON(GALLERIES_CONFIG_PATH, config)
+export async function writeGalleriesConfig(userId, config) {
+  await uploadJSON(getUserGalleriesConfigPath(userId), config)
 }

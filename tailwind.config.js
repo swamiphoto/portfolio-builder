@@ -2,7 +2,7 @@ module.exports = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
-    "./components/**/**/*.{js,ts,jsx,tsx}", // This ensures deeper folders inside components are included
+    "./components/**/**/*.{js,ts,jsx,tsx}",
     "./layouts/**/*.{js,ts,jsx,tsx}",
     "./app/**/*.{js,ts,jsx,tsx}",
   ],
@@ -27,18 +27,17 @@ module.exports = {
       fontSize: {
         base: "19.5px",
       },
-      keyframes: {
-        flip: {
-          "0%": { transform: "rotateX(0deg)" },
-          "50%": { transform: "rotateX(180deg)" },
-          "100%": { transform: "rotateX(0deg)" },
-        },
-      },
-      animation: {
-        flip: "flip 1.2s ease-in-out",
-        "flip-up": "flipUp 1s ease-out forwards",
-      },
       colors: {
+        // UI surface tokens — neutral/clean
+        desk: "#f0f0f0",
+        panel: "#ffffff",
+        parchment: "#ffffff",
+        "parchment-light": "#fafafa",
+        "sidebar-inset": "#f3f4f6",
+        surface: "#ffffff",
+        "surface-hover": "#f9fafb",
+        "surface-active": "#f3f4f6",
+        console: "#111111",
         purple: {
           100: "#F6F8FF",
           200: "#F2F4FB",
@@ -84,8 +83,28 @@ module.exports = {
           900: "#448066",
         },
       },
+      boxShadow: {
+        pane: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+        card: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+        "card-sm": "0 1px 2px rgba(0,0,0,0.06)",
+        popup: "0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)",
+      },
+      borderRadius: {
+        pane: "8px",
+      },
       maxWidth: {
         "8xl": "88rem",
+      },
+      keyframes: {
+        flip: {
+          "0%": { transform: "rotateX(0deg)" },
+          "50%": { transform: "rotateX(180deg)" },
+          "100%": { transform: "rotateX(0deg)" },
+        },
+      },
+      animation: {
+        flip: "flip 1.2s ease-in-out",
+        "flip-up": "flipUp 1s ease-out forwards",
       },
     },
   },
@@ -94,11 +113,11 @@ module.exports = {
       addUtilities(
         {
           ".scrollbar-hidden": {
-            "scrollbar-width": "none" /* Firefox */,
-            "-ms-overflow-style": "none" /* IE 10+ */,
+            "scrollbar-width": "none",
+            "-ms-overflow-style": "none",
           },
           ".scrollbar-hidden::-webkit-scrollbar": {
-            display: "none" /* Safari and Chrome */,
+            display: "none",
           },
         },
         ["responsive", "hover"]

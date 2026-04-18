@@ -1,5 +1,6 @@
 // Server-side only — never import from client components.
 import { downloadJSON, uploadJSON } from './gcsClient'
+import { normalizePageEntity } from './assetRefs'
 import { getUserSiteConfigPath } from './gcsUser'
 
 /**
@@ -36,6 +37,7 @@ export function createDefaultSiteConfig(userId) {
         id: 'home',
         title: 'Home',
         showInNav: false,
+        thumbnail: null,
         thumbnailUrl: '',
         blocks: [],
       },
@@ -51,7 +53,11 @@ export function createDefaultSiteConfig(userId) {
  */
 export async function readSiteConfig(userId) {
   try {
-    return await downloadJSON(getUserSiteConfigPath(userId))
+    const config = await downloadJSON(getUserSiteConfigPath(userId))
+    return {
+      ...config,
+      pages: (config.pages || []).map((page) => normalizePageEntity(page)),
+    }
   } catch (err) {
     // Only treat "file doesn't exist yet" as a normal case
     if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return null
@@ -65,5 +71,8 @@ export async function readSiteConfig(userId) {
  * @param {SiteConfig} config
  */
 export async function writeSiteConfig(userId, config) {
-  await uploadJSON(getUserSiteConfigPath(userId), config)
+  await uploadJSON(getUserSiteConfigPath(userId), {
+    ...config,
+    pages: (config.pages || []).map((page) => normalizePageEntity(page)),
+  })
 }

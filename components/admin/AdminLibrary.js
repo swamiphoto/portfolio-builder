@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
@@ -15,6 +15,10 @@ export default function AdminLibrary() {
     source: "all",
     orientation: "all",
     usage: "all",
+    camera: "all",
+    lens: "all",
+    focalLength: "all",
+    iso: "all",
   });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
@@ -84,20 +88,31 @@ export default function AdminLibrary() {
 
   const applyFilters = useCallback((assets) => {
     return assets.filter((asset) => {
-      if (filters.source !== "all" && asset.source?.provider !== filters.source) {
-        return false;
-      }
-
-      if (filters.orientation !== "all" && asset.orientation !== filters.orientation) {
-        return false;
-      }
+      if (filters.source !== "all" && asset.source?.provider !== filters.source) return false;
+      if (filters.orientation !== "all" && asset.orientation !== filters.orientation) return false;
 
       const usageCount = asset.usage?.usageCount || 0;
-      if (filters.usage === "unused" && usageCount > 0) {
-        return false;
+      if (filters.usage === "unused" && usageCount > 0) return false;
+      if (filters.usage === "used" && usageCount === 0) return false;
+
+      if (filters.camera !== "all" && asset.capture?.cameraModel !== filters.camera) return false;
+      if (filters.lens !== "all" && asset.capture?.lens !== filters.lens) return false;
+
+      if (filters.focalLength !== "all") {
+        const fl = asset.capture?.focalLengthMm;
+        if (!fl) return false;
+        if (filters.focalLength === "wide" && fl > 35) return false;
+        if (filters.focalLength === "normal" && (fl <= 35 || fl > 85)) return false;
+        if (filters.focalLength === "tele" && (fl <= 85 || fl > 200)) return false;
+        if (filters.focalLength === "super" && fl <= 200) return false;
       }
-      if (filters.usage === "used" && usageCount === 0) {
-        return false;
+
+      if (filters.iso !== "all") {
+        const iso = asset.capture?.iso;
+        if (!iso) return false;
+        if (filters.iso === "low" && iso > 400) return false;
+        if (filters.iso === "mid" && (iso <= 400 || iso > 1600)) return false;
+        if (filters.iso === "high" && iso <= 1600) return false;
       }
 
       return true;
@@ -127,23 +142,53 @@ export default function AdminLibrary() {
     return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
   };
 
-  const currentConfig = () => ({
+  const allCollections = useMemo(() => {
+    const galleries = Object.keys(libraryData?.galleries || {}).map(slug => ({ slug, type: 'gallery' }));
+    const portfolios = Object.keys(libraryData?.portfolios || {}).map(slug => ({ slug, type: 'portfolio' }));
+    return [...galleries, ...portfolios].sort((a, b) => a.slug.localeCompare(b.slug));
+  }, [libraryData]);
+
+  const collectionsByUrl = useMemo(() => {
+    if (!libraryData) return {};
+    const map = {};
+    Object.entries(libraryData.galleries || {}).forEach(([slug, urls]) => {
+      (urls || []).forEach(url => {
+        if (!map[url]) map[url] = [];
+        map[url].push({ slug, type: 'gallery' });
+      });
+    });
+    Object.entries(libraryData.portfolios || {}).forEach(([slug, urls]) => {
+      (urls || []).forEach(url => {
+        if (!map[url]) map[url] = [];
+        map[url].push({ slug, type: 'portfolio' });
+      });
+    });
+    return map;
+  }, [libraryData]);
+
+  const currentConfig = useCallback(() => ({
     portfolios: libraryData?.portfolios || {},
     galleries: libraryData?.galleries || {},
-  });
+    assets: libraryData?.assets || {},
+  }), [libraryData]);
 
-  // Default upload folder based on selected album
-  const defaultUploadFolder = () => {
-    if (!selectedAlbum || selectedAlbum.type === "all") return "";
-    const folderMap = {
-      landscapes: "photos/landscapes",
-      portraits: "photos/portraits",
-      bollywood: "photos/bollywood",
-      tennis: "photos/tennis",
-      headshots: "photos/headshots",
-    };
-    return folderMap[selectedAlbum.key] || "";
-  };
+  const handleToggleCollection = useCallback(async (imageUrl, slug, type, add) => {
+    const section = type === 'portfolio' ? 'portfolios' : 'galleries';
+    setLibraryData(prev => {
+      if (!prev) return prev;
+      const current = prev[section]?.[slug] || [];
+      const updated = add ? [...new Set([...current, imageUrl])] : current.filter(u => u !== imageUrl);
+      return { ...prev, [section]: { ...prev[section], [slug]: updated } };
+    });
+    const config = currentConfig();
+    const current = config[section][slug] || [];
+    const updated = add ? [...new Set([...current, imageUrl])] : current.filter(u => u !== imageUrl);
+    await fetch("/api/admin/library", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...config, [section]: { ...config[section], [slug]: updated } }),
+    });
+  }, [currentConfig]);
 
   const handleRemove = useCallback(async (imageUrl) => {
     if (selectedAlbum.type === "all") return;
@@ -157,7 +202,7 @@ export default function AdminLibrary() {
       },
     };
     await saveConfig(updated);
-  }, [selectedAlbum, saveConfig]);
+  }, [selectedAlbum, saveConfig, currentConfig]);
 
   const handleDelete = useCallback(async (imageUrl) => {
     const res = await fetch("/api/admin/delete", {
@@ -172,23 +217,69 @@ export default function AdminLibrary() {
     await fetchLibrary();
   }, [fetchLibrary]);
 
-  const handleUploaded = useCallback(async (uploadedUrls) => {
+  const handleUploaded = useCallback(async (uploadedAssets, targetCollection) => {
+    // uploadedAssets: [{ url, width, height }], targetCollection: gallery key or null
     setUploadOpen(false);
-    if (selectedAlbum.type !== "all") {
-      const section = selectedAlbum.type === "portfolio" ? "portfolios" : "galleries";
-      const config = currentConfig();
-      const updated = {
-        ...config,
-        [section]: {
-          ...config[section],
-          [selectedAlbum.key]: [...new Set([...(config[section][selectedAlbum.key] || []), ...uploadedUrls])],
-        },
+    const uploadedUrls = uploadedAssets.map(a => a.url);
+
+    const config = currentConfig();
+
+    // Seed asset dimension metadata for newly uploaded files
+    const assetUpdates = {};
+    for (const { url, width, height } of uploadedAssets) {
+      if (!width || !height) continue;
+      const { createAssetIdFromUrl } = await import('../../common/adminConfig');
+      const assetId = createAssetIdFromUrl(url);
+      const ratio = width / height;
+      assetUpdates[assetId] = {
+        ...(libraryData?.assets?.[assetId] || {}),
+        assetId,
+        publicUrl: url,
+        width,
+        height,
+        aspectRatio: Number(ratio.toFixed(4)),
+        orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
       };
-      await saveConfig(updated);
-    } else {
-      await fetchLibrary();
     }
-  }, [selectedAlbum, saveConfig, fetchLibrary]);
+
+    const updated = {
+      ...config,
+      assets: { ...config.assets, ...assetUpdates },
+    };
+
+    if (targetCollection) {
+      updated.galleries = {
+        ...config.galleries,
+        [targetCollection]: [...new Set([...(config.galleries[targetCollection] || []), ...uploadedUrls])],
+      };
+      setSelectedAlbum({ type: 'gallery', key: targetCollection });
+    }
+
+    await saveConfig(updated);
+  }, [saveConfig, fetchLibrary, currentConfig, libraryData]);
+
+  const handleCaptionChange = useCallback(async (assetId, caption) => {
+    if (!assetId) return;
+    // Optimistic local update — patch both assets map and images array
+    setLibraryData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), caption } },
+        images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, caption } : img),
+      };
+    });
+    const config = currentConfig();
+    const updated = {
+      ...config,
+      assets: { ...config.assets, [assetId]: { ...(config.assets[assetId] || {}), caption } },
+    };
+    await fetch("/api/admin/library", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated),
+    });
+  }, [currentConfig]);
 
   const handleCreateCollection = useCallback(async (name, parentKey = null) => {
     const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
@@ -199,7 +290,20 @@ export default function AdminLibrary() {
     const updated = { ...config, galleries: { ...config.galleries, [key]: [] } }
     await saveConfig(updated)
     setSelectedAlbum({ type: "gallery", key })
-  }, [saveConfig]);
+  }, [saveConfig, currentConfig]);
+
+  const handleDeleteCollection = useCallback(async (key) => {
+    const config = currentConfig()
+    const prefix = key + '/'
+    const filtered = Object.fromEntries(
+      Object.entries(config.galleries).filter(([k]) => k !== key && !k.startsWith(prefix))
+    )
+    const updated = { ...config, galleries: filtered }
+    if (selectedAlbum.type === 'gallery' && (selectedAlbum.key === key || selectedAlbum.key.startsWith(prefix))) {
+      setSelectedAlbum({ type: 'all', key: 'all' })
+    }
+    await saveConfig(updated)
+  }, [saveConfig, currentConfig, selectedAlbum])
 
   // "Add to another album" from PhotoTile ⋯ menu
   const handleAddToAlbum = useCallback((imageUrl) => {
@@ -241,7 +345,7 @@ export default function AdminLibrary() {
       };
       await saveConfig(updated);
     }
-  }, [selectedAlbum, addLibraryTarget, saveConfig]);
+  }, [selectedAlbum, addLibraryTarget, saveConfig, currentConfig]);
 
   if (loading) {
     return (
@@ -284,6 +388,37 @@ export default function AdminLibrary() {
     return acc;
   }, { used: 0, unused: 0 });
 
+  const cameraCounts = allAssets.reduce((acc, asset) => {
+    const cam = asset.capture?.cameraModel;
+    if (cam) acc[cam] = (acc[cam] || 0) + 1;
+    return acc;
+  }, {});
+
+  const lensCounts = allAssets.reduce((acc, asset) => {
+    const lens = asset.capture?.lens;
+    if (lens) acc[lens] = (acc[lens] || 0) + 1;
+    return acc;
+  }, {});
+
+  const focalLengthCounts = allAssets.reduce((acc, asset) => {
+    const fl = asset.capture?.focalLengthMm;
+    if (!fl) return acc;
+    if (fl <= 35) acc.wide = (acc.wide || 0) + 1;
+    else if (fl <= 85) acc.normal = (acc.normal || 0) + 1;
+    else if (fl <= 200) acc.tele = (acc.tele || 0) + 1;
+    else acc.super = (acc.super || 0) + 1;
+    return acc;
+  }, {});
+
+  const isoCounts = allAssets.reduce((acc, asset) => {
+    const iso = asset.capture?.iso;
+    if (!iso) return acc;
+    if (iso <= 400) acc.low = (acc.low || 0) + 1;
+    else if (iso <= 1600) acc.mid = (acc.mid || 0) + 1;
+    else acc.high = (acc.high || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div className="flex h-full overflow-hidden font-sans bg-white">
       <AlbumSidebar
@@ -291,26 +426,36 @@ export default function AdminLibrary() {
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
         onCreateCollection={handleCreateCollection}
+        onDeleteCollection={handleDeleteCollection}
         onUploadClick={() => setUploadOpen(true)}
         sourceCounts={sourceCounts}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
+        cameraCounts={cameraCounts}
+        lensCounts={lensCounts}
+        focalLengthCounts={focalLengthCounts}
+        isoCounts={isoCounts}
         filters={filters}
         onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
       />
       <PhotoGrid
         assets={assets}
         selectedAlbum={selectedAlbum}
+        collectionsByUrl={collectionsByUrl}
+        allCollections={allCollections}
         onRemove={handleRemove}
         onDelete={handleDelete}
         onAddToAlbum={handleAddToAlbum}
+        onCaptionChange={handleCaptionChange}
+        onToggleCollection={handleToggleCollection}
         onUploadClick={() => setUploadOpen(true)}
         onAddFromLibraryClick={handleAddFromLibrary}
       />
 
       {uploadOpen && (
         <UploadModal
-          defaultFolder={defaultUploadFolder()}
+          collections={Object.keys(libraryData?.galleries || {})}
+          defaultCollection={selectedAlbum.type === 'gallery' ? selectedAlbum.key : null}
           onClose={() => setUploadOpen(false)}
           onUploaded={handleUploaded}
         />

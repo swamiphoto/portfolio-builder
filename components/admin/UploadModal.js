@@ -1,30 +1,66 @@
 import { useState, useRef } from "react";
 
-const KNOWN_FOLDERS = [
-  "photos/library",
-  "photos/landscapes",
-  "photos/portraits",
-  "photos/bollywood",
-  "photos/tennis",
-  "photos/headshots",
-  "photos/landscapes/arizona",
-  "photos/landscapes/california",
-  "photos/portraits/sunol",
-  "photos/portraits/naga-sunflowers",
-];
+function readImageDimensions(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }) }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: null, height: null }) }
+    img.src = url
+  })
+}
 
-export default function UploadModal({ defaultFolder, onClose, onUploaded }) {
+async function generateThumbnail(file, maxWidth = 600) {
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, maxWidth / bitmap.width)
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bitmap.width * scale)
+    canvas.height = Math.round(bitmap.height * scale)
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82))
+  } catch {
+    return null
+  }
+}
+
+async function uploadToSignedUrl(signedUrl, blob, contentType) {
+  const formData = new FormData()
+  Object.entries(signedUrl.fields).forEach(([k, v]) => formData.append(k, v))
+  formData.append('file', blob)
+  const res = await fetch(signedUrl.url, { method: 'POST', body: formData })
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
+}
+
+function deriveSlug(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+export default function UploadModal({ collections = [], defaultCollection = null, onClose, onUploaded }) {
   const [files, setFiles] = useState([]);
-  const [folder, setFolder] = useState(defaultFolder || "");
+  const [selectedCollection, setSelectedCollection] = useState(defaultCollection || "");
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newParent, setNewParent] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState({}); // filename → 'pending' | 'done' | 'error'
+  const [progress, setProgress] = useState({});
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
 
+  const sortedCollections = [...collections].sort();
+
+  const getTargetCollection = () => {
+    if (creating) {
+      const slug = deriveSlug(newName);
+      if (!slug) return null;
+      return newParent ? `${newParent}/${slug}` : slug;
+    }
+    return selectedCollection || null;
+  };
+
   const addFiles = (newFiles) => {
-    const arr = Array.from(newFiles).filter((f) =>
-      /\.(jpg|jpeg|png|gif)$/i.test(f.name)
-    );
+    const arr = Array.from(newFiles).filter((f) => /\.(jpg|jpeg|png|gif)$/i.test(f.name));
     setFiles((prev) => [...prev, ...arr]);
   };
 
@@ -36,38 +72,32 @@ export default function UploadModal({ defaultFolder, onClose, onUploaded }) {
 
   const handleUpload = async () => {
     if (files.length === 0) return;
+    const targetCollection = getTargetCollection();
     setUploading(true);
-    const uploadedUrls = [];
+    const uploadedAssets = [];
 
     for (const file of files) {
       setProgress((p) => ({ ...p, [file.name]: "pending" }));
       try {
-        // 1. Get signed policy from our API
+        const [{ width, height }, thumb] = await Promise.all([
+          readImageDimensions(file),
+          generateThumbnail(file),
+        ]);
+
         const res = await fetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-            folder: folder || undefined,
-          }),
+          body: JSON.stringify({ filename: file.name, contentType: file.type, folder: targetCollection || undefined }),
         });
-        const { signedUrl, gcsUrl } = await res.json();
+        const { signedUrl, thumbSignedUrl, gcsUrl } = await res.json();
 
-        // 2. POST file directly to GCS using the signed policy
-        const formData = new FormData();
-        Object.entries(signedUrl.fields).forEach(([k, v]) => formData.append(k, v));
-        formData.append("file", file);
-
-        const uploadRes = await fetch(signedUrl.url, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+        await Promise.all([
+          uploadToSignedUrl(signedUrl, file, file.type),
+          thumb && thumbSignedUrl ? uploadToSignedUrl(thumbSignedUrl, thumb, 'image/jpeg') : Promise.resolve(),
+        ]);
 
         setProgress((p) => ({ ...p, [file.name]: "done" }));
-        uploadedUrls.push(gcsUrl);
+        uploadedAssets.push({ url: gcsUrl, width, height });
       } catch (err) {
         console.error("Upload error for", file.name, err);
         setProgress((p) => ({ ...p, [file.name]: "error" }));
@@ -75,8 +105,11 @@ export default function UploadModal({ defaultFolder, onClose, onUploaded }) {
     }
 
     setUploading(false);
-    if (uploadedUrls.length > 0) onUploaded(uploadedUrls);
+    if (uploadedAssets.length > 0) onUploaded(uploadedAssets, targetCollection);
   };
+
+  const previewSlug = creating && newName.trim() ? deriveSlug(newName) : null;
+  const previewKey = previewSlug ? (newParent ? `${newParent}/${previewSlug}` : previewSlug) : null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -129,21 +162,63 @@ export default function UploadModal({ defaultFolder, onClose, onUploaded }) {
           </div>
         )}
 
-        {/* Folder picker */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            GCS folder <span className="text-gray-400 font-normal">(optional — blank = photos/library)</span>
-          </label>
-          <input
-            list="folder-options"
-            value={folder}
-            onChange={(e) => setFolder(e.target.value)}
-            placeholder="photos/landscapes"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500"
-          />
-          <datalist id="folder-options">
-            {KNOWN_FOLDERS.map((f) => <option key={f} value={f} />)}
-          </datalist>
+        {/* Collection picker */}
+        <div className="mb-5">
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Add to collection</label>
+          {!creating ? (
+            <div className="flex gap-2">
+              <select
+                value={selectedCollection}
+                onChange={(e) => setSelectedCollection(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500 bg-white text-gray-700"
+              >
+                <option value="">Library only (no collection)</option>
+                {sortedCollections.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setCreating(true)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+              >
+                + New
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <select
+                  value={newParent}
+                  onChange={(e) => setNewParent(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500 bg-white text-gray-700"
+                  style={{ width: '45%' }}
+                >
+                  <option value="">Top level</option>
+                  {sortedCollections.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <input
+                  autoFocus
+                  placeholder="Collection name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500"
+                />
+              </div>
+              {previewKey && (
+                <div className="text-xs text-gray-400">
+                  Will create: <span className="font-mono text-gray-600">{previewKey}</span>
+                </div>
+              )}
+              <button
+                onClick={() => { setCreating(false); setNewName(""); setNewParent(""); }}
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                ← Pick existing instead
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">
@@ -155,7 +230,7 @@ export default function UploadModal({ defaultFolder, onClose, onUploaded }) {
           </button>
           <button
             onClick={handleUpload}
-            disabled={files.length === 0 || uploading}
+            disabled={files.length === 0 || uploading || (creating && !previewKey)}
             className="flex-1 bg-gray-900 text-white text-sm py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading ? "Uploading…" : `Upload ${files.length} photo${files.length !== 1 ? "s" : ""}`}

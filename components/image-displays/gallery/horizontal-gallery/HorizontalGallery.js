@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { getCloudimageUrl } from "../../../../common/images";
+import { getSizedUrl } from "../../../../common/imageUtils";
 import "./HorizontalGallery.module.css";
 import { useRouter } from "next/router";
 
@@ -97,7 +97,7 @@ const HorizontalGallery = ({ name, images, texts, description }) => {
         )}
 
         {images.map((image, index) => (
-          <img key={index} data-src={getCloudimageUrl(image, { width: 1000, quality: 75 })} className="max-h-[calc(100vh-40px)] object-cover mx-3 lazy-load transition-opacity duration-500 ease-in shadow-lg" onError={(e) => e.target.classList.add("hidden")} />
+          <img key={index} src={getSizedUrl(image, 'display')} className="max-h-[calc(100vh-40px)] object-cover mx-3 lazy-load transition-opacity duration-500 ease-in shadow-lg" onError={(e) => e.target.classList.add("hidden")} />
         ))}
       </div>
     </div>

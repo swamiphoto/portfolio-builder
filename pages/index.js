@@ -7,14 +7,8 @@ export default function Home() {
   useEffect(() => {
     if (status !== 'authenticated') return
     // Already signed in — send to post-login handler which redirects to subdomain admin or onboarding
-    fetch('/api/auth/post-login').then((res) => {
-      if (res.redirected) window.location.href = res.url
-    }).catch(() => {
-      window.location.href = '/onboarding'
-    })
+    window.location.href = '/auth/post-login'
   }, [status])
-
-  if (status === 'loading') return null
 
   if (status === 'authenticated') {
     return (
@@ -32,7 +26,7 @@ export default function Home() {
           Beautiful photography portfolios in under 2 minutes.
         </p>
         <button
-          onClick={() => signIn('google', { callbackUrl: '/api/auth/post-login' })}
+          onClick={() => signIn('google', { callbackUrl: '/auth/post-login' })}
           className="px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
         >
           Sign in with Google

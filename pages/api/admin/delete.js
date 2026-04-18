@@ -1,10 +1,11 @@
-import { downloadJSON, uploadJSON, deleteFile, CONFIG_PATH, PUBLIC_URL } from '../../../common/gcsClient'
+import { downloadJSON, uploadJSON, deleteFile, PUBLIC_URL } from '../../../common/gcsClient'
 import { removeFromAllAlbums } from '../../../common/adminConfig'
+import { getUserLibraryConfigPath, getUserPhotosPrefix } from '../../../common/gcsUser'
 import { withAuth } from '../../../common/withAuth'
 
-async function readConfig() {
+async function readConfig(userId) {
   try {
-    return await downloadJSON(CONFIG_PATH)
+    return await downloadJSON(getUserLibraryConfigPath(userId))
   } catch {
     return { portfolios: {}, galleries: {} }
   }
@@ -22,13 +23,18 @@ async function handler(req, res, user) {
   }
 
   const key = imageUrl.replace(`${PUBLIC_URL}/`, '')
+  const userPrefix = getUserPhotosPrefix(user.id)
+
+  if (!key.startsWith(userPrefix)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
 
   try {
     await deleteFile(key)
 
-    const config = await readConfig()
+    const config = await readConfig(user.id)
     const updatedConfig = removeFromAllAlbums(config, imageUrl)
-    await uploadJSON(CONFIG_PATH, updatedConfig)
+    await uploadJSON(getUserLibraryConfigPath(user.id), updatedConfig)
 
     return res.status(200).json({ ok: true })
   } catch (err) {

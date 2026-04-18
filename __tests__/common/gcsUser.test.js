@@ -2,6 +2,7 @@ import {
   getUserPrefix,
   getUserSiteConfigPath,
   getUserLibraryConfigPath,
+  getUserGalleriesConfigPath,
   getUserPhotoPath,
   getUserPhotosPrefix,
 } from '../../common/gcsUser'
@@ -29,6 +30,12 @@ describe('getUserSiteConfigPath', () => {
 describe('getUserLibraryConfigPath', () => {
   it('returns the correct GCS path', () => {
     expect(getUserLibraryConfigPath('abc123')).toBe('users/abc123/library-config.json')
+  })
+})
+
+describe('getUserGalleriesConfigPath', () => {
+  it('returns the correct GCS path', () => {
+    expect(getUserGalleriesConfigPath('abc123')).toBe('users/abc123/galleries-config.json')
   })
 })
 

@@ -68,10 +68,13 @@ function getDateValue(v) {
 export default function PhotoGrid({
   assets,
   selectedAlbum,
+  collectionsByUrl,
+  allCollections,
   onRemove,
   onDelete,
   onAddToAlbum,
   onCaptionChange,
+  onToggleCollection,
   onUploadClick,
   onAddFromLibraryClick,
 }) {
@@ -251,18 +254,28 @@ export default function PhotoGrid({
             caption: a.caption || '',
             originalFilename: a.originalFilename,
             bytes: a.bytes,
+            width: a.width,
+            height: a.height,
             source: a.source,
             capture: a.capture,
             usage: a.usage,
             orientation: a.orientation,
             assetId: a.assetId,
+            createdAt: a.createdAt,
+            updatedAt: a.updatedAt,
+            collections: collectionsByUrl?.[a.publicUrl] || [],
           }))}
+          allCollections={allCollections}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}
           onCaptionChange={(i, newCaption) => {
             const asset = processedAssets[i];
             if (asset && onCaptionChange) onCaptionChange(asset.assetId, newCaption);
+          }}
+          onToggleCollection={(slug, type, add) => {
+            const asset = processedAssets[lightboxIndex];
+            if (asset && onToggleCollection) onToggleCollection(asset.publicUrl, slug, type, add);
           }}
         />
       )}

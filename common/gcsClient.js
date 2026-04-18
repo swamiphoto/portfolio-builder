@@ -15,8 +15,17 @@ const s3 = new S3Client({
 export const BUCKET = process.env.R2_BUCKET_NAME || 'photohub'
 export const PUBLIC_URL = process.env.R2_PUBLIC_URL || 'https://pub-placeholder.r2.dev'
 
-export const CONFIG_PATH = 'photos/library-config.json'
-export const FALLBACK_FOLDER = 'photos/library'
+// Returns the appropriate sized URL for a given context.
+// 'thumbnail' → 600px  (library grid)
+// 'display'   → 1800px (page galleries, lightbox)
+// 'original'  → full resolution (download)
+export function getSizedUrl(publicUrl, size = 'display') {
+  if (!publicUrl) return publicUrl
+  if (size === 'original') return publicUrl
+  return publicUrl
+    .replace('/photos/', `/${size}/`)
+    .replace(/\.[^.]+$/, '.jpg')
+}
 
 /**
  * List all objects under a GCS-style prefix. Returns full GCS-style paths (Key strings).
@@ -43,7 +52,7 @@ export async function listFiles(prefix) {
 
 /**
  * Download and parse a JSON file from R2.
- * @param {string} key - e.g. 'photos/library-config.json'
+ * @param {string} key - e.g. 'users/{userId}/library-config.json'
  * @returns {Promise<object>}
  */
 export async function downloadJSON(key) {
