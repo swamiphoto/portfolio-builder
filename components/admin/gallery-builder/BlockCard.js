@@ -107,6 +107,7 @@ export default function BlockCard({
   sourcePageId,
   blockIndex,
   onRemoveImagesFromBlock,
+  onMoveImagesAcrossBlocks,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -185,9 +186,11 @@ export default function BlockCard({
     const existingRefs = normalizeImageRefs(block.images || block.imageUrls || []);
     const toAdd = incomingRefs.filter(r => !existingRefs.some(ex => ex.url === r.url));
     if (!toAdd.length) return;
-    onUpdate({ ...block, ...buildMultiImageFields([...existingRefs, ...toAdd]) });
-    if (sourceBlockIndexFromDrop !== null && onRemoveImagesFromBlock) {
-      onRemoveImagesFromBlock(sourceBlockIndexFromDrop, incomingRefs);
+    const updatedTarget = { ...block, ...buildMultiImageFields([...existingRefs, ...toAdd]) };
+    if (sourceBlockIndexFromDrop !== null && onMoveImagesAcrossBlocks) {
+      onMoveImagesAcrossBlocks(sourceBlockIndexFromDrop, incomingRefs, blockIndex, updatedTarget);
+    } else {
+      onUpdate(updatedTarget);
     }
   };
 
@@ -315,9 +318,11 @@ export default function BlockCard({
                   }
                   if (!url) url = e.dataTransfer.getData('text/plain');
                   if (url) {
-                    onUpdate({ ...block, imageUrl: url });
-                    if (srcIdx !== null && srcRefs && onRemoveImagesFromBlock) {
-                      onRemoveImagesFromBlock(srcIdx, srcRefs);
+                    const updatedTarget = { ...block, imageUrl: url };
+                    if (srcIdx !== null && srcRefs && onMoveImagesAcrossBlocks) {
+                      onMoveImagesAcrossBlocks(srcIdx, srcRefs, blockIndex, updatedTarget);
+                    } else {
+                      onUpdate(updatedTarget);
                     }
                   }
                 }}

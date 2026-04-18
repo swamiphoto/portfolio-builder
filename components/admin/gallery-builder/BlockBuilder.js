@@ -133,6 +133,22 @@ export default function BlockBuilder({
     onChange({ ...gallery, blocks });
   };
 
+  const moveImagesBetweenBlocks = (sourceBlockIndex, imageRefs, targetBlockIndex, updatedTargetBlock) => {
+    const blocks = [...(gallery.blocks || [])];
+    blocks[targetBlockIndex] = updatedTargetBlock;
+    const src = blocks[sourceBlockIndex];
+    if (src) {
+      const urls = new Set(imageRefs.map(r => r.url));
+      if (src.type === 'photo') {
+        if (urls.has(src.imageUrl)) blocks[sourceBlockIndex] = { ...src, imageUrl: '' };
+      } else {
+        const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter(r => !urls.has(r.url));
+        blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) };
+      }
+    }
+    onChange({ ...gallery, blocks });
+  };
+
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     const blocks = Array.from(gallery.blocks || []);
@@ -329,6 +345,7 @@ export default function BlockBuilder({
                             sourcePageId={sourcePageId}
                             blockIndex={index}
                             onRemoveImagesFromBlock={(srcIdx, refs) => removeImagesFromBlock(srcIdx, refs)}
+                            onMoveImagesAcrossBlocks={(srcIdx, refs, tgtIdx, updatedTgt) => moveImagesBetweenBlocks(srcIdx, refs, tgtIdx, updatedTgt)}
                           />
                         </div>
                       )}
