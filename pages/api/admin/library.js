@@ -1,9 +1,10 @@
-import { listFiles, downloadJSON, uploadJSON, CONFIG_PATH, PUBLIC_URL } from '../../../common/gcsClient'
-import { seedConfig, mergeLibraryData } from '../../../common/adminConfig'
+import { listFiles, downloadJSON, uploadJSON, PUBLIC_URL } from '../../../common/gcsClient'
+import { seedConfig, mergeLibraryData, normalizeLibraryConfig } from '../../../common/adminConfig'
+import { getUserLibraryConfigPath, getUserPhotosPrefix } from '../../../common/gcsUser'
 import { withAuth } from '../../../common/withAuth'
 
-async function listAllImages() {
-  const keys = await listFiles('photos/')
+async function listAllImages(userId) {
+  const keys = await listFiles(getUserPhotosPrefix(userId))
   return keys
     .filter(k => /\.(jpg|jpeg|png|gif)$/i.test(k))
     .map(k => ({
@@ -15,40 +16,54 @@ async function listAllImages() {
     }))
 }
 
-async function listFolder(folderPath) {
-  const keys = await listFiles(`photos/${folderPath}/`)
-  return keys
-    .filter(k => /\.(jpg|jpeg|png|gif)$/i.test(k))
-    .map(k => `${PUBLIC_URL}/${k}`)
-}
-
-async function readConfig() {
+async function readConfig(userId) {
   try {
-    return await downloadJSON(CONFIG_PATH)
+    return await downloadJSON(getUserLibraryConfigPath(userId))
   } catch {
     return null // doesn't exist yet
   }
 }
 
-async function writeConfig(config) {
-  await uploadJSON(CONFIG_PATH, config)
+async function writeConfig(userId, config) {
+  await uploadJSON(getUserLibraryConfigPath(userId), config)
+}
+
+function mergeIncomingConfig(existingConfig, incomingConfig) {
+  return normalizeLibraryConfig({
+    ...existingConfig,
+    ...incomingConfig,
+    portfolios: incomingConfig.portfolios ?? existingConfig.portfolios,
+    galleries: incomingConfig.galleries ?? existingConfig.galleries,
+    assets: incomingConfig.assets ?? existingConfig.assets,
+    assetOrder: incomingConfig.assetOrder ?? existingConfig.assetOrder,
+    collections: incomingConfig.collections ?? existingConfig.collections,
+    savedViews: incomingConfig.savedViews ?? existingConfig.savedViews,
+  })
 }
 
 async function handler(req, res, user) {
   if (req.method === 'GET') {
     try {
       const [allImages, existingConfig] = await Promise.all([
-        listAllImages(),
-        readConfig(),
+        listAllImages(user.id),
+        readConfig(user.id),
       ])
 
-      let config = existingConfig
-      if (!config) {
-        config = await seedConfig(listFolder)
-        await writeConfig(config)
+      const config = existingConfig || await seedConfig()
+      const normalizedConfig = normalizeLibraryConfig(config, allImages)
+
+      const shouldPersist =
+        !existingConfig ||
+        existingConfig.version !== normalizedConfig.version ||
+        !existingConfig.assets ||
+        Object.keys(existingConfig.assets || {}).length !== Object.keys(normalizedConfig.assets).length ||
+        !Array.isArray(existingConfig.assetOrder)
+
+      if (shouldPersist) {
+        await writeConfig(user.id, normalizedConfig)
       }
 
-      const data = mergeLibraryData(allImages, config)
+      const data = mergeLibraryData(allImages, normalizedConfig)
       return res.status(200).json(data)
     } catch (err) {
       console.error('GET /api/admin/library error:', err)
@@ -58,11 +73,15 @@ async function handler(req, res, user) {
 
   if (req.method === 'PUT') {
     try {
-      const config = req.body
-      if (!config || typeof config !== 'object') {
+      const incomingConfig = req.body
+      if (!incomingConfig || typeof incomingConfig !== 'object') {
         return res.status(400).json({ error: 'Invalid config body' })
       }
-      await writeConfig(config)
+
+      const existingConfig = await readConfig(user.id) || await seedConfig()
+      const nextConfig = mergeIncomingConfig(existingConfig, incomingConfig)
+
+      await writeConfig(user.id, nextConfig)
       return res.status(200).json({ ok: true })
     } catch (err) {
       console.error('PUT /api/admin/library error:', err)
@@ -70,7 +89,38 @@ async function handler(req, res, user) {
     }
   }
 
+  if (req.method === 'PATCH') {
+    try {
+      const { assetId, patch } = req.body || {}
+      if (!assetId || !patch || typeof patch !== 'object') {
+        return res.status(400).json({ error: 'assetId and patch required' })
+      }
+      const existingConfig = await readConfig(user.id)
+      const asset = existingConfig?.assets?.[assetId]
+      if (!asset) return res.status(404).json({ error: 'asset not found' })
+      const nextAsset = { ...asset }
+      if ('caption' in patch) nextAsset.caption = String(patch.caption ?? '')
+      const next = {
+        ...existingConfig,
+        assets: { ...existingConfig.assets, [assetId]: nextAsset },
+      }
+      await writeConfig(user.id, next)
+      return res.status(200).json({ ok: true })
+    } catch (err) {
+      console.error('PATCH /api/admin/library error:', err)
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
   return res.status(405).json({ error: 'Method not allowed' })
+}
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
 }
 
 export default withAuth(handler)
