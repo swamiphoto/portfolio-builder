@@ -1,8 +1,9 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
+import { DragDropContext } from '@hello-pangea/dnd'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
-import { buildNavTree, flattenForOtherPages } from '../../../common/pagesTree'
+import { buildNavTree, flattenForOtherPages, movePage } from '../../../common/pagesTree'
 import { defaultPage } from '../../../common/siteConfig'
 
 function SaveBadge({ status }) {
@@ -90,6 +91,23 @@ export default function PlatformSidebar({
     onSelectPage?.(id)
     setRenamingId(id)
     setRenameValue(title)
+  }
+
+  function handlePageDragEnd(result) {
+    if (!result.destination) return
+    const { draggableId: pageId, destination } = result
+    const dest = destination.droppableId
+
+    let patch
+    if (dest === 'other-pages') {
+      patch = { showInNav: false, sortOrder: destination.index }
+    } else if (dest === 'main-nav') {
+      patch = { showInNav: true, parentId: null, sortOrder: destination.index }
+    } else {
+      // dest is a page id (nesting under that parent)
+      patch = { showInNav: true, parentId: dest, sortOrder: destination.index }
+    }
+    onConfigChange(prev => ({ ...prev, pages: movePage(prev.pages, pageId, patch) }))
   }
 
   function renderPageRow(page) {
@@ -220,16 +238,20 @@ export default function PlatformSidebar({
 
       {/* Pages */}
       <div className="flex-1 overflow-y-auto">
-        <SidebarSection
-          label="Main Nav"
-          pages={buildNavTree(pages)}
-          renderRow={renderPageRow}
-        />
-        <SidebarSection
-          label="Other Pages"
-          pages={flattenForOtherPages(pages)}
-          renderRow={renderPageRow}
-        />
+        <DragDropContext onDragEnd={handlePageDragEnd}>
+          <SidebarSection
+            label="Main Nav"
+            pages={buildNavTree(pages)}
+            renderRow={renderPageRow}
+            droppableId="main-nav"
+          />
+          <SidebarSection
+            label="Other Pages"
+            pages={flattenForOtherPages(pages)}
+            renderRow={renderPageRow}
+            droppableId="other-pages"
+          />
+        </DragDropContext>
         <button
           onClick={handleAddPage}
           className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50 mt-1 mx-2"
