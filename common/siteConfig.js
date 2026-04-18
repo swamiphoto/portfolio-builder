@@ -33,15 +33,38 @@ export function createDefaultSiteConfig(userId) {
     customDomain: null,
     publishedAt: null,
     pages: [
-      {
-        id: 'home',
-        title: 'Home',
-        showInNav: false,
-        thumbnail: null,
-        thumbnailUrl: '',
-        blocks: [],
-      },
+      defaultPage({ id: 'home', title: 'Home', showInNav: false }),
     ],
+  }
+}
+
+export function defaultPage(overrides = {}) {
+  return {
+    id: overrides.id || 'page',
+    title: overrides.title || 'New Page',
+    description: '',
+    slug: overrides.id || 'page',
+    parentId: null,
+    showInNav: overrides.showInNav ?? true,
+    sortOrder: overrides.sortOrder ?? 0,
+    password: '',
+    cover: null,
+    thumbnail: { imageUrl: '', useCover: true },
+    thumbnailUrl: '', // legacy mirror; kept for back-compat with normalizers
+    slideshow: {
+      enabled: false,
+      layout: 'kenburns',
+      musicUrl: '',
+    },
+    clientFeatures: {
+      enabled: false,
+      passwordHash: '',
+      watermarkEnabled: false,
+      votingEnabled: false,
+      downloadEnabled: false,
+    },
+    blocks: [],
+    ...overrides,
   }
 }
 

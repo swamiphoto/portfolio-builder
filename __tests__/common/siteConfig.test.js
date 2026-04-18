@@ -24,6 +24,7 @@ describe('createDefaultSiteConfig', () => {
     expect(config.pages[0].id).toBe('home')
     expect(config.pages[0].title).toBe('Home')
     expect(config.pages[0].showInNav).toBe(false)
+    expect(config.pages[0].thumbnail).toEqual({ imageUrl: '', useCover: true })
     expect(config.pages[0].thumbnailUrl).toBe('')
     expect(config.pages[0]).not.toHaveProperty('type')
     expect(config.pages[0]).not.toHaveProperty('albums')

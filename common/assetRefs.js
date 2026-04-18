@@ -117,12 +117,48 @@ export function normalizeGalleryEntity(gallery) {
 export function normalizePageEntity(page) {
   if (!page || typeof page !== "object") return page;
 
-  const thumbnail = normalizeImageRef(page.thumbnail || page.thumbnailUrl);
+  // Back-compat: thumbnail used to be an image ref (or null). Detect and migrate.
+  let thumbnail = page.thumbnail;
+  if (!thumbnail || typeof thumbnail !== "object" || "url" in thumbnail) {
+    const ref = normalizeImageRef(page.thumbnail || page.thumbnailUrl);
+    thumbnail = { imageUrl: ref?.url || "", useCover: !ref };
+  } else {
+    thumbnail = {
+      imageUrl: thumbnail.imageUrl || "",
+      useCover: thumbnail.useCover ?? true,
+    };
+  }
+
+  let cover = page.cover || null;
+  if (cover) {
+    cover = {
+      imageUrl: cover.imageUrl || "",
+      height: cover.height === "partial" ? "partial" : "full",
+      overlayText: cover.overlayText || "",
+    };
+  }
 
   return {
     ...page,
+    parentId: page.parentId ?? null,
+    showInNav: page.showInNav ?? true,
+    sortOrder: page.sortOrder ?? 0,
+    password: page.password || "",
+    cover,
     thumbnail,
-    thumbnailUrl: thumbnail?.url || "",
+    thumbnailUrl: thumbnail.imageUrl, // legacy mirror, derived
+    slideshow: {
+      enabled: page.slideshow?.enabled ?? false,
+      layout: page.slideshow?.layout || "kenburns",
+      musicUrl: page.slideshow?.musicUrl || "",
+    },
+    clientFeatures: {
+      enabled: page.clientFeatures?.enabled ?? false,
+      passwordHash: page.clientFeatures?.passwordHash || "",
+      watermarkEnabled: page.clientFeatures?.watermarkEnabled ?? false,
+      votingEnabled: page.clientFeatures?.votingEnabled ?? false,
+      downloadEnabled: page.clientFeatures?.downloadEnabled ?? false,
+    },
     blocks: (page.blocks || []).map((block) => normalizeBlockImageFields(block)),
   };
 }
