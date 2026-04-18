@@ -1,4 +1,23 @@
+// Server-side only — never import from client components.
+import { downloadJSON } from './gcsClient'
+import { getUserLibraryConfigPath } from './gcsUser'
+
 export const LIBRARY_CONFIG_VERSION = 2;
+
+/**
+ * Read the library config for a user from R2.
+ * Returns an empty config if the file doesn't exist yet.
+ * @param {string} userId
+ * @returns {Promise<object>}
+ */
+export async function readLibraryConfig(userId) {
+  try {
+    return await downloadJSON(getUserLibraryConfigPath(userId))
+  } catch (err) {
+    if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return { assets: {} }
+    throw err
+  }
+}
 
 function uniqueStrings(values = []) {
   return [...new Set((values || []).filter((value) => typeof value === "string" && value.trim()))];
@@ -114,7 +133,7 @@ function normalizeUsage(usage = {}) {
     pageIds,
     galleryIds,
     blockIds,
-    usageCount: (cover ? 1 : 0) + pageIds.length + galleryIds.length + blockIds.length,
+    usageCount: (cover ? 1 : 0) + pageIds.length + blockIds.length,
     lastUsedAt: usage.lastUsedAt || null,
   };
 }
