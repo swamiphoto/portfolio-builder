@@ -1,7 +1,7 @@
 # Unified Page Model & Navigation — Design Spec
 
 **Date:** 2026-04-18
-**Status:** Draft
+**Status:** Implemented (V1)
 **Related:** `docs/designs/photohub-platform-design.md`
 
 ## Problem
