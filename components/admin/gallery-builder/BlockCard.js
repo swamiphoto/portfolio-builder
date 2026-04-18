@@ -175,7 +175,7 @@ export default function BlockCard({
     : [];
 
   const singlePhotoImages = block.type === "photo" && (block.imageUrl || block.image)
-    ? [{ url: block.imageUrl || block.image?.url || '', caption: block.caption || '' }]
+    ? [{ url: block.imageUrl || block.image?.url || '', ...(block.caption !== undefined ? { caption: block.caption } : {}) }]
     : [];
 
   return (
@@ -314,7 +314,8 @@ export default function BlockCard({
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
-                      const ref = { url: block.imageUrl, caption: block.caption || '', assetId: null };
+                      const ref = { url: block.imageUrl, assetId: null };
+                      if (block.caption !== undefined) ref.caption = block.caption;
                       const payload = { imageRefs: [ref], sourceBlockType: block.type, sourceBlockKey: blockKeyRef.current, sourceBlockIndex: blockIndex };
                       e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
                       e.dataTransfer.setData('text/plain', block.imageUrl);

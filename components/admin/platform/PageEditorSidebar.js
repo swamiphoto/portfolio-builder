@@ -45,9 +45,12 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   const assetsByUrl = useMemo(() => {
     const map = {}
-    ;(libraryData?.images || []).forEach(a => { map[a.publicUrl] = a })
+    const assets = libraryConfig?.assets || {}
+    for (const a of Object.values(assets)) {
+      if (a?.publicUrl) map[a.publicUrl] = a
+    }
     return map
-  }, [libraryData])
+  }, [libraryConfig])
 
   const allCollections = useMemo(() => {
     const galleries = Object.keys(libraryData?.galleries || {}).map(slug => ({ slug, type: 'gallery' }))
