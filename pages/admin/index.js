@@ -228,6 +228,7 @@ export default function AdminIndex() {
           blocks: selectedPage.blocks || [],
         }}
         pages={siteConfig.pages}
+        assetsByUrl={assetsByUrl}
       />
     )
   } else {
