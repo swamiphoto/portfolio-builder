@@ -186,6 +186,7 @@ function createAssetRecord(assetId, imageRecord, existingAsset = {}, portfolios 
     alt: existingAsset.alt || "",
     tags: uniqueStrings(existingAsset.tags),
     collectionIds: uniqueStrings(existingAsset.collectionIds),
+    forSale: existingAsset.forSale ?? false,
     source: {
       type: existingAsset.source?.type || "upload",
       provider: existingAsset.source?.provider || "manual",

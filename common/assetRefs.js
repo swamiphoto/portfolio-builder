@@ -78,6 +78,7 @@ export function normalizeBlockImageFields(block) {
     return {
       ...block,
       ...buildSingleImageFields(block.image || block.imageUrl),
+      clientOnly: block.clientOnly ?? false,
     };
   }
 
@@ -85,10 +86,14 @@ export function normalizeBlockImageFields(block) {
     return {
       ...block,
       ...buildMultiImageFields(block.images || block.imageUrls || []),
+      clientOnly: block.clientOnly ?? false,
     };
   }
 
-  return block;
+  return {
+    ...block,
+    clientOnly: block.clientOnly ?? false,
+  };
 }
 
 export function normalizeGalleryEntity(gallery) {

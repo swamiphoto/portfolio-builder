@@ -217,3 +217,19 @@ describe('mergeLibraryData rollup counts', () => {
     expect(merged.counts['portraits/mala']).toBe(2)
   })
 })
+
+describe('normalizeLibraryConfig — forSale reserved', () => {
+  it('defaults forSale to false when not present on the input asset', () => {
+    const config = normalizeLibraryConfig({
+      assets: { ast_1: { assetId: 'ast_1', publicUrl: 'https://x/a.jpg' } },
+    })
+    expect(config.assets.ast_1.forSale).toBe(false)
+  })
+
+  it('preserves forSale=true when set on the input asset', () => {
+    const config = normalizeLibraryConfig({
+      assets: { ast_1: { assetId: 'ast_1', publicUrl: 'https://x/a.jpg', forSale: true } },
+    })
+    expect(config.assets.ast_1.forSale).toBe(true)
+  })
+})
