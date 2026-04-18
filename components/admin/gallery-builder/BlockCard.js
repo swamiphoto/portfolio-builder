@@ -26,23 +26,14 @@ function PaintbrushIcon() {
   );
 }
 
-function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPreview, selected }) {
-  const [editing, setEditing] = useState(false);
-  const [caption, setCaption] = useState(imageRef.caption || '');
-  const inputRef = useRef(null);
-
-  useEffect(() => { setCaption(imageRef.caption || ''); }, [imageRef.caption]);
-
-  const commit = () => {
-    setEditing(false);
-    if (caption !== (imageRef.caption || '')) onUpdateCaption(caption);
-  };
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }) {
+  const caption = imageRef.caption || ''
 
   return (
     <div
       {...dragHandleProps}
       className={`relative group/thumb aspect-square bg-stone-100 overflow-hidden cursor-grab ${selected ? 'ring-2 ring-inset ring-blue-500' : ''}`}
-      onClick={(e) => !editing && onPreview && onPreview(e)}
+      onClick={onPreview}
     >
       <img
         src={getSizedUrl(imageRef.url, 'thumbnail')}
@@ -56,31 +47,9 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPr
           ✓
         </div>
       )}
-      {/* Caption overlay — shows current caption on hover, click to edit */}
-      {!editing && (
-        <div
-          className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-[9px] px-1.5 py-1 opacity-0 group-hover/thumb:opacity-100 transition-opacity cursor-text leading-tight"
-          onClick={(e) => { e.stopPropagation(); setEditing(true); setTimeout(() => inputRef.current?.focus(), 30); }}
-        >
-          {caption || <span className="italic text-white/50">caption…</span>}
-        </div>
-      )}
-      {editing && (
-        <div className="absolute inset-x-0 bottom-0 z-20 bg-white p-1">
-          <input
-            ref={inputRef}
-            type="text"
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commit();
-              if (e.key === 'Escape') { setCaption(imageRef.caption || ''); setEditing(false); }
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full text-[9px] text-stone-800 outline-none border-b border-stone-400 pb-0.5 bg-transparent"
-            placeholder="Caption…"
-          />
+      {caption && (
+        <div className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-[9px] px-1.5 py-1 opacity-0 group-hover/thumb:opacity-100 transition-opacity leading-tight pointer-events-none">
+          {caption}
         </div>
       )}
       <button
@@ -90,7 +59,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onUpdateCaption, onPr
         ×
       </button>
     </div>
-  );
+  )
 }
 
 export default function BlockCard({
@@ -377,12 +346,6 @@ export default function BlockCard({
                   </div>
                 )}
               </div>
-              <input
-                className={INPUT}
-                placeholder="Caption"
-                value={block.caption || ""}
-                onChange={(e) => onUpdate({ ...block, caption: e.target.value })}
-              />
             </>
           )}
 
@@ -399,7 +362,12 @@ export default function BlockCard({
                 </div>
               ) : (
                 <div className={`grid grid-cols-3 gap-px transition-all ${gridDropHover ? 'bg-blue-400 opacity-60' : 'bg-stone-200'}`}>
-                  {blockImageRefs.map((ref, i) => (
+                  {(() => {
+                    const thumbRefs = blockImageRefs.map(r => ({
+                      ...r,
+                      caption: resolveCaption(r, assetsByUrl || {}),
+                    }));
+                    return thumbRefs.map((ref, i) => (
                     <PhotoThumb
                       key={ref.url}
                       imageRef={ref}
@@ -453,14 +421,10 @@ export default function BlockCard({
                           setSelectedIndices(new Set())
                         },
                       }}
-                      onRemove={() => onRemovePhoto(ref)}
-                      onUpdateCaption={(caption) => {
-                        const refs = normalizeImageRefs(block.images || block.imageUrls || []);
-                        const updated = refs.map((r, j) => j === i ? { ...r, caption } : r);
-                        onUpdate({ ...block, ...buildMultiImageFields(updated) });
-                      }}
+                      onRemove={() => onRemovePhoto(blockImageRefs[i])}
                     />
-                  ))}
+                    ));
+                  })()}
                 </div>
               )}
             </>
