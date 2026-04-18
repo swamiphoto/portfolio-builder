@@ -3,6 +3,7 @@ import { readSiteConfig } from '../../common/siteConfig'
 import { readLibraryConfig } from '../../common/adminConfig'
 import { resolveCaption } from '../../common/captionResolver'
 import Gallery from '../../components/image-displays/gallery/Gallery'
+import PageCover from '../../components/image-displays/page/PageCover'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -58,6 +59,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
         <h1 className="text-sm font-semibold text-gray-900">{siteConfig.siteName || username}</h1>
       </header>
       <main>
+        <PageCover cover={homePage?.cover} title={homePage?.title} />
         {homePage ? (
           <Gallery
             blocks={resolvedBlocks}
