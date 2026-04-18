@@ -72,6 +72,7 @@ export default function BlockBuilder({
   headerLabel = 'GALLERY',
   infoLabel = 'Gallery Info',
   namePlaceholder = 'Gallery name',
+  pageSettingsSlot,
   onBack,
   sourcePageId,
   onMoveBlockToPage,
@@ -198,103 +199,105 @@ export default function BlockBuilder({
       <div className="flex-1 overflow-y-auto px-3 py-3">
 
         {/* Info card */}
-        <div className="bg-white border border-stone-200 rounded-lg shadow-sm overflow-hidden mb-1.5">
-          <button
-            className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
-            onClick={() => setInfoExpanded((v) => !v)}
-          >
-            <span className="text-xs font-semibold text-stone-600 flex-1 tracking-wide">{infoLabel}</span>
-            <svg className={`w-3.5 h-3.5 text-stone-400 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
+        {pageSettingsSlot ? pageSettingsSlot : (
+          <div className="bg-white border border-stone-200 rounded-lg shadow-sm overflow-hidden mb-1.5">
+            <button
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
+              onClick={() => setInfoExpanded((v) => !v)}
+            >
+              <span className="text-xs font-semibold text-stone-600 flex-1 tracking-wide">{infoLabel}</span>
+              <svg className={`w-3.5 h-3.5 text-stone-400 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              </svg>
+            </button>
 
-          {infoExpanded && (
-            <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
-              <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Name</div>
-                <input
-                  className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug font-medium text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
-                  placeholder={namePlaceholder}
-                  value={gallery.name || ""}
-                  onChange={(e) => updateField("name", e.target.value)}
-                />
-              </div>
-              <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Slug</div>
-                <input
-                  className="w-full border-b border-stone-200 p-0 pb-1 text-xs leading-snug text-stone-500 font-mono outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
-                  placeholder="slug"
-                  value={gallery.slug || ""}
-                  onChange={(e) => updateField("slug", e.target.value)}
-                />
-              </div>
-              <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Description</div>
-                <AutoGrowTextarea
-                  className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug text-stone-600 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
-                  placeholder="Description"
-                  value={gallery.description || ""}
-                  onChange={(e) => updateField("description", e.target.value)}
-                />
-              </div>
+            {infoExpanded && (
+              <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
+                <div>
+                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Name</div>
+                  <input
+                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug font-medium text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    placeholder={namePlaceholder}
+                    value={gallery.name || ""}
+                    onChange={(e) => updateField("name", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Slug</div>
+                  <input
+                    className="w-full border-b border-stone-200 p-0 pb-1 text-xs leading-snug text-stone-500 font-mono outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    placeholder="slug"
+                    value={gallery.slug || ""}
+                    onChange={(e) => updateField("slug", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Description</div>
+                  <AutoGrowTextarea
+                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug text-stone-600 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    placeholder="Description"
+                    value={gallery.description || ""}
+                    onChange={(e) => updateField("description", e.target.value)}
+                  />
+                </div>
 
-              {/* Thumbnail row */}
-              <div>
-              <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Thumbnail</div>
-              <div className="flex items-center gap-3 pt-0.5">
+                {/* Thumbnail row */}
+                <div>
+                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Thumbnail</div>
+                <div className="flex items-center gap-3 pt-0.5">
+                  <div
+                    onClick={onPickThumbnail}
+                    className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center border border-stone-200 cursor-pointer hover:border-stone-400 transition-colors ${gallery.thumbnailUrl ? "" : "bg-stone-50"}`}
+                  >
+                    {gallery.thumbnailUrl ? (
+                      <img src={getSizedUrl(gallery.thumbnailUrl, 'thumbnail')} alt="Cover" className="w-full h-full object-cover" onError={(e) => { if (e.target.src !== gallery.thumbnailUrl) e.target.src = gallery.thumbnailUrl }} />
+                    ) : (
+                      <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5" />
+                      </svg>
+                    )}
+                  </div>
+                  <button onClick={onPickThumbnail} className="text-xs text-stone-600 hover:text-stone-900 text-left transition-colors leading-none">
+                    Select from library
+                  </button>
+                </div>
+                </div>
+
+                {/* Unlisted toggle */}
                 <div
-                  onClick={onPickThumbnail}
-                  className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center border border-stone-200 cursor-pointer hover:border-stone-400 transition-colors ${gallery.thumbnailUrl ? "" : "bg-stone-50"}`}
+                  className="flex items-center gap-2 cursor-pointer pt-0.5"
+                  onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
                 >
-                  {gallery.thumbnailUrl ? (
-                    <img src={getSizedUrl(gallery.thumbnailUrl, 'thumbnail')} alt="Cover" className="w-full h-full object-cover" onError={(e) => { if (e.target.src !== gallery.thumbnailUrl) e.target.src = gallery.thumbnailUrl }} />
-                  ) : (
-                    <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5" />
-                    </svg>
+                  <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.visibility === "unlisted" ? "bg-stone-700" : "bg-stone-300"}`}>
+                    <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                  </div>
+                  <span className="text-xs text-stone-500 select-none">Unlisted</span>
+                </div>
+
+                {/* Slideshow toggle */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => updateField("enableSlideshow", !gallery.enableSlideshow)}
+                  >
+                    <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.enableSlideshow ? "bg-stone-700" : "bg-stone-300"}`}>
+                      <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                    </div>
+                    <span className="text-xs text-stone-500 select-none">Include slideshow</span>
+                  </div>
+                  {gallery.enableSlideshow && gallery.slug && (
+                    <Link
+                      href={`/admin/galleries/${gallery.slug}/slideshow`}
+                      className="text-xs text-stone-400 hover:text-stone-700 underline underline-offset-2 transition-colors"
+                    >
+                      Customize →
+                    </Link>
                   )}
                 </div>
-                <button onClick={onPickThumbnail} className="text-xs text-stone-600 hover:text-stone-900 text-left transition-colors leading-none">
-                  Select from library
-                </button>
               </div>
-              </div>
-
-              {/* Unlisted toggle */}
-              <div
-                className="flex items-center gap-2 cursor-pointer pt-0.5"
-                onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
-              >
-                <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.visibility === "unlisted" ? "bg-stone-700" : "bg-stone-300"}`}>
-                  <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
-                </div>
-                <span className="text-xs text-stone-500 select-none">Unlisted</span>
-              </div>
-
-              {/* Slideshow toggle */}
-              <div className="flex items-center justify-between pt-0.5">
-                <div
-                  className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => updateField("enableSlideshow", !gallery.enableSlideshow)}
-                >
-                  <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.enableSlideshow ? "bg-stone-700" : "bg-stone-300"}`}>
-                    <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
-                  </div>
-                  <span className="text-xs text-stone-500 select-none">Include slideshow</span>
-                </div>
-                {gallery.enableSlideshow && gallery.slug && (
-                  <Link
-                    href={`/admin/galleries/${gallery.slug}/slideshow`}
-                    className="text-xs text-stone-400 hover:text-stone-700 underline underline-offset-2 transition-colors"
-                  >
-                    Customize →
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Content blocks */}
         <DragDropContext

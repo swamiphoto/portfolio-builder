@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import BlockBuilder from '../gallery-builder/BlockBuilder'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
 import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs } from '../../../common/assetRefs'
+import PageSettingsPanel from './PageSettingsPanel'
 
 function pageToGallery(page) {
   return {
@@ -119,9 +120,23 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     fetchLibrary()
   }, [fetchLibrary])
 
+  const handlePickCoverImage = useCallback(() => {
+    setPhotoPickerBlockIndex('cover')
+    setPhotoPickerOpen(true)
+    fetchLibrary()
+  }, [fetchLibrary])
+
   const handlePhotoPickerConfirm = useCallback((refs) => {
     if (photoPickerBlockIndex === null) return
     if (!refs.length) return
+
+    if (photoPickerBlockIndex === 'cover') {
+      onPageChange({
+        ...page,
+        cover: { ...(page.cover || { height: 'full', overlayText: '' }), imageUrl: refs[0].url || refs[0] },
+      })
+      setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null); return
+    }
 
     if (photoPickerBlockIndex === 'thumbnail') {
       onPageChange({
@@ -178,8 +193,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         collectionsByUrl={collectionsByUrl}
         onToggleCollection={handleToggleCollection}
         headerLabel="PAGE"
-        infoLabel="Page Info"
-        namePlaceholder="Page name"
+        pageSettingsSlot={<PageSettingsPanel page={page} onChange={onPageChange} onPickThumbnail={handlePickThumbnail} onPickCoverImage={handlePickCoverImage} />}
         onBack={null}
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}
@@ -192,7 +206,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         <PhotoPickerModal
           images={libraryImages || []}
           loading={libraryLoading}
-          blockType={photoPickerBlockIndex === 'thumbnail' ? 'photo' : (page.blocks?.[photoPickerBlockIndex]?.type || 'photo')}
+          blockType={(photoPickerBlockIndex === 'thumbnail' || photoPickerBlockIndex === 'cover') ? 'photo' : (page.blocks?.[photoPickerBlockIndex]?.type || 'photo')}
           onConfirm={handlePhotoPickerConfirm}
           onClose={() => { setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null) }}
         />
