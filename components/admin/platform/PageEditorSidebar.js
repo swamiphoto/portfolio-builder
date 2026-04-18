@@ -184,6 +184,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}
         onUpdateLibraryCaption={onUpdateLibraryCaption}
+        assetsByUrl={assetsByUrl}
         className="flex flex-col h-full bg-stone-50 text-left font-sans"
       />
 
