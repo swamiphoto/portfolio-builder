@@ -157,6 +157,7 @@ export function normalizePageEntity(page) {
     showInNav: page.showInNav ?? true,
     sortOrder: page.sortOrder ?? 0,
     password: page.password || "",
+    passwordGateMessage: page.passwordGateMessage || '',
     cover,
     thumbnail,
     thumbnailUrl: thumbnail.imageUrl, // legacy mirror, derived
@@ -165,13 +166,33 @@ export function normalizePageEntity(page) {
       layout: page.slideshow?.layout || "kenburns",
       musicUrl: page.slideshow?.musicUrl || "",
     },
-    clientFeatures: {
-      enabled: page.clientFeatures?.enabled ?? false,
-      passwordHash: page.clientFeatures?.passwordHash || "",
-      watermarkEnabled: page.clientFeatures?.watermarkEnabled ?? false,
-      votingEnabled: page.clientFeatures?.votingEnabled ?? false,
-      downloadEnabled: page.clientFeatures?.downloadEnabled ?? false,
-    },
+    clientFeatures: (() => {
+      const cf = page.clientFeatures || {}
+      return {
+        enabled: cf.enabled ?? false,
+        downloads: {
+          enabled: cf.downloads?.enabled ?? cf.downloadEnabled ?? false,
+          quality: cf.downloads?.quality ?? ['web'],
+          requireEmail: cf.downloads?.requireEmail ?? false,
+          watermarkEnabled: cf.downloads?.watermarkEnabled ?? cf.watermarkEnabled ?? false,
+        },
+        favorites: {
+          enabled: cf.favorites?.enabled ?? cf.votingEnabled ?? false,
+          requireEmail: cf.favorites?.requireEmail ?? false,
+          submitWorkflow: cf.favorites?.submitWorkflow ?? false,
+        },
+        comments: {
+          enabled: cf.comments?.enabled ?? false,
+          requireEmail: cf.comments?.requireEmail ?? false,
+        },
+        purchase: {
+          enabled: cf.purchase?.enabled ?? false,
+          defaultPrice: cf.purchase?.defaultPrice ?? null,
+          currency: cf.purchase?.currency ?? 'USD',
+          tiers: cf.purchase?.tiers ?? { web: null, print: null, original: null },
+        },
+      }
+    })(),
     blocks: (page.blocks || []).map((block) => normalizeBlockImageFields(block)),
   };
 }
