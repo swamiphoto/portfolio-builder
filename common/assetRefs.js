@@ -119,10 +119,33 @@ export function normalizeGalleryEntity(gallery) {
   };
 }
 
+export function getPagePhotos(page) {
+  const urls = []
+  for (const block of page.blocks || []) {
+    if (block.type === 'photo' && block.imageUrl) {
+      urls.push(block.imageUrl)
+    } else if (block.images?.length) {
+      for (const img of block.images) {
+        const url = img?.url || img?.imageUrl || (typeof img === 'string' ? img : null)
+        if (url) urls.push(url)
+      }
+    } else if (block.imageUrls?.length) {
+      for (const url of block.imageUrls) {
+        if (url) urls.push(url)
+      }
+    }
+  }
+  return [...new Set(urls)]
+}
+
 export function pageDisplayThumbnail(page) {
   const explicit = page.thumbnail?.imageUrl
   if (explicit && !page.thumbnail?.useCover) return explicit
-  return page.cover?.imageUrl || explicit || page.thumbnailUrl || ''
+  const coverImg = page.cover?.imageUrl
+  if (coverImg) return coverImg
+  if (explicit) return explicit
+  if (page.thumbnailUrl) return page.thumbnailUrl
+  return getPagePhotos(page)[0] || ''
 }
 
 export function normalizePageEntity(page) {
