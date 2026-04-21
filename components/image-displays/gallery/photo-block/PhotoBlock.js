@@ -26,7 +26,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick }) => {
   const renderImage = () => {
     if (variant === 1) {
       return (
-        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-hidden">
           <img
             src={getSizedUrl(imageUrl, 'display')}
             alt={caption || "Photo"}
@@ -67,7 +67,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick }) => {
     }
 
     return (
-      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden">
+      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-hidden">
         <img
           src={getSizedUrl(imageUrl, 'display')}
           alt={caption || "Photo"}
@@ -84,7 +84,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick }) => {
   };
 
   return (
-    <div className="w-full relative overflow-x-hidden">
+    <div className="w-full relative">
       {renderImage()}
       {caption && renderCaption()}
     </div>

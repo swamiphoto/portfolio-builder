@@ -3,20 +3,7 @@ import { lookupUserByUsername } from '../../../../common/userProfile'
 import { readSiteConfig } from '../../../../common/siteConfig'
 import Slideshow from '../../../../components/image-displays/slideshow/Slideshow'
 import { pageDisplayThumbnail } from '../../../../common/assetRefs'
-
-function collectImages(blocks) {
-  const urls = []
-  for (const b of blocks || []) {
-    if (b.type === 'photo' && b.imageUrl) urls.push(b.imageUrl)
-    if (b.type === 'photos' || b.type === 'stacked' || b.type === 'masonry') {
-      const images = (b.images || []).length
-        ? b.images.map(img => img.url)
-        : (b.imageUrls || [])
-      for (const u of images) if (u) urls.push(u)
-    }
-  }
-  return urls
-}
+import { buildSlideSequence } from '../../../../common/slideshowSync'
 
 export async function getServerSideProps({ params }) {
   const { username, slug } = params
@@ -35,7 +22,7 @@ export async function getServerSideProps({ params }) {
 }
 
 export default function PageSlideshow({ page, siteName }) {
-  const slides = collectImages(page.blocks).map(url => ({ type: 'image', url }))
+  const slides = buildSlideSequence(page.blocks, page.slideshow?.excluded || [])
   if (slides.length === 0) {
     return <div className="flex items-center justify-center h-screen text-stone-400">No images on this page.</div>
   }
@@ -48,6 +35,7 @@ export default function PageSlideshow({ page, siteName }) {
       youtubeUrl={page.slideshow?.musicUrl || ''}
       thumbnailUrl={pageDisplayThumbnail(page)}
       slug={page.slug || page.id}
+      initialModalOpen={false}
     />
   )
 }

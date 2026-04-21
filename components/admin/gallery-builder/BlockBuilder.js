@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { useDrag } from '../../../common/dragContext';
 import Link from "next/link";
@@ -52,7 +52,7 @@ function InsertionZone({ onInsert }) {
   );
 }
 
-export default function BlockBuilder({
+const BlockBuilder = forwardRef(function BlockBuilder({
   gallery,
   onChange,
   onPublish,
@@ -79,18 +79,44 @@ export default function BlockBuilder({
   assetsByUrl,
   onUpdateLibraryCaption,
   className,
-}) {
+  onScrollRatioChange,
+  highlightedBlockIndex,
+  onBlockHover,
+}, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
   const [menuAnchorRect, setMenuAnchorRect] = useState(null);
   const [infoExpanded, setInfoExpanded] = useState(true);
 
+  const blocksContainerRef = useRef(null);
+  const isSyncingRef = useRef(false);
+
   const { startDrag, endDrag, dropTargetPageId } = useDrag()
+
+  // Expose scrollToRatio so parent can drive sidebar scroll from preview
+  useImperativeHandle(ref, () => ({
+    scrollToRatio(ratio) {
+      const el = blocksContainerRef.current;
+      if (!el) return;
+      isSyncingRef.current = true;
+      el.scrollTop = ratio * Math.max(0, el.scrollHeight - el.clientHeight);
+      setTimeout(() => { isSyncingRef.current = false; }, 100);
+    }
+  }), []);
+
+  const handleBlocksScroll = useCallback(() => {
+    if (isSyncingRef.current || !onScrollRatioChange || !blocksContainerRef.current) return;
+    const el = blocksContainerRef.current;
+    const max = el.scrollHeight - el.clientHeight;
+    if (max <= 0) return;
+    onScrollRatioChange(el.scrollTop / max);
+  }, [onScrollRatioChange]);
 
   const updateField = (key, value) => onChange({ ...gallery, [key]: value });
 
   const addBlock = (block) => {
     const blocks = [...(gallery.blocks || [])];
+    const isAppend = insertAtIndex === null;
     if (insertAtIndex !== null) {
       blocks.splice(insertAtIndex, 0, block);
     } else {
@@ -98,6 +124,13 @@ export default function BlockBuilder({
     }
     onChange({ ...gallery, blocks });
     setInsertAtIndex(null);
+    if (isAppend) {
+      setTimeout(() => {
+        if (blocksContainerRef.current) {
+          blocksContainerRef.current.scrollTop = blocksContainerRef.current.scrollHeight;
+        }
+      }, 50);
+    }
   };
 
   const updateBlock = (index, updated) => {
@@ -196,7 +229,7 @@ export default function BlockBuilder({
       </div>
 
       {/* All blocks — scrollable */}
-      <div className="flex-1 overflow-y-auto px-3 py-3">
+      <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto px-3 py-3">
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
@@ -324,7 +357,12 @@ export default function BlockBuilder({
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {(gallery.blocks || []).map((block, index) => (
-                  <div key={`slot-${index}`}>
+                  <div
+                    key={`slot-${index}`}
+                    onMouseEnter={() => onBlockHover?.(index)}
+                    onMouseLeave={() => onBlockHover?.(null)}
+                    className="rounded-lg"
+                  >
                     <InsertionZone
                       onInsert={(e) => {
                         setMenuAnchorRect(e.currentTarget.getBoundingClientRect());
@@ -353,6 +391,7 @@ export default function BlockBuilder({
                             onMoveImagesAcrossBlocks={(srcIdx, refs, tgtIdx, updatedTgt) => moveImagesBetweenBlocks(srcIdx, refs, tgtIdx, updatedTgt)}
                             assetsByUrl={assetsByUrl}
                             onUpdateLibraryCaption={onUpdateLibraryCaption}
+                            highlighted={highlightedBlockIndex === index}
                           />
                         </div>
                       )}
@@ -395,4 +434,6 @@ export default function BlockBuilder({
       )}
     </div>
   );
-}
+})
+
+export default BlockBuilder;

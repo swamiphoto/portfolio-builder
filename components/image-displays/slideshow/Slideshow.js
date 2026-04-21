@@ -97,8 +97,8 @@ const Slideshow = ({ slides = [], layout = "film-stack", title = "Gallery Title"
     }, slideDuration - 2000);
   };
   useEffect(() => {
-    setSlideshowPlaying(false);
-  }, []);
+    if (initialModalOpen) setSlideshowPlaying(false);
+  }, [initialModalOpen]);
   const handlePlayPauseAudio = () => {
     if (playerRef.current && isPlayerReady) {
       if (audioPlaying) {

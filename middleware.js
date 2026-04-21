@@ -16,13 +16,16 @@ export function middleware(req) {
 
   const { pathname } = req.nextUrl
 
-  // Let admin, API, auth, and Next.js internals pass through as-is
+  // Let admin, API, auth, Next.js internals, and explicit /sites/ paths pass through as-is
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/sites/') ||
+    pathname.startsWith('/fonts/') ||
+    pathname.startsWith('/images/') ||
     pathname === '/favicon.ico'
   ) {
     return NextResponse.next()

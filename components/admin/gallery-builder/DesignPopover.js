@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 // Only include layout options that are actually rendered
 const LAYOUTS = {
   photo: ["Edge to edge", "Centered"],
+  photos: ["Stacked", "Masonry"],
   stacked: ["Stacked", "Masonry"],
   masonry: ["Stacked", "Masonry"],
   video: ["Edge to edge", "Centered"],
@@ -46,7 +47,7 @@ export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
   }, [onClose, anchorEl]);
 
   const layouts = LAYOUTS[blockType] || [];
-  const isPhotos = blockType === "stacked" || blockType === "masonry";
+  const isPhotos = blockType === "photos" || blockType === "stacked" || blockType === "masonry";
 
   const currentLayout = isPhotos
     ? (blockType === "masonry" ? "Masonry" : "Stacked")

@@ -8,6 +8,8 @@ import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
 import GalleryPreview from '../../components/admin/gallery-builder/GalleryPreview'
 import AdminLibrary from '../../components/admin/AdminLibrary'
+import PageCover from '../../components/image-displays/page/PageCover'
+import SiteNav from '../../components/image-displays/page/SiteNav'
 
 const AUTOSAVE_DELAY = 1500
 
@@ -20,6 +22,33 @@ export default function AdminIndex() {
   const [selectedPageId, setSelectedPageId] = useState(null)
   const [showLibrary, setShowLibrary] = useState(false)
   const autosaveTimer = useRef(null)
+
+  // Hover highlight sync
+  const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null)
+
+  // Scroll sync — proportional ratio between sidebar and preview
+  const previewContainerRef = useRef(null)
+  const blockBuilderRef = useRef(null)
+  const syncingRef = useRef(false)
+
+  const handlePreviewScroll = useCallback(() => {
+    if (syncingRef.current || !previewContainerRef.current || !blockBuilderRef.current) return
+    const el = previewContainerRef.current
+    const max = el.scrollHeight - el.clientHeight
+    if (max <= 0) return
+    const ratio = el.scrollTop / max
+    syncingRef.current = true
+    blockBuilderRef.current.scrollToRatio(ratio)
+    setTimeout(() => { syncingRef.current = false }, 100)
+  }, [])
+
+  const handleSidebarScrollRatio = useCallback((ratio) => {
+    if (syncingRef.current || !previewContainerRef.current) return
+    const el = previewContainerRef.current
+    syncingRef.current = true
+    el.scrollTop = ratio * Math.max(0, el.scrollHeight - el.clientHeight)
+    setTimeout(() => { syncingRef.current = false }, 100)
+  }, [])
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -203,7 +232,7 @@ export default function AdminIndex() {
     />
   )
 
-  const panel = selectedPage ? (
+  const panel = (selectedPage && selectedPage.type !== 'link') ? (
     <PageEditorSidebar
       page={selectedPage}
       siteConfig={siteConfig}
@@ -213,24 +242,70 @@ export default function AdminIndex() {
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
       onUpdateLibraryCaption={handleUpdateLibraryCaption}
+      username={session?.user?.username}
+      blockBuilderRef={blockBuilderRef}
+      onScrollRatioChange={handleSidebarScrollRatio}
+      highlightedBlockIndex={hoveredBlockIndex}
+      onBlockHover={setHoveredBlockIndex}
     />
   ) : null
+
+
 
   let content
   if (showLibrary) {
     content = <AdminLibrary />
   } else if (selectedPage) {
-    content = (
-      <GalleryPreview
-        gallery={{
-          name: selectedPage.title,
-          description: selectedPage.description || '',
-          blocks: selectedPage.blocks || [],
-        }}
-        pages={siteConfig.pages}
-        assetsByUrl={assetsByUrl}
-      />
-    )
+    const username = session?.user?.username
+    if (selectedPage.type === 'link') {
+      content = (
+        <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center gap-2 bg-white text-stone-400">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+          <span className="text-sm">{selectedPage.url || 'No URL set'}</span>
+          {selectedPage.url && (
+            <a href={selectedPage.url} target="_blank" rel="noopener noreferrer" className="text-xs text-stone-400 hover:text-stone-700 underline">
+              Open link ↗
+            </a>
+          )}
+        </div>
+      )
+    } else {
+      const slideshowHref = (selectedPage.slideshow?.enabled && username)
+        ? `/sites/${username}/${selectedPage.slug || selectedPage.id}/slideshow`
+        : null
+      const navVariant = selectedPage.cover?.imageUrl ? undefined : 'header-dropdown'
+      const isChildPage = !!selectedPage.parentId
+      const childPages = isChildPage
+        ? siteConfig.pages.filter(p => p.parentId === selectedPage.parentId && p.showInNav !== false)
+        : siteConfig.pages.filter(p => p.parentId === selectedPage.id && p.showInNav !== false)
+      const activeChildId = isChildPage ? selectedPage.id : null
+      content = (
+        <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
+          <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+          <PageCover cover={selectedPage.cover} title={selectedPage.title} />
+          <GalleryPreview
+            gallery={{
+              name: selectedPage.title,
+              description: selectedPage.description || '',
+              blocks: selectedPage.blocks || [],
+            }}
+            pages={siteConfig.pages}
+            childPages={childPages}
+            activeChildId={activeChildId}
+            username={username}
+            assetsByUrl={assetsByUrl}
+            noWrap
+            enableSlideshow={!!slideshowHref}
+            onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
+            onChildPageClick={handleSelectPage}
+            highlightedBlockIndex={hoveredBlockIndex}
+            onBlockHover={setHoveredBlockIndex}
+          />
+        </div>
+      )
+    }
   } else {
     content = (
       <div className="flex items-center justify-center h-full text-sm text-gray-300">

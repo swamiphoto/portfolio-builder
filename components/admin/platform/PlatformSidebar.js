@@ -1,10 +1,9 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
-import { DragDropContext } from '@hello-pangea/dnd'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage } from '../../../common/pagesTree'
-import { defaultPage } from '../../../common/siteConfig'
+import { defaultPage, defaultLink } from '../../../common/siteConfig'
 
 function SaveBadge({ status }) {
   if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
@@ -28,19 +27,38 @@ export default function PlatformSidebar({
   const [renameValue, setRenameValue] = useState('')
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [siteMenuOpen, setSiteMenuOpen] = useState(false)
+  const [addMenuOpen, setAddMenuOpen] = useState(false)
+  const [linkEditId, setLinkEditId] = useState(null)
   const menuRef = useRef(null)
   const siteMenuRef = useRef(null)
+  const addMenuRef = useRef(null)
   const { drag, dropTargetPageId, setDropTargetPageId } = useDrag()
 
+  // Custom page drag state
+  const [pageDrag, setPageDrag] = useState(null) // { pageId, title }
+  const [pageDropTarget, setPageDropTarget] = useState(null) // { type: 'nest'|'root'|'other', pageId? }
+  const [ghostPos, setGhostPos] = useState(null)
+  const pageDragRef = useRef(null)
+  const pageDropTargetRef = useRef(null)
+  const didDragRef = useRef(false)
+
   useEffect(() => {
-    if (!menuOpenId && !siteMenuOpen) return
+    if (!menuOpenId && !siteMenuOpen && !addMenuOpen) return
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpenId(null)
       if (siteMenuRef.current && !siteMenuRef.current.contains(e.target)) setSiteMenuOpen(false)
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target)) setAddMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuOpenId, siteMenuOpen])
+  }, [menuOpenId, siteMenuOpen, addMenuOpen])
+
+  useEffect(() => {
+    if (pageDrag) {
+      document.body.style.cursor = 'grabbing'
+      return () => { document.body.style.cursor = '' }
+    }
+  }, [pageDrag])
 
   if (!siteConfig) return null
 
@@ -70,132 +88,234 @@ export default function PlatformSidebar({
     }))
   }
 
-  function handleAddPage() {
-    const title = 'New Page'
-    const baseId = 'new-page'
+  function nextAvailableId(base, existingIds) {
+    let id = base; let n = 2
+    while (existingIds.has(id)) { id = `${base}-${n++}` }
+    return id
+  }
 
+  function handleAddPage() {
+    setAddMenuOpen(false)
+    const base = 'new-page'
     onConfigChange(prev => {
       const existingIds = new Set(prev.pages.map(p => p.id))
-      let id = baseId
-      let n = 2
-      while (existingIds.has(id)) { id = `${baseId}-${n++}` }
+      const id = nextAvailableId(base, existingIds)
       const sortOrder = Math.max(0, ...prev.pages.filter(p => p.showInNav).map(p => p.sortOrder ?? 0)) + 1
-      const newPage = defaultPage({ id, title, sortOrder, showInNav: true, parentId: null })
-      return { ...prev, pages: [...prev.pages, newPage] }
+      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null })] }
     })
-
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
-    let id = baseId
-    let n = 2
-    while (existingIds.has(id)) { id = `${baseId}-${n++}` }
-    onSelectPage?.(id)
-    setRenamingId(id)
-    setRenameValue(title)
+    const id = nextAvailableId(base, existingIds)
+    onSelectPage?.(id); setRenamingId(id); setRenameValue('New Page')
   }
 
-  function handlePageDragEnd(result) {
-    if (!result.destination) return
-    const { draggableId: pageId, destination } = result
-    const dest = destination.droppableId
+  function handleAddLink() {
+    setAddMenuOpen(false)
+    const base = 'new-link'
+    onConfigChange(prev => {
+      const existingIds = new Set(prev.pages.map(p => p.id))
+      const id = nextAvailableId(base, existingIds)
+      const sortOrder = Math.max(0, ...prev.pages.filter(p => p.showInNav).map(p => p.sortOrder ?? 0)) + 1
+      return { ...prev, pages: [...prev.pages, defaultLink({ id, title: 'New Link', sortOrder, showInNav: true, parentId: null })] }
+    })
+    const existingIds = new Set(siteConfig.pages.map(p => p.id))
+    const id = nextAvailableId(base, existingIds)
+    onSelectPage?.(id); setRenamingId(id); setRenameValue('New Link')
+  }
 
-    let patch
-    if (dest === 'other-pages') {
-      patch = { showInNav: false, sortOrder: destination.index }
-    } else if (dest === 'main-nav') {
-      patch = { showInNav: true, parentId: null, sortOrder: destination.index }
-    } else {
-      // dest is a page id (nesting under that parent)
-      patch = { showInNav: true, parentId: dest, sortOrder: destination.index }
+  function handlePageDragStart(page, e) {
+    e.preventDefault()
+    const startX = e.clientX, startY = e.clientY
+    const dragInfo = { pageId: page.id, title: page.title }
+    pageDragRef.current = dragInfo
+    didDragRef.current = false
+
+    function onMove(e) {
+      if (!didDragRef.current) {
+        const dx = e.clientX - startX, dy = e.clientY - startY
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return
+        didDragRef.current = true
+        setPageDrag(dragInfo)
+      }
+      setGhostPos({ x: e.clientX, y: e.clientY })
+      const el = document.elementFromPoint(e.clientX, e.clientY)
+      const pageRow = el?.closest('[data-page-id]')
+      const inMainNav = !!el?.closest('[data-droppable="main-nav"]')
+      const inOtherPages = !!el?.closest('[data-droppable="other-pages"]')
+
+      let target = null
+      if (pageRow && inMainNav) {
+        const targetId = pageRow.dataset.pageId
+        if (targetId !== pageDragRef.current?.pageId) {
+          target = { type: 'nest', pageId: targetId }
+        }
+      } else if (inMainNav) {
+        target = { type: 'root' }
+      } else if (inOtherPages) {
+        target = { type: 'other' }
+      }
+
+      pageDropTargetRef.current = target
+      setPageDropTarget(target)
     }
-    onConfigChange(prev => ({ ...prev, pages: movePage(prev.pages, pageId, patch) }))
+
+    function onUp() {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerup', onUp)
+
+      const currentDrag = pageDragRef.current
+      const target = pageDropTargetRef.current
+      const wasDrag = didDragRef.current
+      pageDragRef.current = null
+      pageDropTargetRef.current = null
+      didDragRef.current = false
+      setPageDrag(null)
+      setGhostPos(null)
+      setPageDropTarget(null)
+
+      if (!currentDrag || !wasDrag) return
+
+      if (target?.type === 'nest') {
+        onConfigChange(prev => {
+          const siblings = prev.pages.filter(p => p.parentId === target.pageId && p.showInNav)
+          const sortOrder = Math.max(0, ...siblings.map(p => p.sortOrder ?? 0)) + 1
+          return { ...prev, pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: target.pageId, sortOrder }) }
+        })
+      } else if (target?.type === 'root') {
+        onConfigChange(prev => {
+          const roots = prev.pages.filter(p => p.showInNav && !p.parentId)
+          const sortOrder = Math.max(0, ...roots.map(p => p.sortOrder ?? 0)) + 1
+          return { ...prev, pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: null, sortOrder }) }
+        })
+      } else if (target?.type === 'other') {
+        onConfigChange(prev => {
+          const others = prev.pages.filter(p => !p.showInNav)
+          const sortOrder = Math.max(0, ...others.map(p => p.sortOrder ?? 0)) + 1
+          return { ...prev, pages: movePage(prev.pages, currentDrag.pageId, { showInNav: false, sortOrder }) }
+        })
+      }
+    }
+
+    document.addEventListener('pointermove', onMove)
+    document.addEventListener('pointerup', onUp)
   }
 
-  function renderPageRow(page, dragHandleProps) {
-    const isDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag.sourcePageId
+  function renderPageRow(page) {
+    const isImageDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag?.sourcePageId
+    const isPageNestTarget = pageDropTarget?.type === 'nest' && pageDropTarget.pageId === page.id
+    const isLink = page.type === 'link'
+
     return (
       <div
         className="relative flex items-start"
+        data-page-id={page.id}
         onPointerEnter={() => drag && setDropTargetPageId(page.id)}
         onPointerLeave={() => drag && setDropTargetPageId(null)}
         onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTargetPageId(page.id) } }}
         onDragLeave={(e) => { if (drag && !e.currentTarget.contains(e.relatedTarget)) setDropTargetPageId(null) }}
         onDrop={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
+          e.preventDefault(); e.stopPropagation()
           setDropTargetPageId(null)
           if (!drag) return
-          if (drag.type === 'images') {
-            if (page.id === drag.sourcePageId) return
+          if (drag.type === 'images' && page.id !== drag.sourcePageId) {
             onDropImagesToPage?.(page.id, drag.imageRefs, drag.sourceBlockType, drag.sourcePageId, drag.sourceBlockIndex)
           }
         }}
       >
-        {dragHandleProps && (
-          <div
-            {...dragHandleProps}
-            className="flex-shrink-0 flex items-center justify-center w-3 self-stretch cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-500 transition-colors"
-          >
-            <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor">
-              <circle cx="1.5" cy="1.5" r="1" />
-              <circle cx="4.5" cy="1.5" r="1" />
-              <circle cx="1.5" cy="5" r="1" />
-              <circle cx="4.5" cy="5" r="1" />
-              <circle cx="1.5" cy="8.5" r="1" />
-              <circle cx="4.5" cy="8.5" r="1" />
-            </svg>
-          </div>
-        )}
+        <div
+          className="flex-shrink-0 flex items-center justify-center w-3 self-stretch cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-500 transition-colors"
+          onPointerDown={(e) => handlePageDragStart(page, e)}
+          style={{ touchAction: 'none' }}
+        >
+          <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor">
+            <circle cx="1.5" cy="1.5" r="1" /><circle cx="4.5" cy="1.5" r="1" />
+            <circle cx="1.5" cy="5" r="1" /><circle cx="4.5" cy="5" r="1" />
+            <circle cx="1.5" cy="8.5" r="1" /><circle cx="4.5" cy="8.5" r="1" />
+          </svg>
+        </div>
         <div className="flex-1 min-w-0">
-        {renamingId === page.id ? (
-          <input
-            autoFocus
-            value={renameValue}
-            onChange={e => setRenameValue(e.target.value)}
-            onBlur={() => handleRenameCommit(page.id)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleRenameCommit(page.id)
-              if (e.key === 'Escape') setRenamingId(null)
-            }}
-            className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
-          />
-        ) : (
-          <div
-            onClick={() => onSelectPage?.(page.id)}
-            className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
-              isDropTarget
-                ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700'
-                : selectedPageId === page.id
-                ? 'bg-gray-100 text-gray-900 font-medium'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <span className="flex-1 truncate">{page.title}</span>
-            {isDropTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">Drop</span>}
-            <button
-              onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-              className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
+          {renamingId === page.id ? (
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onBlur={() => handleRenameCommit(page.id)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleRenameCommit(page.id)
+                if (e.key === 'Escape') setRenamingId(null)
+              }}
+              className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
+            />
+          ) : (
+            <div
+              onClick={() => {
+                if (didDragRef.current || pageDragRef.current) return
+                if (!isLink) onSelectPage?.(page.id)
+              }}
+              className={`flex items-center px-3 py-1.5 rounded cursor-pointer group transition-colors ${
+                isPageNestTarget
+                  ? 'bg-blue-50 ring-1 ring-blue-400 text-blue-700'
+                  : isImageDropTarget
+                  ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700'
+                  : selectedPageId === page.id
+                  ? 'bg-gray-100 text-gray-900 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
             >
-              ···
-            </button>
-          </div>
-        )}
+              <span className="flex-1 truncate">{page.title}</span>
+              {isLink && <span className="text-[10px] text-stone-400 flex-shrink-0 ml-1">↗</span>}
+              {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">nest here</span>}
+              {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">Drop</span>}
+              {isLink && (
+                <button
+                  onClick={e => { e.stopPropagation(); setLinkEditId(linkEditId === page.id ? null : page.id) }}
+                  className="ml-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-opacity"
+                  title="Edit link"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
+                className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
+              >
+                ···
+              </button>
+            </div>
+          )}
 
-        {menuOpenId === page.id && (
-          <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
-            <button
-              onClick={() => handleRenameStart(page)}
-              className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Rename
-            </button>
-            <button
-              onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
-              className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-            >
-              Delete
-            </button>
-          </div>
-        )}
+          {menuOpenId === page.id && (
+            <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-32">
+              <button onClick={() => handleRenameStart(page)} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Rename</button>
+              <button onClick={() => { setMenuOpenId(null); handleDelete(page.id) }} className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">Delete</button>
+            </div>
+          )}
+
+          {isLink && linkEditId === page.id && (
+            <div className="mx-2 mb-2 p-2.5 bg-white border border-stone-200 rounded-lg shadow-popup space-y-2">
+              <div>
+                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">Label</div>
+                <input
+                  autoFocus
+                  className="w-full text-sm border-b border-stone-200 pb-1 outline-none focus:border-stone-500 bg-transparent"
+                  value={page.title || ''}
+                  onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, title: e.target.value } : p) }))}
+                />
+              </div>
+              <div>
+                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">URL</div>
+                <input
+                  type="url"
+                  className="w-full text-sm border-b border-stone-200 pb-1 outline-none focus:border-stone-500 bg-transparent placeholder:text-stone-300"
+                  placeholder="https://…"
+                  value={page.url || ''}
+                  onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, url: e.target.value } : p) }))}
+                />
+              </div>
+              <button onClick={() => setLinkEditId(null)} className="text-xs text-stone-400 hover:text-stone-700">Done</button>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -210,8 +330,7 @@ export default function PlatformSidebar({
           {username && (
             <a
               href={`http://${username}.${(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              target="_blank" rel="noopener noreferrer"
               className="text-xs text-gray-400 hover:text-gray-600 truncate block mt-0.5"
             >
               {username}.{(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')} ↗
@@ -220,20 +339,10 @@ export default function PlatformSidebar({
           <SaveBadge status={saveStatus} />
         </div>
         <div className="relative" ref={siteMenuRef}>
-          <button
-            onClick={() => setSiteMenuOpen(v => !v)}
-            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 transition-colors"
-          >
-            ···
-          </button>
+          <button onClick={() => setSiteMenuOpen(v => !v)} className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 transition-colors">···</button>
           {siteMenuOpen && (
             <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-popup z-20 py-1 w-40">
-              <button
-                onClick={() => { setSiteMenuOpen(false); onSignOut?.() }}
-                className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Sign out
-              </button>
+              <button onClick={() => { setSiteMenuOpen(false); onSignOut?.() }} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Sign out</button>
             </div>
           )}
         </div>
@@ -255,38 +364,50 @@ export default function PlatformSidebar({
 
       {/* Pages */}
       <div className="flex-1 overflow-y-auto">
-        <DragDropContext onDragEnd={handlePageDragEnd}>
-          <SidebarSection
-            label="Main Nav"
-            pages={buildNavTree(pages)}
-            renderRow={renderPageRow}
-            droppableId="main-nav"
-            nestable={true}
-          />
-          <SidebarSection
-            label="Other Pages"
-            pages={flattenForOtherPages(pages)}
-            renderRow={renderPageRow}
-            droppableId="other-pages"
-          />
-        </DragDropContext>
-        <button
-          onClick={handleAddPage}
-          className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50 mt-1 mx-2"
-        >
-          <span className="mr-1.5">+</span> Add Page
-        </button>
+        <SidebarSection
+          label="Main Nav"
+          pages={buildNavTree(pages)}
+          renderRow={renderPageRow}
+          droppableId="main-nav"
+        />
+        <SidebarSection
+          label="Other Pages"
+          pages={flattenForOtherPages(pages)}
+          renderRow={renderPageRow}
+          droppableId="other-pages"
+        />
+
+        {/* Add menu */}
+        <div className="relative mx-2 mt-1" ref={addMenuRef}>
+          <button
+            onClick={() => setAddMenuOpen(v => !v)}
+            className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50"
+          >
+            <span className="mr-1.5">+</span> Add
+          </button>
+          {addMenuOpen && (
+            <div className="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-popup z-20 py-1 w-36">
+              <button onClick={handleAddPage} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Page</button>
+              <button onClick={handleAddLink} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Link ↗</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}
       <div className="border-t border-gray-200 px-4 py-3">
-        <button
-          onClick={onShowLibrary}
-          className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          Library
-        </button>
+        <button onClick={onShowLibrary} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Library</button>
       </div>
+
+      {/* Drag ghost */}
+      {pageDrag && ghostPos && (
+        <div
+          className="fixed pointer-events-none z-[9999] bg-white border border-stone-300 shadow-lg px-3 py-1.5 rounded text-sm text-stone-700"
+          style={{ left: ghostPos.x + 14, top: ghostPos.y - 10 }}
+        >
+          {pageDrag.title}
+        </div>
+      )}
     </div>
   )
 }

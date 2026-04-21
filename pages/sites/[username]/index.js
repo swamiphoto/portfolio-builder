@@ -62,26 +62,21 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
   const navVariant = homePage?.cover?.imageUrl ? undefined : 'header-dropdown'
+  const slideshowHref = homePage?.slideshow?.enabled ? `/sites/${username}/${homePage.slug || homePage.id}/slideshow` : null
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-white font-sans relative">
       <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
         <PageCover cover={homePage?.cover} title={homePage?.title} />
-        {homePage?.slideshow?.enabled && (
-          <div className="px-6 py-2">
-            <a
-              href={`/sites/${username}/${homePage.slug || homePage.id}/slideshow`}
-              className="text-sm text-stone-500 hover:text-stone-900 underline"
-            >
-              View slideshow ↗
-            </a>
-          </div>
-        )}
         {homePage ? (
           <Gallery
+            name={homePage.title}
+            description={homePage.description}
             blocks={resolvedBlocks}
             pages={siteConfig.pages}
+            enableSlideshow={!!slideshowHref}
+            onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">

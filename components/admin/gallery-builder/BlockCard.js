@@ -80,12 +80,13 @@ export default function BlockCard({
   onMoveImagesAcrossBlocks,
   assetsByUrl,
   onUpdateLibraryCaption,
+  highlighted,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
   const { startDrag, endDrag } = useDrag()
-  const hasDesign = block.type === "photo" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
+  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
 
   const [expanded, setExpanded] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
@@ -180,7 +181,7 @@ export default function BlockCard({
 
   return (
     <div
-      className="bg-white border border-stone-200 rounded-lg shadow-sm group/card mb-1.5"
+      className={`border border-stone-200 rounded-lg shadow-sm group/card mb-1.5 transition-colors duration-150 ${highlighted ? 'bg-stone-100' : 'bg-white'}`}
       onDragEnter={isPhotoBlock ? (e) => { e.preventDefault(); setGridDropHover(true); } : undefined}
       onDragOver={isPhotoBlock ? handleDragOver : undefined}
       onDragLeave={isPhotoBlock ? handleDragLeave : undefined}

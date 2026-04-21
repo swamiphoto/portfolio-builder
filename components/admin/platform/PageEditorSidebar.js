@@ -33,7 +33,7 @@ function galleryToPage(page, gallery) {
   }
 }
 
-export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onBack, onMoveBlockToPage, onUpdateLibraryCaption }) {
+export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onBack, onMoveBlockToPage, onUpdateLibraryCaption, username, blockBuilderRef, onScrollRatioChange, highlightedBlockIndex, onBlockHover }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
@@ -173,11 +173,30 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     : saveStatus === 'error' ? 'unsaved'
     : 'idle'
 
+  if (page.type === 'link') {
+    return (
+      <div className="flex flex-col h-full bg-stone-50 p-3">
+        <PageSettingsPanel
+          page={page}
+          onChange={onPageChange}
+          onPickThumbnail={null}
+          onPickCoverImage={null}
+          username={username}
+          assetsByUrl={assetsByUrl}
+        />
+      </div>
+    )
+  }
+
   return (
     <>
       <BlockBuilder
+        ref={blockBuilderRef}
         gallery={gallery}
         onChange={handleGalleryChange}
+        onScrollRatioChange={onScrollRatioChange}
+        highlightedBlockIndex={highlightedBlockIndex}
+        onBlockHover={onBlockHover}
         onPublish={null}
         publishing={false}
         autosaveStatus={autosaveStatus}
@@ -193,7 +212,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         collectionsByUrl={collectionsByUrl}
         onToggleCollection={handleToggleCollection}
         headerLabel="PAGE"
-        pageSettingsSlot={<PageSettingsPanel page={page} onChange={onPageChange} onPickThumbnail={handlePickThumbnail} onPickCoverImage={handlePickCoverImage} />}
+        pageSettingsSlot={<PageSettingsPanel page={page} onChange={onPageChange} onPickThumbnail={handlePickThumbnail} onPickCoverImage={handlePickCoverImage} username={username} assetsByUrl={assetsByUrl} />}
         onBack={null}
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}

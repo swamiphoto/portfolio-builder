@@ -120,8 +120,9 @@ export function normalizeGalleryEntity(gallery) {
 }
 
 export function pageDisplayThumbnail(page) {
-  if (page.thumbnail?.useCover) return page.cover?.imageUrl || ''
-  return page.thumbnail?.imageUrl || page.thumbnailUrl || ''
+  const explicit = page.thumbnail?.imageUrl
+  if (explicit && !page.thumbnail?.useCover) return explicit
+  return page.cover?.imageUrl || explicit || page.thumbnailUrl || ''
 }
 
 export function normalizePageEntity(page) {
@@ -150,6 +151,8 @@ export function normalizePageEntity(page) {
 
   return {
     ...page,
+    type: page.type === 'link' ? 'link' : 'page',
+    url: page.url || '',
     parentId: page.parentId ?? null,
     showInNav: page.showInNav ?? true,
     sortOrder: page.sortOrder ?? 0,

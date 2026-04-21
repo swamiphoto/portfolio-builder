@@ -42,6 +42,7 @@ export function defaultPage(overrides = {}) {
   return {
     id: overrides.id || 'page',
     title: overrides.title || 'New Page',
+    type: 'page',
     description: '',
     slug: overrides.id || 'page',
     parentId: null,
@@ -63,6 +64,21 @@ export function defaultPage(overrides = {}) {
       votingEnabled: false,
       downloadEnabled: false,
     },
+    blocks: [],
+    ...overrides,
+  }
+}
+
+export function defaultLink(overrides = {}) {
+  return {
+    id: overrides.id || 'link',
+    title: overrides.title || 'New Link',
+    type: 'link',
+    url: '',
+    slug: overrides.id || 'link',
+    parentId: null,
+    showInNav: overrides.showInNav ?? true,
+    sortOrder: overrides.sortOrder ?? 0,
     blocks: [],
     ...overrides,
   }

@@ -18,7 +18,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, assetsByUrl }) {
+export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover }) {
   const [debouncedGallery, setDebouncedGallery] = useState(gallery);
 
   useEffect(() => {
@@ -28,24 +28,31 @@ export default function GalleryPreview({ gallery, pages, assetsByUrl }) {
 
   const resolvedBlocks = (debouncedGallery.blocks || []).map(b => resolveBlock(b, assetsByUrl))
 
+  const inner = (
+    <Gallery
+      name={debouncedGallery.name}
+      description={debouncedGallery.description}
+      blocks={resolvedBlocks}
+      enableSlideshow={enableSlideshow}
+      pages={pages}
+      childPages={childPages}
+      activeChildId={activeChildId}
+      username={username}
+      onChildPageClick={onChildPageClick}
+      showPlaceholders
+      onBackClick={() => {}}
+      onSlideshowClick={onSlideshowClick || (() => {})}
+      onClientLoginClick={() => {}}
+      highlightedBlockIndex={highlightedBlockIndex}
+      onBlockHover={onBlockHover}
+    />
+  );
+
+  if (noWrap) return inner;
+
   return (
     <div className="flex-1 h-full min-w-0 overflow-y-auto bg-white">
-      {resolvedBlocks.length > 0 ? (
-        <Gallery
-          name={debouncedGallery.name}
-          description={debouncedGallery.description}
-          blocks={resolvedBlocks}
-          enableSlideshow={false}
-          pages={pages}
-          onBackClick={() => {}}
-          onSlideshowClick={() => {}}
-          onClientLoginClick={() => {}}
-        />
-      ) : (
-        <div className="flex items-center justify-center h-64 text-gray-300 text-sm">
-          Add blocks to preview the gallery
-        </div>
-      )}
+      {inner}
     </div>
   );
 }
