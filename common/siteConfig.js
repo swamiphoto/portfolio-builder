@@ -2,6 +2,7 @@
 import { downloadJSON, uploadJSON } from './gcsClient'
 import { normalizePageEntity } from './assetRefs'
 import { getUserSiteConfigPath } from './gcsUser'
+import { slugify } from './pageUtils'
 
 /**
  * Slugify a title into a URL-safe page ID.
@@ -10,13 +11,7 @@ import { getUserSiteConfigPath } from './gcsUser'
  * @returns {string}
  */
 export function generatePageId(title, suffix = '') {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '') + suffix
+  return slugify(title) + suffix
 }
 
 /**
