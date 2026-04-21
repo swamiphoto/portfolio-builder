@@ -3,6 +3,58 @@ import { getPagePhotos } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/imageUtils'
 import PopoverShell from './PopoverShell'
 
+function Toggle({ checked, onChange, label, hint }) {
+  return (
+    <div
+      onClick={() => onChange(!checked)}
+      className="flex items-start gap-2 cursor-pointer"
+    >
+      <div
+        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 mt-0.5 ${
+          checked ? 'bg-stone-700' : 'bg-stone-300'
+        }`}
+      >
+        <div
+          className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${
+            checked ? 'translate-x-[14px]' : 'translate-x-[2px]'
+          }`}
+        />
+      </div>
+      <div>
+        <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
+      </div>
+    </div>
+  )
+}
+
+function FeatureBlock({ label, checked, onToggle, children }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-stone-700">{label}</span>
+        <button
+          onClick={() => onToggle(!checked)}
+          className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${
+            checked ? 'bg-stone-700' : 'bg-stone-300'
+          }`}
+        >
+          <div
+            className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${
+              checked ? 'translate-x-[14px]' : 'translate-x-[2px]'
+            }`}
+          />
+        </button>
+      </div>
+      {checked && children && (
+        <div className="pl-3 space-y-2 border-l border-stone-100">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Section({ label, children }) {
   return (
     <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
@@ -19,6 +71,16 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
   function update(patch) {
     onUpdate({ ...page, ...patch })
+  }
+
+  function updateCf(key, patch) {
+    const cf = page.clientFeatures || {}
+    update({
+      clientFeatures: {
+        ...cf,
+        [key]: { ...(cf[key] || {}), ...patch },
+      },
+    })
   }
 
   const rootDomain =
@@ -111,6 +173,134 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             </p>
           </>
         )}
+      </Section>
+
+      {/* ── Client Features ── */}
+      <Section label="Client Features">
+        {(() => {
+          const cf = page.clientFeatures || {}
+          return (
+            <>
+              <Toggle
+                checked={cf.enabled || false}
+                onChange={(v) => update({ clientFeatures: { ...cf, enabled: v } })}
+                label="Enable client features"
+              />
+
+              {cf.enabled && (
+                <div className="mt-3 pt-3 border-t border-stone-100 space-y-3">
+
+                  <FeatureBlock
+                    label="Downloads"
+                    checked={cf.downloads?.enabled || false}
+                    onToggle={(v) => updateCf('downloads', { enabled: v })}
+                  >
+                    <div className="text-[10px] text-stone-500 font-medium uppercase tracking-wider">Quality</div>
+                    {['web', 'print', 'original'].map((q) => (
+                      <label key={q} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={(cf.downloads?.quality || ['web']).includes(q)}
+                          onChange={(e) => {
+                            const cur = cf.downloads?.quality || ['web']
+                            const next = e.target.checked
+                              ? [...new Set([...cur, q])]
+                              : cur.filter((x) => x !== q)
+                            updateCf('downloads', { quality: next })
+                          }}
+                          className="rounded border-stone-300 text-stone-700 focus:ring-stone-500"
+                        />
+                        <span className="text-xs text-stone-600 capitalize">{q}</span>
+                      </label>
+                    ))}
+                    <Toggle
+                      checked={cf.downloads?.requireEmail || false}
+                      onChange={(v) => updateCf('downloads', { requireEmail: v })}
+                      label="Require email to download"
+                    />
+                    <Toggle
+                      checked={cf.downloads?.watermarkEnabled || false}
+                      onChange={(v) => updateCf('downloads', { watermarkEnabled: v })}
+                      label="Watermark"
+                    />
+                  </FeatureBlock>
+
+                  <FeatureBlock
+                    label="Favorites"
+                    checked={cf.favorites?.enabled || false}
+                    onToggle={(v) => updateCf('favorites', { enabled: v })}
+                  >
+                    <Toggle
+                      checked={cf.favorites?.requireEmail || false}
+                      onChange={(v) => updateCf('favorites', { requireEmail: v })}
+                      label="Require email"
+                    />
+                    <Toggle
+                      checked={cf.favorites?.submitWorkflow || false}
+                      onChange={(v) => updateCf('favorites', { submitWorkflow: v })}
+                      label="Submit workflow"
+                      hint="Client clicks 'Submit selection' when done; you're notified"
+                    />
+                  </FeatureBlock>
+
+                  <FeatureBlock
+                    label="Comments"
+                    checked={cf.comments?.enabled || false}
+                    onToggle={(v) => updateCf('comments', { enabled: v })}
+                  >
+                    <Toggle
+                      checked={cf.comments?.requireEmail || false}
+                      onChange={(v) => updateCf('comments', { requireEmail: v })}
+                      label="Require email"
+                    />
+                  </FeatureBlock>
+
+                  <FeatureBlock
+                    label="Purchase"
+                    checked={cf.purchase?.enabled || false}
+                    onToggle={(v) => updateCf('purchase', { enabled: v })}
+                  >
+                    <div>
+                      <div className="text-[10px] text-stone-400 mb-1">Default price per photo</div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-stone-400">{cf.purchase?.currency || 'USD'}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="flex-1 border-b border-stone-200 p-0 pb-1 text-xs text-stone-700 outline-none focus:border-stone-500 bg-transparent"
+                          placeholder="0.00"
+                          value={cf.purchase?.defaultPrice ?? ''}
+                          onChange={(e) =>
+                            updateCf('purchase', {
+                              defaultPrice: e.target.value === '' ? null : parseFloat(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-stone-400 mb-1">Currency</div>
+                      <select
+                        className="w-full text-xs text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+                        value={cf.purchase?.currency || 'USD'}
+                        onChange={(e) => updateCf('purchase', { currency: e.target.value })}
+                      >
+                        {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="text-[10px] text-stone-400">
+                      Override pricing per photo in the photo block inspector.
+                    </p>
+                  </FeatureBlock>
+
+                </div>
+              )}
+            </>
+          )
+        })()}
       </Section>
 
       {/* ── Footer ── */}
