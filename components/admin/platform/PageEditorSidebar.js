@@ -1,10 +1,11 @@
 // components/admin/platform/PageEditorSidebar.js
 // Single-sidebar block editor with breadcrumb back to page list
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import BlockBuilder from '../gallery-builder/BlockBuilder'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
 import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail } from '../../../common/assetRefs'
 import PageSettingsPanel from './PageSettingsPanel'
+import PageSettingsPopover from './PageSettingsPopover'
 
 function pageToGallery(page) {
   return {
@@ -38,6 +39,8 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
   const [photoPickerBlockIndex, setPhotoPickerBlockIndex] = useState(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsGearRef = useRef(null)
 
   const libraryImages = libraryData?.images || null
 
@@ -175,16 +178,29 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   if (page.type === 'link') {
     return (
-      <div className="flex flex-col h-full bg-stone-50 p-3">
-        <PageSettingsPanel
-          page={page}
-          onChange={onPageChange}
-          onPickThumbnail={null}
-          onPickCoverImage={null}
-          username={username}
-          assetsByUrl={assetsByUrl}
-        />
-      </div>
+      <>
+        <div className="flex flex-col h-full bg-stone-50 p-3">
+          <PageSettingsPanel
+            page={page}
+            onChange={onPageChange}
+            onPickThumbnail={null}
+            onPickCoverImage={null}
+            username={username}
+            assetsByUrl={assetsByUrl}
+            settingsGearRef={settingsGearRef}
+            onSettingsOpen={() => setSettingsOpen(v => !v)}
+          />
+        </div>
+        {settingsOpen && (
+          <PageSettingsPopover
+            page={page}
+            anchorEl={settingsGearRef.current}
+            onUpdate={onPageChange}
+            onClose={() => setSettingsOpen(false)}
+            username={username}
+          />
+        )}
+      </>
     )
   }
 
@@ -212,7 +228,18 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         collectionsByUrl={collectionsByUrl}
         onToggleCollection={handleToggleCollection}
         headerLabel="PAGE"
-        pageSettingsSlot={<PageSettingsPanel page={page} onChange={onPageChange} onPickThumbnail={handlePickThumbnail} onPickCoverImage={handlePickCoverImage} username={username} assetsByUrl={assetsByUrl} />}
+        pageSettingsSlot={
+          <PageSettingsPanel
+            page={page}
+            onChange={onPageChange}
+            onPickThumbnail={handlePickThumbnail}
+            onPickCoverImage={handlePickCoverImage}
+            username={username}
+            assetsByUrl={assetsByUrl}
+            settingsGearRef={settingsGearRef}
+            onSettingsOpen={() => setSettingsOpen(v => !v)}
+          />
+        }
         onBack={null}
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}
@@ -228,6 +255,15 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
           blockType={(photoPickerBlockIndex === 'thumbnail' || photoPickerBlockIndex === 'cover') ? 'photo' : (page.blocks?.[photoPickerBlockIndex]?.type || 'photo')}
           onConfirm={handlePhotoPickerConfirm}
           onClose={() => { setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null) }}
+        />
+      )}
+      {settingsOpen && (
+        <PageSettingsPopover
+          page={page}
+          anchorEl={settingsGearRef.current}
+          onUpdate={onPageChange}
+          onClose={() => setSettingsOpen(false)}
+          username={username}
         />
       )}
     </>
