@@ -1,3 +1,5 @@
+import { slugify } from './pageUtils'
+
 export function normalizeImageRef(value) {
   if (!value) return null;
 
@@ -172,9 +174,12 @@ export function normalizePageEntity(page) {
     };
   }
 
+  const slug = page.slug || slugify(page.title || '') || page.id || ''
+
   return {
     ...page,
     type: page.type === 'link' ? 'link' : 'page',
+    slug,
     url: page.url || '',
     parentId: page.parentId ?? null,
     showInNav: page.showInNav ?? true,
