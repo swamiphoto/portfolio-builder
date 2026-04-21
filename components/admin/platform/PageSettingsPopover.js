@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { slugify } from '../../../common/pageUtils'
 import { getPagePhotos } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/imageUtils'
@@ -68,6 +69,8 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const pagePhotos = getPagePhotos(page)
   const autoSlug = slugify(page.title || '')
   const displaySlug = page.slug || autoSlug
+  const [slugDraft, setSlugDraft] = useState(null)
+  const displayValue = slugDraft !== null ? slugDraft : displaySlug
 
   function update(patch) {
     onUpdate({ ...page, ...patch })
@@ -98,8 +101,13 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           <span className="text-[10px] text-stone-400 flex-shrink-0 font-mono">{username}/</span>
           <input
             className="flex-1 border-b border-stone-200 p-0 pb-1 text-xs font-mono text-stone-700 outline-none focus:border-stone-500 bg-transparent min-w-0"
-            value={displaySlug}
-            onChange={(e) => update({ slug: e.target.value })}
+            value={displayValue}
+            onChange={(e) => setSlugDraft(e.target.value)}
+            onBlur={() => {
+              const sanitized = slugify(slugDraft ?? displaySlug)
+              setSlugDraft(null)
+              update({ slug: sanitized })
+            }}
             placeholder={autoSlug || 'page-url'}
             spellCheck={false}
           />
