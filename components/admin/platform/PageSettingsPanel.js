@@ -23,9 +23,8 @@ function Toggle({ checked, onChange, disabled, label, hint }) {
   )
 }
 
-export default function PageSettingsPanel({ page, onChange, onPickThumbnail, onPickCoverImage, username, assetsByUrl }) {
+export default function PageSettingsPanel({ page, onChange, onPickThumbnail, onPickCoverImage, username, assetsByUrl, settingsGearRef, onSettingsOpen }) {
   const [expanded, setExpanded] = useState(true)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [designOpen, setDesignOpen] = useState(false)
   const [slideshowConfigOpen, setSlideshowConfigOpen] = useState(false)
   const brushRef = useRef(null)
@@ -125,6 +124,18 @@ export default function PageSettingsPanel({ page, onChange, onPickThumbnail, onP
         </button>
 
         <button
+          ref={settingsGearRef}
+          onClick={onSettingsOpen}
+          title="Page settings"
+          className="w-6 h-6 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+
+        <button
           onClick={() => setExpanded(v => !v)}
           className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0"
         >
@@ -215,25 +226,6 @@ export default function PageSettingsPanel({ page, onChange, onPickThumbnail, onP
             </div>
           </div>
 
-          {/* Advanced */}
-          <div className="border-t border-stone-100 pt-2">
-            <button onClick={() => setAdvancedOpen(v => !v)} className="text-[10px] font-medium text-stone-400 uppercase tracking-wider hover:text-stone-700">
-              {advancedOpen ? '▼' : '▶'} Advanced
-            </button>
-            {advancedOpen && (
-              <div className="mt-3 space-y-3">
-                <div>
-                  <div className="text-[10px] text-stone-400 mb-1">Slug</div>
-                  <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-xs font-mono text-stone-500 outline-none focus:border-stone-500 bg-transparent"
-                    value={page.slug || ''}
-                    onChange={(e) => update({ slug: e.target.value })}
-                  />
-                </div>
-                <Toggle checked={false} disabled label="Client features" hint="Coming soon" />
-              </div>
-            )}
-          </div>
         </div>
       )}
 
