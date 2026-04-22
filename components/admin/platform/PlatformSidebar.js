@@ -275,8 +275,10 @@ export default function PlatformSidebar({
               }`}
             >
               <span className="flex-1 truncate">{page.title}</span>
-              {siteConfig.initialPageId === page.id && (
-                <span className="text-[9px] text-stone-400 uppercase tracking-wider flex-shrink-0 mr-1">Start</span>
+              {siteConfig.homePageId === page.id && (
+                <svg className="w-3 h-3 text-stone-400 flex-shrink-0 mr-1" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
               )}
               {isLink && <span className="text-[10px] text-stone-400 flex-shrink-0 ml-1">↗</span>}
               {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">nest here</span>}
@@ -324,11 +326,11 @@ export default function PlatformSidebar({
                 <button
                   onClick={() => {
                     setMenuOpenId(null)
-                    onConfigChange(prev => ({ ...prev, initialPageId: prev.initialPageId === page.id ? null : page.id }))
+                    onConfigChange(prev => ({ ...prev, homePageId: prev.homePageId === page.id ? null : page.id }))
                   }}
                   className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  {siteConfig.initialPageId === page.id ? 'Unset initial page' : 'Set as initial page'}
+                  {siteConfig.homePageId === page.id ? 'Unset home page' : 'Set as home page'}
                 </button>
               )}
               <button onClick={() => { setMenuOpenId(null); handleDelete(page.id) }} className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">Delete</button>

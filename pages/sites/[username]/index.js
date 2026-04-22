@@ -55,8 +55,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
   const hasCoverPage = siteConfig.hasCoverPage !== false
   const coverConfig = siteConfig.cover || {}
-  const initialPage = hasCoverPage && siteConfig.initialPageId
-    ? siteConfig.pages?.find(p => p.id === siteConfig.initialPageId)
+  const initialPage = hasCoverPage && siteConfig.homePageId
+    ? siteConfig.pages?.find(p => p.id === siteConfig.homePageId)
     : null
   const initialPageHref = initialPage ? `/sites/${username}/${initialPage.slug || initialPage.id}` : null
 

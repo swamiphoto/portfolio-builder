@@ -38,7 +38,7 @@ export function createDefaultSiteConfig(userId) {
       height: 'full',
       buttonStyle: 'solid',
     },
-    initialPageId: null,
+    homePageId: null,
     design: {
       theme: 'minimal-light',
       navStyle: 'minimal',

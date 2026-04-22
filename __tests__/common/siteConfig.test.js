@@ -40,7 +40,7 @@ describe('createDefaultSiteConfig', () => {
     expect(config.publishedAt).toBeNull()
   })
 
-  it('includes cover config and initialPageId', () => {
+  it('includes cover config and homePageId', () => {
     const config = createDefaultSiteConfig('user-123')
     expect(config.cover).toEqual({
       heading: '',
@@ -50,7 +50,7 @@ describe('createDefaultSiteConfig', () => {
       height: 'full',
       buttonStyle: 'solid',
     })
-    expect(config.initialPageId).toBeNull()
+    expect(config.homePageId).toBeNull()
     expect(config.hasCoverPage).toBe(true)
   })
 })
