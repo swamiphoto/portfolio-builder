@@ -96,7 +96,7 @@ function DrillHeader({ label, onBack }) {
   )
 }
 
-function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, hint }) {
+function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, hint, alwaysShowDrill }) {
   return (
     <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
       <button
@@ -110,7 +110,7 @@ function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, hint }) {
         <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
         {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
       </div>
-      {checked && actionLabel && onDrillIn && (
+      {(checked || alwaysShowDrill) && actionLabel && onDrillIn && (
         <button
           type="button"
           onClick={onDrillIn}
@@ -284,18 +284,6 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
 
-      {/* Identity */}
-      <div className="px-3 py-3 space-y-3 border-b border-stone-100">
-        <Field label="Site name">
-          <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
-        </Field>
-        <UploadField label="Logo" placeholder="https://…" value={config.logo || ''} onChange={(v) => update({ logo: v })} />
-        <UploadField label="Favicon" placeholder="https://… (defaults to logo)" value={config.favicon || ''} onChange={(v) => update({ favicon: v })} />
-        <Field label="Footer text">
-          <input className={inputCls} placeholder={`© ${new Date().getFullYear()} ${config.siteName || 'Your Name'}`} value={footer.customText || ''} onChange={(e) => updateFooter({ customText: e.target.value })} />
-        </Field>
-      </div>
-
       {/* Theme row */}
       <div className="px-3 py-2.5 flex items-center gap-2 border-b border-stone-100">
         <select
@@ -317,6 +305,18 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </button>
       </div>
 
+      {/* Identity */}
+      <div className="px-3 py-3 space-y-3 border-b border-stone-100">
+        <Field label="Site name">
+          <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
+        </Field>
+        <UploadField label="Logo" placeholder="https://…" value={config.logo || ''} onChange={(v) => update({ logo: v })} />
+        <UploadField label="Favicon" placeholder="https://… (defaults to logo)" value={config.favicon || ''} onChange={(v) => update({ favicon: v })} />
+        <Field label="Footer text">
+          <input className={inputCls} placeholder={`© ${new Date().getFullYear()} ${config.siteName || 'Your Name'}`} value={footer.customText || ''} onChange={(e) => updateFooter({ customText: e.target.value })} />
+        </Field>
+      </div>
+
       {/* Toggle / drill rows */}
       <ToggleRow
         checked={!!config.customDomain}
@@ -327,11 +327,24 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         label="Custom domain"
         actionLabel="Configure"
         onDrillIn={() => setView('domain')}
+        alwaysShowDrill
       />
 
-      <DrillRow label="Analytics" onDrillIn={() => setView('analytics')} />
+      <ToggleRow
+        checked={!!config.analytics?.enabled}
+        onToggle={(v) => updateAnalytics({ enabled: v })}
+        label="Analytics"
+        actionLabel="Configure"
+        onDrillIn={() => setView('analytics')}
+      />
 
-      <DrillRow label="Payments" onDrillIn={() => setView('payments')} />
+      <ToggleRow
+        checked={!!config.clientDefaults?.paymentsEnabled}
+        onToggle={(v) => updateClientDefaults({ paymentsEnabled: v })}
+        label="Payments"
+        actionLabel="Configure"
+        onDrillIn={() => setView('payments')}
+      />
 
     </PopoverShell>
   )
