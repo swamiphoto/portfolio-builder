@@ -37,7 +37,7 @@ async function uploadAsset(file) {
   return gcsUrl
 }
 
-function ImageSquare({ value, onChange, fallbackUrl, label }) {
+function AssetRow({ label, value, onChange, fallbackUrl, onPickFromLibrary }) {
   const fileRef = useRef(null)
   const [uploading, setUploading] = useState(false)
 
@@ -57,46 +57,59 @@ function ImageSquare({ value, onChange, fallbackUrl, label }) {
   const isDefault = !value && !!fallbackUrl
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="w-11 h-11 rounded-md border border-stone-200 overflow-hidden relative group flex items-center justify-center bg-stone-50 hover:border-stone-400 transition-colors disabled:opacity-40"
-        >
+    <div className="flex items-center gap-2">
+      <div className="relative flex-shrink-0">
+        <div className="w-9 h-9 rounded border border-stone-200 overflow-hidden flex items-center justify-center bg-stone-50">
           {displayUrl ? (
-            <>
-              <img src={displayUrl} className={`w-full h-full object-cover ${isDefault ? 'opacity-50' : ''}`} alt="" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-2.828 1.172H7v-2a4 4 0 011.172-2.828z" />
-                </svg>
-              </div>
-            </>
+            <img src={displayUrl} className={`w-full h-full object-cover ${isDefault ? 'opacity-40' : ''}`} alt="" />
           ) : (
-            uploading ? (
-              <span className="text-xs text-stone-400">…</span>
-            ) : (
-              <svg className="w-4 h-4 text-stone-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-            )
+            <svg className="w-3.5 h-3.5 text-stone-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
           )}
-        </button>
+        </div>
         {value && (
           <button
             type="button"
             onClick={() => onChange('')}
-            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-stone-400 hover:bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center transition-colors leading-none"
-          >
-            ×
-          </button>
+            className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-stone-400 hover:bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center transition-colors leading-none"
+          >×</button>
         )}
       </div>
-      <span className="text-[10px] text-stone-400 leading-tight text-center">
-        {label}{isDefault ? <><br />(logo)</>  : ''}
-      </span>
+
+      <div className="text-[10px] text-stone-400 w-9 flex-shrink-0 leading-tight">{label}{isDefault ? <><br/><span className="text-[9px]">(logo)</span></> : ''}</div>
+
+      <input
+        className="flex-1 min-w-0 border-b border-stone-200 p-0 pb-0.5 text-xs text-stone-600 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+        placeholder={isDefault ? '(using logo)' : 'https://…'}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      />
+
+      {onPickFromLibrary && (
+        <button type="button" onClick={onPickFromLibrary} title="Choose from library" className="flex-shrink-0 text-stone-300 hover:text-stone-600 transition-colors">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+        </button>
+      )}
+
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        title="Upload image"
+        className="flex-shrink-0 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-40"
+      >
+        {uploading ? (
+          <span className="text-[10px] text-stone-400">…</span>
+        ) : (
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+        )}
+      </button>
+
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </div>
   )
@@ -166,7 +179,7 @@ function DrillRow({ label, onDrillIn }) {
   )
 }
 
-export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose }) {
+export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
@@ -298,19 +311,19 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         <Field label="Site name">
           <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
-        <div className="flex gap-4">
-          <ImageSquare
-            value={config.logo || ''}
-            onChange={(v) => update({ logo: v })}
-            label="Logo"
-          />
-          <ImageSquare
-            value={config.favicon || ''}
-            onChange={(v) => update({ favicon: v })}
-            fallbackUrl={config.logo || ''}
-            label="Favicon"
-          />
-        </div>
+        <AssetRow
+          label="Logo"
+          value={config.logo || ''}
+          onChange={(v) => update({ logo: v })}
+          onPickFromLibrary={onPickLogo}
+        />
+        <AssetRow
+          label="Favicon"
+          value={config.favicon || ''}
+          onChange={(v) => update({ favicon: v })}
+          fallbackUrl={config.logo || ''}
+          onPickFromLibrary={onPickFavicon}
+        />
         <Field label="Footer text">
           <input
             className={inputCls}

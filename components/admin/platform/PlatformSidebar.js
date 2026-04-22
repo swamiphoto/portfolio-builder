@@ -28,6 +28,8 @@ export default function PlatformSidebar({
   onDropImagesToPage,
   onPickThumbnail,
   assetsByUrl,
+  onPickLogo,
+  onPickFavicon,
 }) {
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
@@ -437,6 +439,8 @@ export default function PlatformSidebar({
           anchorEl={siteSettingsGearRef.current}
           onUpdate={onConfigChange}
           onClose={() => setSiteSettingsOpen(false)}
+          onPickLogo={onPickLogo}
+          onPickFavicon={onPickFavicon}
         />
       )}
 

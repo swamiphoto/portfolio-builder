@@ -23,6 +23,7 @@ export default function AdminIndex() {
   const [selectedPageId, setSelectedPageId] = useState(null)
   const [showLibrary, setShowLibrary] = useState(false)
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
+  const [assetPickerTarget, setAssetPickerTarget] = useState(null) // 'logo' | 'favicon' | null
   const autosaveTimer = useRef(null)
 
   // Hover highlight sync
@@ -217,6 +218,12 @@ export default function AdminIndex() {
     setThumbnailPickerPageId(null)
   }, [thumbnailPickerPageId, siteConfig, updatePage])
 
+  const handleAssetPickerConfirm = useCallback((refs) => {
+    if (!assetPickerTarget || !refs.length) return
+    updateConfig(prev => ({ ...prev, [assetPickerTarget]: refs[0].url }))
+    setAssetPickerTarget(null)
+  }, [assetPickerTarget, updateConfig])
+
   const handleSelectPage = useCallback((pageId) => {
     setSelectedPageId(pageId)
     setShowLibrary(false)
@@ -251,6 +258,8 @@ export default function AdminIndex() {
       onDropImagesToPage={handleDropImagesToPage}
       onPickThumbnail={handlePickThumbnail}
       assetsByUrl={assetsByUrl}
+      onPickLogo={() => setAssetPickerTarget('logo')}
+      onPickFavicon={() => setAssetPickerTarget('favicon')}
     />
   )
 
@@ -353,6 +362,15 @@ export default function AdminIndex() {
           blockType="photo"
           onConfirm={handleThumbnailConfirm}
           onClose={() => setThumbnailPickerPageId(null)}
+        />
+      )}
+      {assetPickerTarget && (
+        <PhotoPickerModal
+          images={libraryConfig?.images || []}
+          loading={!libraryConfig}
+          blockType="photo"
+          onConfirm={handleAssetPickerConfirm}
+          onClose={() => setAssetPickerTarget(null)}
         />
       )}
     </DragProvider>
