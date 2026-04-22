@@ -1,15 +1,6 @@
 import { useState, useRef } from 'react'
 import PopoverShell from './PopoverShell'
 
-function Section({ label, children }) {
-  return (
-    <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
-      <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">{label}</div>
-      {children}
-    </div>
-  )
-}
-
 function Field({ label, children }) {
   return (
     <div>
@@ -70,7 +61,7 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary }) 
         <div className="flex flex-col gap-1">
           {onPickFromLibrary && (
             <button type="button" onClick={onPickFromLibrary} className="text-xs text-stone-500 hover:text-stone-900 text-left">
-              {value ? 'Change…' : 'Select from library'}
+              {value ? 'Change…' : 'Select image'}
             </button>
           )}
           <button
@@ -81,9 +72,7 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary }) 
           >
             {uploading ? 'Uploading…' : (value ? 'Upload new' : 'Upload an image')}
           </button>
-          {isDefault && (
-            <span className="text-[10px] text-stone-400">Defaults to logo</span>
-          )}
+          {isDefault && <span className="text-[10px] text-stone-400">Defaults to logo</span>}
           {value && (
             <button type="button" onClick={() => onChange('')} className="text-[10px] text-stone-400 hover:text-red-600 text-left">
               Remove
@@ -117,42 +106,17 @@ function DrillHeader({ label, onBack }) {
   )
 }
 
-function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, hint, alwaysShowDrill }) {
+function DrillRow({ label, hint, onDrillIn }) {
   return (
     <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
-      <button
-        type="button"
-        onClick={() => onToggle(!checked)}
-        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-stone-700' : 'bg-stone-300'}`}
-      >
-        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
-      </button>
-      <div className="flex-1 ml-2 min-w-0">
-        <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
-        {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
+      <div className="flex-1 min-w-0">
+        <div className="text-xs text-stone-700 select-none">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 select-none mt-0.5">{hint}</div>}
       </div>
-      {(checked || alwaysShowDrill) && actionLabel && onDrillIn && (
-        <button
-          type="button"
-          onClick={onDrillIn}
-          className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-2"
-        >
-          {actionLabel}
-          <ChevronRight />
-        </button>
-      )}
-    </div>
-  )
-}
-
-function DrillRow({ label, onDrillIn }) {
-  return (
-    <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
-      <span className="flex-1 text-xs text-stone-700 select-none">{label}</span>
       <button
         type="button"
         onClick={onDrillIn}
-        className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0"
+        className="flex items-center gap-0.5 text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-2"
       >
         <ChevronRight />
       </button>
@@ -160,9 +124,15 @@ function DrillRow({ label, onDrillIn }) {
   )
 }
 
+const BrushIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+  </svg>
+)
+
 export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon }) {
   const config = siteConfig || {}
-  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
+  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments' | 'branding'
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const footer = config.footer || {}
@@ -183,8 +153,59 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     update({ footer: { ...(config.footer || {}), ...patch } })
   }
 
-  const rootDomain =
-    (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
+  const rootDomain = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
+  const hasAnalytics = !!(config.analytics?.googleId || config.analytics?.plausibleDomain)
+  const logoType = config.logoType || 'sitename'
+
+  const brushButton = (
+    <button
+      ref={brushRef}
+      type="button"
+      onClick={() => setDesignOpen(v => !v)}
+      className="text-stone-400 hover:text-stone-700 transition-colors"
+      title="Design options"
+    >
+      <BrushIcon />
+    </button>
+  )
+
+  // ── Branding drill-in ─────────────────────────────────────────────────────
+  if (view === 'branding') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Branding">
+        <DrillHeader label="Branding" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-4">
+          <div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Logo</div>
+            <div className="flex gap-1.5 mb-3">
+              {[['sitename', 'Site name'], ['image', 'Image']].map(([val, lbl]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => update({ logoType: val })}
+                  className={`text-xs px-3 py-1 border transition-colors ${
+                    logoType === val
+                      ? 'border-stone-900 bg-stone-900 text-white'
+                      : 'border-stone-200 text-stone-600 hover:border-stone-400'
+                  }`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+            {logoType === 'image' && (
+              <AssetField
+                label="Logo image"
+                value={config.logo || ''}
+                onChange={(v) => update({ logo: v })}
+                onPickFromLibrary={onPickLogo}
+              />
+            )}
+          </div>
+        </div>
+      </PopoverShell>
+    )
+  }
 
   // ── Domain drill-in ───────────────────────────────────────────────────────
   if (view === 'domain') {
@@ -233,9 +254,11 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         <DrillHeader label="Payments" onBack={() => setView('main')} />
         <div className="px-3 py-3 space-y-3">
           <Field label="Default currency">
-            <select className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+            <select
+              className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
               value={config.clientDefaults?.defaultCurrency || 'USD'}
-              onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}>
+              onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}
+            >
               {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
@@ -253,37 +276,24 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
   // ── Main view ─────────────────────────────────────────────────────────────
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings" headerRight={brushButton}>
 
-      {/* Theme row */}
-      <div className="px-3 py-2.5 border-b border-stone-100">
-        <div className="flex items-center border border-stone-300 rounded-md px-2 py-1.5 gap-1.5 hover:border-stone-400 transition-colors">
-          <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider flex-shrink-0">Theme</span>
-          <div className="flex-1 relative min-w-0">
-            <select
-              className="w-full pr-4 text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer"
-              value={config.design?.theme || 'minimal-light'}
-              onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
-            >
-              <option value="minimal-light">Minimal Light</option>
-              <option value="minimal-dark">Minimal Dark</option>
-              <option value="editorial">Editorial</option>
-            </select>
-            <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-          <button
-            ref={brushRef}
-            type="button"
-            onClick={() => setDesignOpen(v => !v)}
-            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
-            title="Design options"
+      {/* Theme — compact row */}
+      <div className="px-3 py-2 border-b border-stone-100 flex items-center gap-2">
+        <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider flex-shrink-0">Theme</span>
+        <div className="relative min-w-0">
+          <select
+            className="text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer pr-4"
+            value={config.design?.theme || 'minimal-light'}
+            onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-            </svg>
-          </button>
+            <option value="minimal-light">Minimal Light</option>
+            <option value="minimal-dark">Minimal Dark</option>
+            <option value="editorial">Editorial</option>
+          </select>
+          <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
       </div>
 
@@ -292,19 +302,42 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         <Field label="Site name">
           <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
-        <AssetField
-          label="Logo"
-          value={config.logo || ''}
-          onChange={(v) => update({ logo: v })}
-          onPickFromLibrary={onPickLogo}
-        />
+        <Field label="Tagline">
+          <input className={inputCls} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
+        </Field>
+
+        {/* Logo status row */}
+        <div>
+          <div className="text-[10px] text-stone-400 mb-1">Logo</div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {logoType === 'image' && config.logo && (
+                <div className="h-5 max-w-[60px] border border-stone-200 overflow-hidden flex items-center bg-stone-50 px-1">
+                  <img src={config.logo} className="max-h-full max-w-full object-contain" alt="" />
+                </div>
+              )}
+              <span className="text-xs text-stone-500">
+                {logoType === 'image' ? (config.logo ? '' : 'Image (none set)') : 'Site name'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setView('branding')}
+              className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0"
+            >
+              Branding <ChevronRight />
+            </button>
+          </div>
+        </div>
+
         <AssetField
           label="Favicon"
           value={config.favicon || ''}
           onChange={(v) => update({ favicon: v })}
-          fallbackUrl={config.logo || ''}
+          fallbackUrl={logoType === 'image' ? (config.logo || '') : ''}
           onPickFromLibrary={onPickFavicon}
         />
+
         <Field label="Footer text">
           <input
             className={inputCls}
@@ -314,37 +347,24 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </Field>
       </div>
 
-      {/* Toggle / drill rows */}
-      <ToggleRow
-        checked={config.customDomain != null}
-        onToggle={(v) => {
-          if (!v) update({ customDomain: null })
-          else update({ customDomain: '' })
-        }}
-        label="Custom domain"
-        actionLabel="Configure"
+      {/* Drill rows */}
+      <DrillRow
+        label={config.customDomain || 'Setup custom domain'}
         onDrillIn={() => setView('domain')}
       />
-
-      <ToggleRow
-        checked={!!config.analytics?.enabled}
-        onToggle={(v) => updateAnalytics({ enabled: v })}
-        label="Analytics"
-        actionLabel="Configure"
+      <DrillRow
+        label={hasAnalytics ? 'Analytics' : 'Setup analytics'}
         onDrillIn={() => setView('analytics')}
       />
-
-      <ToggleRow
-        checked={!!config.clientDefaults?.paymentsEnabled}
-        onToggle={(v) => updateClientDefaults({ paymentsEnabled: v })}
-        label="Payments"
-        actionLabel="Configure"
+      <DrillRow
+        label={config.clientDefaults?.paymentsEnabled ? 'Payments' : 'Setup payments'}
         onDrillIn={() => setView('payments')}
       />
 
       {designOpen && (
         <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={260} title="Design">
-          <Section label="Navigation">
+          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Navigation</div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { value: 'minimal',  label: '1', title: 'Minimal'  },
@@ -360,16 +380,20 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
                 )
               })}
             </div>
-          </Section>
-          <Section label="Sub-navigation">
-            <select className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+          </div>
+          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Sub-navigation</div>
+            <select
+              className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
               value={config.design?.subNavStyle || 'dropdown'}
-              onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}>
+              onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
+            >
               <option value="dropdown">Dropdown</option>
               <option value="inline">Links below page title</option>
             </select>
-          </Section>
-          <Section label="Footer Layout">
+          </div>
+          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Footer Layout</div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { value: 'none',     label: '0', title: 'None'     },
@@ -386,7 +410,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
                 )
               })}
             </div>
-          </Section>
+          </div>
         </PopoverShell>
       )}
 

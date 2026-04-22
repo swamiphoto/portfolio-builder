@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 
-export default function PopoverShell({ anchorEl, onClose, width = 320, title, children }) {
+export default function PopoverShell({ anchorEl, onClose, width = 320, title, children, headerRight }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
 
@@ -39,7 +39,10 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
       {title ? (
         <div className="px-3 pt-2.5 pb-2 flex items-center justify-between sticky top-0 bg-white z-10">
           <span className="text-xs font-semibold text-stone-700 tracking-wide">{title}</span>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none ml-2">×</button>
+          <div className="flex items-center gap-1.5 ml-2">
+            {headerRight}
+            <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
+          </div>
         </div>
       ) : (
         <div className="flex justify-end px-2 pt-1.5 sticky top-0 bg-white z-10">

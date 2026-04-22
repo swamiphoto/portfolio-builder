@@ -26,6 +26,7 @@ export function createDefaultSiteConfig(userId) {
     slug: '',
     customDomain: null,
     tagline: '',
+    logoType: 'sitename',
     logo: '',
     favicon: '',
     design: {
