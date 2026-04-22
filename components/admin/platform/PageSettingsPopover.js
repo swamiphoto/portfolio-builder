@@ -111,7 +111,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const displaySlug = page.slug || autoSlug
   const [slugDraft, setSlugDraft] = useState(null)
   const displayValue = slugDraft !== null ? slugDraft : displaySlug
-  const [view, setView] = useState('main') // 'main' | 'slideshow' | 'client' | 'password' | 'buttons'
+  const [view, setView] = useState('main') // 'main' | 'slideshow' | 'client' | 'password'
 
   // Slideshow local state
   const slideshow = page.slideshow || {}
@@ -151,23 +151,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
     updateSlideshow({ excluded: next })
   }
 
-  function updateButton(index, patch) {
-    const buttons = [...(page.cover?.buttons || [])]
-    buttons[index] = { ...buttons[index], ...patch }
-    update({ cover: { ...(page.cover || {}), buttons } })
-  }
-
-  function removeButton(index) {
-    const buttons = (page.cover?.buttons || []).filter((_, i) => i !== index)
-    update({ cover: { ...(page.cover || {}), buttons } })
-  }
-
-  function addButton() {
-    const existing = page.cover?.buttons || []
-    if (existing.length > 0 && !existing[existing.length - 1].label) return
-    const buttons = [...existing, { label: '', href: '', style: 'solid' }]
-    update({ cover: { ...(page.cover || {}), buttons } })
-  }
 
   const currentThumbUrl = page.thumbnail?.imageUrl || pagePhotos[0] || null
   const cf = page.clientFeatures || {}
@@ -182,11 +165,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   )
   const includedCount = sequence.filter(s => s.type === 'image' && !s.excluded).length
   const textCount = sequence.filter(s => s.type === 'text').length
-
-  const autoButtonLabels = [
-    slideshow.enabled && 'Start Slideshow',
-    cf.enabled && 'Client Login',
-  ].filter(Boolean)
 
   // ── Password drill-in ─────────────────────────────────────────────────────
   if (view === 'password') {
@@ -216,64 +194,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
     )
   }
 
-  // ── Buttons drill-in ──────────────────────────────────────────────────────
-  if (view === 'buttons') {
-    return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
-        <DrillHeader label="Buttons" onBack={() => setView('main')} />
-        <div className="px-3 py-3">
-          {(page.cover?.buttons || []).map((btn, i) => (
-            <div key={i} className="flex items-start gap-1.5 mb-3">
-              <div className="flex-1 space-y-1.5 min-w-0">
-                <input
-                  className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                  placeholder="Button label"
-                  value={btn.label}
-                  onChange={(e) => updateButton(i, { label: e.target.value })}
-                />
-                <input
-                  className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-500 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                  placeholder="URL or #anchor"
-                  value={btn.href}
-                  onChange={(e) => updateButton(i, { href: e.target.value })}
-                />
-              </div>
-              <div className="flex flex-col gap-1 items-end flex-shrink-0 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => updateButton(i, { style: btn.style === 'solid' ? 'outline' : 'solid' })}
-                  className="text-[10px] text-stone-500 border border-stone-200 rounded px-1.5 py-0.5 hover:border-stone-400 transition-colors whitespace-nowrap"
-                >
-                  {btn.style === 'solid' ? 'Solid' : 'Outline'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeButton(i)}
-                  className="text-stone-300 hover:text-red-400 transition-colors text-sm leading-none"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addButton}
-            className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
-          >
-            + Add button
-          </button>
-          {autoButtonLabels.length > 0 && (
-            <p className="text-[10px] text-stone-400 mt-2">
-              Auto: {autoButtonLabels.join(' · ')}
-            </p>
-          )}
-        </div>
-      </PopoverShell>
-    )
-  }
-
-  // ── Slideshow drill-in ────────────────────────────────────────────────────
+// ── Slideshow drill-in ────────────────────────────────────────────────────
   if (view === 'slideshow') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
@@ -572,17 +493,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         label="Enable client features"
         actionLabel="Configure"
         onDrillIn={() => setView('client')}
-      />
-
-      <ToggleRow
-        checked={(page.cover?.buttons || []).length > 0}
-        onToggle={(v) => {
-          if (v) addButton()
-          else update({ cover: { ...(page.cover || {}), buttons: [] } })
-        }}
-        label="Custom buttons"
-        actionLabel={(page.cover?.buttons || []).some(b => b.label) ? 'Edit' : 'Add'}
-        onDrillIn={() => setView('buttons')}
       />
 
     </PopoverShell>
