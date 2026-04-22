@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from 'react'
 export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
-  const cover = page.cover || { height: 'full' }
+  const cover = page.cover || { imageUrl: '', height: 'full', overlayText: '', variant: 'showcase', buttonStyle: 'solid', buttons: [] }
 
   useEffect(() => {
     if (!anchorEl) return

@@ -6,6 +6,7 @@ const BUTTON_STYLES = ['solid', 'outline', 'ghost']
 const normalizeBtn = (b) => {
   if (!b?.label) return null
   return {
+    id: b.id,
     type: BUTTON_TYPES.includes(b.type) ? b.type : 'url',
     label: b.label,
     href: b.href || '',
