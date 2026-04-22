@@ -44,7 +44,7 @@ export function createDefaultSiteConfig(userId) {
       website: '',
     },
     footer: {
-      customText: '',
+      customText: `© ${new Date().getFullYear()} My Portfolio`,
     },
     analytics: {
       googleId: '',

@@ -37,7 +37,7 @@ async function uploadAsset(file) {
   return gcsUrl
 }
 
-function UploadField({ label, value, placeholder, onChange }) {
+function ImageSquare({ value, onChange, fallbackUrl, label }) {
   const fileRef = useRef(null)
   const [uploading, setUploading] = useState(false)
 
@@ -48,30 +48,57 @@ function UploadField({ label, value, placeholder, onChange }) {
     try {
       const url = await uploadAsset(file)
       onChange(url)
-    } catch (e) {}
+    } catch {}
     setUploading(false)
     e.target.value = ''
   }
 
+  const displayUrl = value || fallbackUrl || null
+  const isDefault = !value && !!fallbackUrl
+
   return (
-    <Field label={label}>
-      <div className="flex items-center gap-2">
-        <input
-          className={inputCls}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative">
         <button
+          type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="text-[10px] text-stone-400 hover:text-stone-700 flex-shrink-0 disabled:opacity-40"
+          className="w-11 h-11 rounded-md border border-stone-200 overflow-hidden relative group flex items-center justify-center bg-stone-50 hover:border-stone-400 transition-colors disabled:opacity-40"
         >
-          {uploading ? '…' : 'Upload'}
+          {displayUrl ? (
+            <>
+              <img src={displayUrl} className={`w-full h-full object-cover ${isDefault ? 'opacity-50' : ''}`} alt="" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-2.828 1.172H7v-2a4 4 0 011.172-2.828z" />
+                </svg>
+              </div>
+            </>
+          ) : (
+            uploading ? (
+              <span className="text-xs text-stone-400">…</span>
+            ) : (
+              <svg className="w-4 h-4 text-stone-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+            )
+          )}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-stone-400 hover:bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center transition-colors leading-none"
+          >
+            ×
+          </button>
+        )}
       </div>
-    </Field>
+      <span className="text-[10px] text-stone-400 leading-tight text-center">
+        {label}{isDefault ? <><br />(logo)</>  : ''}
+      </span>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+    </div>
   )
 }
 
@@ -271,10 +298,25 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         <Field label="Site name">
           <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
-        <UploadField label="Logo" placeholder="https://…" value={config.logo || ''} onChange={(v) => update({ logo: v })} />
-        <UploadField label="Favicon" placeholder="https://… (defaults to logo)" value={config.favicon || ''} onChange={(v) => update({ favicon: v })} />
+        <div className="flex gap-4">
+          <ImageSquare
+            value={config.logo || ''}
+            onChange={(v) => update({ logo: v })}
+            label="Logo"
+          />
+          <ImageSquare
+            value={config.favicon || ''}
+            onChange={(v) => update({ favicon: v })}
+            fallbackUrl={config.logo || ''}
+            label="Favicon"
+          />
+        </div>
         <Field label="Footer text">
-          <input className={inputCls} placeholder={`© ${new Date().getFullYear()} ${config.siteName || 'Your Name'}`} value={footer.customText || ''} onChange={(e) => updateFooter({ customText: e.target.value })} />
+          <input
+            className={inputCls}
+            value={footer.customText || `© ${new Date().getFullYear()} ${config.siteName || 'My Portfolio'}`}
+            onChange={(e) => updateFooter({ customText: e.target.value })}
+          />
         </Field>
       </div>
 
