@@ -173,13 +173,15 @@ export function normalizePageEntity(page) {
     let buttons
     if (Array.isArray(cover.buttons)) {
       buttons = cover.buttons.map(normalizeBtn).filter(Boolean)
-    } else {
+    } else if (cover.buttons === undefined && (cover.primaryCta || cover.secondaryCta)) {
       // Migrate legacy primaryCta/secondaryCta
       const legacy = [
-        cover.primaryCta?.label ? { label: cover.primaryCta.label, href: cover.primaryCta.href || '', style: 'solid' } : null,
-        cover.secondaryCta?.label ? { label: cover.secondaryCta.label, href: cover.secondaryCta.href || '', style: 'outline' } : null,
+        cover.primaryCta?.label ? normalizeBtn({ label: cover.primaryCta.label, href: cover.primaryCta.href, style: 'solid' }) : null,
+        cover.secondaryCta?.label ? normalizeBtn({ label: cover.secondaryCta.label, href: cover.secondaryCta.href, style: 'outline' }) : null,
       ].filter(Boolean)
       buttons = legacy
+    } else {
+      buttons = []
     }
 
     cover = {

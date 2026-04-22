@@ -157,4 +157,20 @@ describe('normalizePageEntity — back-compat migration', () => {
     })
     expect(p.cover.buttons).toEqual([{ label: 'New', href: '/new', style: 'solid' }])
   })
+
+  it('treats cover.buttons=null as empty (does not trigger legacy migration)', () => {
+    const p = normalizePageEntity({
+      cover: { imageUrl: 'x', buttons: null, primaryCta: { label: 'Old', href: '/old' } },
+      blocks: [],
+    })
+    expect(p.cover.buttons).toEqual([])
+  })
+
+  it('passes through an explicitly empty buttons array without triggering migration', () => {
+    const p = normalizePageEntity({
+      cover: { imageUrl: 'x', buttons: [], primaryCta: { label: 'Old', href: '/old' } },
+      blocks: [],
+    })
+    expect(p.cover.buttons).toEqual([])
+  })
 })
