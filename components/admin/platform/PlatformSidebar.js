@@ -96,10 +96,14 @@ export default function PlatformSidebar({
 
   function handleDelete(pageId) {
     if (!confirm('Delete this page? This cannot be undone.')) return
-    onConfigChange(prev => ({
-      ...prev,
-      pages: prev.pages.filter(p => p.id !== pageId),
-    }))
+    onConfigChange(prev => {
+      const pages = prev.pages.filter(p => p.id !== pageId)
+      let homePageId = prev.homePageId
+      if (homePageId === pageId) {
+        homePageId = pages.find(p => p.showInNav && p.type !== 'link')?.id || null
+      }
+      return { ...prev, pages, homePageId }
+    })
   }
 
   function nextAvailableId(base, existingIds) {
