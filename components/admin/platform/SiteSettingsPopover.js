@@ -12,49 +12,19 @@ function Field({ label, children }) {
 
 const inputCls = 'w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent'
 
-async function uploadAsset(file) {
-  const res = await fetch('/api/admin/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename: file.name, contentType: file.type, folder: 'site-assets' }),
-  })
-  if (!res.ok) throw new Error('Upload failed')
-  const { signedUrl, gcsUrl } = await res.json()
-  const form = new FormData()
-  Object.entries(signedUrl.fields).forEach(([k, v]) => form.append(k, v))
-  form.append('file', file)
-  const up = await fetch(signedUrl.url, { method: 'POST', body: form })
-  if (!up.ok) throw new Error('GCS upload failed')
-  return gcsUrl
-}
 
-function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, contain }) {
-  const fileRef = useRef(null)
-  const [uploading, setUploading] = useState(false)
-
-  async function handleFile(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const url = await uploadAsset(file)
-      onChange(url)
-    } catch {}
-    setUploading(false)
-    e.target.value = ''
-  }
-
+function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, contain, small }) {
   const displayUrl = value || fallbackUrl || null
-  const isDefault = !value && !!fallbackUrl
   const imgFit = contain ? 'object-contain p-1' : 'object-cover'
+  const boxCls = contain ? 'w-20 h-10' : small ? 'w-10 h-10' : 'w-14 h-14'
 
   return (
     <div>
-      <div className="text-[10px] text-stone-400 mb-1">{label}</div>
+      {label && <div className="text-[10px] text-stone-400 mb-1">{label}</div>}
       <div className="flex items-center gap-3">
-        <div className={`flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50 ${contain ? 'w-20 h-10' : 'w-14 h-14'}`}>
+        <div className={`flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50 ${boxCls}`}>
           {displayUrl ? (
-            <img src={displayUrl} className={`w-full h-full ${imgFit} ${isDefault ? 'opacity-50' : ''}`} alt="" />
+            <img src={displayUrl} className={`w-full h-full ${imgFit}`} alt="" />
           ) : (
             <span className="text-stone-300 text-lg">+</span>
           )}
@@ -65,15 +35,6 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, co
               {value ? 'Change…' : 'Select image'}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="text-xs text-stone-500 hover:text-stone-900 text-left disabled:opacity-40"
-          >
-            {uploading ? 'Uploading…' : (value ? 'Upload new' : 'Upload an image')}
-          </button>
-          {isDefault && <span className="text-[10px] text-stone-400">Defaults to logo</span>}
           {value && (
             <button type="button" onClick={() => onChange('')} className="text-[10px] text-stone-400 hover:text-red-600 text-left">
               Remove
@@ -81,7 +42,6 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, co
           )}
         </div>
       </div>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </div>
   )
 }
@@ -302,6 +262,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           onChange={(v) => update({ favicon: v })}
           fallbackUrl={logoType === 'image' ? (config.logo || '') : ''}
           onPickFromLibrary={onPickFavicon}
+          small
         />
 
         <Field label="Footer text">
