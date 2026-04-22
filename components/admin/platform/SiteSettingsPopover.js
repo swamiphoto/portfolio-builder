@@ -75,9 +75,73 @@ function UploadField({ label, value, placeholder, onChange }) {
   )
 }
 
+function ChevronRight() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+function DrillHeader({ label, onBack }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
+      <button type="button" onClick={onBack} className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0">
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <span className="text-xs font-medium text-stone-700">{label}</span>
+    </div>
+  )
+}
+
+function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, hint }) {
+  return (
+    <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => onToggle(!checked)}
+        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-stone-700' : 'bg-stone-300'}`}
+      >
+        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
+      </button>
+      <div className="flex-1 ml-2 min-w-0">
+        <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
+      </div>
+      {checked && actionLabel && onDrillIn && (
+        <button
+          type="button"
+          onClick={onDrillIn}
+          className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-2"
+        >
+          {actionLabel}
+          <ChevronRight />
+        </button>
+      )}
+    </div>
+  )
+}
+
+function DrillRow({ label, onDrillIn }) {
+  return (
+    <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
+      <span className="flex-1 text-xs text-stone-700 select-none">{label}</span>
+      <button
+        type="button"
+        onClick={onDrillIn}
+        className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0"
+      >
+        <ChevronRight />
+      </button>
+    </div>
+  )
+}
+
 export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose }) {
   const config = siteConfig || {}
-  const [tab, setTab] = useState('site')
+  const [view, setView] = useState('main') // 'main' | 'design' | 'domain' | 'analytics' | 'payments'
   const footer = config.footer || {}
 
   function update(patch) {
@@ -96,81 +160,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     update({ footer: { ...(config.footer || {}), ...patch } })
   }
 
-  const hasAnyClientFeatures = (config.pages || []).some(p => p.clientFeatures?.enabled)
-
   const rootDomain =
     (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
 
-  return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
-
-      {/* ── Tabs ── */}
-      <div className="flex border-b border-stone-100 px-1">
-        {['site', 'design', 'domain', 'advanced'].map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-2.5 py-2 text-xs capitalize transition-colors ${
-              tab === t
-                ? 'text-stone-800 border-b-2 border-stone-800 -mb-px'
-                : 'text-stone-400 hover:text-stone-600'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Site tab ── */}
-      {tab === 'site' && <>
-        <Section label="Identity">
-          <div className="space-y-3">
-            <Field label="Site name">
-              <input
-                className={inputCls}
-                placeholder="My Portfolio"
-                value={config.siteName || ''}
-                onChange={(e) => update({ siteName: e.target.value })}
-              />
-            </Field>
-            <UploadField
-              label="Logo"
-              placeholder="https://…"
-              value={config.logo || ''}
-              onChange={(v) => update({ logo: v })}
-            />
-            <UploadField
-              label="Favicon"
-              placeholder="https://… (defaults to logo)"
-              value={config.favicon || ''}
-              onChange={(v) => update({ favicon: v })}
-            />
-            <Field label="Footer text">
-              <input
-                className={inputCls}
-                placeholder={`© ${new Date().getFullYear()} ${config.siteName || 'Your Name'}`}
-                value={footer.customText || ''}
-                onChange={(e) => updateFooter({ customText: e.target.value })}
-              />
-            </Field>
-          </div>
-        </Section>
-      </>}
-
-      {/* ── Design tab ── */}
-      {tab === 'design' && <>
-        <Section label="Theme">
-          <select
-            className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
-            value={config.design?.theme || 'minimal-light'}
-            onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
-          >
-            <option value="minimal-light">Minimal Light</option>
-            <option value="minimal-dark">Minimal Dark</option>
-            <option value="editorial">Editorial</option>
-          </select>
-        </Section>
-
+  // ── Design drill-in ───────────────────────────────────────────────────────
+  if (view === 'design') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+        <DrillHeader label="Design" onBack={() => setView('main')} />
         <Section label="Navigation">
           <div className="flex items-center gap-1.5 flex-wrap">
             {[
@@ -180,34 +177,22 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             ].map(({ value, label, title }) => {
               const active = (config.design?.navStyle || 'minimal') === value
               return (
-                <button
-                  key={value}
-                  onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })}
-                  title={title}
-                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${
-                    active
-                      ? 'bg-stone-800 border-stone-800 text-white'
-                      : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'
-                  }`}
-                >
+                <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })} title={title}
+                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
                   {label}
                 </button>
               )
             })}
           </div>
         </Section>
-
         <Section label="Sub-navigation">
-          <select
-            className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+          <select className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
             value={config.design?.subNavStyle || 'dropdown'}
-            onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
-          >
+            onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}>
             <option value="dropdown">Dropdown</option>
             <option value="inline">Links below page title</option>
           </select>
         </Section>
-
         <Section label="Footer Layout">
           <div className="flex items-center gap-1.5 flex-wrap">
             {[
@@ -218,102 +203,135 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             ].map(({ value, label, title }) => {
               const active = (config.design?.footerLayout || 'standard') === value
               return (
-                <button
-                  key={value}
-                  onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })}
-                  title={title}
-                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${
-                    active
-                      ? 'bg-stone-800 border-stone-800 text-white'
-                      : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'
-                  }`}
-                >
+                <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })} title={title}
+                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
                   {label}
                 </button>
               )
             })}
           </div>
         </Section>
-      </>}
+      </PopoverShell>
+    )
+  }
 
-      {/* ── Domain tab ── */}
-      {tab === 'domain' && <>
-        <Section label="Custom Domain">
-          <Field label="Domain">
-            <input
-              className={inputCls}
-              placeholder="photos.yourname.com"
-              value={config.customDomain || ''}
-              onChange={(e) => update({ customDomain: e.target.value || null })}
-            />
-          </Field>
+  // ── Domain drill-in ───────────────────────────────────────────────────────
+  if (view === 'domain') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+        <DrillHeader label="Custom Domain" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-2">
+          <input
+            autoFocus
+            className={inputCls}
+            placeholder="photos.yourname.com"
+            value={config.customDomain || ''}
+            onChange={(e) => update({ customDomain: e.target.value || null })}
+          />
           {config.customDomain && (
-            <p className="text-[10px] text-stone-400 mt-2">
-              Point a CNAME record to <span className="font-mono">{config.userId}.{rootDomain}</span> to activate your custom domain.
+            <p className="text-[10px] text-stone-400">
+              Point a CNAME to <span className="font-mono">{config.userId}.{rootDomain}</span> to activate.
             </p>
           )}
-        </Section>
-      </>}
+        </div>
+      </PopoverShell>
+    )
+  }
 
-      {/* ── Advanced tab ── */}
-      {tab === 'advanced' && <>
-        <Section label="Analytics">
-          <div className="space-y-3">
-            <Field label="Google Analytics ID">
-              <input
-                className={inputCls}
-                placeholder="G-XXXXXXXXXX"
-                value={config.analytics?.googleId || ''}
-                onChange={(e) => updateAnalytics({ googleId: e.target.value })}
-              />
-            </Field>
-            <Field label="Plausible domain">
-              <input
-                className={inputCls}
-                placeholder="yourdomain.com"
-                value={config.analytics?.plausibleDomain || ''}
-                onChange={(e) => updateAnalytics({ plausibleDomain: e.target.value })}
-              />
-            </Field>
-          </div>
-        </Section>
+  // ── Analytics drill-in ────────────────────────────────────────────────────
+  if (view === 'analytics') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+        <DrillHeader label="Analytics" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-3">
+          <Field label="Google Analytics ID">
+            <input autoFocus className={inputCls} placeholder="G-XXXXXXXXXX" value={config.analytics?.googleId || ''} onChange={(e) => updateAnalytics({ googleId: e.target.value })} />
+          </Field>
+          <Field label="Plausible domain">
+            <input className={inputCls} placeholder="yourdomain.com" value={config.analytics?.plausibleDomain || ''} onChange={(e) => updateAnalytics({ plausibleDomain: e.target.value })} />
+          </Field>
+        </div>
+      </PopoverShell>
+    )
+  }
 
-        {hasAnyClientFeatures && (
-          <Section label="Client Defaults">
-            <div className="space-y-3">
-              <Field label="Notification email">
-                <input
-                  className={inputCls}
-                  placeholder="Where alerts are sent"
-                  value={config.clientDefaults?.notificationEmail || ''}
-                  onChange={(e) => updateClientDefaults({ notificationEmail: e.target.value })}
-                />
-              </Field>
-              <Field label="Default currency">
-                <select
-                  className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
-                  value={config.clientDefaults?.defaultCurrency || 'USD'}
-                  onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}
-                >
-                  {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </Field>
-              <Field label="Default watermark URL">
-                <input
-                  className={inputCls}
-                  placeholder="https://…"
-                  value={config.clientDefaults?.defaultWatermarkUrl || ''}
-                  onChange={(e) => updateClientDefaults({ defaultWatermarkUrl: e.target.value })}
-                />
-              </Field>
-              <p className="text-[10px] text-stone-400">
-                Connect Stripe to enable purchases.{' '}
-                <span className="underline cursor-pointer">Set up Stripe →</span>
-              </p>
-            </div>
-          </Section>
-        )}
-      </>}
+  // ── Payments drill-in ─────────────────────────────────────────────────────
+  if (view === 'payments') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+        <DrillHeader label="Payments" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-3">
+          <Field label="Default currency">
+            <select className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+              value={config.clientDefaults?.defaultCurrency || 'USD'}
+              onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}>
+              {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Default watermark">
+            <input className={inputCls} placeholder="https://…" value={config.clientDefaults?.defaultWatermarkUrl || ''} onChange={(e) => updateClientDefaults({ defaultWatermarkUrl: e.target.value })} />
+          </Field>
+          <p className="text-[10px] text-stone-400">
+            Connect Stripe to enable purchases across pages.{' '}
+            <span className="underline cursor-pointer">Set up Stripe →</span>
+          </p>
+        </div>
+      </PopoverShell>
+    )
+  }
+
+  // ── Main view ─────────────────────────────────────────────────────────────
+  return (
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+
+      {/* Identity */}
+      <div className="px-3 py-3 space-y-3 border-b border-stone-100">
+        <Field label="Site name">
+          <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
+        </Field>
+        <UploadField label="Logo" placeholder="https://…" value={config.logo || ''} onChange={(v) => update({ logo: v })} />
+        <UploadField label="Favicon" placeholder="https://… (defaults to logo)" value={config.favicon || ''} onChange={(v) => update({ favicon: v })} />
+        <Field label="Footer text">
+          <input className={inputCls} placeholder={`© ${new Date().getFullYear()} ${config.siteName || 'Your Name'}`} value={footer.customText || ''} onChange={(e) => updateFooter({ customText: e.target.value })} />
+        </Field>
+      </div>
+
+      {/* Theme row */}
+      <div className="px-3 py-2.5 flex items-center gap-2 border-b border-stone-100">
+        <select
+          className="flex-1 text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer"
+          value={config.design?.theme || 'minimal-light'}
+          onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
+        >
+          <option value="minimal-light">Minimal Light</option>
+          <option value="minimal-dark">Minimal Dark</option>
+          <option value="editorial">Editorial</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => setView('design')}
+          className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0"
+        >
+          Customize
+          <ChevronRight />
+        </button>
+      </div>
+
+      {/* Toggle / drill rows */}
+      <ToggleRow
+        checked={!!config.customDomain}
+        onToggle={(v) => {
+          if (!v) update({ customDomain: null })
+          else { update({ customDomain: '' }); setView('domain') }
+        }}
+        label="Custom domain"
+        actionLabel="Configure"
+        onDrillIn={() => setView('domain')}
+      />
+
+      <DrillRow label="Analytics" onDrillIn={() => setView('analytics')} />
+
+      <DrillRow label="Payments" onDrillIn={() => setView('payments')} />
 
     </PopoverShell>
   )
