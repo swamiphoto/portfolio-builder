@@ -7,38 +7,33 @@ const BUTTON_STYLE_MAP = {
   ghost: 'text-white hover:bg-white/10',
 }
 
-function CtaButton({ button, style }) {
-  if (!button?.label) return null
-  const href = button.href || '#'
-  const isExternal = href.startsWith('http')
+function CtaButton({ label, href, style }) {
+  if (!label) return null
+  const isExternal = href?.startsWith('http')
   return (
     <a
-      href={href}
+      href={href || '#'}
       className={`inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`}
       {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
-      {button.label}
+      {label}
     </a>
   )
 }
 
-export default function PageCover({ cover, title, description, slideshowHref }) {
+export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled }) {
   if (!cover || !cover.imageUrl) return null
   const heightClass = cover.height === 'partial' ? 'h-[60vh]' : 'h-[100vh]'
   const isCover = cover.variant === 'cover'
   const buttonStyle = cover.buttonStyle || 'solid'
 
-  const buttons = (cover.buttons || [])
-    .filter(b => b.type !== 'slideshow' || !!slideshowHref)
-    .filter(b => !!b.label)
-    .map(b => ({
-      ...b,
-      href: b.type === 'slideshow'
-        ? slideshowHref
-        : b.type === 'client-login'
-          ? '#client-login'
-          : b.href,
-    }))
+  const buttons = []
+  if (slideshowHref) {
+    buttons.push({ label: 'Start Slideshow', href: slideshowHref })
+  }
+  if (clientFeaturesEnabled) {
+    buttons.push({ label: 'Client Login', href: '#client-login' })
+  }
 
   return (
     <section className={`relative w-full ${heightClass} overflow-hidden`}>
@@ -56,7 +51,9 @@ export default function PageCover({ cover, title, description, slideshowHref }) 
           {description && <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{description}</p>}
           {buttons.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-3">
-              {buttons.map((btn, i) => <CtaButton key={i} button={btn} style={buttonStyle} />)}
+              {buttons.map((btn, i) => (
+                <CtaButton key={i} label={btn.label} href={btn.href} style={buttonStyle} />
+              ))}
             </div>
           )}
         </div>

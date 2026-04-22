@@ -76,6 +76,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
           title={page.title}
           description={page.description}
           slideshowHref={slideshowHref}
+          clientFeaturesEnabled={!!page.clientFeatures?.enabled}
         />
         <Gallery
           name={page.title}

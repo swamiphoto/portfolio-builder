@@ -58,7 +58,7 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
         </div>
 
         {/* Button style */}
-        {(cover.buttons || []).length > 0 && (
+        {(page.slideshow?.enabled || page.clientFeatures?.enabled) && (
           <div>
             <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2">Button style</div>
             <div className="flex gap-1.5">
