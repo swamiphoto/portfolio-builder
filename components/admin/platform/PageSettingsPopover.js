@@ -71,6 +71,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const displaySlug = page.slug || autoSlug
   const [slugDraft, setSlugDraft] = useState(null)
   const displayValue = slugDraft !== null ? slugDraft : displaySlug
+  const [tab, setTab] = useState('page')
 
   function update(patch) {
     onUpdate({ ...page, ...patch })
@@ -95,7 +96,25 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Page Settings">
 
-      {/* ── URL ── */}
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-stone-100 px-1">
+        {['page', 'access', 'client'].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-2.5 py-2 text-xs capitalize transition-colors ${
+              tab === t
+                ? 'text-stone-800 border-b-2 border-stone-800 -mb-px'
+                : 'text-stone-400 hover:text-stone-600'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Page tab ── */}
+      {tab === 'page' && <>
       <Section label="URL">
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-stone-400 flex-shrink-0 font-mono">{username}/</span>
@@ -157,7 +176,10 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         )}
       </Section>
 
-      {/* ── Password ── */}
+      </>}
+
+      {/* ── Access tab ── */}
+      {tab === 'access' && <>
       <Section label="Password">
         <input
           type="text"
@@ -183,7 +205,10 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         )}
       </Section>
 
-      {/* ── Client Features ── */}
+      </>}
+
+      {/* ── Client tab ── */}
+      {tab === 'client' && <>
       <Section label="Client Features">
         {(() => {
           const cf = page.clientFeatures || {}
@@ -310,6 +335,8 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           )
         })()}
       </Section>
+
+      </>}
 
       {/* ── Footer ── */}
       <div className="px-3 py-2.5 flex items-center justify-between">
