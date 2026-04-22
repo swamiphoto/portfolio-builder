@@ -21,13 +21,14 @@ function CtaButton({ label, href, style }) {
   )
 }
 
-export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled }) {
+export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton }) {
   if (!cover || !cover.imageUrl) return null
   const heightClass = cover.height === 'partial' ? 'h-[60vh]' : 'h-[100vh]'
   const isCover = cover.variant === 'cover'
   const buttonStyle = cover.buttonStyle || 'solid'
 
   const buttons = []
+  if (primaryButton?.label) buttons.push(primaryButton)
   if (slideshowHref) {
     buttons.push({ label: 'Start Slideshow', href: slideshowHref })
   }
