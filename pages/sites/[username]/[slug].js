@@ -58,7 +58,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
     return <PasswordGate pageTitle={page.title} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
   }
 
-  const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
+  const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   const ogTitle = page.title || siteConfig.siteName || 'Portfolio'
   const ogDescription = page.description || siteConfig.tagline || ''
   const rootDomainPublic = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
