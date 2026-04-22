@@ -53,10 +53,36 @@ export async function getServerSideProps({ params }) {
 
 export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
+  const hasCoverPage = siteConfig.hasCoverPage !== false
+  const coverConfig = siteConfig.cover || {}
+  const initialPage = hasCoverPage && siteConfig.initialPageId
+    ? siteConfig.pages?.find(p => p.id === siteConfig.initialPageId)
+    : null
+  const initialPageHref = initialPage ? `/sites/${username}/${initialPage.slug || initialPage.id}` : null
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)
   if (!unlocked) {
     return <PasswordGate pageTitle={homePage?.title || 'Protected'} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
+  }
+
+  if (hasCoverPage) {
+    return (
+      <div className="min-h-screen bg-black font-sans relative">
+        <PageCover
+          cover={{
+            imageUrl: coverConfig.imageUrl || '',
+            height: coverConfig.height || 'full',
+            variant: 'cover',
+            buttonStyle: coverConfig.buttonStyle || 'solid',
+          }}
+          title={coverConfig.heading || siteConfig.siteName || ''}
+          description={coverConfig.subheading || siteConfig.tagline || ''}
+          primaryButton={initialPageHref ? { label: coverConfig.buttonText || 'View my portfolio', href: initialPageHref } : null}
+          slideshowHref={null}
+          clientFeaturesEnabled={false}
+        />
+      </div>
+    )
   }
 
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
@@ -74,6 +100,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
           description={homePage?.description}
           slideshowHref={slideshowHref}
           clientFeaturesEnabled={!!homePage?.clientFeatures?.enabled}
+          primaryButton={null}
         />
         {homePage ? (
           <Gallery
