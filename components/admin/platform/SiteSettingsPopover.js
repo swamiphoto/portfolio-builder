@@ -286,8 +286,9 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
       {/* Theme row */}
       <div className="px-3 py-2.5 flex items-center gap-2 border-b border-stone-100">
+        <span className="text-xs text-stone-500 flex-shrink-0">Theme</span>
         <select
-          className="flex-1 text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer"
+          className="flex-1 text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer min-w-0"
           value={config.design?.theme || 'minimal-light'}
           onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
         >
@@ -298,10 +299,17 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         <button
           type="button"
           onClick={() => setView('design')}
-          className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0"
+          className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
+          title="Design options"
         >
-          Customize
-          <ChevronRight />
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+            <circle cx="8" cy="6" r="2" fill="currentColor" stroke="none" />
+            <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" />
+            <circle cx="10" cy="18" r="2" fill="currentColor" stroke="none" />
+          </svg>
         </button>
       </div>
 
