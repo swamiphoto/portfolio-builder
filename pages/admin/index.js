@@ -350,9 +350,16 @@ export default function AdminIndex() {
               {(cover.subheading || siteConfig.tagline) && (
                 <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{cover.subheading || siteConfig.tagline}</p>
               )}
-              <div className="inline-flex items-center px-5 py-2.5 text-sm font-medium bg-white text-stone-900">
+              <button
+                type="button"
+                onClick={() => {
+                  const targetId = siteConfig.homePageId || siteConfig.pages?.find(p => p.showInNav && p.type !== 'link')?.id
+                  if (targetId) handleSelectPage(targetId)
+                }}
+                className="inline-flex items-center px-5 py-2.5 text-sm font-medium bg-white text-stone-900 hover:bg-stone-100 transition-colors"
+              >
                 {cover.buttonText || 'View my portfolio'}
-              </div>
+              </button>
             </div>
           </div>
         )
