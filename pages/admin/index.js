@@ -306,7 +306,7 @@ export default function AdminIndex() {
       content = (
         <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
           <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
-          <PageCover cover={selectedPage.cover} title={selectedPage.title} />
+          <PageCover cover={selectedPage.cover} title={selectedPage.title} description={selectedPage.description} />
           <GalleryPreview
             gallery={{
               name: selectedPage.title,

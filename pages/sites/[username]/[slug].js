@@ -71,7 +71,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
     <div className="min-h-screen bg-white font-sans relative">
       <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
-        <PageCover cover={page.cover} title={page.title} />
+        <PageCover cover={page.cover} title={page.title} description={page.description} />
         <Gallery
           name={page.title}
           description={page.description}
