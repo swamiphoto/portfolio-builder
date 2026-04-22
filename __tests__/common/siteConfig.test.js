@@ -53,6 +53,11 @@ describe('createDefaultSiteConfig', () => {
     expect(config.homePageId).toBeNull()
     expect(config.hasCoverPage).toBe(true)
   })
+
+  it('includes share config', () => {
+    const config = createDefaultSiteConfig('user-123')
+    expect(config.share).toEqual({ largeImage: '', squareImage: '' })
+  })
 })
 
 describe('generatePageId', () => {

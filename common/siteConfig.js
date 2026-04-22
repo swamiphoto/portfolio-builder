@@ -39,6 +39,10 @@ export function createDefaultSiteConfig(userId) {
       buttonStyle: 'solid',
     },
     homePageId: null,
+    share: {
+      largeImage: '',
+      squareImage: '',
+    },
     design: {
       theme: 'minimal-light',
       navStyle: 'minimal',
