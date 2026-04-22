@@ -28,7 +28,7 @@ async function uploadAsset(file) {
   return gcsUrl
 }
 
-function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary }) {
+function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, contain }) {
   const fileRef = useRef(null)
   const [uploading, setUploading] = useState(false)
 
@@ -46,14 +46,15 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary }) 
 
   const displayUrl = value || fallbackUrl || null
   const isDefault = !value && !!fallbackUrl
+  const imgFit = contain ? 'object-contain p-1' : 'object-cover'
 
   return (
     <div>
       <div className="text-[10px] text-stone-400 mb-1">{label}</div>
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50">
+        <div className={`flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50 ${contain ? 'w-20 h-10' : 'w-14 h-14'}`}>
           {displayUrl ? (
-            <img src={displayUrl} className={`w-full h-full object-cover ${isDefault ? 'opacity-50' : ''}`} alt="" />
+            <img src={displayUrl} className={`w-full h-full ${imgFit} ${isDefault ? 'opacity-50' : ''}`} alt="" />
           ) : (
             <span className="text-stone-300 text-lg">+</span>
           )}
@@ -108,19 +109,17 @@ function DrillHeader({ label, onBack }) {
 
 function DrillRow({ label, hint, onDrillIn }) {
   return (
-    <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
+    <button
+      type="button"
+      onClick={onDrillIn}
+      className="w-full px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0 hover:bg-stone-50 transition-colors text-left"
+    >
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-stone-700 select-none">{label}</div>
-        {hint && <div className="text-[10px] text-stone-400 select-none mt-0.5">{hint}</div>}
+        <div className="text-xs text-stone-700">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 mt-0.5">{hint}</div>}
       </div>
-      <button
-        type="button"
-        onClick={onDrillIn}
-        className="flex items-center gap-0.5 text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-2"
-      >
-        <ChevronRight />
-      </button>
-    </div>
+      <span className="text-stone-400 flex-shrink-0 ml-2"><ChevronRight /></span>
+    </button>
   )
 }
 
@@ -132,7 +131,7 @@ const BrushIcon = () => (
 
 export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon }) {
   const config = siteConfig || {}
-  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments' | 'branding'
+  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const footer = config.footer || {}
@@ -168,44 +167,6 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
       <BrushIcon />
     </button>
   )
-
-  // ── Branding drill-in ─────────────────────────────────────────────────────
-  if (view === 'branding') {
-    return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Branding">
-        <DrillHeader label="Branding" onBack={() => setView('main')} />
-        <div className="px-3 py-3 space-y-4">
-          <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Logo</div>
-            <div className="flex gap-1.5 mb-3">
-              {[['sitename', 'Site name'], ['image', 'Image']].map(([val, lbl]) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => update({ logoType: val })}
-                  className={`text-xs px-3 py-1 border transition-colors ${
-                    logoType === val
-                      ? 'border-stone-900 bg-stone-900 text-white'
-                      : 'border-stone-200 text-stone-600 hover:border-stone-400'
-                  }`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
-            {logoType === 'image' && (
-              <AssetField
-                label="Logo image"
-                value={config.logo || ''}
-                onChange={(v) => update({ logo: v })}
-                onPickFromLibrary={onPickLogo}
-              />
-            )}
-          </div>
-        </div>
-      </PopoverShell>
-    )
-  }
 
   // ── Domain drill-in ───────────────────────────────────────────────────────
   if (view === 'domain') {
@@ -306,28 +267,33 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           <input className={inputCls} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
         </Field>
 
-        {/* Logo status row */}
+        {/* Logo */}
         <div>
-          <div className="text-[10px] text-stone-400 mb-1">Logo</div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {logoType === 'image' && config.logo && (
-                <div className="h-5 max-w-[60px] border border-stone-200 overflow-hidden flex items-center bg-stone-50 px-1">
-                  <img src={config.logo} className="max-h-full max-w-full object-contain" alt="" />
-                </div>
-              )}
-              <span className="text-xs text-stone-500">
-                {logoType === 'image' ? (config.logo ? '' : 'Image (none set)') : 'Site name'}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setView('branding')}
-              className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0"
-            >
-              Branding <ChevronRight />
-            </button>
+          <div className="text-[10px] text-stone-400 mb-1.5">Logo</div>
+          <div className="flex gap-1.5 mb-2">
+            {[['sitename', 'Site name'], ['image', 'Image']].map(([val, lbl]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => update({ logoType: val })}
+                className={`text-xs px-2.5 py-0.5 border transition-colors ${
+                  logoType === val
+                    ? 'border-stone-900 bg-stone-900 text-white'
+                    : 'border-stone-200 text-stone-500 hover:border-stone-400'
+                }`}
+              >
+                {lbl}
+              </button>
+            ))}
           </div>
+          {logoType === 'image' && (
+            <AssetField
+              value={config.logo || ''}
+              onChange={(v) => update({ logo: v })}
+              onPickFromLibrary={onPickLogo}
+              contain
+            />
+          )}
         </div>
 
         <AssetField
