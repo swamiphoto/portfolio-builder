@@ -323,15 +323,15 @@ export default function PlatformSidebar({
           {menuOpenId === page.id && (
             <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-40">
               <button onClick={() => handleRenameStart(page)} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Rename</button>
-              {page.showInNav && page.type !== 'link' && (
+              {page.showInNav && page.type !== 'link' && siteConfig.homePageId !== page.id && (
                 <button
                   onClick={() => {
                     setMenuOpenId(null)
-                    onConfigChange(prev => ({ ...prev, homePageId: prev.homePageId === page.id ? null : page.id }))
+                    onConfigChange(prev => ({ ...prev, homePageId: page.id }))
                   }}
                   className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  {siteConfig.homePageId === page.id ? 'Unset home page' : 'Set as home page'}
+                  Set as home page
                 </button>
               )}
               <button onClick={() => { setMenuOpenId(null); handleDelete(page.id) }} className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">Delete</button>

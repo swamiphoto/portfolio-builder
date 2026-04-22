@@ -66,11 +66,19 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
       if (res.status === 409) { setUsernameError('Username already taken'); return }
       if (!res.ok) return
 
-      const currentSiteName = siteConfig?.siteName
+      const patch = { ...(siteConfig || {}) }
       const name = fields.displayName ?? displayName
-      if (name && (!currentSiteName || currentSiteName === 'My Portfolio')) {
-        onUpdate({ ...(siteConfig || {}), siteName: `${name} Photography` })
+      if (name && (!patch.siteName || patch.siteName === 'My Portfolio')) {
+        patch.siteName = `${name} Photography`
       }
+      const bioPatch = fields.bio ?? bio
+      if (bioPatch && !patch.tagline) {
+        patch.tagline = bioPatch
+        if (!patch.cover?.subheading) {
+          patch.cover = { ...(patch.cover || {}), subheading: bioPatch }
+        }
+      }
+      onUpdate(patch)
     } catch (e) {}
   }
 
