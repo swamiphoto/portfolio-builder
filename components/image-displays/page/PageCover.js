@@ -32,7 +32,7 @@ export default function PageCover({ cover, title, description }) {
       )}
       {isCover && (
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-6">
-          {title && <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{title}</h1>}
+          {title && <h2 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{title}</h2>}
           {description && <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{description}</p>}
           <div className="flex flex-wrap items-center justify-center gap-3">
             <CtaButton cta={cover.primaryCta} variant="primary" />

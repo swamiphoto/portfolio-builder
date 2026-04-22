@@ -42,7 +42,7 @@ describe('normalizePageEntity — back-compat migration', () => {
 
   it('normalizes cover when present, defaulting height to "full"', () => {
     const p = normalizePageEntity({ cover: { imageUrl: 'https://x/c.jpg' }, blocks: [] })
-    expect(p.cover).toEqual({ imageUrl: 'https://x/c.jpg', height: 'full', overlayText: '' })
+    expect(p.cover).toEqual({ imageUrl: 'https://x/c.jpg', height: 'full', overlayText: '', variant: 'showcase', primaryCta: null, secondaryCta: null })
   })
 
   it('clamps unknown cover.height values to "full"', () => {
@@ -58,5 +58,48 @@ describe('normalizePageEntity — back-compat migration', () => {
   it('leaves cover null when absent', () => {
     const p = normalizePageEntity({ blocks: [] })
     expect(p.cover).toBeNull()
+  })
+
+  it('defaults cover.variant to "showcase" when absent', () => {
+    const p = normalizePageEntity({ cover: { imageUrl: 'x' }, blocks: [] })
+    expect(p.cover.variant).toBe('showcase')
+  })
+
+  it('preserves cover.variant="cover"', () => {
+    const p = normalizePageEntity({ cover: { imageUrl: 'x', variant: 'cover' }, blocks: [] })
+    expect(p.cover.variant).toBe('cover')
+  })
+
+  it('clamps unknown cover.variant to "showcase"', () => {
+    const p = normalizePageEntity({ cover: { imageUrl: 'x', variant: 'banner' }, blocks: [] })
+    expect(p.cover.variant).toBe('showcase')
+  })
+
+  it('defaults primaryCta and secondaryCta to null when absent', () => {
+    const p = normalizePageEntity({ cover: { imageUrl: 'x' }, blocks: [] })
+    expect(p.cover.primaryCta).toBeNull()
+    expect(p.cover.secondaryCta).toBeNull()
+  })
+
+  it('preserves primaryCta and secondaryCta with label and href', () => {
+    const p = normalizePageEntity({
+      cover: {
+        imageUrl: 'x',
+        variant: 'cover',
+        primaryCta: { label: 'View', href: '/portfolio' },
+        secondaryCta: { label: 'Contact', href: '#contact' },
+      },
+      blocks: [],
+    })
+    expect(p.cover.primaryCta).toEqual({ label: 'View', href: '/portfolio' })
+    expect(p.cover.secondaryCta).toEqual({ label: 'Contact', href: '#contact' })
+  })
+
+  it('normalizes partial CTA (label only) to { label, href: "" }', () => {
+    const p = normalizePageEntity({
+      cover: { imageUrl: 'x', primaryCta: { label: 'Click' } },
+      blocks: [],
+    })
+    expect(p.cover.primaryCta).toEqual({ label: 'Click', href: '' })
   })
 })

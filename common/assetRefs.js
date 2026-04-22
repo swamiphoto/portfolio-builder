@@ -167,10 +167,15 @@ export function normalizePageEntity(page) {
 
   let cover = page.cover || null;
   if (cover) {
+    const normalizeCta = (cta) =>
+      cta ? { label: cta.label || "", href: cta.href || "" } : null;
     cover = {
       imageUrl: cover.imageUrl || "",
       height: cover.height === "partial" ? "partial" : "full",
       overlayText: cover.overlayText || "",
+      variant: cover.variant === "cover" ? "cover" : "showcase",
+      primaryCta: normalizeCta(cover.primaryCta),
+      secondaryCta: normalizeCta(cover.secondaryCta),
     };
   }
 
