@@ -167,15 +167,27 @@ export function normalizePageEntity(page) {
 
   let cover = page.cover || null;
   if (cover) {
-    const normalizeCta = (cta) =>
-      cta ? { label: cta.label || "", href: cta.href || "" } : null;
+    const normalizeBtn = (b) =>
+      b && b.label ? { label: b.label, href: b.href || '', style: b.style === 'solid' ? 'solid' : 'outline' } : null
+
+    let buttons
+    if (Array.isArray(cover.buttons)) {
+      buttons = cover.buttons.map(normalizeBtn).filter(Boolean)
+    } else {
+      // Migrate legacy primaryCta/secondaryCta
+      const legacy = [
+        cover.primaryCta?.label ? { label: cover.primaryCta.label, href: cover.primaryCta.href || '', style: 'solid' } : null,
+        cover.secondaryCta?.label ? { label: cover.secondaryCta.label, href: cover.secondaryCta.href || '', style: 'outline' } : null,
+      ].filter(Boolean)
+      buttons = legacy
+    }
+
     cover = {
       imageUrl: cover.imageUrl || "",
       height: cover.height === "partial" ? "partial" : "full",
       overlayText: cover.overlayText || "",
       variant: cover.variant === "cover" ? "cover" : "showcase",
-      primaryCta: normalizeCta(cover.primaryCta),
-      secondaryCta: normalizeCta(cover.secondaryCta),
+      buttons,
     };
   }
 

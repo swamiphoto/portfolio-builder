@@ -40,9 +40,9 @@ describe('normalizePageEntity — back-compat migration', () => {
     expect(p.password).toBe('')
   })
 
-  it('normalizes cover when present, defaulting height to "full"', () => {
+  it('normalizes cover when present, defaulting height to "full" and buttons to []', () => {
     const p = normalizePageEntity({ cover: { imageUrl: 'https://x/c.jpg' }, blocks: [] })
-    expect(p.cover).toEqual({ imageUrl: 'https://x/c.jpg', height: 'full', overlayText: '', variant: 'showcase', primaryCta: null, secondaryCta: null })
+    expect(p.cover).toEqual({ imageUrl: 'https://x/c.jpg', height: 'full', overlayText: '', variant: 'showcase', buttons: [] })
   })
 
   it('clamps unknown cover.height values to "full"', () => {
@@ -75,13 +75,52 @@ describe('normalizePageEntity — back-compat migration', () => {
     expect(p.cover.variant).toBe('showcase')
   })
 
-  it('defaults primaryCta and secondaryCta to null when absent', () => {
+  it('defaults cover.buttons to [] when absent', () => {
     const p = normalizePageEntity({ cover: { imageUrl: 'x' }, blocks: [] })
-    expect(p.cover.primaryCta).toBeNull()
-    expect(p.cover.secondaryCta).toBeNull()
+    expect(p.cover.buttons).toEqual([])
   })
 
-  it('preserves primaryCta and secondaryCta with label and href', () => {
+  it('preserves cover.buttons array', () => {
+    const p = normalizePageEntity({
+      cover: {
+        imageUrl: 'x',
+        variant: 'cover',
+        buttons: [
+          { label: 'View', href: '/portfolio', style: 'solid' },
+          { label: 'Contact', href: '#contact', style: 'outline' },
+        ],
+      },
+      blocks: [],
+    })
+    expect(p.cover.buttons).toEqual([
+      { label: 'View', href: '/portfolio', style: 'solid' },
+      { label: 'Contact', href: '#contact', style: 'outline' },
+    ])
+  })
+
+  it('normalizes button with missing href and defaults unknown style to "outline"', () => {
+    const p = normalizePageEntity({
+      cover: {
+        imageUrl: 'x',
+        buttons: [{ label: 'Click' }],
+      },
+      blocks: [],
+    })
+    expect(p.cover.buttons).toEqual([{ label: 'Click', href: '', style: 'outline' }])
+  })
+
+  it('filters out buttons with no label', () => {
+    const p = normalizePageEntity({
+      cover: {
+        imageUrl: 'x',
+        buttons: [{ label: '', href: '/x', style: 'solid' }, { label: 'Keep', href: '', style: 'solid' }],
+      },
+      blocks: [],
+    })
+    expect(p.cover.buttons).toEqual([{ label: 'Keep', href: '', style: 'solid' }])
+  })
+
+  it('migrates legacy primaryCta/secondaryCta to buttons array', () => {
     const p = normalizePageEntity({
       cover: {
         imageUrl: 'x',
@@ -91,15 +130,31 @@ describe('normalizePageEntity — back-compat migration', () => {
       },
       blocks: [],
     })
-    expect(p.cover.primaryCta).toEqual({ label: 'View', href: '/portfolio' })
-    expect(p.cover.secondaryCta).toEqual({ label: 'Contact', href: '#contact' })
+    expect(p.cover.buttons).toEqual([
+      { label: 'View', href: '/portfolio', style: 'solid' },
+      { label: 'Contact', href: '#contact', style: 'outline' },
+    ])
+    expect(p.cover.primaryCta).toBeUndefined()
+    expect(p.cover.secondaryCta).toBeUndefined()
   })
 
-  it('normalizes partial CTA (label only) to { label, href: "" }', () => {
+  it('migrates legacy primaryCta only (no secondaryCta)', () => {
     const p = normalizePageEntity({
       cover: { imageUrl: 'x', primaryCta: { label: 'Click' } },
       blocks: [],
     })
-    expect(p.cover.primaryCta).toEqual({ label: 'Click', href: '' })
+    expect(p.cover.buttons).toEqual([{ label: 'Click', href: '', style: 'solid' }])
+  })
+
+  it('ignores legacy CTAs when buttons array already present', () => {
+    const p = normalizePageEntity({
+      cover: {
+        imageUrl: 'x',
+        buttons: [{ label: 'New', href: '/new', style: 'solid' }],
+        primaryCta: { label: 'Old', href: '/old' },
+      },
+      blocks: [],
+    })
+    expect(p.cover.buttons).toEqual([{ label: 'New', href: '/new', style: 'solid' }])
   })
 })
