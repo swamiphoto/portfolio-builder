@@ -60,9 +60,9 @@ export default function PageSettingsPanel({ page, onChange, hasChildPages }) {
 
   function addButton(type) {
     const defaults = {
-      url: { type: 'url', label: '', href: '' },
-      slideshow: { type: 'slideshow', label: 'Start Slideshow', href: '' },
-      'client-login': { type: 'client-login', label: 'Client Login', href: '#client-login' },
+      url: { type: 'url', label: '', href: '', id: Date.now() },
+      slideshow: { type: 'slideshow', label: 'Start Slideshow', href: '', id: Date.now() },
+      'client-login': { type: 'client-login', label: 'Client Login', href: '#client-login', id: Date.now() },
     }
     const btns = [...(page.cover?.buttons || []), defaults[type]]
     updateCover({ buttons: btns })
@@ -204,7 +204,7 @@ export default function PageSettingsPanel({ page, onChange, hasChildPages }) {
               const isLocked = btn.type === 'client-login' && !!page.clientFeatures?.enabled
               return (
                 <div
-                  key={i}
+                  key={btn.id ?? i}
                   draggable={!isLocked}
                   onDragStart={() => !isLocked && handleDragStart(i)}
                   onDragOver={handleDragOver}
