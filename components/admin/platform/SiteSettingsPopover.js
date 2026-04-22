@@ -141,7 +141,9 @@ function DrillRow({ label, onDrillIn }) {
 
 export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose }) {
   const config = siteConfig || {}
-  const [view, setView] = useState('main') // 'main' | 'design' | 'domain' | 'analytics' | 'payments'
+  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
+  const [designOpen, setDesignOpen] = useState(false)
+  const brushRef = useRef(null)
   const footer = config.footer || {}
 
   function update(patch) {
@@ -162,58 +164,6 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
   const rootDomain =
     (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
-
-  // ── Design drill-in ───────────────────────────────────────────────────────
-  if (view === 'design') {
-    return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
-        <DrillHeader label="Design" onBack={() => setView('main')} />
-        <Section label="Navigation">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {[
-              { value: 'minimal',  label: '1', title: 'Minimal'  },
-              { value: 'centered', label: '2', title: 'Centered' },
-              { value: 'fixed',    label: '3', title: 'Fixed'    },
-            ].map(({ value, label, title }) => {
-              const active = (config.design?.navStyle || 'minimal') === value
-              return (
-                <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })} title={title}
-                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </Section>
-        <Section label="Sub-navigation">
-          <select className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
-            value={config.design?.subNavStyle || 'dropdown'}
-            onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}>
-            <option value="dropdown">Dropdown</option>
-            <option value="inline">Links below page title</option>
-          </select>
-        </Section>
-        <Section label="Footer Layout">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {[
-              { value: 'none',     label: '0', title: 'None'     },
-              { value: 'compact',  label: '1', title: 'Compact'  },
-              { value: 'standard', label: '2', title: 'Standard' },
-              { value: 'full',     label: '3', title: 'Full'     },
-            ].map(({ value, label, title }) => {
-              const active = (config.design?.footerLayout || 'standard') === value
-              return (
-                <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })} title={title}
-                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </Section>
-      </PopoverShell>
-    )
-  }
 
   // ── Domain drill-in ───────────────────────────────────────────────────────
   if (view === 'domain') {
@@ -285,36 +235,34 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
 
       {/* Theme row */}
-      <div className="px-3 py-2.5 flex items-center gap-2 border-b border-stone-100">
-        <span className="text-xs text-stone-500 flex-shrink-0">Theme</span>
-        <div className="flex-1 flex items-center border border-stone-300 rounded-md px-2 py-1 gap-1.5 min-w-0 hover:border-stone-400 transition-colors">
-          <select
-            className="flex-1 text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer min-w-0"
-            value={config.design?.theme || 'minimal-light'}
-            onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
-          >
-            <option value="minimal-light">Minimal Light</option>
-            <option value="minimal-dark">Minimal Dark</option>
-            <option value="editorial">Editorial</option>
-          </select>
+      <div className="px-3 py-2.5 border-b border-stone-100">
+        <div className="flex items-center border border-stone-300 rounded-md px-2 py-1.5 gap-1.5 hover:border-stone-400 transition-colors">
+          <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider flex-shrink-0">Theme</span>
+          <div className="flex-1 relative min-w-0">
+            <select
+              className="w-full pr-4 text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer"
+              value={config.design?.theme || 'minimal-light'}
+              onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
+            >
+              <option value="minimal-light">Minimal Light</option>
+              <option value="minimal-dark">Minimal Dark</option>
+              <option value="editorial">Editorial</option>
+            </select>
+            <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
           <button
+            ref={brushRef}
             type="button"
-            onClick={() => setView('design')}
+            onClick={() => setDesignOpen(v => !v)}
             className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
             title="Design options"
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <line x1="4" y1="6" x2="20" y2="6" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="18" x2="20" y2="18" />
-              <circle cx="8" cy="6" r="2" fill="currentColor" stroke="none" />
-              <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" />
-              <circle cx="10" cy="18" r="2" fill="currentColor" stroke="none" />
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
             </svg>
           </button>
-          <svg className="w-3 h-3 text-stone-400 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
         </div>
       </div>
 
@@ -358,6 +306,54 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         actionLabel="Configure"
         onDrillIn={() => setView('payments')}
       />
+
+      {designOpen && (
+        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={260} title="Design">
+          <Section label="Navigation">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { value: 'minimal',  label: '1', title: 'Minimal'  },
+                { value: 'centered', label: '2', title: 'Centered' },
+                { value: 'fixed',    label: '3', title: 'Fixed'    },
+              ].map(({ value, label, title }) => {
+                const active = (config.design?.navStyle || 'minimal') === value
+                return (
+                  <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })} title={title}
+                    className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </Section>
+          <Section label="Sub-navigation">
+            <select className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+              value={config.design?.subNavStyle || 'dropdown'}
+              onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}>
+              <option value="dropdown">Dropdown</option>
+              <option value="inline">Links below page title</option>
+            </select>
+          </Section>
+          <Section label="Footer Layout">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { value: 'none',     label: '0', title: 'None'     },
+                { value: 'compact',  label: '1', title: 'Compact'  },
+                { value: 'standard', label: '2', title: 'Standard' },
+                { value: 'full',     label: '3', title: 'Full'     },
+              ].map(({ value, label, title }) => {
+                const active = (config.design?.footerLayout || 'standard') === value
+                return (
+                  <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })} title={title}
+                    className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </Section>
+        </PopoverShell>
+      )}
 
     </PopoverShell>
   )
