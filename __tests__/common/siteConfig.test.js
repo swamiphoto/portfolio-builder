@@ -39,6 +39,20 @@ describe('createDefaultSiteConfig', () => {
     const config = createDefaultSiteConfig('user-123')
     expect(config.publishedAt).toBeNull()
   })
+
+  it('includes cover config and initialPageId', () => {
+    const config = createDefaultSiteConfig('user-123')
+    expect(config.cover).toEqual({
+      heading: '',
+      subheading: '',
+      buttonText: 'View my portfolio',
+      imageUrl: '',
+      height: 'full',
+      buttonStyle: 'solid',
+    })
+    expect(config.initialPageId).toBeNull()
+    expect(config.hasCoverPage).toBe(true)
+  })
 })
 
 describe('generatePageId', () => {

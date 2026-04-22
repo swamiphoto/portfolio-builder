@@ -30,6 +30,15 @@ export function createDefaultSiteConfig(userId) {
     logoType: 'sitename',
     logo: '',
     favicon: '',
+    cover: {
+      heading: '',
+      subheading: '',
+      buttonText: 'View my portfolio',
+      imageUrl: '',
+      height: 'full',
+      buttonStyle: 'solid',
+    },
+    initialPageId: null,
     design: {
       theme: 'minimal-light',
       navStyle: 'minimal',
