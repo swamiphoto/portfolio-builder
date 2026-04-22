@@ -283,7 +283,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         checked={!!config.customDomain}
         onToggle={(v) => {
           if (!v) update({ customDomain: null })
-          else { update({ customDomain: '' }); setView('domain') }
+          else update({ customDomain: '' })
         }}
         label="Custom domain"
         actionLabel="Configure"
