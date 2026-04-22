@@ -288,7 +288,6 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         label="Custom domain"
         actionLabel="Configure"
         onDrillIn={() => setView('domain')}
-        alwaysShowDrill
       />
 
       <ToggleRow
