@@ -274,7 +274,8 @@ export default function AdminIndex() {
     />
   )
 
-  const panel = (selectedPage && selectedPage.type !== 'link') ? (
+  const isCoverPageSelected = selectedPage?.id === 'home' && siteConfig.hasCoverPage !== false
+  const panel = (selectedPage && selectedPage.type !== 'link' && !isCoverPageSelected) ? (
     <PageEditorSidebar
       page={selectedPage}
       siteConfig={siteConfig}
@@ -323,7 +324,7 @@ export default function AdminIndex() {
         ? siteConfig.pages.filter(p => p.parentId === selectedPage.parentId && p.showInNav !== false)
         : siteConfig.pages.filter(p => p.parentId === selectedPage.id && p.showInNav !== false)
       const activeChildId = isChildPage ? selectedPage.id : null
-      const isCoverPage = selectedPage.id === 'home' && siteConfig.hasCoverPage !== false
+      const isCoverPage = isCoverPageSelected
       if (isCoverPage) {
         const cover = siteConfig.cover || {}
         const bgStyle = cover.imageUrl ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}
