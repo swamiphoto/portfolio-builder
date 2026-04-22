@@ -167,22 +167,30 @@ export function normalizePageEntity(page) {
 
   let cover = page.cover || null;
   if (cover) {
-    const normalizeBtn = (b) =>
-      b && b.label ? { label: b.label, href: b.href || '', style: b.style === 'solid' ? 'solid' : 'outline' } : null
+    const BUTTON_TYPES = ['url', 'slideshow', 'client-login']
+    const normalizeBtn = (b) => {
+      if (!b?.label) return null
+      return {
+        type: BUTTON_TYPES.includes(b.type) ? b.type : 'url',
+        label: b.label,
+        href: b.href || '',
+      }
+    }
 
     let buttons
     if (Array.isArray(cover.buttons)) {
       buttons = cover.buttons.map(normalizeBtn).filter(Boolean)
     } else if (cover.buttons === undefined && (cover.primaryCta || cover.secondaryCta)) {
-      // Migrate legacy primaryCta/secondaryCta
-      const legacy = [
-        cover.primaryCta?.label ? normalizeBtn({ label: cover.primaryCta.label, href: cover.primaryCta.href, style: 'solid' }) : null,
-        cover.secondaryCta?.label ? normalizeBtn({ label: cover.secondaryCta.label, href: cover.secondaryCta.href, style: 'outline' }) : null,
+      buttons = [
+        cover.primaryCta?.label ? { type: 'url', label: cover.primaryCta.label, href: cover.primaryCta.href || '' } : null,
+        cover.secondaryCta?.label ? { type: 'url', label: cover.secondaryCta.label, href: cover.secondaryCta.href || '' } : null,
       ].filter(Boolean)
-      buttons = legacy
     } else {
       buttons = []
     }
+
+    const BUTTON_STYLES = ['solid', 'outline', 'ghost']
+    const buttonStyle = BUTTON_STYLES.includes(cover.buttonStyle) ? cover.buttonStyle : 'solid'
 
     cover = {
       imageUrl: cover.imageUrl || "",
@@ -190,6 +198,7 @@ export function normalizePageEntity(page) {
       overlayText: cover.overlayText || "",
       variant: cover.variant === "cover" ? "cover" : "showcase",
       buttons,
+      buttonStyle,
     };
   }
 
