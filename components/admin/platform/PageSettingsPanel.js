@@ -18,14 +18,6 @@ export default function PageSettingsPanel({ page, onChange }) {
     update({ title, slug })
   }
 
-  function updateCover(patch) {
-    update({ cover: { ...(page.cover || {}), ...patch } })
-  }
-
-  function updateCta(key, patch) {
-    updateCover({ [key]: { ...(page.cover?.[key] || {}), ...patch } })
-  }
-
   const variant = page.cover?.variant || 'showcase'
 
   const isLink = page.type === 'link'
@@ -136,7 +128,8 @@ export default function PageSettingsPanel({ page, onChange }) {
               ].map(({ value, label }) => (
                 <button
                   key={value}
-                  onClick={() => updateCover({ variant: value })}
+                  type="button"
+                  onClick={() => update({ cover: { ...(page.cover || {}), variant: value } })}
                   className={`px-3 py-1 transition-colors ${
                     variant === value
                       ? 'bg-stone-800 text-white'
@@ -153,46 +146,6 @@ export default function PageSettingsPanel({ page, onChange }) {
                 : 'Image with title and gallery links below.'}
             </p>
           </div>
-
-          {variant === 'cover' && (
-            <>
-              <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">Primary button</div>
-                <div className="space-y-1.5">
-                  <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                    placeholder="Label (e.g. View portfolio)"
-                    value={page.cover?.primaryCta?.label || ''}
-                    onChange={(e) => updateCta('primaryCta', { label: e.target.value })}
-                  />
-                  <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-500 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                    placeholder="URL or #anchor"
-                    value={page.cover?.primaryCta?.href || ''}
-                    onChange={(e) => updateCta('primaryCta', { href: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">Secondary button</div>
-                <div className="space-y-1.5">
-                  <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                    placeholder="Label (e.g. Contact me)"
-                    value={page.cover?.secondaryCta?.label || ''}
-                    onChange={(e) => updateCta('secondaryCta', { label: e.target.value })}
-                  />
-                  <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-500 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                    placeholder="URL or #anchor"
-                    value={page.cover?.secondaryCta?.href || ''}
-                    onChange={(e) => updateCta('secondaryCta', { href: e.target.value })}
-                  />
-                </div>
-              </div>
-            </>
-          )}
         </div>
       )}
 
