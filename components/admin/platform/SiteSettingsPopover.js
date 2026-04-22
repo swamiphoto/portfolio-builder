@@ -89,7 +89,7 @@ const BrushIcon = () => (
   </svg>
 )
 
-export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover }) {
+export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
@@ -116,6 +116,10 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
   function updateCover(patch) {
     update({ cover: { ...(config.cover || {}), ...patch } })
+  }
+
+  function updateShare(patch) {
+    update({ share: { ...(config.share || {}), ...patch } })
   }
 
   const rootDomain = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
@@ -279,6 +283,87 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     )
   }
 
+  // ── Sharing drill-in ──────────────────────────────────────────────────────
+  if (view === 'sharing') {
+    const share = config.share || {}
+    const largeImage = share.largeImage || config.cover?.imageUrl || ''
+    const squareImage = share.squareImage || config.cover?.imageUrl || ''
+    const domain = config.customDomain || `${config.userId || 'yoursite'}.${rootDomain.replace(/:\d+$/, '')}`
+    const siteName = config.siteName || 'My Portfolio'
+    const tagline = config.tagline || ''
+
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
+        <DrillHeader label="Sharing" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-3">
+
+          {/* Large card */}
+          <div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Social card</div>
+            <div
+              className="group relative w-full cursor-pointer overflow-hidden border border-stone-200"
+              style={{ paddingBottom: '52.5%' }}
+              onClick={onPickShareLarge}
+            >
+              <div className="absolute inset-0 bg-stone-100">
+                {largeImage ? (
+                  <img src={largeImage} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-stone-300 text-2xl">+</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-white text-xs">{largeImage ? 'Change image' : 'Add image'}</span>
+                </div>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 py-1.5">
+                <div className="text-xs font-medium text-stone-800 truncate">{siteName}</div>
+                {tagline && <div className="text-[10px] text-stone-500 truncate mt-0.5">{tagline}</div>}
+                <div className="text-[10px] text-stone-400 truncate mt-0.5">{domain}</div>
+              </div>
+            </div>
+            {share.largeImage && (
+              <button type="button" onClick={() => updateShare({ largeImage: '' })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Remove override</button>
+            )}
+          </div>
+
+          {/* Square card */}
+          <div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Compact card</div>
+            <div
+              className="group flex gap-0 border border-stone-200 cursor-pointer overflow-hidden"
+              onClick={onPickShareSquare}
+            >
+              <div className="relative w-16 h-16 flex-shrink-0 bg-stone-100 overflow-hidden">
+                {squareImage ? (
+                  <img src={squareImage} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-stone-300 text-xl">+</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-white text-[10px]">{squareImage ? '↺' : '+'}</span>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-center border-l border-stone-200">
+                <div className="text-xs font-medium text-stone-800 truncate">{siteName}</div>
+                {tagline && <div className="text-[10px] text-stone-500 truncate mt-0.5">{tagline}</div>}
+                <div className="text-[10px] text-stone-400 truncate mt-0.5">{domain}</div>
+              </div>
+            </div>
+            {share.squareImage && (
+              <button type="button" onClick={() => updateShare({ squareImage: '' })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Remove override</button>
+            )}
+          </div>
+
+          <p className="text-[10px] text-stone-400">Title and description come from your site name and tagline. Each page can set its own description.</p>
+        </div>
+      </PopoverShell>
+    )
+  }
+
   // ── Main view ─────────────────────────────────────────────────────────────
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings" headerRight={brushButton}>
@@ -403,6 +488,10 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
       <DrillRow
         label={config.clientDefaults?.paymentsEnabled ? 'Payments' : 'Setup payments'}
         onDrillIn={() => setView('payments')}
+      />
+      <DrillRow
+        label="Sharing"
+        onDrillIn={() => setView('sharing')}
       />
 
       {designOpen && (
