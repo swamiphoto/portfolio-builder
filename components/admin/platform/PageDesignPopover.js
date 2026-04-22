@@ -57,6 +57,28 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
           </div>
         </div>
 
+        {/* Button style */}
+        {(cover.buttons || []).length > 0 && (
+          <div>
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2">Button style</div>
+            <div className="flex gap-1.5">
+              {['solid', 'outline', 'ghost'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => update({ buttonStyle: s })}
+                  className={`text-xs px-2.5 py-1 border transition-colors capitalize ${
+                    (cover.buttonStyle || 'solid') === s
+                      ? 'border-stone-900 bg-stone-900 text-white'
+                      : 'border-stone-200 text-stone-600 hover:border-stone-400'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
