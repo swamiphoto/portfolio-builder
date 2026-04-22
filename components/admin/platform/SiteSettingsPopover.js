@@ -280,7 +280,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
       {/* Toggle / drill rows */}
       <ToggleRow
-        checked={!!config.customDomain}
+        checked={config.customDomain != null}
         onToggle={(v) => {
           if (!v) update({ customDomain: null })
           else update({ customDomain: '' })
