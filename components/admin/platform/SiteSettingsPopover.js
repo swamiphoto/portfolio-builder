@@ -274,6 +274,18 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </Field>
       </div>
 
+      {/* Cover page toggle */}
+      <div className="px-3 py-2.5 flex items-center border-b border-stone-100">
+        <button
+          type="button"
+          onClick={() => update({ hasCoverPage: config.hasCoverPage === false })}
+          className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${config.hasCoverPage !== false ? 'bg-stone-700' : 'bg-stone-300'}`}
+        >
+          <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
+        </button>
+        <span className="ml-2 text-xs text-stone-700 select-none">Cover page</span>
+      </div>
+
       {/* Drill rows */}
       <DrillRow
         label={config.customDomain || 'Setup custom domain'}
