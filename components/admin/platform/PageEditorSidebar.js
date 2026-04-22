@@ -43,6 +43,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   const gallery = pageToGallery(page)
   const pages = siteConfig?.pages || []
+  const hasChildPages = pages.some(p => p.parentId === page.id)
 
   const assetsByUrl = useMemo(() => {
     const map = {}
@@ -170,7 +171,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   if (page.type === 'link') {
     return (
       <div className="flex flex-col h-full bg-stone-50 p-3">
-        <PageSettingsPanel page={page} onChange={onPageChange} />
+        <PageSettingsPanel page={page} onChange={onPageChange} hasChildPages={hasChildPages} />
       </div>
     )
   }
@@ -203,6 +204,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
           <PageSettingsPanel
             page={page}
             onChange={onPageChange}
+            hasChildPages={hasChildPages}
           />
         }
         onBack={null}
