@@ -233,6 +233,17 @@ export default function AdminIndex() {
     setShowLibrary(false)
   }, [siteConfig])
 
+  const handleDisableCover = useCallback(() => {
+    const pages = siteConfig?.pages || []
+    const targetId = siteConfig?.homePageId
+      || pages.find(p => p.showInNav && p.type !== 'link')?.id
+    if (!siteConfig?.homePageId && targetId) {
+      updateConfig(prev => ({ ...prev, homePageId: targetId }))
+    }
+    setSelectedPageId(targetId || null)
+    setShowLibrary(false)
+  }, [siteConfig, updateConfig])
+
   const handleSelectPage = useCallback((pageId) => {
     setSelectedPageId(pageId)
     setShowLibrary(false)
@@ -271,6 +282,7 @@ export default function AdminIndex() {
       onPickFavicon={() => setAssetPickerTarget('favicon')}
       onPickCoverImage={() => setAssetPickerTarget('coverImage')}
       onViewCover={handleViewCover}
+      onDisableCover={handleDisableCover}
     />
   )
 

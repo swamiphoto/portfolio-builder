@@ -32,6 +32,7 @@ export default function PlatformSidebar({
   onPickFavicon,
   onPickCoverImage,
   onViewCover,
+  onDisableCover,
 }) {
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
@@ -461,6 +462,7 @@ export default function PlatformSidebar({
           onPickFavicon={onPickFavicon}
           onPickCoverImage={onPickCoverImage}
           onViewCover={onViewCover}
+          onDisableCover={onDisableCover}
         />
       )}
 

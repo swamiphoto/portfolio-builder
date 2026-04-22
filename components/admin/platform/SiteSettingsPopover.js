@@ -89,7 +89,7 @@ const BrushIcon = () => (
   </svg>
 )
 
-export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover }) {
+export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
@@ -362,7 +362,11 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
       <div className="flex items-center px-3 py-2.5 border-b border-stone-100">
         <button
           type="button"
-          onClick={() => update({ hasCoverPage: config.hasCoverPage === false })}
+          onClick={() => {
+              const enabling = config.hasCoverPage === false
+              update({ hasCoverPage: enabling })
+              if (!enabling) onDisableCover?.()
+            }}
           className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${config.hasCoverPage !== false ? 'bg-stone-700' : 'bg-stone-300'}`}
         >
           <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
