@@ -3,20 +3,10 @@ import { useState, useRef } from 'react'
 import { generatePageId } from '../../../common/siteConfig'
 import PageDesignPopover from './PageDesignPopover'
 
-const DRAG_HANDLE = (
-  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" />
-    <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
-    <circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" />
-  </svg>
-)
-
-export default function PageSettingsPanel({ page, onChange, hasChildPages }) {
+export default function PageSettingsPanel({ page, onChange }) {
   const [expanded, setExpanded] = useState(true)
   const [designOpen, setDesignOpen] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState(false)
   const brushRef = useRef(null)
-  const dragIndex = useRef(null)
 
   function update(patch) {
     onChange({ ...page, ...patch })
@@ -28,64 +18,7 @@ export default function PageSettingsPanel({ page, onChange, hasChildPages }) {
     update({ title, slug })
   }
 
-  function updateCover(patch) {
-    update({
-      cover: {
-        imageUrl: '',
-        height: 'full',
-        overlayText: '',
-        variant: 'showcase',
-        buttonStyle: 'solid',
-        buttons: [],
-        ...(page.cover || {}),
-        ...patch,
-      },
-    })
-  }
-
-  function updateButton(i, patch) {
-    const btns = [...(page.cover?.buttons || [])]
-    btns[i] = { ...btns[i], ...patch }
-    updateCover({ buttons: btns })
-  }
-
-  function removeButton(i) {
-    const btns = (page.cover?.buttons || []).filter((_, idx) => idx !== i)
-    updateCover({ buttons: btns })
-  }
-
-  function hasButtonType(type) {
-    return (page.cover?.buttons || []).some(b => b.type === type)
-  }
-
-  function addButton(type) {
-    const defaults = {
-      url: { type: 'url', label: '', href: '', id: Date.now() },
-      slideshow: { type: 'slideshow', label: 'Start Slideshow', href: '', id: Date.now() },
-      'client-login': { type: 'client-login', label: 'Client Login', href: '#client-login', id: Date.now() },
-    }
-    const btns = [...(page.cover?.buttons || []), defaults[type]]
-    updateCover({ buttons: btns })
-    setPickerOpen(false)
-  }
-
-  function handleDragStart(i) { dragIndex.current = i }
-  function handleDragOver(e) { e.preventDefault() }
-  function handleDrop(i) {
-    const from = dragIndex.current
-    if (from === null || from === i) return
-    const btns = [...(page.cover?.buttons || [])]
-    const [moved] = btns.splice(from, 1)
-    btns.splice(i, 0, moved)
-    updateCover({ buttons: btns })
-    dragIndex.current = null
-  }
-
   const isLink = page.type === 'link'
-  const buttons = page.cover?.buttons || []
-  const canAddMore = buttons.length < 4
-
-  const inputCls = 'w-full border-b border-stone-200 p-0 pb-0.5 text-xs text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent'
 
   // ── Link page ──────────────────────────────────────────────────────────────
   if (isLink) {
@@ -187,114 +120,6 @@ export default function PageSettingsPanel({ page, onChange, hasChildPages }) {
             />
           </div>
 
-          {/* Buttons */}
-          <div>
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2">Buttons</div>
-
-            {/* Informational Links row */}
-            {hasChildPages && (
-              <div className="flex items-center gap-2 py-1.5 border-b border-stone-100">
-                <span className="w-3 flex-shrink-0" />
-                <span className="flex-1 text-xs text-stone-400 italic">Links (auto)</span>
-              </div>
-            )}
-
-            {/* Stored buttons */}
-            {buttons.map((btn, i) => {
-              const isLocked = btn.type === 'client-login' && !!page.clientFeatures?.enabled
-              return (
-                <div
-                  key={btn.id ?? i}
-                  draggable={!isLocked}
-                  onDragStart={() => !isLocked && handleDragStart(i)}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleDrop(i)}
-                  className="flex items-start gap-2 py-1.5 border-b border-stone-100 last:border-b-0"
-                >
-                  <div className={`mt-1 flex-shrink-0 text-stone-300 ${isLocked ? 'opacity-0 pointer-events-none' : 'cursor-grab'}`}>
-                    {DRAG_HANDLE}
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <input
-                      className={inputCls}
-                      placeholder={
-                        btn.type === 'slideshow' ? 'Start Slideshow'
-                        : btn.type === 'client-login' ? 'Client Login'
-                        : 'Button label'
-                      }
-                      value={btn.label}
-                      readOnly={isLocked}
-                      onChange={(e) => !isLocked && updateButton(i, { label: e.target.value })}
-                    />
-                    {btn.type === 'url' && (
-                      <input
-                        className={inputCls}
-                        placeholder="URL or #anchor"
-                        value={btn.href}
-                        onChange={(e) => updateButton(i, { href: e.target.value })}
-                      />
-                    )}
-                    {btn.type !== 'url' && (
-                      <div className="text-[10px] text-stone-400">
-                        {btn.type === 'slideshow' ? 'Slideshow link' : 'Client login'}
-                      </div>
-                    )}
-                  </div>
-                  {!isLocked && (
-                    <button
-                      type="button"
-                      onClick={() => removeButton(i)}
-                      className="mt-0.5 flex-shrink-0 text-stone-300 hover:text-red-400 transition-colors text-base leading-none"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-
-            {/* Add button + picker */}
-            {canAddMore && (
-              <div className="relative mt-2">
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(v => !v)}
-                  className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
-                >
-                  + Add button
-                </button>
-                {pickerOpen && (
-                  <div className="absolute left-0 top-full mt-1 bg-white border border-stone-200 shadow-sm rounded-md py-1 z-10 min-w-[140px]">
-                    <button
-                      type="button"
-                      onClick={() => addButton('url')}
-                      className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                    >
-                      Custom URL
-                    </button>
-                    {page.slideshow?.enabled && !hasButtonType('slideshow') && (
-                      <button
-                        type="button"
-                        onClick={() => addButton('slideshow')}
-                        className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                      >
-                        Slideshow
-                      </button>
-                    )}
-                    {page.clientFeatures?.enabled && !hasButtonType('client-login') && (
-                      <button
-                        type="button"
-                        onClick={() => addButton('client-login')}
-                        className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                      >
-                        Client Login
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </div>
       )}
 
