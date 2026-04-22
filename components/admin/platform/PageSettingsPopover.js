@@ -546,12 +546,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
       </Section>
 
       <ToggleRow
-        checked={page.cover?.variant === 'cover'}
-        onToggle={(v) => update({ cover: { ...(page.cover || {}), variant: v ? 'cover' : 'showcase' } })}
-        label="Cover style"
-      />
-
-      <ToggleRow
         checked={!!page.password}
         onToggle={(v) => {
           if (!v) update({ password: '', passwordGateMessage: '' })
