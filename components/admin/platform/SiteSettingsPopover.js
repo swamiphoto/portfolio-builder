@@ -358,7 +358,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </Field>
       </div>
 
-      {/* Cover page toggle + drill-in */}
+      {/* Cover page toggle + inline chevron */}
       <div className="flex items-center px-3 py-2.5 border-b border-stone-100">
         <button
           type="button"
@@ -368,13 +368,16 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
         </button>
         <span className="ml-2 text-xs text-stone-700 flex-1 select-none">Include a cover page</span>
+        {config.hasCoverPage !== false && (
+          <button
+            type="button"
+            onClick={() => { setView('cover'); onViewCover?.() }}
+            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0 ml-2"
+          >
+            <ChevronRight />
+          </button>
+        )}
       </div>
-      {config.hasCoverPage !== false && (
-        <DrillRow
-          label="Cover page"
-          onDrillIn={() => { setView('cover'); onViewCover?.() }}
-        />
-      )}
 
       {/* Drill rows */}
       <DrillRow
