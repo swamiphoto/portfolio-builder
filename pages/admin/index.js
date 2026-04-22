@@ -324,55 +324,58 @@ export default function AdminIndex() {
         : siteConfig.pages.filter(p => p.parentId === selectedPage.id && p.showInNav !== false)
       const activeChildId = isChildPage ? selectedPage.id : null
       const isCoverPage = selectedPage.id === 'home' && siteConfig.hasCoverPage !== false
-      const coverProps = isCoverPage
-        ? {
-            cover: {
-              imageUrl: siteConfig.cover?.imageUrl || '',
-              height: siteConfig.cover?.height || 'full',
-              variant: 'cover',
-              buttonStyle: siteConfig.cover?.buttonStyle || 'solid',
-            },
-            title: siteConfig.cover?.heading || siteConfig.siteName || '',
-            description: siteConfig.cover?.subheading || siteConfig.tagline || '',
-            primaryButton: { label: siteConfig.cover?.buttonText || 'View my portfolio', href: '#' },
-          }
-        : {
-            cover: selectedPage.cover,
-            title: selectedPage.title,
-            description: selectedPage.description,
-            primaryButton: null,
-          }
-      content = (
-        <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
-          <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
-          <PageCover
-            cover={coverProps.cover}
-            title={coverProps.title}
-            description={coverProps.description}
-            slideshowHref={isCoverPage ? null : slideshowHref}
-            clientFeaturesEnabled={isCoverPage ? false : !!selectedPage.clientFeatures?.enabled}
-            primaryButton={coverProps.primaryButton}
-          />
-          <GalleryPreview
-            gallery={{
-              name: selectedPage.title,
-              description: selectedPage.description || '',
-              blocks: selectedPage.blocks || [],
-            }}
-            pages={siteConfig.pages}
-            childPages={childPages}
-            activeChildId={activeChildId}
-            username={username}
-            assetsByUrl={assetsByUrl}
-            noWrap
-            enableSlideshow={!!slideshowHref}
-            onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
-            onChildPageClick={handleSelectPage}
-            highlightedBlockIndex={hoveredBlockIndex}
-            onBlockHover={setHoveredBlockIndex}
-          />
-        </div>
-      )
+      if (isCoverPage) {
+        const cover = siteConfig.cover || {}
+        const bgStyle = cover.imageUrl ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}
+        content = (
+          <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center bg-stone-900 text-center px-6 relative" style={bgStyle}>
+            {cover.imageUrl && <div className="absolute inset-0 bg-black/30" />}
+            <div className="relative z-10 text-white">
+              {(cover.heading || siteConfig.siteName) && (
+                <h2 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{cover.heading || siteConfig.siteName}</h2>
+              )}
+              {(cover.subheading || siteConfig.tagline) && (
+                <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{cover.subheading || siteConfig.tagline}</p>
+              )}
+              <div className="inline-flex items-center px-5 py-2.5 text-sm font-medium bg-white text-stone-900">
+                {cover.buttonText || 'View my portfolio'}
+              </div>
+            </div>
+          </div>
+        )
+      } else {
+        content = (
+          <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
+            <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+            <PageCover
+              cover={selectedPage.cover}
+              title={selectedPage.title}
+              description={selectedPage.description}
+              slideshowHref={slideshowHref}
+              clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
+              primaryButton={null}
+            />
+            <GalleryPreview
+              gallery={{
+                name: selectedPage.title,
+                description: selectedPage.description || '',
+                blocks: selectedPage.blocks || [],
+              }}
+              pages={siteConfig.pages}
+              childPages={childPages}
+              activeChildId={activeChildId}
+              username={username}
+              assetsByUrl={assetsByUrl}
+              noWrap
+              enableSlideshow={!!slideshowHref}
+              onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
+              onChildPageClick={handleSelectPage}
+              highlightedBlockIndex={hoveredBlockIndex}
+              onBlockHover={setHoveredBlockIndex}
+            />
+          </div>
+        )
+      }
     }
   } else {
     content = (

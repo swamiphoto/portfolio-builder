@@ -371,7 +371,15 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         {config.hasCoverPage !== false && (
           <button
             type="button"
-            onClick={() => { setView('cover'); onViewCover?.() }}
+            onClick={() => {
+              const patch = {}
+              if (!config.cover?.heading) patch.heading = config.siteName || ''
+              if (!config.cover?.subheading) patch.subheading = config.tagline || ''
+              if (!config.cover?.buttonText) patch.buttonText = 'View my portfolio'
+              if (Object.keys(patch).length) update({ cover: { ...(config.cover || {}), ...patch } })
+              setView('cover')
+              onViewCover?.()
+            }}
             className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0 ml-2"
           >
             <ChevronRight />
