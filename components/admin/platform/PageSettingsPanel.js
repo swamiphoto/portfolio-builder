@@ -18,8 +18,6 @@ export default function PageSettingsPanel({ page, onChange }) {
     update({ title, slug })
   }
 
-  const variant = page.cover?.variant || 'showcase'
-
   const isLink = page.type === 'link'
 
   // ── Link page ──────────────────────────────────────────────────────────────
@@ -119,33 +117,6 @@ export default function PageSettingsPanel({ page, onChange }) {
             />
           </div>
 
-          <div>
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1.5">Style</div>
-            <div className="inline-flex rounded-md border border-stone-200 overflow-hidden text-xs">
-              {[
-                { value: 'showcase', label: 'Showcase' },
-                { value: 'cover',    label: 'Cover'    },
-              ].map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => update({ cover: { ...(page.cover || {}), variant: value } })}
-                  className={`px-3 py-1 transition-colors ${
-                    variant === value
-                      ? 'bg-stone-800 text-white'
-                      : 'bg-white text-stone-500 hover:text-stone-800'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-stone-400 mt-1">
-              {variant === 'cover'
-                ? 'Full-viewport landing with call-to-action buttons.'
-                : 'Image with title and gallery links below.'}
-            </p>
-          </div>
         </div>
       )}
 
