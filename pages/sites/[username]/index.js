@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Head from 'next/head'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -52,6 +53,14 @@ export async function getServerSideProps({ params }) {
 }
 
 export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
+  const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
+  const ogTitle = siteConfig.siteName || 'Portfolio'
+  const ogDescription = siteConfig.tagline || ''
+  const rootDomainPublic = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+  const siteUrl = siteConfig.customDomain
+    ? `https://${siteConfig.customDomain}`
+    : `https://${username}.${rootDomainPublic.replace(/:\d+$/, '')}`
+
   const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
   const hasCoverPage = siteConfig.hasCoverPage !== false
   const coverConfig = siteConfig.cover || {}
@@ -68,6 +77,19 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   if (hasCoverPage) {
     return (
       <div className="min-h-screen bg-black font-sans relative">
+        <Head>
+          <title>{ogTitle}</title>
+          <meta name="description" content={ogDescription} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={siteUrl} />
+          <meta property="og:title" content={ogTitle} />
+          <meta property="og:description" content={ogDescription} />
+          {ogImage && <meta property="og:image" content={ogImage} />}
+          <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+          <meta name="twitter:title" content={ogTitle} />
+          <meta name="twitter:description" content={ogDescription} />
+          {ogImage && <meta name="twitter:image" content={ogImage} />}
+        </Head>
         <PageCover
           cover={{
             imageUrl: coverConfig.imageUrl || '',
@@ -92,6 +114,19 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
 
   return (
     <div className="min-h-screen bg-white font-sans relative">
+      <Head>
+        <title>{ogTitle}</title>
+        <meta name="description" content={ogDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={siteUrl} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={ogTitle} />
+        <meta name="twitter:description" content={ogDescription} />
+        {ogImage && <meta name="twitter:image" content={ogImage} />}
+      </Head>
       <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
         <PageCover

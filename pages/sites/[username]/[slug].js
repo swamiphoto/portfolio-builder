@@ -1,5 +1,6 @@
 // pages/sites/[username]/[slug].js
 import { useState } from 'react'
+import Head from 'next/head'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -57,6 +58,15 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
     return <PasswordGate pageTitle={page.title} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
   }
 
+  const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
+  const ogTitle = page.title || siteConfig.siteName || 'Portfolio'
+  const ogDescription = page.description || siteConfig.tagline || ''
+  const rootDomainPublic = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+  const siteUrl = siteConfig.customDomain
+    ? `https://${siteConfig.customDomain}`
+    : `https://${username}.${rootDomainPublic.replace(/:\d+$/, '')}`
+  const pageUrl = `${siteUrl}/${page.slug || page.id}`
+
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   const navVariant = page?.cover?.imageUrl ? undefined : 'header-dropdown'
   const slideshowHref = page.slideshow?.enabled ? `/sites/${username}/${page.slug || page.id}/slideshow` : null
@@ -69,6 +79,19 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
   const activeSubNavId = isChildPage ? page.id : null
   return (
     <div className="min-h-screen bg-white font-sans relative">
+      <Head>
+        <title>{ogTitle}</title>
+        <meta name="description" content={ogDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={ogTitle} />
+        <meta name="twitter:description" content={ogDescription} />
+        {ogImage && <meta name="twitter:image" content={ogImage} />}
+      </Head>
       <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
         <PageCover
