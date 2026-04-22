@@ -220,9 +220,18 @@ export default function AdminIndex() {
 
   const handleAssetPickerConfirm = useCallback((refs) => {
     if (!assetPickerTarget || !refs.length) return
-    updateConfig(prev => ({ ...prev, [assetPickerTarget]: refs[0].url }))
+    if (assetPickerTarget === 'coverImage') {
+      updateConfig(prev => ({ ...prev, cover: { ...(prev.cover || {}), imageUrl: refs[0].url } }))
+    } else {
+      updateConfig(prev => ({ ...prev, [assetPickerTarget]: refs[0].url }))
+    }
     setAssetPickerTarget(null)
   }, [assetPickerTarget, updateConfig])
+
+  const handleViewCover = useCallback(() => {
+    setSelectedPageId(siteConfig?.pages?.find(p => p.id === 'home')?.id || null)
+    setShowLibrary(false)
+  }, [siteConfig])
 
   const handleSelectPage = useCallback((pageId) => {
     setSelectedPageId(pageId)
@@ -260,6 +269,8 @@ export default function AdminIndex() {
       assetsByUrl={assetsByUrl}
       onPickLogo={() => setAssetPickerTarget('logo')}
       onPickFavicon={() => setAssetPickerTarget('favicon')}
+      onPickCoverImage={() => setAssetPickerTarget('coverImage')}
+      onViewCover={handleViewCover}
     />
   )
 
@@ -312,15 +323,35 @@ export default function AdminIndex() {
         ? siteConfig.pages.filter(p => p.parentId === selectedPage.parentId && p.showInNav !== false)
         : siteConfig.pages.filter(p => p.parentId === selectedPage.id && p.showInNav !== false)
       const activeChildId = isChildPage ? selectedPage.id : null
+      const isCoverPage = selectedPage.id === 'home' && siteConfig.hasCoverPage !== false
+      const coverProps = isCoverPage
+        ? {
+            cover: {
+              imageUrl: siteConfig.cover?.imageUrl || '',
+              height: siteConfig.cover?.height || 'full',
+              variant: 'cover',
+              buttonStyle: siteConfig.cover?.buttonStyle || 'solid',
+            },
+            title: siteConfig.cover?.heading || siteConfig.siteName || '',
+            description: siteConfig.cover?.subheading || siteConfig.tagline || '',
+            primaryButton: { label: siteConfig.cover?.buttonText || 'View my portfolio', href: '#' },
+          }
+        : {
+            cover: selectedPage.cover,
+            title: selectedPage.title,
+            description: selectedPage.description,
+            primaryButton: null,
+          }
       content = (
         <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
           <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
           <PageCover
-            cover={selectedPage.cover}
-            title={selectedPage.title}
-            description={selectedPage.description}
-            slideshowHref={slideshowHref}
-            clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
+            cover={coverProps.cover}
+            title={coverProps.title}
+            description={coverProps.description}
+            slideshowHref={isCoverPage ? null : slideshowHref}
+            clientFeaturesEnabled={isCoverPage ? false : !!selectedPage.clientFeatures?.enabled}
+            primaryButton={coverProps.primaryButton}
           />
           <GalleryPreview
             gallery={{
