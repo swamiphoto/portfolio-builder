@@ -89,11 +89,13 @@ const BrushIcon = () => (
   </svg>
 )
 
-export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon }) {
+export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
+  const [coverDesignOpen, setCoverDesignOpen] = useState(false)
+  const coverBrushRef = useRef(null)
   const footer = config.footer || {}
 
   function update(patch) {
@@ -112,6 +114,10 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     update({ footer: { ...(config.footer || {}), ...patch } })
   }
 
+  function updateCover(patch) {
+    update({ cover: { ...(config.cover || {}), ...patch } })
+  }
+
   const rootDomain = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
   const hasAnalytics = !!(config.analytics?.googleId || config.analytics?.plausibleDomain)
   const logoType = config.logoType || 'sitename'
@@ -127,6 +133,84 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
       <BrushIcon />
     </button>
   )
+
+  // ── Cover page drill-in ───────────────────────────────────────────────────
+  if (view === 'cover') {
+    const cover = config.cover || {}
+
+    const coverBrushButton = (
+      <button
+        ref={coverBrushRef}
+        type="button"
+        onClick={() => setCoverDesignOpen(v => !v)}
+        className="text-stone-400 hover:text-stone-700 transition-colors"
+        title="Cover design"
+      >
+        <BrushIcon />
+      </button>
+    )
+
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings" headerRight={coverBrushButton}>
+        <DrillHeader label="Cover page" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-3">
+          <AssetField
+            label="Background image"
+            value={cover.imageUrl || ''}
+            onChange={(v) => updateCover({ imageUrl: v })}
+            onPickFromLibrary={onPickCoverImage}
+          />
+          <Field label="Heading">
+            <input
+              className={inputCls}
+              placeholder={config.siteName || 'My Portfolio'}
+              value={cover.heading || ''}
+              onChange={(e) => updateCover({ heading: e.target.value })}
+            />
+          </Field>
+          <Field label="Subheading">
+            <input
+              className={inputCls}
+              placeholder={config.tagline || 'Short description'}
+              value={cover.subheading || ''}
+              onChange={(e) => updateCover({ subheading: e.target.value })}
+            />
+          </Field>
+          <Field label="Button text">
+            <input
+              className={inputCls}
+              placeholder="View my portfolio"
+              value={cover.buttonText || ''}
+              onChange={(e) => updateCover({ buttonText: e.target.value })}
+            />
+          </Field>
+        </div>
+        {coverDesignOpen && (
+          <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width={220} title="Cover Design">
+            <div className="px-3 py-3">
+              <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Button Style</div>
+              <div className="flex items-center gap-1.5">
+                {[
+                  { value: 'solid',   label: 'Solid'   },
+                  { value: 'outline', label: 'Outline' },
+                  { value: 'ghost',   label: 'Ghost'   },
+                ].map(({ value, label }) => {
+                  const active = (cover.buttonStyle || 'solid') === value
+                  return (
+                    <button key={value} type="button"
+                      onClick={() => updateCover({ buttonStyle: value })}
+                      className={`px-2.5 py-0.5 text-xs border transition-colors ${active ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-500 hover:border-stone-400'}`}>
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </PopoverShell>
+        )}
+      </PopoverShell>
+    )
+  }
 
   // ── Domain drill-in ───────────────────────────────────────────────────────
   if (view === 'domain') {
@@ -274,8 +358,8 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </Field>
       </div>
 
-      {/* Cover page toggle */}
-      <div className="px-3 py-2.5 flex items-center border-b border-stone-100">
+      {/* Cover page toggle + drill-in */}
+      <div className="flex items-center px-3 py-2.5 border-b border-stone-100">
         <button
           type="button"
           onClick={() => update({ hasCoverPage: config.hasCoverPage === false })}
@@ -283,8 +367,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         >
           <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
         </button>
-        <span className="ml-2 text-xs text-stone-700 select-none">Cover page</span>
+        <span className="ml-2 text-xs text-stone-700 flex-1 select-none">Include a cover page</span>
       </div>
+      {config.hasCoverPage !== false && (
+        <DrillRow
+          label="Cover page"
+          onDrillIn={() => { setView('cover'); onViewCover?.() }}
+        />
+      )}
 
       {/* Drill rows */}
       <DrillRow
