@@ -222,6 +222,10 @@ export default function AdminIndex() {
     if (!assetPickerTarget || !refs.length) return
     if (assetPickerTarget === 'coverImage') {
       updateConfig(prev => ({ ...prev, cover: { ...(prev.cover || {}), imageUrl: refs[0].url } }))
+    } else if (assetPickerTarget === 'shareLarge') {
+      updateConfig(prev => ({ ...prev, share: { ...(prev.share || {}), largeImage: refs[0].url } }))
+    } else if (assetPickerTarget === 'shareSquare') {
+      updateConfig(prev => ({ ...prev, share: { ...(prev.share || {}), squareImage: refs[0].url } }))
     } else {
       updateConfig(prev => ({ ...prev, [assetPickerTarget]: refs[0].url }))
     }
@@ -281,6 +285,8 @@ export default function AdminIndex() {
       onPickLogo={() => setAssetPickerTarget('logo')}
       onPickFavicon={() => setAssetPickerTarget('favicon')}
       onPickCoverImage={() => setAssetPickerTarget('coverImage')}
+      onPickShareLarge={() => setAssetPickerTarget('shareLarge')}
+      onPickShareSquare={() => setAssetPickerTarget('shareSquare')}
       onViewCover={handleViewCover}
       onDisableCover={handleDisableCover}
     />

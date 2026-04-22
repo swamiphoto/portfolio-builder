@@ -31,6 +31,8 @@ export default function PlatformSidebar({
   onPickLogo,
   onPickFavicon,
   onPickCoverImage,
+  onPickShareLarge,
+  onPickShareSquare,
   onViewCover,
   onDisableCover,
 }) {
@@ -465,6 +467,8 @@ export default function PlatformSidebar({
           onPickLogo={onPickLogo}
           onPickFavicon={onPickFavicon}
           onPickCoverImage={onPickCoverImage}
+          onPickShareLarge={onPickShareLarge}
+          onPickShareSquare={onPickShareSquare}
           onViewCover={onViewCover}
           onDisableCover={onDisableCover}
         />
