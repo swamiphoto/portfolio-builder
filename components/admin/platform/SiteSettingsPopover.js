@@ -358,7 +358,17 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             )}
           </div>
 
-          <p className="text-[10px] text-stone-400">Title and description come from your site name and tagline. Each page can set its own description.</p>
+          {/* Google search result */}
+          <div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Search result</div>
+            <div className="border border-stone-200 px-3 py-2.5 space-y-0.5">
+              <div className="text-[10px] text-stone-400 truncate">{domain}</div>
+              <div className="text-xs text-blue-600 truncate">{siteName}</div>
+              {tagline && <div className="text-[10px] text-stone-500 line-clamp-2">{tagline}</div>}
+            </div>
+          </div>
+
+          <p className="text-[10px] text-stone-400">Title and description come from your site name and tagline. Each page can override both.</p>
         </div>
       </PopoverShell>
     )
