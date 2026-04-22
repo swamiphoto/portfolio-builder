@@ -24,11 +24,16 @@ export function createDefaultSiteConfig(userId) {
     userId,
     siteName: 'My Portfolio',
     slug: '',
-    theme: 'minimal-light',
     customDomain: null,
     tagline: '',
     logo: '',
     favicon: '',
+    design: {
+      theme: 'minimal-light',
+      navStyle: 'minimal',
+      subNavStyle: 'dropdown',
+      footerLayout: 'standard',
+    },
     contact: {
       email: '',
       instagram: '',
@@ -37,6 +42,9 @@ export function createDefaultSiteConfig(userId) {
       tiktok: '',
       youtube: '',
       website: '',
+    },
+    footer: {
+      customText: '',
     },
     analytics: {
       googleId: '',

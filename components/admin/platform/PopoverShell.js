@@ -36,10 +36,16 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
         visibility: pos ? undefined : 'hidden',
       }}
     >
-      <div className="px-3 pt-2.5 pb-2 border-b border-stone-100 flex items-center justify-between sticky top-0 bg-white z-10">
-        <span className="text-xs font-semibold text-stone-700 tracking-wide">{title}</span>
-        <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none ml-2">×</button>
-      </div>
+      {title ? (
+        <div className="px-3 pt-2.5 pb-2 flex items-center justify-between sticky top-0 bg-white z-10">
+          <span className="text-xs font-semibold text-stone-700 tracking-wide">{title}</span>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none ml-2">×</button>
+        </div>
+      ) : (
+        <div className="flex justify-end px-2 pt-1.5 sticky top-0 bg-white z-10">
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
+        </div>
+      )}
       {children}
     </div>
   )

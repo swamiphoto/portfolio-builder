@@ -7,6 +7,7 @@ import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
 import GalleryPreview from '../../components/admin/gallery-builder/GalleryPreview'
+import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPickerModal'
 import AdminLibrary from '../../components/admin/AdminLibrary'
 import PageCover from '../../components/image-displays/page/PageCover'
 import SiteNav from '../../components/image-displays/page/SiteNav'
@@ -21,6 +22,7 @@ export default function AdminIndex() {
   const [saveStatus, setSaveStatus] = useState('idle')
   const [selectedPageId, setSelectedPageId] = useState(null)
   const [showLibrary, setShowLibrary] = useState(false)
+  const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
   const autosaveTimer = useRef(null)
 
   // Hover highlight sync
@@ -198,6 +200,23 @@ export default function AdminIndex() {
     })
   }, [updateConfig])
 
+  const handlePickThumbnail = useCallback((pageId) => {
+    setThumbnailPickerPageId(pageId)
+  }, [])
+
+  const handleThumbnailConfirm = useCallback((refs) => {
+    if (!thumbnailPickerPageId || !refs.length) return
+    const page = siteConfig?.pages?.find(p => p.id === thumbnailPickerPageId)
+    if (page) {
+      updatePage(thumbnailPickerPageId, {
+        ...page,
+        thumbnail: { imageUrl: refs[0].url, useCover: false },
+        thumbnailUrl: refs[0].url,
+      })
+    }
+    setThumbnailPickerPageId(null)
+  }, [thumbnailPickerPageId, siteConfig, updatePage])
+
   const handleSelectPage = useCallback((pageId) => {
     setSelectedPageId(pageId)
     setShowLibrary(false)
@@ -228,7 +247,10 @@ export default function AdminIndex() {
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
       libraryActive={showLibrary}
       username={session?.user?.username}
+      email={session?.user?.email}
       onDropImagesToPage={handleDropImagesToPage}
+      onPickThumbnail={handlePickThumbnail}
+      assetsByUrl={assetsByUrl}
     />
   )
 
@@ -319,6 +341,15 @@ export default function AdminIndex() {
       <AdminLayout sidebar={sidebar} panel={panel}>
         {content}
       </AdminLayout>
+      {thumbnailPickerPageId && (
+        <PhotoPickerModal
+          images={libraryConfig?.images || []}
+          loading={!libraryConfig}
+          blockType="photo"
+          onConfirm={handleThumbnailConfirm}
+          onClose={() => setThumbnailPickerPageId(null)}
+        />
+      )}
     </DragProvider>
   )
 }

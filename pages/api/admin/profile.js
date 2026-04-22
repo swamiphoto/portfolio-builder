@@ -13,7 +13,7 @@ export default withAuth(async (req, res, user) => {
   }
 
   if (req.method === 'PUT') {
-    const { username, displayName } = req.body
+    const { username, displayName, bio } = req.body
     if (!username) return res.status(400).json({ error: 'username is required' })
 
     const slug = username.toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -30,6 +30,7 @@ export default withAuth(async (req, res, user) => {
       userId: user.id,
       username: slug,
       displayName: displayName || user.name || '',
+      bio: bio || existingProfile?.bio || '',
       email: user.email || '',
       updatedAt: new Date().toISOString(),
       createdAt: existingProfile?.createdAt || new Date().toISOString(),
