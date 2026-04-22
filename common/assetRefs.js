@@ -1,5 +1,17 @@
 import { slugify } from './pageUtils'
 
+const BUTTON_TYPES = ['url', 'slideshow', 'client-login']
+const BUTTON_STYLES = ['solid', 'outline', 'ghost']
+
+const normalizeBtn = (b) => {
+  if (!b?.label) return null
+  return {
+    type: BUTTON_TYPES.includes(b.type) ? b.type : 'url',
+    label: b.label,
+    href: b.href || '',
+  }
+}
+
 export function normalizeImageRef(value) {
   if (!value) return null;
 
@@ -167,16 +179,6 @@ export function normalizePageEntity(page) {
 
   let cover = page.cover || null;
   if (cover) {
-    const BUTTON_TYPES = ['url', 'slideshow', 'client-login']
-    const normalizeBtn = (b) => {
-      if (!b?.label) return null
-      return {
-        type: BUTTON_TYPES.includes(b.type) ? b.type : 'url',
-        label: b.label,
-        href: b.href || '',
-      }
-    }
-
     let buttons
     if (Array.isArray(cover.buttons)) {
       buttons = cover.buttons.map(normalizeBtn).filter(Boolean)
@@ -189,7 +191,6 @@ export function normalizePageEntity(page) {
       buttons = []
     }
 
-    const BUTTON_STYLES = ['solid', 'outline', 'ghost']
     const buttonStyle = BUTTON_STYLES.includes(cover.buttonStyle) ? cover.buttonStyle : 'solid'
 
     cover = {
