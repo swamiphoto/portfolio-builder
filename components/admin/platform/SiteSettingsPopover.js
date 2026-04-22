@@ -106,7 +106,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
       {/* ── Tabs ── */}
       <div className="flex border-b border-stone-100 px-1">
-        {['site', 'domain', 'advanced'].map((t) => (
+        {['site', 'design', 'domain', 'advanced'].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -153,6 +153,85 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
                 onChange={(e) => updateFooter({ customText: e.target.value })}
               />
             </Field>
+          </div>
+        </Section>
+      </>}
+
+      {/* ── Design tab ── */}
+      {tab === 'design' && <>
+        <Section label="Theme">
+          <select
+            className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+            value={config.design?.theme || 'minimal-light'}
+            onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
+          >
+            <option value="minimal-light">Minimal Light</option>
+            <option value="minimal-dark">Minimal Dark</option>
+            <option value="editorial">Editorial</option>
+          </select>
+        </Section>
+
+        <Section label="Navigation">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { value: 'minimal',  label: '1', title: 'Minimal'  },
+              { value: 'centered', label: '2', title: 'Centered' },
+              { value: 'fixed',    label: '3', title: 'Fixed'    },
+            ].map(({ value, label, title }) => {
+              const active = (config.design?.navStyle || 'minimal') === value
+              return (
+                <button
+                  key={value}
+                  onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })}
+                  title={title}
+                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${
+                    active
+                      ? 'bg-stone-800 border-stone-800 text-white'
+                      : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </Section>
+
+        <Section label="Sub-navigation">
+          <select
+            className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+            value={config.design?.subNavStyle || 'dropdown'}
+            onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
+          >
+            <option value="dropdown">Dropdown</option>
+            <option value="inline">Links below page title</option>
+          </select>
+        </Section>
+
+        <Section label="Footer Layout">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { value: 'none',     label: '0', title: 'None'     },
+              { value: 'compact',  label: '1', title: 'Compact'  },
+              { value: 'standard', label: '2', title: 'Standard' },
+              { value: 'full',     label: '3', title: 'Full'     },
+            ].map(({ value, label, title }) => {
+              const active = (config.design?.footerLayout || 'standard') === value
+              return (
+                <button
+                  key={value}
+                  onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })}
+                  title={title}
+                  className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${
+                    active
+                      ? 'bg-stone-800 border-stone-800 text-white'
+                      : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
         </Section>
       </>}
