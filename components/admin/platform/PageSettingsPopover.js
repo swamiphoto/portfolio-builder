@@ -77,13 +77,41 @@ function DrillHeader({ label, onBack }) {
   )
 }
 
+function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, disabled, hint }) {
+  return (
+    <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => !disabled && onToggle(!checked)}
+        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-stone-700' : 'bg-stone-300'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+      >
+        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
+      </button>
+      <div className="flex-1 ml-2 min-w-0">
+        <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
+      </div>
+      {checked && actionLabel && onDrillIn && (
+        <button
+          type="button"
+          onClick={onDrillIn}
+          className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-2"
+        >
+          {actionLabel}
+          <ChevronRight />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose, username, onPickThumbnail, assetsByUrl }) {
   const pagePhotos = getPagePhotos(page)
   const autoSlug = slugify(page.title || '')
   const displaySlug = page.slug || autoSlug
   const [slugDraft, setSlugDraft] = useState(null)
   const displayValue = slugDraft !== null ? slugDraft : displaySlug
-  const [view, setView] = useState('main') // 'main' | 'slideshow' | 'client'
+  const [view, setView] = useState('main') // 'main' | 'slideshow' | 'client' | 'password' | 'buttons'
 
   // Slideshow local state
   const slideshow = page.slideshow || {}
@@ -160,15 +188,96 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
     cf.enabled && 'Client Login',
   ].filter(Boolean)
 
+  // ── Password drill-in ─────────────────────────────────────────────────────
+  if (view === 'password') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
+        <DrillHeader label="Password" onBack={() => setView('main')} />
+        <div className="px-3 py-3 space-y-2">
+          <input
+            type="text"
+            autoFocus
+            className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+            placeholder="Enter password"
+            value={page.password.trim()}
+            onChange={(e) => update({ password: e.target.value })}
+            autoComplete="off"
+          />
+          <textarea
+            className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-600 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent resize-none"
+            placeholder="Gate message (optional)"
+            rows={2}
+            value={page.passwordGateMessage || ''}
+            onChange={(e) => update({ passwordGateMessage: e.target.value })}
+          />
+          <p className="text-[10px] text-stone-400">Not indexed by search engines.</p>
+        </div>
+      </PopoverShell>
+    )
+  }
+
+  // ── Buttons drill-in ──────────────────────────────────────────────────────
+  if (view === 'buttons') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
+        <DrillHeader label="Buttons" onBack={() => setView('main')} />
+        <div className="px-3 py-3">
+          {(page.cover?.buttons || []).map((btn, i) => (
+            <div key={i} className="flex items-start gap-1.5 mb-3">
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <input
+                  className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+                  placeholder="Button label"
+                  value={btn.label}
+                  onChange={(e) => updateButton(i, { label: e.target.value })}
+                />
+                <input
+                  className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-500 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+                  placeholder="URL or #anchor"
+                  value={btn.href}
+                  onChange={(e) => updateButton(i, { href: e.target.value })}
+                />
+              </div>
+              <div className="flex flex-col gap-1 items-end flex-shrink-0 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => updateButton(i, { style: btn.style === 'solid' ? 'outline' : 'solid' })}
+                  className="text-[10px] text-stone-500 border border-stone-200 rounded px-1.5 py-0.5 hover:border-stone-400 transition-colors whitespace-nowrap"
+                >
+                  {btn.style === 'solid' ? 'Solid' : 'Outline'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeButton(i)}
+                  className="text-stone-300 hover:text-red-400 transition-colors text-sm leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addButton}
+            className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
+          >
+            + Add button
+          </button>
+          {autoButtonLabels.length > 0 && (
+            <p className="text-[10px] text-stone-400 mt-2">
+              Auto: {autoButtonLabels.join(' · ')}
+            </p>
+          )}
+        </div>
+      </PopoverShell>
+    )
+  }
+
   // ── Slideshow drill-in ────────────────────────────────────────────────────
   if (view === 'slideshow') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
         <DrillHeader label="Slideshow" onBack={() => setView('main')} />
-
-        <div className="px-3 py-3 border-b border-stone-100">
-          <Toggle checked={slideshow.enabled || false} onChange={handleEnableSlideshow} label="Enable slideshow" disabled={!canSlideshow} hint={!canSlideshow ? 'Requires 6+ photos' : undefined} />
-        </div>
 
         {slideshow.enabled && <>
           <div className="px-3 pt-3 space-y-3">
@@ -436,126 +545,45 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         </div>
       </Section>
 
-      <Section label="Privacy">
-        <Toggle
-          checked={!!page.password}
-          onChange={(v) => {
-            if (!v) update({ password: '', passwordGateMessage: '' })
-            else update({ password: ' ' })
-          }}
-          label="Password protect"
-        />
-        {!!page.password && (
-          <div className="mt-2 space-y-2">
-            <input
-              type="text"
-              className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-              placeholder="Enter password"
-              value={page.password.trim()}
-              onChange={(e) => update({ password: e.target.value })}
-              autoComplete="off"
-              autoFocus
-            />
-            <textarea
-              className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-600 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent resize-none"
-              placeholder="Gate message (optional)"
-              rows={2}
-              value={page.passwordGateMessage || ''}
-              onChange={(e) => update({ passwordGateMessage: e.target.value })}
-            />
-            <p className="text-[10px] text-stone-400">Not indexed by search engines.</p>
-          </div>
-        )}
-      </Section>
+      <ToggleRow
+        checked={!!page.password}
+        onToggle={(v) => {
+          if (!v) update({ password: '', passwordGateMessage: '' })
+          else update({ password: ' ' })
+        }}
+        label="Password protect"
+        actionLabel="Configure"
+        onDrillIn={() => setView('password')}
+      />
 
-      <Section label="Slideshow">
-        <div className="flex items-center justify-between">
-          <Toggle
-            checked={slideshow.enabled || false}
-            onChange={handleEnableSlideshow}
-            label="Enable slideshow"
-            disabled={!canSlideshow && !slideshow.enabled}
-            hint={!canSlideshow ? 'Requires 6+ photos' : undefined}
-          />
-          {slideshow.enabled && (
-            <button
-              type="button"
-              onClick={() => setView('slideshow')}
-              className="flex-shrink-0 text-stone-400 hover:text-stone-700 transition-colors ml-2"
-            >
-              <ChevronRight />
-            </button>
-          )}
-        </div>
-      </Section>
+      <ToggleRow
+        checked={slideshow.enabled || false}
+        onToggle={handleEnableSlideshow}
+        label="Enable slideshow"
+        actionLabel="Customize"
+        onDrillIn={() => setView('slideshow')}
+        disabled={!canSlideshow && !slideshow.enabled}
+        hint={!canSlideshow ? 'Requires 6+ photos' : undefined}
+      />
 
-      <Section label="Client Features">
-        <div className="flex items-center justify-between">
-          <Toggle
-            checked={cf.enabled || false}
-            onChange={(v) => update({ clientFeatures: { ...cf, enabled: v } })}
-            label="Enable client features"
-          />
-          {cf.enabled && (
-            <button
-              type="button"
-              onClick={() => setView('client')}
-              className="flex-shrink-0 text-stone-400 hover:text-stone-700 transition-colors ml-2"
-            >
-              <ChevronRight />
-            </button>
-          )}
-        </div>
-      </Section>
+      <ToggleRow
+        checked={cf.enabled || false}
+        onToggle={(v) => update({ clientFeatures: { ...cf, enabled: v } })}
+        label="Enable client features"
+        actionLabel="Configure"
+        onDrillIn={() => setView('client')}
+      />
 
-      <Section label="Buttons">
-        {(page.cover?.buttons || []).map((btn, i) => (
-          <div key={i} className="flex items-start gap-1.5 mb-3">
-            <div className="flex-1 space-y-1.5 min-w-0">
-              <input
-                className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                placeholder="Button label"
-                value={btn.label}
-                onChange={(e) => updateButton(i, { label: e.target.value })}
-              />
-              <input
-                className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-500 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                placeholder="URL or #anchor"
-                value={btn.href}
-                onChange={(e) => updateButton(i, { href: e.target.value })}
-              />
-            </div>
-            <div className="flex flex-col gap-1 items-end flex-shrink-0 pt-0.5">
-              <button
-                type="button"
-                onClick={() => updateButton(i, { style: btn.style === 'solid' ? 'outline' : 'solid' })}
-                className="text-[10px] text-stone-500 border border-stone-200 rounded px-1.5 py-0.5 hover:border-stone-400 transition-colors whitespace-nowrap"
-              >
-                {btn.style === 'solid' ? 'Solid' : 'Outline'}
-              </button>
-              <button
-                type="button"
-                onClick={() => removeButton(i)}
-                className="text-stone-300 hover:text-red-400 transition-colors text-sm leading-none"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={addButton}
-          className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
-        >
-          + Add button
-        </button>
-        {autoButtonLabels.length > 0 && (
-          <p className="text-[10px] text-stone-400 mt-2">
-            Auto: {autoButtonLabels.join(' · ')}
-          </p>
-        )}
-      </Section>
+      <ToggleRow
+        checked={(page.cover?.buttons || []).length > 0}
+        onToggle={(v) => {
+          if (v) addButton()
+          else update({ cover: { ...(page.cover || {}), buttons: [] } })
+        }}
+        label="Custom buttons"
+        actionLabel={(page.cover?.buttons || []).some(b => b.label) ? 'Edit' : 'Add'}
+        onDrillIn={() => setView('buttons')}
+      />
 
     </PopoverShell>
   )
