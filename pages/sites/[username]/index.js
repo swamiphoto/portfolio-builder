@@ -68,7 +68,13 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
     <div className="min-h-screen bg-white font-sans relative">
       <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
       <main>
-        <PageCover cover={homePage?.cover} title={homePage?.title} description={homePage?.description} />
+        <PageCover
+          cover={homePage?.cover}
+          title={homePage?.title}
+          description={homePage?.description}
+          slideshowHref={slideshowHref}
+          clientFeaturesEnabled={homePage?.clientFeatures?.enabled}
+        />
         {homePage ? (
           <Gallery
             name={homePage.title}
