@@ -73,7 +73,6 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
           title={homePage?.title}
           description={homePage?.description}
           slideshowHref={slideshowHref}
-          clientFeaturesEnabled={homePage?.clientFeatures?.enabled}
         />
         {homePage ? (
           <Gallery

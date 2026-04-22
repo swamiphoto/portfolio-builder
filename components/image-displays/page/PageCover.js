@@ -1,18 +1,20 @@
 // components/image-displays/page/PageCover.js
 import { getSizedUrl } from '../../../common/imageUtils'
 
-function CtaButton({ button }) {
+const BUTTON_STYLE_MAP = {
+  solid: 'bg-white text-stone-900 hover:bg-stone-100',
+  outline: 'border border-white text-white hover:bg-white/10',
+  ghost: 'text-white hover:bg-white/10',
+}
+
+function CtaButton({ button, style }) {
   if (!button?.label) return null
   const href = button.href || '#'
   const isExternal = href.startsWith('http')
-  const base = 'inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors'
-  const style = button.style === 'solid'
-    ? 'bg-white text-stone-900 hover:bg-stone-100'
-    : 'border border-white text-white hover:bg-white/10'
   return (
     <a
       href={href}
-      className={`${base} ${style}`}
+      className={`inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`}
       {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       {button.label}
@@ -20,24 +22,23 @@ function CtaButton({ button }) {
   )
 }
 
-export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled }) {
+export default function PageCover({ cover, title, description, slideshowHref }) {
   if (!cover || !cover.imageUrl) return null
   const heightClass = cover.height === 'partial' ? 'h-[60vh]' : 'h-[100vh]'
   const isCover = cover.variant === 'cover'
+  const buttonStyle = cover.buttonStyle || 'solid'
 
-  const customButtons = cover.buttons || []
-  const hasSolid = customButtons.some(b => b.style === 'solid')
-
-  const autoButtons = []
-  if (slideshowHref) {
-    autoButtons.push({ label: 'Start Slideshow', href: slideshowHref, style: hasSolid ? 'outline' : 'solid' })
-  }
-  if (clientFeaturesEnabled) {
-    const firstAutoIsSolid = autoButtons.some(b => b.style === 'solid')
-    autoButtons.push({ label: 'Client Login', href: '#client-login', style: (hasSolid || firstAutoIsSolid) ? 'outline' : 'solid' })
-  }
-
-  const allButtons = [...customButtons, ...autoButtons].filter(b => b.label)
+  const buttons = (cover.buttons || [])
+    .filter(b => b.type !== 'slideshow' || !!slideshowHref)
+    .filter(b => !!b.label)
+    .map(b => ({
+      ...b,
+      href: b.type === 'slideshow'
+        ? slideshowHref
+        : b.type === 'client-login'
+          ? '#client-login'
+          : b.href,
+    }))
 
   return (
     <section className={`relative w-full ${heightClass} overflow-hidden`}>
@@ -53,9 +54,9 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-6">
           {title && <h2 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{title}</h2>}
           {description && <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{description}</p>}
-          {allButtons.length > 0 && (
+          {buttons.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-3">
-              {allButtons.map((btn, i) => <CtaButton key={i} button={btn} />)}
+              {buttons.map((btn, i) => <CtaButton key={i} button={btn} style={buttonStyle} />)}
             </div>
           )}
         </div>

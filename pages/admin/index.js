@@ -311,7 +311,6 @@ export default function AdminIndex() {
                 title={selectedPage.title}
                 description={selectedPage.description}
                 slideshowHref={slideshowHref}
-                clientFeaturesEnabled={selectedPage.clientFeatures?.enabled}
               />
           <GalleryPreview
             gallery={{
