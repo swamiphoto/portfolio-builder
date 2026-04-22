@@ -502,6 +502,7 @@ export default function PlatformSidebar({
             onClose={() => { setPageSettingsId(null); setPageSettingsAnchorEl(null) }}
             username={username}
             onPickThumbnail={onPickThumbnail ? () => onPickThumbnail(pageSettingsId) : undefined}
+            siteConfig={siteConfig}
             assetsByUrl={assetsByUrl}
           />
         )
