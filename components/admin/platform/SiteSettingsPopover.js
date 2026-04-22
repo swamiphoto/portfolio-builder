@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import PopoverShell from './PopoverShell'
 
 function Section({ label, children }) {
@@ -23,6 +24,7 @@ const smallInputCls = 'w-full border-b border-stone-200 p-0 pb-1 text-xs text-st
 
 export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose }) {
   const config = siteConfig || {}
+  const [tab, setTab] = useState('site')
 
   function update(patch) {
     onUpdate({ ...config, ...patch })
@@ -55,7 +57,25 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
 
-      {/* ── Identity ── */}
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-stone-100 px-1">
+        {['site', 'contact', 'advanced'].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-2.5 py-2 text-xs capitalize transition-colors ${
+              tab === t
+                ? 'text-stone-800 border-b-2 border-stone-800 -mb-px'
+                : 'text-stone-400 hover:text-stone-600'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Site tab ── */}
+      {tab === 'site' && <>
       <Section label="Identity">
         <div className="space-y-3">
           <Field label="Site name">
@@ -118,7 +138,23 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </div>
       </Section>
 
-      {/* ── Contact ── */}
+      {/* ── Theme ── */}
+      <Section label="Theme">
+        <select
+          className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+          value={config.theme || 'minimal-light'}
+          onChange={(e) => update({ theme: e.target.value })}
+        >
+          <option value="minimal-light">Minimal Light</option>
+          <option value="minimal-dark">Minimal Dark</option>
+          <option value="editorial">Editorial</option>
+        </select>
+      </Section>
+
+      </>}
+
+      {/* ── Contact tab ── */}
+      {tab === 'contact' && <>
       <Section label="Contact">
         <div className="space-y-2">
           {[
@@ -143,20 +179,10 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </div>
       </Section>
 
-      {/* ── Theme ── */}
-      <Section label="Theme">
-        <select
-          className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
-          value={config.theme || 'minimal-light'}
-          onChange={(e) => update({ theme: e.target.value })}
-        >
-          <option value="minimal-light">Minimal Light</option>
-          <option value="minimal-dark">Minimal Dark</option>
-          <option value="editorial">Editorial</option>
-        </select>
-      </Section>
+      </>}
 
-      {/* ── Analytics ── */}
+      {/* ── Advanced tab ── */}
+      {tab === 'advanced' && <>
       <Section label="Analytics">
         <div className="space-y-3">
           <Field label="Google Analytics ID">
@@ -216,6 +242,8 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           </div>
         </Section>
       )}
+
+      </>}
 
       {/* ── Footer ── */}
       <div className="px-3 py-2.5 flex justify-end">
