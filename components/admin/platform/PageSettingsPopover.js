@@ -199,7 +199,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             autoFocus
             className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
             placeholder="Enter password"
-            value={page.password.trim()}
+            value={(page.password || '').trim()}
             onChange={(e) => update({ password: e.target.value })}
             autoComplete="off"
           />
