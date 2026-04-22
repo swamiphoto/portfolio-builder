@@ -71,6 +71,15 @@ export default function PlatformSidebar({
     }
   }, [pageDrag])
 
+  useEffect(() => {
+    if (siteConfig.hasCoverPage === false) return
+    if (siteConfig.pages?.find(p => p.id === 'home')) return
+    onConfigChange(prev => ({
+      ...prev,
+      pages: [defaultPage({ id: 'home', title: 'Home', showInNav: false }), ...(prev.pages || [])],
+    }))
+  }, [siteConfig.hasCoverPage, siteConfig.pages, onConfigChange])
+
   if (!siteConfig) return null
 
   const { pages = [], siteName } = siteConfig
