@@ -135,7 +135,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   }
 
   function addButton() {
-    const buttons = [...(page.cover?.buttons || []), { label: '', href: '', style: 'solid' }]
+    const existing = page.cover?.buttons || []
+    if (existing.length > 0 && !existing[existing.length - 1].label) return
+    const buttons = [...existing, { label: '', href: '', style: 'solid' }]
     update({ cover: { ...(page.cover || {}), buttons } })
   }
 
@@ -436,14 +438,14 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
       <Section label="Privacy">
         <Toggle
-          checked={!!page.password?.trim()}
+          checked={!!page.password}
           onChange={(v) => {
             if (!v) update({ password: '', passwordGateMessage: '' })
             else update({ password: ' ' })
           }}
           label="Password protect"
         />
-        {!!page.password?.trim() && (
+        {!!page.password && (
           <div className="mt-2 space-y-2">
             <input
               type="text"
@@ -472,7 +474,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             checked={slideshow.enabled || false}
             onChange={handleEnableSlideshow}
             label="Enable slideshow"
-            disabled={!canSlideshow}
+            disabled={!canSlideshow && !slideshow.enabled}
             hint={!canSlideshow ? 'Requires 6+ photos' : undefined}
           />
           {slideshow.enabled && (
