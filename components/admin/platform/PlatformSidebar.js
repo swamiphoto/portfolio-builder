@@ -432,7 +432,7 @@ export default function PlatformSidebar({
         />
         <SidebarSection
           label="Other Pages"
-          pages={flattenForOtherPages(pages).filter(p => siteConfig.hasCoverPage === false || p.id !== 'home')}
+          pages={flattenForOtherPages(pages).filter(p => !siteConfig.hasCoverPage || p.id !== 'home')}
           renderRow={renderPageRow}
           droppableId="other-pages"
         />

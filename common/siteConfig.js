@@ -24,7 +24,7 @@ export function createDefaultSiteConfig(userId) {
     userId,
     siteName: 'My Portfolio',
     slug: '',
-    hasCoverPage: true,        // ← add this line
+    hasCoverPage: true,
     customDomain: null,
     tagline: '',
     logoType: 'sitename',
