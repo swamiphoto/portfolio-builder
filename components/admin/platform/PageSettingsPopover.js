@@ -111,7 +111,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const displaySlug = page.slug || autoSlug
   const [slugDraft, setSlugDraft] = useState(null)
   const displayValue = slugDraft !== null ? slugDraft : displaySlug
-  const [view, setView] = useState('main') // 'main' | 'slideshow' | 'client' | 'password' | 'sharing'
+  const [view, setView] = useState('main') // 'main' | 'slideshow' | 'client' | 'password'
 
   // Slideshow local state
   const slideshow = page.slideshow || {}
@@ -165,121 +165,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   )
   const includedCount = sequence.filter(s => s.type === 'image' && !s.excluded).length
   const textCount = sequence.filter(s => s.type === 'text').length
-
-  // ── Sharing drill-in ─────────────────────────────────────────────────────
-  if (view === 'sharing') {
-    const cardImage = currentThumbUrl || siteConfig?.share?.largeImage || siteConfig?.cover?.imageUrl || ''
-    const cardTitle = page.title || siteConfig?.siteName || 'Page title'
-    const cardDesc = page.description || siteConfig?.tagline || ''
-    const rootDomainRaw = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
-    const domain = siteConfig?.customDomain || `${username}.${rootDomainRaw.replace(/:\d+$/, '')}`
-    const pageUrl = `${domain}/${page.slug || page.id || ''}`
-    const isPassworded = !!page.password
-
-    return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
-        <DrillHeader label="Sharing" onBack={() => setView('main')} />
-        <div className="px-3 py-3 space-y-3">
-          <div className="space-y-2">
-            <div>
-              <div className="text-[10px] text-stone-400 mb-1">Title</div>
-              <input
-                className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
-                placeholder={siteConfig?.siteName || 'Page title'}
-                value={page.title || ''}
-                onChange={(e) => update({ title: e.target.value })}
-              />
-            </div>
-            <div>
-              <div className="text-[10px] text-stone-400 mb-1">Description</div>
-              <textarea
-                className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent resize-none"
-                placeholder={siteConfig?.tagline || 'Add a description…'}
-                rows={2}
-                value={page.description || ''}
-                onChange={(e) => update({ description: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Large card */}
-          <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Social card</div>
-            <div
-              className="group relative w-full cursor-pointer overflow-hidden border border-stone-200"
-              style={{ paddingBottom: '52.5%' }}
-              onClick={onPickThumbnail}
-            >
-              <div className="absolute inset-0 bg-stone-100">
-                {cardImage ? (
-                  <img src={getSizedUrl(cardImage, 'thumbnail')} className="w-full h-full object-cover" alt="" onError={(e) => { e.currentTarget.src = cardImage }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-stone-300 text-2xl">+</span>
-                  </div>
-                )}
-                {onPickThumbnail && (
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="text-white text-xs">{cardImage ? 'Change image' : 'Add image'}</span>
-                  </div>
-                )}
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 py-1.5">
-                <div className="text-xs font-medium text-stone-800 truncate">{cardTitle}</div>
-                {cardDesc && <div className="text-[10px] text-stone-500 truncate mt-0.5">{cardDesc}</div>}
-                <div className="text-[10px] text-stone-400 truncate mt-0.5">{pageUrl}</div>
-              </div>
-            </div>
-            {page.thumbnail?.imageUrl && (
-              <button type="button" onClick={() => update({ thumbnail: null })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Reset to auto</button>
-            )}
-          </div>
-
-          {/* Compact card */}
-          <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Compact card</div>
-            <div
-              className="group flex border border-stone-200 cursor-pointer overflow-hidden"
-              onClick={onPickThumbnail}
-            >
-              <div className="relative w-16 h-16 flex-shrink-0 bg-stone-100 overflow-hidden">
-                {cardImage ? (
-                  <img src={getSizedUrl(cardImage, 'thumbnail')} className="w-full h-full object-cover" alt="" onError={(e) => { e.currentTarget.src = cardImage }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-stone-300 text-xl">+</span>
-                  </div>
-                )}
-                {onPickThumbnail && (
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="text-white text-[10px]">{cardImage ? '↺' : '+'}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-center border-l border-stone-200">
-                <div className="text-xs font-medium text-stone-800 truncate">{cardTitle}</div>
-                {cardDesc && <div className="text-[10px] text-stone-500 truncate mt-0.5">{cardDesc}</div>}
-                <div className="text-[10px] text-stone-400 truncate mt-0.5">{pageUrl}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Search result */}
-          <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Search result</div>
-            <div className={`border border-stone-200 px-3 py-2.5 space-y-0.5 ${isPassworded ? 'opacity-50' : ''}`}>
-              <div className="text-[10px] text-stone-400 truncate">{pageUrl}</div>
-              <div className="text-xs text-blue-600 truncate">{cardTitle}</div>
-              {cardDesc && <div className="text-[10px] text-stone-500 line-clamp-2">{cardDesc}</div>}
-            </div>
-            {isPassworded && (
-              <div className="text-[10px] text-stone-400 mt-1">Not indexed — page is password protected</div>
-            )}
-          </div>
-        </div>
-      </PopoverShell>
-    )
-  }
 
   // ── Password drill-in ─────────────────────────────────────────────────────
   if (view === 'password') {
@@ -610,14 +495,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         onDrillIn={() => setView('client')}
       />
 
-      <button
-        type="button"
-        onClick={() => setView('sharing')}
-        className="w-full px-3 py-2.5 flex items-center justify-between border-t border-stone-100 text-xs text-stone-700 hover:text-stone-900 transition-colors"
-      >
-        Sharing
-        <ChevronRight />
-      </button>
 
     </PopoverShell>
   )

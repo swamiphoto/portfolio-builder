@@ -368,7 +368,11 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             </div>
           </div>
 
-          <p className="text-[10px] text-stone-400">Title and description come from your site name and tagline. Each page can override both.</p>
+          <div className="space-y-1.5 text-[10px] text-stone-400 border-t border-stone-100 pt-3">
+            <div><span className="text-stone-500">{siteName || 'Site name'}{siteName ? ' — Page Title' : ''}</span> · Title defaults to site name; each page can set its own</div>
+            <div><span className="text-stone-500">{tagline || 'Site description'}</span> · Description defaults to tagline; can be overridden per page</div>
+            <div>Image defaults to cover · can be overridden by thumbnail set in page settings</div>
+          </div>
         </div>
       </PopoverShell>
     )
@@ -404,6 +408,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         </Field>
         <Field label="Tagline">
           <input className={inputCls} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
+        </Field>
+
+        <Field label="Footer text">
+          <input
+            className={inputCls}
+            value={footer.customText || `© ${new Date().getFullYear()} ${config.siteName || 'My Portfolio'}`}
+            onChange={(e) => updateFooter({ customText: e.target.value })}
+          />
         </Field>
 
         {/* Logo */}
@@ -443,14 +455,6 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           onPickFromLibrary={onPickFavicon}
           small
         />
-
-        <Field label="Footer text">
-          <input
-            className={inputCls}
-            value={footer.customText || `© ${new Date().getFullYear()} ${config.siteName || 'My Portfolio'}`}
-            onChange={(e) => updateFooter({ customText: e.target.value })}
-          />
-        </Field>
       </div>
 
       {/* Cover page toggle + inline chevron */}
