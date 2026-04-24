@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 
-export default function PopoverShell({ anchorEl, onClose, width = 320, title, children, headerRight }) {
+export default function PopoverShell({ anchorEl, onClose, width = 320, title, children, headerRight, onBack }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
 
@@ -38,8 +38,17 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
     >
       {title ? (
         <div className="px-3 pt-2.5 pb-2 flex items-center justify-between sticky top-0 bg-white z-10">
-          <span className="text-xs font-semibold text-stone-700 tracking-wide">{title}</span>
-          <div className="flex items-center gap-1.5 ml-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {onBack && (
+              <button onClick={onBack} className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0 -ml-0.5">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            <span className="text-xs font-semibold text-stone-700 tracking-wide truncate">{title}</span>
+          </div>
+          <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
             {headerRight}
             <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
           </div>

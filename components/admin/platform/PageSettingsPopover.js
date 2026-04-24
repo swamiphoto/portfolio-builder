@@ -60,22 +60,6 @@ function ChevronRight() {
   )
 }
 
-function DrillHeader({ label, onBack }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <span className="text-xs font-medium text-stone-700">{label}</span>
-    </div>
-  )
-}
 
 function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, disabled, hint }) {
   return (
@@ -169,8 +153,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   // ── Password drill-in ─────────────────────────────────────────────────────
   if (view === 'password') {
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
-        <DrillHeader label="Password" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Password" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-2">
           <input
             type="text"
@@ -197,8 +180,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 // ── Slideshow drill-in ────────────────────────────────────────────────────
   if (view === 'slideshow') {
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
-        <DrillHeader label="Slideshow" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Slideshow" onBack={() => setView('main')}>
 
         {slideshow.enabled && <>
           <div className="px-3 pt-3 space-y-3">
@@ -312,8 +294,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   // ── Client features drill-in ──────────────────────────────────────────────
   if (view === 'client') {
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
-        <DrillHeader label="Client Features" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Client Features" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
           <Toggle
             checked={cf.enabled || false}

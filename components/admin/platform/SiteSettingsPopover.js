@@ -54,18 +54,6 @@ function ChevronRight() {
   )
 }
 
-function DrillHeader({ label, onBack }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
-      <button type="button" onClick={onBack} className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0">
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <span className="text-xs font-medium text-stone-700">{label}</span>
-    </div>
-  )
-}
 
 function DrillRow({ label, hint, onDrillIn }) {
   return (
@@ -155,8 +143,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     )
 
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings" headerRight={coverBrushButton}>
-        <DrillHeader label="Cover page" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Cover page" onBack={() => setView('main')} headerRight={coverBrushButton}>
         <div className="px-3 py-3 space-y-3">
           <AssetField
             label="Background image"
@@ -219,8 +206,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   // ── Domain drill-in ───────────────────────────────────────────────────────
   if (view === 'domain') {
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
-        <DrillHeader label="Custom Domain" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Custom Domain" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-2">
           <input
             autoFocus
@@ -242,8 +228,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   // ── Analytics drill-in ────────────────────────────────────────────────────
   if (view === 'analytics') {
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
-        <DrillHeader label="Analytics" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Analytics" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
           <Field label="Google Analytics ID">
             <input autoFocus className={inputCls} placeholder="G-XXXXXXXXXX" value={config.analytics?.googleId || ''} onChange={(e) => updateAnalytics({ googleId: e.target.value })} />
@@ -259,8 +244,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   // ── Payments drill-in ─────────────────────────────────────────────────────
   if (view === 'payments') {
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
-        <DrillHeader label="Payments" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Payments" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
           <Field label="Default currency">
             <select
@@ -293,8 +277,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     const tagline = config.tagline || ''
 
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings">
-        <DrillHeader label="Sharing" onBack={() => setView('main')} />
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Sharing" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
 
           {/* Large card */}
