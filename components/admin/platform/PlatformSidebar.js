@@ -9,9 +9,9 @@ import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
 
 function SaveBadge({ status }) {
-  if (status === 'saving') return <span className="text-xs text-gray-400">Saving…</span>
-  if (status === 'saved') return <span className="text-xs text-green-600">Saved</span>
-  if (status === 'error') return <span className="text-xs text-red-600">Save failed</span>
+  if (status === 'saving') return <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Saving…</span>
+  if (status === 'saved') return <span className="text-xs" style={{ color: 'var(--sepia-accent)' }}>Saved</span>
+  if (status === 'error') return <span className="text-xs text-red-500">Save failed</span>
   return null
 }
 
@@ -242,9 +242,9 @@ export default function PlatformSidebar({
         }}
       >
         <div
-          className="flex-shrink-0 flex items-center justify-center w-3 self-stretch cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-500 transition-colors"
+          className="flex-shrink-0 flex items-center justify-center w-5 pl-1 self-stretch cursor-grab active:cursor-grabbing transition-colors"
           onPointerDown={(e) => handlePageDragStart(page, e)}
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: 'none', color: 'var(--border)' }}
         >
           <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor">
             <circle cx="1.5" cy="1.5" r="1" /><circle cx="4.5" cy="1.5" r="1" />
@@ -277,9 +277,16 @@ export default function PlatformSidebar({
                   : isImageDropTarget
                   ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700'
                   : selectedPageId === page.id
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'font-medium'
+                  : 'hover:bg-[#ede8e0]'
               }`}
+              style={
+                isPageNestTarget || isImageDropTarget
+                  ? undefined
+                  : selectedPageId === page.id
+                  ? { background: 'var(--panel-hover)', color: 'var(--text-primary)' }
+                  : { color: 'var(--text-secondary)' }
+              }
             >
               <span className="flex-1 truncate">{page.title}</span>
               {siteConfig.homePageId === page.id && (
@@ -376,9 +383,9 @@ export default function PlatformSidebar({
   return (
     <div className="flex flex-col h-full select-none text-sm">
       {/* Header */}
-      <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-200">
+      <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-gray-900 truncate">{siteName || 'My Portfolio'}</div>
+          <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{siteName || 'My Portfolio'}</div>
           {username && (
             <a
               href={`http://${username}.${(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')}`}
@@ -394,7 +401,8 @@ export default function PlatformSidebar({
           ref={siteSettingsGearRef}
           onClick={() => setSiteSettingsOpen(v => !v)}
           title="Site settings"
-          className="w-6 h-6 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
+          className="w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0"
+          style={{ color: 'var(--text-muted)' }}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
@@ -405,7 +413,8 @@ export default function PlatformSidebar({
           ref={accountAvatarRef}
           onClick={() => setAccountOpen(v => !v)}
           title="Account"
-          className="w-7 h-7 rounded-full bg-stone-200 hover:bg-stone-300 flex items-center justify-center text-stone-600 text-xs font-semibold transition-colors flex-shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold transition-colors flex-shrink-0"
+          style={{ background: 'var(--sepia-accent)' }}
         >
           {(username || 'U')[0].toUpperCase()}
         </button>
@@ -444,8 +453,17 @@ export default function PlatformSidebar({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-4 py-3">
-        <button onClick={onShowLibrary} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Library</button>
+      <div style={{ borderTop: '1px solid var(--border)' }} className="flex-shrink-0">
+        <button
+          onClick={onShowLibrary}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em]">Library</span>
+        </button>
       </div>
 
       {/* Drag ghost */}
