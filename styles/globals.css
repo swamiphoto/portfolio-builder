@@ -17,15 +17,32 @@
 }
 
 :root {
-  --text-primary: #111111;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --border-warm: #e5e7eb;
-  --border-warm-light: #f3f4f6;
-  --surface: #ffffff;
-  --surface-hover: #f9fafb;
-  --surface-active: #f3f4f6;
+  --text-primary: #2c2416;
+  --text-secondary: #7a6b55;
+  --text-muted: #a8967a;
+  --border-warm: rgba(160, 140, 110, 0.3);
+  --border-warm-light: rgba(180, 160, 130, 0.2);
+  --surface: #f9f6f1;
+  --surface-hover: #ede8e0;
+  --surface-active: #e8e2d9;
   --ease-out-arc: cubic-bezier(0.16, 1, 0.3, 1);
+  --desk: #e8e2d9;
+  --panel: #f4efe8;
+  --panel-hover: #ede8e0;
+  --popover: #f0ebe3;
+  --card: #f9f6f1;
+  --card-border: rgba(180, 160, 130, 0.25);
+  --border: rgba(160, 140, 110, 0.30);
+  --border-focus: rgba(120, 100, 70, 0.60);
+  --sepia-accent: #8b6f47;
+  --pane-shadow:
+    0 0 0 1px rgba(100, 75, 40, 0.10),
+    0 2px 6px rgba(60, 40, 15, 0.08),
+    0 8px 24px rgba(40, 25, 8, 0.10);
+  --popover-shadow:
+    0 0 0 1px rgba(100, 75, 40, 0.12),
+    0 4px 16px rgba(60, 40, 15, 0.14),
+    0 16px 40px rgba(40, 25, 8, 0.12);
 }
 
 body {
