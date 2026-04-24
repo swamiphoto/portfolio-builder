@@ -197,36 +197,6 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     <div
       className={className || "w-72 flex-shrink-0 flex flex-col h-full bg-stone-50 border-r border-stone-200 relative z-10 text-left font-sans"}
     >
-      {/* Header bar */}
-      <div className="px-3 pt-3 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-stone-200">
-        <button onClick={onBack || onToggleExpand} className="text-stone-400 hover:text-stone-700 transition-colors text-sm leading-none">←</button>
-        <span className="text-xs tracking-widest font-medium text-stone-400 flex-1">{headerLabel}</span>
-        <span className="text-[10px] text-stone-400">
-          {autosaveStatus === "saving" && "Saving…"}
-          {autosaveStatus === "saved" && "Saved"}
-          {autosaveStatus === "unsaved" && "Unsaved"}
-        </span>
-        {!onBack && (
-          <button
-            onClick={onToggleExpand}
-            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
-            title="Collapse sidebar"
-          >
-            <svg className="w-3.5 h-3.5 -rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-        )}
-        {onPublish && (
-          <button
-            onClick={onPublish}
-            disabled={publishing || (isPublished && !hasDraft)}
-            className="text-xs font-semibold bg-stone-900 text-white px-4 py-1.5 hover:bg-stone-700 disabled:opacity-40 transition-colors"
-          >
-            {publishing ? "Publishing…" : "Publish"}
-          </button>
-        )}
-      </div>
 
       {/* All blocks — scrollable */}
       <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto px-3 py-3">
@@ -410,8 +380,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
       </div>
 
-      {/* Add Block */}
-      <div className="p-3 border-t border-stone-200 flex-shrink-0">
+      {/* Footer: Add Block + controls */}
+      <div className="p-3 border-t border-stone-200 flex-shrink-0 space-y-2">
         <button
           onClick={(e) => {
             if (showBlockMenu) { setShowBlockMenu(false); return; }
@@ -423,6 +393,33 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         >
           Add Block
         </button>
+        <div className="flex items-center gap-2">
+          {onToggleExpand && (
+            <button
+              onClick={onBack || onToggleExpand}
+              className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
+              title="Collapse sidebar"
+            >
+              <svg className="w-3.5 h-3.5 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              </svg>
+            </button>
+          )}
+          <span className="text-[10px] text-stone-400 flex-1">
+            {autosaveStatus === "saving" && "Saving…"}
+            {autosaveStatus === "saved" && "Saved"}
+            {autosaveStatus === "unsaved" && "Unsaved"}
+          </span>
+          {onPublish && (
+            <button
+              onClick={onPublish}
+              disabled={publishing || (isPublished && !hasDraft)}
+              className="text-xs font-semibold bg-stone-900 text-white px-4 py-1.5 hover:bg-stone-700 disabled:opacity-40 transition-colors"
+            >
+              {publishing ? "Publishing…" : "Publish"}
+            </button>
+          )}
+        </div>
       </div>
 
       {showBlockMenu && (
