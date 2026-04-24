@@ -9,9 +9,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Inter"', "neue-haas-unica", "ui-sans-serif", "system-ui"],
-        mono: ['"JetBrains Mono"', '"Geist Mono"', "ui-monospace", "monospace"],
-        serif: ['"Cormorant Garamond"', "Georgia", "serif"],
+        sans: ["neue-haas-unica, sans-serif", "ui-sans-serif", "system-ui"],
+        mono: ["Geist Mono", "monospace"],
+        serif: ['"Cormorant Garamond", serif'],
         serif2: ["Muse"],
       },
       fontWeight: {
@@ -28,20 +28,8 @@ module.exports = {
         base: "19.5px",
       },
       colors: {
-        // Warm parchment palette
-        desk: "var(--desk)",
-        paper: "var(--paper)",
-        "paper-2": "var(--paper-2)",
-        "paper-3": "var(--paper-3)",
-        ink: "var(--ink)",
-        "ink-2": "var(--ink-2)",
-        "ink-3": "var(--ink-3)",
-        "ink-4": "var(--ink-4)",
-        rule: "var(--rule)",
-        "rule-2": "var(--rule-2)",
-        accent: "var(--accent)",
-        "accent-soft": "var(--accent-soft)",
-        // Legacy tokens (kept for backward compat)
+        // UI surface tokens — neutral/clean
+        desk: "#f0f0f0",
         panel: "#ffffff",
         parchment: "#ffffff",
         "parchment-light": "#fafafa",
@@ -96,10 +84,10 @@ module.exports = {
         },
       },
       boxShadow: {
-        pane: "var(--pane-shadow)",
-        "pane-lift": "var(--pane-shadow-lift)",
+        pane: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+        card: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+        "card-sm": "0 1px 2px rgba(0,0,0,0.06)",
         popup: "0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)",
-        "popup-warm": "0 0 0 1px rgba(26,18,10,.06), 0 4px 24px rgba(26,18,10,.12)",
       },
       borderRadius: {
         pane: "8px",

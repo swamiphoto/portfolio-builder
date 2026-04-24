@@ -153,7 +153,7 @@ export default function PhotoGrid({
   }, [processedAssets]);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-paper">
+    <div className="flex-1 flex flex-col min-w-0 bg-white">
       {/* Header */}
       <div className="px-5 py-4 border-b border-gray-200 flex items-center gap-3">
         <div>
@@ -194,7 +194,7 @@ export default function PhotoGrid({
         <select
           value={sort}
           onChange={e => setSort(e.target.value)}
-          className="border border-rule rounded-lg px-3 py-1.5 text-sm text-ink-3 outline-none focus:border-ink-3 bg-paper"
+          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 outline-none focus:border-gray-400 bg-white"
         >
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>

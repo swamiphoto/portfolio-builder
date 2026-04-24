@@ -255,8 +255,8 @@ export default function AdminIndex() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="flex items-center justify-center h-screen" style={{ background: 'var(--desk)', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-4)' }}>
-        Loading…
+      <div className="flex items-center justify-center h-screen text-sm text-gray-400">
+        Loading...
       </div>
     )
   }
@@ -320,7 +320,7 @@ export default function AdminIndex() {
     const username = session?.user?.username
     if (selectedPage.type === 'link') {
       content = (
-        <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center gap-2" style={{ color: 'var(--ink-4)' }}>
+        <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center gap-2 bg-white text-stone-400">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
           </svg>
@@ -405,8 +405,8 @@ export default function AdminIndex() {
     }
   } else {
     content = (
-      <div className="flex items-center justify-center h-full" style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontStyle: 'italic', color: 'var(--ink-4)' }}>
-        Select a page to preview.
+      <div className="flex items-center justify-center h-full text-sm text-gray-300">
+        Select a page to edit
       </div>
     )
   }

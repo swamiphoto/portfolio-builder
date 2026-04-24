@@ -12,12 +12,12 @@ function Toggle({ checked, onChange, label, hint, disabled }) {
       onClick={() => !disabled && onChange(!checked)}
       className={`flex items-start gap-2 ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
     >
-      <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 mt-0.5 ${checked ? 'bg-ink' : 'bg-rule-2'}`}>
-        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-paper rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
+      <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 mt-0.5 ${checked ? 'bg-stone-700' : 'bg-stone-300'}`}>
+        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
       </div>
       <div>
-        <div className="text-xs text-ink-2 select-none leading-tight">{label}</div>
-        {hint && <div className="text-[10px] text-ink-4 select-none leading-tight mt-0.5">{hint}</div>}
+        <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
       </div>
     </div>
   )
@@ -27,17 +27,17 @@ function FeatureBlock({ label, checked, onToggle, children }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-ink-2">{label}</span>
+        <span className="text-xs font-medium text-stone-700">{label}</span>
         <button
           type="button"
           onClick={() => onToggle(!checked)}
-          className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-ink' : 'bg-rule-2'}`}
+          className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-stone-700' : 'bg-stone-300'}`}
         >
-          <div className={`absolute top-[2px] w-[10px] h-[10px] bg-paper rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
+          <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
         </button>
       </div>
       {checked && children && (
-        <div className="pl-3 space-y-2 border-l border-rule">{children}</div>
+        <div className="pl-3 space-y-2 border-l border-stone-100">{children}</div>
       )}
     </div>
   )
@@ -45,8 +45,8 @@ function FeatureBlock({ label, checked, onToggle, children }) {
 
 function Section({ label, children }) {
   return (
-    <div className="px-3 py-3 border-b border-rule last:border-b-0">
-      <div className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em] mb-2.5">{label}</div>
+    <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+      <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">{label}</div>
       {children}
     </div>
   )
@@ -54,7 +54,7 @@ function Section({ label, children }) {
 
 function ChevronRight() {
   return (
-    <svg className="w-3.5 h-3.5 text-ink-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+    <svg className="w-3.5 h-3.5 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
   )
@@ -63,23 +63,23 @@ function ChevronRight() {
 
 function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, disabled, hint }) {
   return (
-    <div className="px-3 py-2.5 flex items-center border-b border-rule last:border-b-0">
+    <div className="px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0">
       <button
         type="button"
         onClick={() => !disabled && onToggle(!checked)}
-        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-ink' : 'bg-rule-2'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-stone-700' : 'bg-stone-300'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       >
-        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-paper rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
+        <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
       </button>
       <div className="flex-1 ml-2 min-w-0">
-        <div className="text-xs text-ink-2 select-none leading-tight">{label}</div>
-        {hint && <div className="text-[10px] text-ink-4 select-none leading-tight mt-0.5">{hint}</div>}
+        <div className="text-xs text-stone-700 select-none leading-tight">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 select-none leading-tight mt-0.5">{hint}</div>}
       </div>
       {checked && actionLabel && onDrillIn && (
         <button
           type="button"
           onClick={onDrillIn}
-          className="flex items-center gap-0.5 text-xs text-ink-4 hover:text-ink-3 transition-colors flex-shrink-0 ml-2"
+          className="flex items-center gap-0.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0 ml-2"
         >
           {actionLabel}
           <ChevronRight />
@@ -158,20 +158,20 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           <input
             type="text"
             autoFocus
-            className="w-full border-b border-rule p-0 pb-1 text-sm text-ink-2 outline-none focus:border-ink-3 placeholder:text-ink-4 bg-transparent"
+            className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
             placeholder="Enter password"
             value={(page.password || '').trim()}
             onChange={(e) => update({ password: e.target.value })}
             autoComplete="off"
           />
           <textarea
-            className="w-full border-b border-rule p-0 pb-1 text-xs text-ink-3 outline-none focus:border-ink-3 placeholder:text-ink-4 bg-transparent resize-none"
+            className="w-full border-b border-stone-200 p-0 pb-1 text-xs text-stone-600 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent resize-none"
             placeholder="Gate message (optional)"
             rows={2}
             value={page.passwordGateMessage || ''}
             onChange={(e) => update({ passwordGateMessage: e.target.value })}
           />
-          <p className="text-[10px] text-ink-4">Not indexed by search engines.</p>
+          <p className="text-[10px] text-stone-400">Not indexed by search engines.</p>
         </div>
       </PopoverShell>
     )
@@ -185,9 +185,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         {slideshow.enabled && <>
           <div className="px-3 pt-3 space-y-3">
             <div>
-              <div className="text-[10px] text-ink-4 mb-1">Theme</div>
+              <div className="text-[10px] text-stone-400 mb-1">Theme</div>
               <select
-                className="w-full border border-rule rounded px-2 py-1 text-xs outline-none focus:border-ink-3 bg-paper"
+                className="w-full border border-stone-200 rounded px-2 py-1 text-xs outline-none focus:border-stone-500 bg-white"
                 value={slideshow.layout || 'kenburns'}
                 onChange={(e) => updateSlideshow({ layout: e.target.value })}
               >
@@ -197,9 +197,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
               </select>
             </div>
             <div>
-              <div className="text-[10px] text-ink-4 mb-1">Music</div>
+              <div className="text-[10px] text-stone-400 mb-1">Music</div>
               <select
-                className="w-full border border-rule rounded px-2 py-1 text-xs outline-none focus:border-ink-3 bg-paper"
+                className="w-full border border-stone-200 rounded px-2 py-1 text-xs outline-none focus:border-stone-500 bg-white"
                 value={musicMode === 'custom' ? '__custom__' : (currentMusicId || '')}
                 onChange={(e) => {
                   if (e.target.value === '__custom__') {
@@ -218,7 +218,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 <input
                   type="text"
                   autoFocus
-                  className="w-full border border-rule rounded px-2 py-1 text-xs outline-none focus:border-ink-3 mt-1.5"
+                  className="w-full border border-stone-200 rounded px-2 py-1 text-xs outline-none focus:border-stone-500 mt-1.5"
                   placeholder="https://youtube.com/watch?v=…"
                   value={customMusicUrl}
                   onChange={(e) => { setCustomMusicUrl(e.target.value); updateSlideshow({ musicUrl: e.target.value }) }}
@@ -228,9 +228,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           </div>
 
           <div className="px-3 pb-3">
-            <div className="text-[10px] text-ink-4 mb-2">Sequence · {includedCount} image{includedCount !== 1 ? 's' : ''}{textCount > 0 ? ` · ${textCount} text` : ''}</div>
+            <div className="text-[10px] text-stone-400 mb-2">Sequence · {includedCount} image{includedCount !== 1 ? 's' : ''}{textCount > 0 ? ` · ${textCount} text` : ''}</div>
             {sequence.length === 0 ? (
-              <div className="h-12 flex items-center justify-center text-[10px] text-ink-4 border border-dashed border-rule rounded">
+              <div className="h-12 flex items-center justify-center text-[10px] text-stone-300 border border-dashed border-stone-200 rounded">
                 Add blocks to populate the slideshow
               </div>
             ) : (
@@ -242,9 +242,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                         key={`text-${i}`}
                         onMouseEnter={(e) => { if (item.content) { const r = e.currentTarget.getBoundingClientRect(); setTooltip({ text: item.content, x: r.left + r.width / 2, y: r.top }) } }}
                         onMouseLeave={() => setTooltip(null)}
-                        className="w-10 h-10 bg-paper-2 border border-rule rounded flex items-center justify-center cursor-default flex-shrink-0"
+                        className="w-10 h-10 bg-stone-100 border border-stone-200 rounded flex items-center justify-center cursor-default flex-shrink-0"
                       >
-                        <svg className="w-3.5 h-3.5 text-ink-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-stone-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
                         </svg>
                       </div>
@@ -256,7 +256,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                       onClick={() => toggleExcluded(item.url)}
                       onMouseEnter={(e) => { if (item.caption) { const r = e.currentTarget.getBoundingClientRect(); setTooltip({ text: item.caption, x: r.left + r.width / 2, y: r.top }) } }}
                       onMouseLeave={() => setTooltip(null)}
-                      className={`relative group w-10 h-10 overflow-hidden rounded border flex-shrink-0 transition-all ${item.excluded ? 'opacity-25 border-rule' : 'opacity-100 border-rule'}`}
+                      className={`relative group w-10 h-10 overflow-hidden rounded border flex-shrink-0 transition-all ${item.excluded ? 'opacity-25 border-stone-100' : 'opacity-100 border-stone-200'}`}
                     >
                       <img src={item.url} alt="" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none">
@@ -281,7 +281,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
         {tooltip && (
           <div
-            className="fixed z-[10000] px-2 py-1 bg-ink text-paper text-[10px] rounded pointer-events-none max-w-[200px] leading-snug"
+            className="fixed z-[10000] px-2 py-1 bg-stone-800 text-white text-[10px] rounded pointer-events-none max-w-[200px] leading-snug"
             style={{ left: tooltip.x, top: tooltip.y - 6, transform: 'translate(-50%, -100%)' }}
           >
             {tooltip.text}
@@ -303,10 +303,10 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           />
           {cf.enabled && <>
             <div>
-              <div className="text-[10px] text-ink-4 mb-1">Client password</div>
+              <div className="text-[10px] text-stone-400 mb-1">Client password</div>
               <input
                 type="text"
-                className="w-full border-b border-rule p-0 pb-1 text-sm text-ink-2 outline-none focus:border-ink-3 placeholder:text-ink-4 bg-transparent"
+                className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
                 placeholder="Required to access client content"
                 value={cf.password || ''}
                 onChange={(e) => update({ clientFeatures: { ...cf, password: e.target.value } })}
@@ -319,7 +319,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 checked={cf.downloads?.enabled || false}
                 onToggle={(v) => updateCf('downloads', { enabled: v })}
               >
-                <div className="text-[10px] text-ink-3 font-medium uppercase tracking-wider">Quality</div>
+                <div className="text-[10px] text-stone-500 font-medium uppercase tracking-wider">Quality</div>
                 {['web', 'print', 'original'].map((q) => (
                   <label key={q} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -330,9 +330,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                         const next = e.target.checked ? [...new Set([...cur, q])] : cur.filter(x => x !== q)
                         updateCf('downloads', { quality: next })
                       }}
-                      className="rounded border-rule-2 text-ink-2 focus:ring-ink-3"
+                      className="rounded border-stone-300 text-stone-700 focus:ring-stone-500"
                     />
-                    <span className="text-xs text-ink-3 capitalize">{q}</span>
+                    <span className="text-xs text-stone-600 capitalize">{q}</span>
                   </label>
                 ))}
                 <Toggle checked={cf.downloads?.requireEmail || false} onChange={(v) => updateCf('downloads', { requireEmail: v })} label="Require email to download" />
@@ -362,12 +362,12 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 onToggle={(v) => updateCf('purchase', { enabled: v })}
               >
                 <div>
-                  <div className="text-[10px] text-ink-4 mb-1">Default price per photo</div>
+                  <div className="text-[10px] text-stone-400 mb-1">Default price per photo</div>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-ink-4">{cf.purchase?.currency || 'USD'}</span>
+                    <span className="text-xs text-stone-400">{cf.purchase?.currency || 'USD'}</span>
                     <input
                       type="number" min="0" step="0.01"
-                      className="flex-1 border-b border-rule p-0 pb-1 text-xs text-ink-2 outline-none focus:border-ink-3 bg-transparent"
+                      className="flex-1 border-b border-stone-200 p-0 pb-1 text-xs text-stone-700 outline-none focus:border-stone-500 bg-transparent"
                       placeholder="0.00"
                       value={cf.purchase?.defaultPrice ?? ''}
                       onChange={(e) => updateCf('purchase', { defaultPrice: e.target.value === '' ? null : parseFloat(e.target.value) })}
@@ -375,16 +375,16 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-ink-4 mb-1">Currency</div>
+                  <div className="text-[10px] text-stone-400 mb-1">Currency</div>
                   <select
-                    className="w-full text-xs text-ink-2 border-b border-rule p-0 pb-1 outline-none bg-transparent"
+                    className="w-full text-xs text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
                     value={cf.purchase?.currency || 'USD'}
                     onChange={(e) => updateCf('purchase', { currency: e.target.value })}
                   >
                     {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <p className="text-[10px] text-ink-4">Override pricing per photo in the photo block inspector.</p>
+                <p className="text-[10px] text-stone-400">Override pricing per photo in the photo block inspector.</p>
               </FeatureBlock>
             </div>
           </>}
@@ -399,9 +399,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
       <Section label="URL">
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-ink-4 flex-shrink-0 font-mono">{username}/</span>
+          <span className="text-[10px] text-stone-400 flex-shrink-0 font-mono">{username}/</span>
           <input
-            className="flex-1 border-b border-rule p-0 pb-1 text-xs font-mono text-ink-2 outline-none focus:border-ink-3 bg-transparent min-w-0"
+            className="flex-1 border-b border-stone-200 p-0 pb-1 text-xs font-mono text-stone-700 outline-none focus:border-stone-500 bg-transparent min-w-0"
             value={displayValue}
             onChange={(e) => setSlugDraft(e.target.value)}
             onBlur={() => {
@@ -419,7 +419,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         <div className="flex items-center gap-3">
           <div
             onClick={onPickThumbnail}
-            className={`w-14 h-14 flex-shrink-0 overflow-hidden border border-rule flex items-center justify-center bg-paper-2 ${onPickThumbnail ? 'cursor-pointer hover:border-ink-4 transition-colors' : ''}`}
+            className={`w-14 h-14 flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50 ${onPickThumbnail ? 'cursor-pointer hover:border-stone-400 transition-colors' : ''}`}
           >
             {currentThumbUrl ? (
               <img
@@ -429,17 +429,17 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 onError={(e) => { e.currentTarget.src = currentThumbUrl }}
               />
             ) : (
-              <span className="text-ink-4 text-lg">+</span>
+              <span className="text-stone-300 text-lg">+</span>
             )}
           </div>
           <div className="flex flex-col gap-1">
             {onPickThumbnail && (
-              <button onClick={onPickThumbnail} className="text-xs text-ink-3 hover:text-ink text-left">
+              <button onClick={onPickThumbnail} className="text-xs text-stone-500 hover:text-stone-900 text-left">
                 {currentThumbUrl ? 'Change…' : 'Select from library'}
               </button>
             )}
             {page.thumbnail?.imageUrl && (
-              <button onClick={() => update({ thumbnail: null })} className="text-[10px] text-ink-4 hover:text-red-600 text-left">
+              <button onClick={() => update({ thumbnail: null })} className="text-[10px] text-stone-400 hover:text-red-600 text-left">
                 Reset to auto
               </button>
             )}

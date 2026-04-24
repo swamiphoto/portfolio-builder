@@ -349,7 +349,7 @@ export default function AdminLibrary() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-ink-4 text-sm bg-paper">
+      <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
         Loading library…
       </div>
     );
@@ -357,12 +357,12 @@ export default function AdminLibrary() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-4 bg-paper">
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
         <div className="text-red-500 text-sm font-medium">Error: {error}</div>
-        <div className="text-xs text-ink-4 max-w-sm text-center">
+        <div className="text-xs text-gray-400 max-w-sm text-center">
           Make sure GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_CLIENT_EMAIL, and GOOGLE_CLOUD_PRIVATE_KEY are set in .env.local
         </div>
-        <button onClick={fetchLibrary} className="text-sm bg-ink text-paper px-4 py-2">
+        <button onClick={fetchLibrary} className="text-sm bg-gray-900 text-white px-4 py-2 rounded-lg">
           Retry
         </button>
       </div>
@@ -420,7 +420,7 @@ export default function AdminLibrary() {
   }, {});
 
   return (
-    <div className="flex h-full overflow-hidden font-sans bg-paper">
+    <div className="flex h-full overflow-hidden font-sans bg-white">
       <AlbumSidebar
         counts={counts}
         selectedAlbum={selectedAlbum}

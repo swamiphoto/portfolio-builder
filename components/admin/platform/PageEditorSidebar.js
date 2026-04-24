@@ -169,7 +169,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   if (page.type === 'link') {
     return (
-      <div className="flex flex-col h-full bg-paper p-3">
+      <div className="flex flex-col h-full bg-stone-50 p-3">
         <PageSettingsPanel page={page} onChange={onPageChange} />
       </div>
     )
@@ -210,7 +210,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         onMoveBlockToPage={onMoveBlockToPage}
         onUpdateLibraryCaption={onUpdateLibraryCaption}
         assetsByUrl={assetsByUrl}
-        className="flex flex-col h-full bg-paper text-left font-sans"
+        className="flex flex-col h-full bg-stone-50 text-left font-sans"
       />
 
       {photoPickerOpen && (

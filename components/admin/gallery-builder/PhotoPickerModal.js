@@ -137,33 +137,18 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
     );
   };
 
-  const inputStyle = {
-    background: 'transparent',
-    borderBottom: '1px solid var(--rule)',
-    color: 'var(--ink-2)',
-    outline: 'none',
-  };
-  const selectStyle = {
-    background: 'transparent',
-    borderBottom: '1px solid var(--rule)',
-    color: 'var(--ink-3)',
-    outline: 'none',
-  };
-
   return (
     <div className="flex flex-col h-full">
-      <div className="px-3 py-3 space-y-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--rule)' }}>
+      <div className="px-3 py-3 border-b border-stone-100 space-y-2 flex-shrink-0">
         <input
-          className="w-full pb-1.5 text-sm transition-colors"
-          style={inputStyle}
+          className="w-full border-b border-stone-200 pb-1.5 text-sm text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
           placeholder="Search photos…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <div className="grid grid-cols-3 gap-2">
           <select
-            className="pb-1.5 text-xs transition-colors"
-            style={selectStyle}
+            className="border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
             value={collection}
             onChange={(e) => setCollection(e.target.value)}
           >
@@ -175,8 +160,7 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
               ))}
           </select>
           <select
-            className="pb-1.5 text-xs transition-colors"
-            style={selectStyle}
+            className="border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
             value={source}
             onChange={(e) => setSource(e.target.value)}
           >
@@ -188,8 +172,7 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
               ))}
           </select>
           <select
-            className="pb-1.5 text-xs transition-colors"
-            style={selectStyle}
+            className="border-b border-stone-200 pb-1.5 text-xs text-stone-600 outline-none bg-transparent focus:border-stone-500 transition-colors"
             value={orientation}
             onChange={(e) => setOrientation(e.target.value)}
           >
@@ -201,11 +184,11 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 scroll-quiet">
+      <div className="flex-1 overflow-y-auto p-2">
         {loading ? (
-          <div className="text-center text-xs py-12" style={{ color: 'var(--ink-4)' }}>Loading…</div>
+          <div className="text-center text-stone-400 text-xs py-12">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center text-xs py-12" style={{ color: 'var(--ink-4)' }}>No photos found</div>
+          <div className="text-center text-stone-400 text-xs py-12">No photos found</div>
         ) : (
           <div style={{ columns: "3", gap: "4px" }}>
             {filtered.map((asset) => {
@@ -214,12 +197,9 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
               return (
                 <div
                   key={key}
-                  className="relative overflow-hidden cursor-pointer mb-1 break-inside-avoid transition-all"
-                  style={{
-                    boxShadow: isSelected
-                      ? '0 0 0 2px var(--ink)'
-                      : '0 0 0 1px var(--rule)',
-                  }}
+                  className={`relative overflow-hidden cursor-pointer mb-1 break-inside-avoid ring-2 transition-all ${
+                    isSelected ? "ring-stone-700" : "ring-transparent hover:ring-stone-300"
+                  }`}
                   onClick={() => toggle(asset)}
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", asset.publicUrl)}
@@ -228,27 +208,23 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
                   <img
                     src={getSizedUrl(asset.publicUrl, 'thumbnail')}
                     alt={asset.caption || asset.originalFilename}
-                    className="w-full block"
+                    className="w-full block bg-stone-100"
                     style={{
-                      background: 'var(--paper-2)',
                       aspectRatio: asset.width && asset.height ? `${asset.width} / ${asset.height}` : '3 / 2',
                       objectFit: 'cover',
                     }}
                     loading="lazy"
                     onError={(e) => { if (e.target.src !== asset.publicUrl) e.target.src = asset.publicUrl }}
                   />
-                  <div className="px-1.5 py-1" style={{ background: 'var(--paper)' }}>
-                    <div className="truncate text-[10px]" style={{ color: 'var(--ink-3)' }}>{asset.originalFilename}</div>
+                  <div className="px-1.5 py-1 bg-white">
+                    <div className="truncate text-[10px] text-stone-500">{asset.originalFilename}</div>
                     {asset.source?.provider && (
-                      <div className="truncate text-[10px]" style={{ color: 'var(--ink-4)' }}>{asset.source.provider}</div>
+                      <div className="truncate text-[10px] text-stone-300">{asset.source.provider}</div>
                     )}
                   </div>
                   {isSelected && (
-                    <div
-                      className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ background: 'var(--ink)' }}
-                    >
-                      <span className="text-[8px] font-bold" style={{ color: 'var(--paper)' }}>✓</span>
+                    <div className="absolute top-1 right-1 w-4 h-4 bg-stone-900 rounded-full flex items-center justify-center">
+                      <span className="text-white text-[8px] font-bold">✓</span>
                     </div>
                   )}
                 </div>
@@ -259,11 +235,8 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
       </div>
 
       {isMulti && (
-        <div
-          className="px-3 py-2.5 flex items-center justify-between flex-shrink-0"
-          style={{ borderTop: '1px solid var(--rule)' }}
-        >
-          <span className="text-xs" style={{ color: 'var(--ink-4)' }}>
+        <div className="px-3 py-2.5 border-t border-stone-100 flex items-center justify-between flex-shrink-0">
+          <span className="text-xs text-stone-400">
             {selected.length > 0 ? `${selected.length} selected` : `${filtered.length} photos`}
           </span>
           <button
@@ -274,16 +247,7 @@ function LibraryTab({ images, loading, blockType, onConfirm }) {
               );
             }}
             disabled={selected.length === 0}
-            className="px-3 py-1.5 disabled:opacity-40 transition-colors"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              fontWeight: 500,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              background: 'var(--ink)',
-              color: 'var(--paper)',
-            }}
+            className="bg-stone-900 text-white text-xs px-3 py-1.5 disabled:opacity-40 hover:bg-stone-700 transition-colors"
           >
             Add {selected.length > 0 ? selected.length : ""} photo{selected.length !== 1 ? "s" : ""}
           </button>
@@ -343,31 +307,25 @@ function UploadTab({ onUploaded }) {
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
         onClick={() => inputRef.current?.click()}
-        className="p-6 text-center cursor-pointer transition-colors"
-        style={{
-          border: `1px dashed ${dragging ? 'var(--ink-3)' : 'var(--rule-2)'}`,
-          background: dragging ? 'var(--paper-2)' : 'transparent',
-        }}
+        className={`border border-dashed p-6 text-center cursor-pointer transition-colors ${
+          dragging ? "border-stone-500 bg-stone-50" : "border-stone-200 hover:border-stone-400"
+        }`}
       >
         <input ref={inputRef} type="file" multiple accept=".jpg,.jpeg,.png,.gif" className="hidden" onChange={(e) => addFiles(e.target.files)} />
-        <div className="text-xs font-medium mb-0.5" style={{ color: 'var(--ink-2)' }}>Drop photos here</div>
-        <div className="text-xs" style={{ color: 'var(--ink-4)' }}>or click to browse</div>
+        <div className="text-xs font-medium text-stone-600 mb-0.5">Drop photos here</div>
+        <div className="text-xs text-stone-400">or click to browse</div>
       </div>
 
       {files.length > 0 && (
-        <div className="max-h-24 overflow-y-auto space-y-1 scroll-quiet">
+        <div className="max-h-24 overflow-y-auto space-y-1">
           {files.map((f) => (
             <div key={f.name} className="flex items-center gap-2">
-              <span className="flex-1 truncate text-xs" style={{ color: 'var(--ink-2)' }}>{f.name}</span>
-              <span
-                className="text-xs"
-                style={{
-                  color:
-                    progress[f.name] === "done" ? '#6a8d5a' :
-                    progress[f.name] === "error" ? '#a85a4a' :
-                    progress[f.name] === "pending" ? 'var(--ink-4)' : 'var(--ink-4)'
-                }}
-              >
+              <span className="flex-1 truncate text-xs text-stone-600">{f.name}</span>
+              <span className={
+                progress[f.name] === "done" ? "text-green-500 text-xs" :
+                progress[f.name] === "error" ? "text-red-500 text-xs" :
+                progress[f.name] === "pending" ? "text-stone-400 text-xs" : "text-stone-300 text-xs"
+              }>
                 {progress[f.name] === "done" ? "✓" : progress[f.name] === "error" ? "✗" : progress[f.name] === "pending" ? "↑" : "·"}
               </span>
             </div>
@@ -376,16 +334,13 @@ function UploadTab({ onUploaded }) {
       )}
 
       <div>
-        <div className="text-xs mb-1" style={{ color: 'var(--ink-4)' }}>
-          Folder <span style={{ color: 'var(--ink-4)', opacity: 0.7 }}>(advanced)</span>
-        </div>
+        <div className="text-xs text-stone-400 mb-1">Folder <span className="text-stone-300">(advanced)</span></div>
         <input
           list="upload-folder-options"
           value={folder}
           onChange={(e) => setFolder(e.target.value)}
           placeholder="photos/landscapes"
-          className="w-full pb-1.5 text-sm outline-none transition-colors"
-          style={{ background: 'transparent', borderBottom: '1px solid var(--rule)', color: 'var(--ink-2)' }}
+          className="w-full border-b border-stone-200 pb-1.5 text-sm text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
         />
         <datalist id="upload-folder-options">
           {KNOWN_FOLDERS.map((f) => <option key={f} value={f} />)}
@@ -395,16 +350,7 @@ function UploadTab({ onUploaded }) {
       <button
         onClick={handleUpload}
         disabled={files.length === 0 || uploading}
-        className="w-full py-2 disabled:opacity-40 transition-colors"
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          fontWeight: 500,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          background: 'var(--ink)',
-          color: 'var(--paper)',
-        }}
+        className="w-full bg-stone-900 text-white text-xs font-medium py-2 disabled:opacity-40 hover:bg-stone-700 transition-colors"
       >
         {uploading ? "Uploading…" : `Upload ${files.length} photo${files.length !== 1 ? "s" : ""}`}
       </button>
@@ -439,53 +385,33 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
     dragState.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
   };
 
-  const tabStyle = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 10,
-    fontWeight: 500,
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
-  };
-
   return (
     <div
       ref={panelRef}
-      className="fixed z-50 flex flex-col"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        width: 320,
-        height: 560,
-        background: 'var(--paper)',
-        border: '1px solid var(--rule)',
-        boxShadow: 'var(--pane-shadow-lift)',
-      }}
+      className="fixed z-50 bg-white border border-stone-200 shadow-xl flex flex-col"
+      style={{ left: pos.x, top: pos.y, width: 320, height: 560 }}
     >
       <div
-        className="flex items-center gap-2 px-3 py-2.5 cursor-grab select-none flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--rule)' }}
+        className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100 cursor-grab select-none flex-shrink-0"
         onMouseDown={startDrag}
       >
         <button
           onClick={() => setTab("library")}
-          className="transition-colors"
-          style={{ ...tabStyle, color: tab === "library" ? 'var(--ink)' : 'var(--ink-4)' }}
+          className={`text-xs font-medium transition-colors ${tab === "library" ? "text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
         >
           Library
         </button>
-        <span style={{ color: 'var(--rule-2)', fontSize: 10 }}>|</span>
+        <span className="text-stone-200 text-xs">|</span>
         <button
           onClick={() => setTab("upload")}
-          className="transition-colors"
-          style={{ ...tabStyle, color: tab === "upload" ? 'var(--ink)' : 'var(--ink-4)' }}
+          className={`text-xs font-medium transition-colors ${tab === "upload" ? "text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
         >
           Upload
         </button>
         <div className="flex-1" />
         <button
           onClick={onClose}
-          className="transition-colors text-base leading-none"
-          style={{ color: 'var(--ink-4)' }}
+          className="text-stone-400 hover:text-stone-700 transition-colors text-base leading-none"
         >
           ×
         </button>

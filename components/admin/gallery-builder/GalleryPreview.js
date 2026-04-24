@@ -51,7 +51,7 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
   if (noWrap) return inner;
 
   return (
-    <div className="flex-1 h-full min-w-0 overflow-y-auto bg-paper">
+    <div className="flex-1 h-full min-w-0 overflow-y-auto bg-white">
       {inner}
     </div>
   );

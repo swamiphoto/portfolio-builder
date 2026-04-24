@@ -1,18 +1,17 @@
 import { useState, useRef } from 'react'
 import PopoverShell from './PopoverShell'
 
-const overlineCls = 'text-[10px] font-mono font-medium uppercase tracking-[0.14em] text-ink-4'
-const inputCls = 'w-full border-b border-rule p-0 pb-1 text-sm text-ink-2 outline-none focus:border-ink-3 placeholder:text-ink-4 bg-transparent'
-const selectCls = 'w-full text-sm text-ink-2 border-b border-rule p-0 pb-1 outline-none bg-transparent'
-
 function Field({ label, children }) {
   return (
     <div>
-      <div className={`${overlineCls} mb-1.5`}>{label}</div>
+      <div className="text-[10px] text-stone-400 mb-1">{label}</div>
       {children}
     </div>
   )
 }
+
+const inputCls = 'w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent'
+
 
 function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, contain, small }) {
   const displayUrl = value || fallbackUrl || null
@@ -21,23 +20,23 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, co
 
   return (
     <div>
-      {label && <div className={`${overlineCls} mb-1.5`}>{label}</div>}
+      {label && <div className="text-[10px] text-stone-400 mb-1">{label}</div>}
       <div className="flex items-center gap-3">
-        <div className={`flex-shrink-0 overflow-hidden border border-rule flex items-center justify-center bg-paper-2 ${boxCls}`}>
+        <div className={`flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50 ${boxCls}`}>
           {displayUrl ? (
             <img src={displayUrl} className={`w-full h-full ${imgFit}`} alt="" />
           ) : (
-            <span className="text-ink-4 text-lg">+</span>
+            <span className="text-stone-300 text-lg">+</span>
           )}
         </div>
         <div className="flex flex-col gap-1">
           {onPickFromLibrary && (
-            <button type="button" onClick={onPickFromLibrary} className="text-xs text-ink-3 hover:text-ink text-left transition-colors">
+            <button type="button" onClick={onPickFromLibrary} className="text-xs text-stone-500 hover:text-stone-900 text-left">
               {value ? 'Change…' : 'Select image'}
             </button>
           )}
           {value && (
-            <button type="button" onClick={() => onChange('')} className="text-[10px] text-ink-4 hover:text-red-600 text-left transition-colors">
+            <button type="button" onClick={() => onChange('')} className="text-[10px] text-stone-400 hover:text-red-600 text-left">
               Remove
             </button>
           )}
@@ -55,21 +54,19 @@ function ChevronRight() {
   )
 }
 
+
 function DrillRow({ label, hint, onDrillIn }) {
   return (
     <button
       type="button"
       onClick={onDrillIn}
-      className="w-full px-3 py-2.5 flex items-center border-b border-rule last:border-b-0 transition-colors text-left"
-      style={{ background: 'transparent' }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-2)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+      className="w-full px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0 hover:bg-stone-50 transition-colors text-left"
     >
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-ink-2">{label}</div>
-        {hint && <div className="text-[10px] text-ink-4 mt-0.5">{hint}</div>}
+        <div className="text-xs text-stone-700">{label}</div>
+        {hint && <div className="text-[10px] text-stone-400 mt-0.5">{hint}</div>}
       </div>
-      <span className="text-ink-4 flex-shrink-0 ml-2"><ChevronRight /></span>
+      <span className="text-stone-400 flex-shrink-0 ml-2"><ChevronRight /></span>
     </button>
   )
 }
@@ -80,39 +77,38 @@ const BrushIcon = () => (
   </svg>
 )
 
-function PillButton({ active, onClick, children, title }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className="px-2.5 py-0.5 text-xs border transition-colors"
-      style={{
-        borderColor: active ? 'var(--ink)' : 'var(--rule)',
-        background: active ? 'var(--ink)' : 'transparent',
-        color: active ? 'var(--paper)' : 'var(--ink-3)',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
 export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
   const config = siteConfig || {}
-  const [view, setView] = useState('main')
+  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const [coverDesignOpen, setCoverDesignOpen] = useState(false)
   const coverBrushRef = useRef(null)
   const footer = config.footer || {}
 
-  function update(patch) { onUpdate({ ...config, ...patch }) }
-  function updateAnalytics(patch) { update({ analytics: { ...(config.analytics || {}), ...patch } }) }
-  function updateClientDefaults(patch) { update({ clientDefaults: { ...(config.clientDefaults || {}), ...patch } }) }
-  function updateFooter(patch) { update({ footer: { ...(config.footer || {}), ...patch } }) }
-  function updateCover(patch) { update({ cover: { ...(config.cover || {}), ...patch } }) }
-  function updateShare(patch) { update({ share: { ...(config.share || {}), ...patch } }) }
+  function update(patch) {
+    onUpdate({ ...config, ...patch })
+  }
+
+  function updateAnalytics(patch) {
+    update({ analytics: { ...(config.analytics || {}), ...patch } })
+  }
+
+  function updateClientDefaults(patch) {
+    update({ clientDefaults: { ...(config.clientDefaults || {}), ...patch } })
+  }
+
+  function updateFooter(patch) {
+    update({ footer: { ...(config.footer || {}), ...patch } })
+  }
+
+  function updateCover(patch) {
+    update({ cover: { ...(config.cover || {}), ...patch } })
+  }
+
+  function updateShare(patch) {
+    update({ share: { ...(config.share || {}), ...patch } })
+  }
 
   const rootDomain = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
   const hasAnalytics = !!(config.analytics?.googleId || config.analytics?.plausibleDomain)
@@ -123,13 +119,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
       ref={brushRef}
       type="button"
       onClick={() => setDesignOpen(v => !v)}
-      className="text-ink-4 hover:text-ink transition-colors"
+      className="text-stone-400 hover:text-stone-700 transition-colors"
       title="Design options"
     >
       <BrushIcon />
     </button>
   )
 
+  // ── Cover page drill-in ───────────────────────────────────────────────────
   if (view === 'cover') {
     const cover = config.cover || {}
 
@@ -138,7 +135,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         ref={coverBrushRef}
         type="button"
         onClick={() => setCoverDesignOpen(v => !v)}
-        className="text-ink-4 hover:text-ink transition-colors"
+        className="text-stone-400 hover:text-stone-700 transition-colors"
         title="Cover design"
       >
         <BrushIcon />
@@ -182,17 +179,22 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         {coverDesignOpen && (
           <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width={220} title="Cover Design">
             <div className="px-3 py-3">
-              <div className={`${overlineCls} mb-2.5`}>Button Style</div>
+              <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Button Style</div>
               <div className="flex items-center gap-1.5">
                 {[
                   { value: 'solid',   label: 'Solid'   },
                   { value: 'outline', label: 'Outline' },
                   { value: 'ghost',   label: 'Ghost'   },
-                ].map(({ value, label }) => (
-                  <PillButton key={value} active={(cover.buttonStyle || 'solid') === value} onClick={() => updateCover({ buttonStyle: value })}>
-                    {label}
-                  </PillButton>
-                ))}
+                ].map(({ value, label }) => {
+                  const active = (cover.buttonStyle || 'solid') === value
+                  return (
+                    <button key={value} type="button"
+                      onClick={() => updateCover({ buttonStyle: value })}
+                      className={`px-2.5 py-0.5 text-xs border transition-colors ${active ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-500 hover:border-stone-400'}`}>
+                      {label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </PopoverShell>
@@ -201,6 +203,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     )
   }
 
+  // ── Domain drill-in ───────────────────────────────────────────────────────
   if (view === 'domain') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Custom Domain" onBack={() => setView('main')}>
@@ -213,8 +216,8 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             onChange={(e) => update({ customDomain: e.target.value || null })}
           />
           {config.customDomain && (
-            <p className="text-[10px] text-ink-4">
-              Point a CNAME to <span className="font-mono text-ink-3">{config.userId}.{rootDomain}</span> to activate.
+            <p className="text-[10px] text-stone-400">
+              Point a CNAME to <span className="font-mono">{config.userId}.{rootDomain}</span> to activate.
             </p>
           )}
         </div>
@@ -222,6 +225,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     )
   }
 
+  // ── Analytics drill-in ────────────────────────────────────────────────────
   if (view === 'analytics') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Analytics" onBack={() => setView('main')}>
@@ -237,13 +241,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     )
   }
 
+  // ── Payments drill-in ─────────────────────────────────────────────────────
   if (view === 'payments') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Payments" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
           <Field label="Default currency">
             <select
-              className={selectCls}
+              className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
               value={config.clientDefaults?.defaultCurrency || 'USD'}
               onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}
             >
@@ -253,15 +258,16 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           <Field label="Default watermark">
             <input className={inputCls} placeholder="https://…" value={config.clientDefaults?.defaultWatermarkUrl || ''} onChange={(e) => updateClientDefaults({ defaultWatermarkUrl: e.target.value })} />
           </Field>
-          <p className="text-[10px] text-ink-4">
+          <p className="text-[10px] text-stone-400">
             Connect Stripe to enable purchases across pages.{' '}
-            <span className="underline cursor-pointer text-ink-3">Set up Stripe →</span>
+            <span className="underline cursor-pointer">Set up Stripe →</span>
           </p>
         </div>
       </PopoverShell>
     )
   }
 
+  // ── Sharing drill-in ──────────────────────────────────────────────────────
   if (view === 'sharing') {
     const share = config.share || {}
     const largeImage = share.largeImage || config.cover?.imageUrl || ''
@@ -273,77 +279,81 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Sharing" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
+
+          {/* Large card */}
           <div>
-            <div className={`${overlineCls} mb-1.5`}>Social card</div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Social card</div>
             <div
-              className="group relative w-full cursor-pointer overflow-hidden border border-rule"
+              className="group relative w-full cursor-pointer overflow-hidden border border-stone-200"
               style={{ paddingBottom: '52.5%' }}
               onClick={onPickShareLarge}
             >
-              <div className="absolute inset-0 bg-paper-2">
+              <div className="absolute inset-0 bg-stone-100">
                 {largeImage ? (
                   <img src={largeImage} className="w-full h-full object-cover" alt="" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-ink-4 text-2xl">+</span>
+                    <span className="text-stone-300 text-2xl">+</span>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="text-white text-xs">{largeImage ? 'Change image' : 'Add image'}</span>
                 </div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-paper border-t border-rule px-2 py-1.5">
-                <div className="text-xs font-medium text-ink-2 truncate">{siteName}</div>
-                {tagline && <div className="text-[10px] text-ink-3 truncate mt-0.5">{tagline}</div>}
-                <div className="text-[10px] text-ink-4 truncate mt-0.5">{domain}</div>
+              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 py-1.5">
+                <div className="text-xs font-medium text-stone-800 truncate">{siteName}</div>
+                {tagline && <div className="text-[10px] text-stone-500 truncate mt-0.5">{tagline}</div>}
+                <div className="text-[10px] text-stone-400 truncate mt-0.5">{domain}</div>
               </div>
             </div>
             {share.largeImage && (
-              <button type="button" onClick={() => updateShare({ largeImage: '' })} className="text-[10px] text-ink-4 hover:text-red-600 mt-1 transition-colors">Remove override</button>
+              <button type="button" onClick={() => updateShare({ largeImage: '' })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Remove override</button>
             )}
           </div>
 
+          {/* Square card */}
           <div>
-            <div className={`${overlineCls} mb-1.5`}>Compact card</div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Compact card</div>
             <div
-              className="group flex gap-0 border border-rule cursor-pointer overflow-hidden"
+              className="group flex gap-0 border border-stone-200 cursor-pointer overflow-hidden"
               onClick={onPickShareSquare}
             >
-              <div className="relative w-16 h-16 flex-shrink-0 bg-paper-2 overflow-hidden">
+              <div className="relative w-16 h-16 flex-shrink-0 bg-stone-100 overflow-hidden">
                 {squareImage ? (
                   <img src={squareImage} className="w-full h-full object-cover" alt="" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-ink-4 text-xl">+</span>
+                    <span className="text-stone-300 text-xl">+</span>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="text-white text-[10px]">{squareImage ? '↺' : '+'}</span>
                 </div>
               </div>
-              <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-center border-l border-rule bg-paper">
-                <div className="text-xs font-medium text-ink-2 truncate">{siteName}</div>
-                {tagline && <div className="text-[10px] text-ink-3 truncate mt-0.5">{tagline}</div>}
-                <div className="text-[10px] text-ink-4 truncate mt-0.5">{domain}</div>
+              <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-center border-l border-stone-200">
+                <div className="text-xs font-medium text-stone-800 truncate">{siteName}</div>
+                {tagline && <div className="text-[10px] text-stone-500 truncate mt-0.5">{tagline}</div>}
+                <div className="text-[10px] text-stone-400 truncate mt-0.5">{domain}</div>
               </div>
             </div>
             {share.squareImage && (
-              <button type="button" onClick={() => updateShare({ squareImage: '' })} className="text-[10px] text-ink-4 hover:text-red-600 mt-1 transition-colors">Remove override</button>
+              <button type="button" onClick={() => updateShare({ squareImage: '' })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Remove override</button>
             )}
           </div>
 
+          {/* Google search result */}
           <div>
-            <div className={`${overlineCls} mb-1.5`}>Search result</div>
-            <div className="border border-rule px-3 py-2.5 space-y-0.5 bg-paper">
-              <div className="text-[10px] text-ink-4 truncate">{domain}</div>
+            <div className="text-[10px] text-stone-400 mb-1.5">Search result</div>
+            <div className="border border-stone-200 px-3 py-2.5 space-y-0.5">
+              <div className="text-[10px] text-stone-400 truncate">{domain}</div>
               <div className="text-xs text-blue-600 truncate">{siteName}</div>
-              {tagline && <div className="text-[10px] text-ink-3 line-clamp-2">{tagline}</div>}
+              {tagline && <div className="text-[10px] text-stone-500 line-clamp-2">{tagline}</div>}
             </div>
           </div>
 
-          <div className="space-y-1.5 text-[10px] text-ink-4 border-t border-rule pt-3">
-            <div><span className="text-ink-3">{siteName || 'Site name'}{siteName ? ' — Page Title' : ''}</span> · Title defaults to site name; each page can set its own</div>
-            <div><span className="text-ink-3">{tagline || 'Site description'}</span> · Description defaults to tagline; can be overridden per page</div>
+          <div className="space-y-1.5 text-[10px] text-stone-400 border-t border-stone-100 pt-3">
+            <div><span className="text-stone-500">{siteName || 'Site name'}{siteName ? ' — Page Title' : ''}</span> · Title defaults to site name; each page can set its own</div>
+            <div><span className="text-stone-500">{tagline || 'Site description'}</span> · Description defaults to tagline; can be overridden per page</div>
             <div>Image defaults to cover · can be overridden by thumbnail set in page settings</div>
           </div>
         </div>
@@ -351,14 +361,16 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     )
   }
 
+  // ── Main view ─────────────────────────────────────────────────────────────
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings" headerRight={brushButton}>
 
-      <div className="px-3 py-2 border-b border-rule flex items-center gap-2">
-        <span className={`${overlineCls} flex-shrink-0`}>Theme</span>
+      {/* Theme — compact row */}
+      <div className="px-3 py-2 border-b border-stone-100 flex items-center gap-2">
+        <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider flex-shrink-0">Theme</span>
         <div className="relative min-w-0">
           <select
-            className="text-xs text-ink-2 outline-none bg-transparent border-none appearance-none cursor-pointer pr-4"
+            className="text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer pr-4"
             value={config.design?.theme || 'minimal-light'}
             onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
           >
@@ -366,13 +378,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             <option value="minimal-dark">Minimal Dark</option>
             <option value="editorial">Editorial</option>
           </select>
-          <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-ink-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </div>
 
-      <div className="px-3 py-3 space-y-3 border-b border-rule">
+      {/* Identity */}
+      <div className="px-3 py-3 space-y-3 border-b border-stone-100">
         <Field label="Site name">
           <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
@@ -388,13 +401,23 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           />
         </Field>
 
+        {/* Logo */}
         <div>
-          <div className={`${overlineCls} mb-1.5`}>Logo</div>
+          <div className="text-[10px] text-stone-400 mb-1.5">Logo</div>
           <div className="flex gap-1.5 mb-2">
             {[['sitename', 'Site name'], ['image', 'Image']].map(([val, lbl]) => (
-              <PillButton key={val} active={logoType === val} onClick={() => update({ logoType: val })}>
+              <button
+                key={val}
+                type="button"
+                onClick={() => update({ logoType: val })}
+                className={`text-xs px-2.5 py-0.5 border transition-colors ${
+                  logoType === val
+                    ? 'border-stone-900 bg-stone-900 text-white'
+                    : 'border-stone-200 text-stone-500 hover:border-stone-400'
+                }`}
+              >
                 {lbl}
-              </PillButton>
+              </button>
             ))}
           </div>
           {logoType === 'image' && (
@@ -417,7 +440,8 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         />
       </div>
 
-      <div className="flex items-center px-3 py-2.5 border-b border-rule">
+      {/* Cover page toggle + inline chevron */}
+      <div className="flex items-center px-3 py-2.5 border-b border-stone-100">
         <button
           type="button"
           onClick={() => {
@@ -425,15 +449,11 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
               update({ hasCoverPage: enabling })
               if (!enabling) onDisableCover?.()
             }}
-          className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
-          style={{ background: config.hasCoverPage !== false ? 'var(--ink)' : 'var(--rule-2)' }}
+          className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${config.hasCoverPage !== false ? 'bg-stone-700' : 'bg-stone-300'}`}
         >
-          <div
-            className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`}
-            style={{ background: 'var(--paper)' }}
-          />
+          <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
         </button>
-        <span className="ml-2 text-xs text-ink-2 flex-1 select-none">Include a cover page</span>
+        <span className="ml-2 text-xs text-stone-700 flex-1 select-none">Include a cover page</span>
         {config.hasCoverPage !== false && (
           <button
             type="button"
@@ -446,38 +466,55 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
               setView('cover')
               onViewCover?.()
             }}
-            className="text-ink-4 hover:text-ink transition-colors flex-shrink-0 ml-2"
+            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0 ml-2"
           >
             <ChevronRight />
           </button>
         )}
       </div>
 
-      <DrillRow label={config.customDomain || 'Setup custom domain'} onDrillIn={() => setView('domain')} />
-      <DrillRow label={hasAnalytics ? 'Analytics' : 'Setup analytics'} onDrillIn={() => setView('analytics')} />
-      <DrillRow label={config.clientDefaults?.paymentsEnabled ? 'Payments' : 'Setup payments'} onDrillIn={() => setView('payments')} />
-      <DrillRow label="Sharing" onDrillIn={() => setView('sharing')} />
+      {/* Drill rows */}
+      <DrillRow
+        label={config.customDomain || 'Setup custom domain'}
+        onDrillIn={() => setView('domain')}
+      />
+      <DrillRow
+        label={hasAnalytics ? 'Analytics' : 'Setup analytics'}
+        onDrillIn={() => setView('analytics')}
+      />
+      <DrillRow
+        label={config.clientDefaults?.paymentsEnabled ? 'Payments' : 'Setup payments'}
+        onDrillIn={() => setView('payments')}
+      />
+      <DrillRow
+        label="Sharing"
+        onDrillIn={() => setView('sharing')}
+      />
 
       {designOpen && (
         <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={260} title="Design">
-          <div className="px-3 py-3 border-b border-rule last:border-b-0">
-            <div className={`${overlineCls} mb-2.5`}>Navigation</div>
+          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Navigation</div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { value: 'minimal',  label: '1', title: 'Minimal'  },
                 { value: 'centered', label: '2', title: 'Centered' },
                 { value: 'fixed',    label: '3', title: 'Fixed'    },
-              ].map(({ value, label, title }) => (
-                <PillButton key={value} active={(config.design?.navStyle || 'minimal') === value} onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })} title={title}>
-                  {label}
-                </PillButton>
-              ))}
+              ].map(({ value, label, title }) => {
+                const active = (config.design?.navStyle || 'minimal') === value
+                return (
+                  <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })} title={title}
+                    className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
-          <div className="px-3 py-3 border-b border-rule last:border-b-0">
-            <div className={`${overlineCls} mb-2.5`}>Sub-navigation</div>
+          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Sub-navigation</div>
             <select
-              className={selectCls}
+              className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
               value={config.design?.subNavStyle || 'dropdown'}
               onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
             >
@@ -485,19 +522,23 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
               <option value="inline">Links below page title</option>
             </select>
           </div>
-          <div className="px-3 py-3 border-b border-rule last:border-b-0">
-            <div className={`${overlineCls} mb-2.5`}>Footer Layout</div>
+          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
+            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Footer Layout</div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { value: 'none',     label: '0', title: 'None'     },
                 { value: 'compact',  label: '1', title: 'Compact'  },
                 { value: 'standard', label: '2', title: 'Standard' },
                 { value: 'full',     label: '3', title: 'Full'     },
-              ].map(({ value, label, title }) => (
-                <PillButton key={value} active={(config.design?.footerLayout || 'standard') === value} onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })} title={title}>
-                  {label}
-                </PillButton>
-              ))}
+              ].map(({ value, label, title }) => {
+                const active = (config.design?.footerLayout || 'standard') === value
+                return (
+                  <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })} title={title}
+                    className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </PopoverShell>
