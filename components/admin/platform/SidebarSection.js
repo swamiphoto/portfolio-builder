@@ -4,10 +4,12 @@ export default function SidebarSection({ label, pages, depth = 0, renderRow, dro
   return (
     <div data-droppable={droppableId}>
       {depth === 0 && label && (
-        <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400">{label}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px 8px' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-4)' }}>{label}</span>
+        </div>
       )}
       {pages.length === 0 && depth === 0 && (
-        <div className="px-3 pb-2 text-xs text-stone-300">Empty</div>
+        <div style={{ padding: '0 20px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-4)', fontStyle: 'italic' }}>Empty</div>
       )}
       {pages.map((p) => (
         <div key={p.id}>

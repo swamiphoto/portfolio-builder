@@ -26,6 +26,59 @@
   --surface-hover: #f9fafb;
   --surface-active: #f3f4f6;
   --ease-out-arc: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Warm parchment palette */
+  --desk: #e8e4dc;
+  --paper: #f6f3ec;
+  --paper-2: #efeae1;
+  --paper-3: #e6e0d4;
+  --ink: #1d1b17;
+  --ink-2: #3a362f;
+  --ink-3: #6e685c;
+  --ink-4: #9e9788;
+  --rule: #d8d2c3;
+  --rule-2: #c9c2b0;
+  --accent: #7a5a3a;
+  --accent-soft: #efe4d2;
+  --pane-shadow: 0 0 0 1px rgba(26,18,10,.05), 0 1px 2px rgba(26,18,10,.05), 0 8px 28px -8px rgba(26,18,10,.14);
+  --pane-shadow-lift: 0 0 0 1px rgba(26,18,10,.06), 0 2px 6px rgba(26,18,10,.06), 0 24px 48px -12px rgba(26,18,10,.18);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", -apple-system, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, monospace;
+}
+
+/* Paper grain overlay for admin UI */
+.admin-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .28;
+  background-image:
+    radial-gradient(rgba(120,100,70,.06) 1px, transparent 1px),
+    radial-gradient(rgba(120,100,70,.04) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+  mix-blend-mode: multiply;
+}
+
+/* Quiet scrollbar */
+.scroll-quiet::-webkit-scrollbar { width: 5px; }
+.scroll-quiet::-webkit-scrollbar-track { background: transparent; }
+.scroll-quiet::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; transition: background .15s; }
+.scroll-quiet:hover::-webkit-scrollbar-thumb { background: rgba(26,18,10,.1); }
+
+/* Overline label style */
+.overline-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-4);
 }
 
 body {
