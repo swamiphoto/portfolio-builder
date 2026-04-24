@@ -63,22 +63,22 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
   return (
     <div
       ref={ref}
-      className="fixed bg-white border border-stone-200 shadow-[0_4px_24px_rgba(0,0,0,0.12)] z-[9999] flex flex-col"
-      style={{ width: 300, maxHeight: pos?.maxHeight ?? '80vh', left: pos?.left, top: pos?.top }}
+      className="fixed bg-paper border border-rule z-[9999] flex flex-col"
+      style={{ width: 300, maxHeight: pos?.maxHeight ?? '80vh', left: pos?.left, top: pos?.top, boxShadow: 'var(--pane-shadow-lift)' }}
     >
       {/* Header */}
-      <div className="px-3 pt-2.5 pb-2 border-b border-stone-100 flex items-center justify-between flex-shrink-0">
-        <span className="text-xs font-semibold text-stone-700 tracking-wide">Slideshow</span>
-        <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
+      <div className="px-3 pt-2.5 pb-2 border-b border-rule flex items-center justify-between flex-shrink-0">
+        <span className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em]">Slideshow</span>
+        <button onClick={onClose} className="text-ink-4 hover:text-ink-2 text-base leading-none transition-colors">×</button>
       </div>
 
       <div className="overflow-y-auto flex-1">
         {/* Settings */}
-        <div className="px-3 py-3 space-y-2 border-b border-stone-100">
+        <div className="px-3 py-3 space-y-2 border-b border-rule">
           <div>
-            <div className="text-[10px] text-stone-400 mb-1">Layout</div>
+            <div className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em] mb-1">Layout</div>
             <select
-              className="w-full border border-stone-200 rounded px-2 py-1 text-xs outline-none focus:border-stone-500 bg-white"
+              className="w-full border border-rule rounded px-2 py-1 text-xs text-ink-2 outline-none focus:border-ink-3 bg-paper"
               value={slideshow.layout || 'kenburns'}
               onChange={(e) => updateSetting({ layout: e.target.value })}
             >
@@ -86,9 +86,9 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
             </select>
           </div>
           <div>
-            <div className="text-[10px] text-stone-400 mb-1">Music</div>
+            <div className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em] mb-1">Music</div>
             <select
-              className="w-full border border-stone-200 rounded px-2 py-1 text-xs outline-none focus:border-stone-500 bg-white"
+              className="w-full border border-rule rounded px-2 py-1 text-xs text-ink-2 outline-none focus:border-ink-3 bg-paper"
               value={musicMode === 'custom' ? '__custom__' : (currentId || '')}
               onChange={(e) => {
                 if (e.target.value === '__custom__') {
@@ -109,7 +109,7 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
               <input
                 type="text"
                 autoFocus
-                className="w-full border border-stone-200 rounded px-2 py-1 text-xs outline-none focus:border-stone-500 mt-1.5"
+                className="w-full border border-rule rounded px-2 py-1 text-xs text-ink-2 outline-none focus:border-ink-3 bg-paper mt-1.5"
                 placeholder="https://youtube.com/watch?v=…"
                 value={customUrl}
                 onChange={(e) => {
@@ -124,16 +124,16 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
         {/* Sequence */}
         <div className="px-3 pt-3 pb-3">
           <div className="flex items-baseline justify-between mb-2">
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">
+            <div className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em]">
               Sequence
             </div>
-            <div className="text-[10px] text-stone-300">
+            <div className="text-[10px] text-ink-4">
               {includedCount} image{includedCount !== 1 ? 's' : ''}{textCount > 0 ? ` · ${textCount} text` : ''}
             </div>
           </div>
 
           {sequence.length === 0 ? (
-            <div className="h-16 flex items-center justify-center text-[10px] text-stone-300 border border-dashed border-stone-200 rounded">
+            <div className="h-16 flex items-center justify-center text-[10px] text-ink-4 border border-dashed border-rule-2 rounded">
               Add blocks to the gallery to populate the slideshow
             </div>
           ) : (
@@ -149,9 +149,9 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
                         setTooltip({ text: item.content, x: r.left + r.width / 2, y: r.top })
                       }}
                       onMouseLeave={() => setTooltip(null)}
-                      className="w-11 h-11 bg-stone-100 border border-stone-200 rounded flex items-center justify-center cursor-default flex-shrink-0"
+                      className="w-11 h-11 bg-paper-2 border border-rule rounded flex items-center justify-center cursor-default flex-shrink-0"
                     >
-                      <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-ink-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
                       </svg>
                     </div>
@@ -168,17 +168,17 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
                     }}
                     onMouseLeave={() => setTooltip(null)}
                     className={`relative group w-11 h-11 overflow-hidden rounded border flex-shrink-0 transition-all ${
-                      item.excluded ? 'opacity-25 border-stone-100' : 'opacity-100 border-stone-200'
+                      item.excluded ? 'opacity-25 border-rule' : 'opacity-100 border-rule-2'
                     }`}
                   >
                     <img src={item.url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none">
                       {item.excluded ? (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-paper" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
                         </svg>
                       ) : (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-paper" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
@@ -194,7 +194,7 @@ export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, on
 
       {tooltip && (
         <div
-          className="fixed z-[10000] px-2 py-1 bg-stone-800 text-white text-[10px] rounded pointer-events-none max-w-[200px] leading-snug"
+          className="fixed z-[10000] px-2 py-1 bg-ink text-paper text-[10px] rounded pointer-events-none max-w-[200px] leading-snug"
           style={{ left: tooltip.x, top: tooltip.y - 6, transform: 'translate(-50%, -100%)' }}
         >
           {tooltip.text}

@@ -433,25 +433,25 @@ export default function PlatformSidebar({
           {isLink && linkEditId === page.id && (
             <div className="mx-2 mb-2 p-2.5 space-y-2" style={{ background: 'var(--paper)', border: '1px solid var(--rule)', boxShadow: 'var(--pane-shadow)' }}>
               <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">Label</div>
+                <div className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em] mb-1">Label</div>
                 <input
                   autoFocus
-                  className="w-full text-sm border-b border-stone-200 pb-1 outline-none focus:border-stone-500 bg-transparent"
+                  className="w-full text-sm border-b border-rule pb-1 outline-none focus:border-ink-3 text-ink-2 bg-transparent"
                   value={page.title || ''}
                   onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, title: e.target.value } : p) }))}
                 />
               </div>
               <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">URL</div>
+                <div className="text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em] mb-1">URL</div>
                 <input
                   type="url"
-                  className="w-full text-sm border-b border-stone-200 pb-1 outline-none focus:border-stone-500 bg-transparent placeholder:text-stone-300"
+                  className="w-full text-sm border-b border-rule pb-1 outline-none focus:border-ink-3 text-ink-2 bg-transparent placeholder:text-ink-4"
                   placeholder="https://…"
                   value={page.url || ''}
                   onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, url: e.target.value } : p) }))}
                 />
               </div>
-              <button onClick={() => setLinkEditId(null)} className="text-xs text-stone-400 hover:text-stone-700">Done</button>
+              <button onClick={() => setLinkEditId(null)} className="text-[10px] font-mono uppercase tracking-[0.14em] text-ink-3 hover:text-ink">Done</button>
             </div>
           )}
         </div>

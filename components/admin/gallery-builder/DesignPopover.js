@@ -9,10 +9,12 @@ const LAYOUTS = {
   video: ["Edge to edge", "Centered"],
 };
 
+const overlineCls = 'text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em]'
+
 function Section({ label, children }) {
   return (
-    <div className="py-3 border-b border-stone-100 last:border-0">
-      <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2 pl-1">{label}</div>
+    <div className="py-3 border-b border-rule last:border-0">
+      <div className={`${overlineCls} mb-2 pl-1`}>{label}</div>
       {children}
     </div>
   );
@@ -23,7 +25,6 @@ export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
   const [pos, setPos] = useState(null);
   const blockType = block.type;
 
-  // Position just below the brush icon, left-aligned to it
   useEffect(() => {
     if (anchorEl) {
       const rect = anchorEl.getBoundingClientRect();
@@ -66,12 +67,12 @@ export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
   return (
     <div
       ref={ref}
-      className="fixed bg-white border border-stone-200 shadow-[0_4px_24px_rgba(0,0,0,0.12)] z-[9999]"
-      style={{ width: 200, ...(pos || {}) }}
+      className="fixed bg-paper border border-rule z-[9999]"
+      style={{ width: 200, boxShadow: 'var(--pane-shadow-lift)', ...(pos || {}) }}
     >
-      <div className="px-3 pt-2.5 pb-2 border-b border-stone-100 flex items-center justify-between">
-        <span className="text-xs font-semibold text-stone-700 tracking-wide">Design</span>
-        <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none transition-colors">×</button>
+      <div className="px-3 pt-2.5 pb-2 border-b border-rule flex items-center justify-between">
+        <span className={overlineCls}>Design</span>
+        <button onClick={onClose} className="text-ink-4 hover:text-ink-2 text-base leading-none transition-colors">×</button>
       </div>
 
       <div className="px-3">
@@ -81,10 +82,10 @@ export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
               <button
                 key={l}
                 onClick={() => handleLayoutChange(l)}
-                className={`text-xs px-2.5 py-1 border transition-colors ${
+                className={`text-[10px] font-mono uppercase tracking-[0.12em] px-2.5 py-1 border transition-colors ${
                   currentLayout === l
-                    ? "border-stone-900 bg-stone-900 text-white"
-                    : "border-stone-200 text-stone-600 hover:border-stone-400"
+                    ? "border-ink bg-ink text-paper"
+                    : "border-rule text-ink-3 hover:border-ink-4"
                 }`}
               >
                 {l}

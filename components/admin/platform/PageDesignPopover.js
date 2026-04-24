@@ -1,6 +1,9 @@
 // components/admin/platform/PageDesignPopover.js
 import { useRef, useEffect, useState } from 'react'
 
+const overlineCls = 'text-[10px] font-mono font-medium text-ink-4 uppercase tracking-[0.14em]'
+const pillCls = 'text-[10px] font-mono uppercase tracking-[0.12em] px-2.5 py-1 border transition-colors'
+
 export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
@@ -30,25 +33,25 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
   return (
     <div
       ref={ref}
-      className="fixed bg-white border border-stone-200 shadow-[0_4px_24px_rgba(0,0,0,0.12)] z-[9999]"
-      style={{ width: 220, overflow: 'auto', maxHeight: pos?.maxHeight ?? '80vh', left: pos?.left, top: pos?.top }}
+      className="fixed bg-paper border border-rule z-[9999]"
+      style={{ width: 220, overflow: 'auto', maxHeight: pos?.maxHeight ?? '80vh', left: pos?.left, top: pos?.top, boxShadow: 'var(--pane-shadow-lift)' }}
     >
-      <div className="px-3 pt-2.5 pb-2 border-b border-stone-100 flex items-center justify-between">
-        <span className="text-xs font-semibold text-stone-700 tracking-wide">Page Design</span>
-        <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
+      <div className="px-3 pt-2.5 pb-2 border-b border-rule flex items-center justify-between">
+        <span className={overlineCls}>Page Design</span>
+        <button onClick={onClose} className="text-ink-4 hover:text-ink-2 text-base leading-none transition-colors">×</button>
       </div>
 
       <div className="px-3 py-3 space-y-4">
         {/* Height */}
         <div>
-          <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2">Cover height</div>
+          <div className={`${overlineCls} mb-2`}>Cover height</div>
           <div className="flex gap-1.5">
             {['full', 'partial'].map(h => (
               <button
                 key={h}
                 onClick={() => update({ height: h })}
-                className={`text-xs px-2.5 py-1 border transition-colors ${
-                  cover.height === h ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-600 hover:border-stone-400'
+                className={`${pillCls} ${
+                  cover.height === h ? 'border-ink bg-ink text-paper' : 'border-rule text-ink-3 hover:border-ink-4'
                 }`}
               >
                 {h === 'full' ? 'Full' : 'Partial'}
@@ -60,16 +63,16 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
         {/* Button style */}
         {(page.slideshow?.enabled || page.clientFeatures?.enabled) && (
           <div>
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2">Button style</div>
+            <div className={`${overlineCls} mb-2`}>Button style</div>
             <div className="flex gap-1.5">
               {['solid', 'outline', 'ghost'].map(s => (
                 <button
                   key={s}
                   onClick={() => update({ buttonStyle: s })}
-                  className={`text-xs px-2.5 py-1 border transition-colors capitalize ${
+                  className={`${pillCls} ${
                     (cover.buttonStyle || 'solid') === s
-                      ? 'border-stone-900 bg-stone-900 text-white'
-                      : 'border-stone-200 text-stone-600 hover:border-stone-400'
+                      ? 'border-ink bg-ink text-paper'
+                      : 'border-rule text-ink-3 hover:border-ink-4'
                   }`}
                 >
                   {s}

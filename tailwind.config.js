@@ -38,6 +38,7 @@ module.exports = {
         "ink-3": "var(--ink-3)",
         "ink-4": "var(--ink-4)",
         rule: "var(--rule)",
+        "rule-2": "var(--rule-2)",
         accent: "var(--accent)",
         "accent-soft": "var(--accent-soft)",
         // Legacy tokens (kept for backward compat)
