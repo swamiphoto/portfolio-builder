@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+.scroll-quiet::-webkit-scrollbar { width: 4px; }
+.scroll-quiet::-webkit-scrollbar-track { background: transparent; }
+.scroll-quiet::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; transition: background 0.15s; }
+.scroll-quiet:hover::-webkit-scrollbar-thumb { background: rgba(26,18,10,0.12); }
+
 @font-face {
   font-family: "Muse";
   src: url("/fonts/Muse/hv_muse_regular-webfont.woff2") format("woff2"), url("/fonts/Muse/hv_muse_regular-webfont.woff") format("woff");

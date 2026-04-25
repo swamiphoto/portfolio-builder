@@ -200,7 +200,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     >
 
       {/* All blocks — scrollable */}
-      <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto px-3 py-3">
+      <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (

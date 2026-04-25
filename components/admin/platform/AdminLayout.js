@@ -16,7 +16,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
 
       {/* Block sidebar + Preview — one connected card */}
       <div
-        className="flex-1 flex min-w-0 m-2 ml-2 rounded-xl overflow-hidden"
+        className="flex-1 flex min-w-0 mt-2 ml-2 rounded-tl-xl rounded-bl-xl overflow-hidden"
         style={{
           boxShadow: '0 0 0 1px rgba(26,18,10,0.06), 0 2px 6px rgba(26,18,10,0.06), 0 24px 48px -12px rgba(26,18,10,0.18)',
         }}
