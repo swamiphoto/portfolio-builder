@@ -302,6 +302,7 @@ export default function PlatformSidebar({
               paddingLeft: 10 + depth * 12,
               paddingRight: 10,
               background: isSelected ? '#f6f3ec' : undefined,
+              boxShadow: isSelected ? '0 1px 4px rgba(26,18,10,0.10), 0 0 0 1px rgba(26,18,10,0.05)' : undefined,
             }}
             onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
             onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
