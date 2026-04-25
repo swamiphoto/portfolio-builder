@@ -290,17 +290,18 @@ export default function PlatformSidebar({
             >
               <span className="flex-1 truncate">{page.title}</span>
               {siteConfig.homePageId === page.id && (
-                <svg className="w-3 h-3 text-stone-400 flex-shrink-0 mr-1" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <svg className="w-3 h-3 flex-shrink-0 mr-1" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
               )}
-              {isLink && <span className="text-[10px] text-stone-400 flex-shrink-0 ml-1">↗</span>}
+              {isLink && <span className="text-[10px] flex-shrink-0 ml-1" style={{ color: 'var(--text-muted)' }}>↗</span>}
               {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">nest here</span>}
               {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0 ml-1">Drop</span>}
               {isLink && (
                 <button
                   onClick={e => { e.stopPropagation(); setLinkEditId(linkEditId === page.id ? null : page.id) }}
-                  className="ml-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-opacity"
+                  className="ml-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center transition-opacity"
+                  style={{ color: 'var(--text-muted)' }}
                   title="Edit link"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -315,7 +316,8 @@ export default function PlatformSidebar({
                     if (pageSettingsId === page.id) { setPageSettingsId(null); setPageSettingsAnchorEl(null) }
                     else { setPageSettingsId(page.id); setPageSettingsAnchorEl(e.currentTarget) }
                   }}
-                  className="ml-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-opacity"
+                  className="ml-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center transition-opacity"
+                  style={{ color: 'var(--text-muted)' }}
                   title="Page settings"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -326,7 +328,8 @@ export default function PlatformSidebar({
               )}
               <button
                 onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                className="ml-1 opacity-0 group-hover:opacity-100 px-1 text-gray-400 transition-opacity"
+                className="ml-1 opacity-0 group-hover:opacity-100 px-1 transition-opacity"
+                style={{ color: 'var(--text-muted)' }}
               >
                 ···
               </button>
@@ -334,15 +337,16 @@ export default function PlatformSidebar({
           )}
 
           {menuOpenId === page.id && (
-            <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white border border-gray-200 rounded-lg shadow-popup py-1 w-40">
-              <button onClick={() => handleRenameStart(page)} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Rename</button>
+            <div ref={menuRef} className="absolute right-2 top-7 z-10 bg-white rounded-lg shadow-popup py-1 w-40" style={{ border: '1px solid var(--border)' }}>
+              <button onClick={() => handleRenameStart(page)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Rename</button>
               {page.showInNav && page.type !== 'link' && siteConfig.homePageId !== page.id && (
                 <button
                   onClick={() => {
                     setMenuOpenId(null)
                     onConfigChange(prev => ({ ...prev, homePageId: page.id }))
                   }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   Set as home page
                 </button>
@@ -352,27 +356,29 @@ export default function PlatformSidebar({
           )}
 
           {isLink && linkEditId === page.id && (
-            <div className="mx-2 mb-2 p-2.5 bg-white border border-stone-200 rounded-lg shadow-popup space-y-2">
+            <div className="mx-2 mb-2 p-2.5 bg-white rounded-lg shadow-popup space-y-2" style={{ border: '1px solid var(--border)' }}>
               <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">Label</div>
+                <div className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Label</div>
                 <input
                   autoFocus
-                  className="w-full text-sm border-b border-stone-200 pb-1 outline-none focus:border-stone-500 bg-transparent"
+                  className="w-full text-sm pb-1 outline-none bg-transparent focus:border-[#8b6f47]"
+                  style={{ borderBottom: '1px solid var(--border)' }}
                   value={page.title || ''}
                   onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, title: e.target.value } : p) }))}
                 />
               </div>
               <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-1">URL</div>
+                <div className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>URL</div>
                 <input
                   type="url"
-                  className="w-full text-sm border-b border-stone-200 pb-1 outline-none focus:border-stone-500 bg-transparent placeholder:text-stone-300"
+                  className="w-full text-sm pb-1 outline-none bg-transparent focus:border-[#8b6f47]"
+                  style={{ borderBottom: '1px solid var(--border)', '--tw-placeholder-opacity': '1' }}
                   placeholder="https://…"
                   value={page.url || ''}
                   onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, url: e.target.value } : p) }))}
                 />
               </div>
-              <button onClick={() => setLinkEditId(null)} className="text-xs text-stone-400 hover:text-stone-700">Done</button>
+              <button onClick={() => setLinkEditId(null)} className="text-xs" style={{ color: 'var(--text-muted)' }}>Done</button>
             </div>
           )}
         </div>
@@ -390,7 +396,8 @@ export default function PlatformSidebar({
             <a
               href={`http://${username}.${(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')}`}
               target="_blank" rel="noopener noreferrer"
-              className="text-xs text-gray-400 hover:text-gray-600 truncate block mt-0.5"
+              className="text-xs truncate block mt-0.5"
+              style={{ color: 'var(--text-muted)' }}
             >
               {username}.{(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')} ↗
             </a>
@@ -439,14 +446,15 @@ export default function PlatformSidebar({
         <div className="relative mx-2 mt-1" ref={addMenuRef}>
           <button
             onClick={() => setAddMenuOpen(v => !v)}
-            className="flex items-center w-full px-3 py-1.5 text-sm text-gray-400 rounded hover:bg-gray-50"
+            className="flex items-center w-full px-3 py-1.5 text-sm rounded hover:bg-[#ede8e0]"
+            style={{ color: 'var(--text-muted)' }}
           >
             <span className="mr-1.5">+</span> Add
           </button>
           {addMenuOpen && (
-            <div className="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-popup z-20 py-1 w-36">
-              <button onClick={handleAddPage} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Page</button>
-              <button onClick={handleAddLink} className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Link ↗</button>
+            <div className="absolute left-0 bottom-full mb-1 bg-white rounded-lg shadow-popup z-20 py-1 w-36" style={{ border: '1px solid var(--border)' }}>
+              <button onClick={handleAddPage} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Page</button>
+              <button onClick={handleAddLink} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Link ↗</button>
             </div>
           )}
         </div>
@@ -469,7 +477,8 @@ export default function PlatformSidebar({
       {/* Drag ghost */}
       {pageDrag && ghostPos && (
         <div
-          className="fixed pointer-events-none z-[9999] bg-white border border-stone-300 shadow-lg px-3 py-1.5 rounded text-sm text-stone-700"
+          className="fixed pointer-events-none z-[9999] bg-white shadow-lg px-3 py-1.5 rounded text-sm"
+          style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }}
           style={{ left: ghostPos.x + 14, top: ghostPos.y - 10 }}
         >
           {pageDrag.title}
