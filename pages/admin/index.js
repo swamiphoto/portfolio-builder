@@ -278,6 +278,7 @@ export default function AdminIndex() {
       selectedPageId={selectedPageId}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
+      onPublish={() => {/* TODO: publish flow */}}
       libraryActive={showLibrary}
       username={session?.user?.username}
       email={session?.user?.email}
