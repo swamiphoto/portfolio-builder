@@ -392,61 +392,55 @@ export default function PlatformSidebar({
 
   return (
     <div className="flex flex-col h-full select-none text-sm">
-      {/* Header — Site switcher card + Publish */}
-      <div className="px-3 pt-3 pb-3" style={{ borderBottom: '1px solid var(--card-border)' }}>
+      {/* Header — Site switcher + Preview / Publish */}
+      <div style={{ padding: '12px 12px 10px', borderBottom: '1px solid #d8d2c3' }}>
         {/* Site switcher card */}
         <button
           ref={accountAvatarRef}
           onClick={() => setAccountOpen(v => !v)}
-          className="w-full flex items-center gap-[10px] mb-2.5"
-          style={{
-            padding: '6px 8px',
-            background: '#f6f3ec',
-            border: '1px solid #d8d2c3',
-            borderRadius: 3,
-          }}
+          className="w-full flex items-center"
+          style={{ gap: 10, padding: '6px 8px', background: '#f6f3ec', border: '1px solid #d8d2c3', borderRadius: 3, cursor: 'pointer' }}
           title="Account"
         >
-          {/* Square serif avatar */}
           <div
             className="flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: 26, height: 26,
-              background: '#1d1b17',
-              color: '#f6f3ec',
-              borderRadius: 3,
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: 14,
-              fontWeight: 500,
-              fontStyle: 'italic',
-            }}
+            style={{ width: 26, height: 26, background: '#1d1b17', color: '#f6f3ec', fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 14, fontWeight: 500, fontStyle: 'italic' }}
           >
             {(username || 'U')[0].toUpperCase()}
           </div>
-          {/* Name + handle */}
-          <div className="flex-1 min-w-0 text-left">
-            <div className="truncate" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.2 }}>
+          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.1 }} className="truncate">
               {username || 'My Portfolio'}
             </div>
-            <div className="font-mono truncate" style={{ fontSize: 9, color: '#9e9788', letterSpacing: '0.06em', marginTop: 2 }}>
+            <div className="truncate" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 9, color: '#9e9788', letterSpacing: '0.06em', marginTop: 2 }}>
               {username ? `${username}.sepia.photo` : ''}
             </div>
           </div>
-          {/* Chevron */}
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9e9788" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9e9788" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
-        {/* Publish button */}
-        <button
-          onClick={onPublish}
-          className="w-full flex items-center justify-center gap-2 py-[9px] font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-90 active:opacity-75"
-          style={{ background: '#1d1b17', color: '#f6f3ec', borderRadius: 2 }}
-        >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }} />
-          Publish
-        </button>
-        <div className="mt-1.5 flex justify-center">
+
+        {/* Preview + Publish buttons */}
+        <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+          <button
+            className="flex-1 flex items-center justify-center font-mono uppercase transition-colors hover:bg-[rgba(26,18,10,0.04)]"
+            style={{ padding: '8px 10px', border: '1px solid #d8d2c3', borderRadius: 2, fontSize: 10, letterSpacing: '0.16em', color: '#3a362f', background: 'transparent' }}
+          >
+            Preview
+          </button>
+          <button
+            onClick={onPublish}
+            className="flex-1 flex items-center justify-center gap-1.5 font-mono uppercase transition-opacity hover:opacity-90 active:opacity-75"
+            style={{ padding: '8px 10px', background: '#1d1b17', color: '#f6f3ec', borderRadius: 2, fontSize: 10, letterSpacing: '0.16em' }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }} />
+            Publish
+          </button>
+        </div>
+
+        {/* Autosave status */}
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <SaveBadge status={saveStatus} />
         </div>
       </div>
