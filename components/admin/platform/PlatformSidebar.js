@@ -222,23 +222,23 @@ export default function PlatformSidebar({
   function PageTypeIcon({ page }) {
     const isHome = siteConfig.homePageId === page.id
     if (isHome) return (
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
       </svg>
     )
     if (page.type === 'link') return (
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
       </svg>
     )
     if (page.type === 'text') return (
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
       </svg>
     )
     // gallery / default
     return (
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
       </svg>
     )
@@ -286,35 +286,33 @@ export default function PlatformSidebar({
               if (didDragRef.current || pageDragRef.current) return
               if (!isLink) onSelectPage?.(page.id)
             }}
-            className={`group relative flex items-center gap-2 pl-3 pr-2 py-1.5 mx-1 rounded-md cursor-pointer transition-colors ${
+            className={`group relative flex items-center gap-[10px] px-[10px] py-[8px] mx-1 cursor-pointer transition-colors duration-[120ms] ${
               isPageNestTarget
                 ? 'ring-1 ring-blue-400 bg-blue-50'
                 : isImageDropTarget
                 ? 'ring-1 ring-blue-300 bg-blue-50'
                 : isSelected
                 ? ''
-                : 'hover:bg-[#ede8e0]'
+                : ''
             }`}
-            style={isSelected ? { background: 'var(--panel-hover)' } : {}}
+            style={{
+              borderRadius: 3,
+              background: isSelected ? 'var(--panel)' : undefined,
+              boxShadow: isSelected ? 'inset 2px 0 0 #1d1b17' : undefined,
+            }}
+            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
+            onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
           >
-            {/* Left accent bar on selected */}
-            {isSelected && (
-              <div
-                className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full"
-                style={{ background: 'var(--sepia-accent)' }}
-              />
-            )}
-
             {/* Icon — page type normally, drag handle on hover */}
             <div
-              className="flex-shrink-0 w-4 flex items-center justify-center"
+              className="flex-shrink-0 flex items-center justify-center"
               onPointerDown={(e) => handlePageDragStart(page, e)}
-              style={{ touchAction: 'none' }}
+              style={{ touchAction: 'none', width: 14, color: '#6e685c' }}
             >
-              <span className="group-hover:hidden flex items-center" style={{ color: 'var(--text-muted)' }}>
+              <span className="group-hover:hidden flex items-center">
                 <PageTypeIcon page={page} />
               </span>
-              <span className="hidden group-hover:flex items-center cursor-grab active:cursor-grabbing" style={{ color: 'var(--text-muted)' }}>
+              <span className="hidden group-hover:flex items-center cursor-grab active:cursor-grabbing">
                 <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor">
                   <circle cx="1.5" cy="1.5" r="1" /><circle cx="4.5" cy="1.5" r="1" />
                   <circle cx="1.5" cy="5" r="1" /><circle cx="4.5" cy="5" r="1" />
@@ -323,32 +321,29 @@ export default function PlatformSidebar({
               </span>
             </div>
 
-            {/* Page title — serif */}
+            {/* Page title */}
             <span
-              className="flex-1 truncate text-[15px] leading-snug"
-              style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
-              }}
+              className="flex-1 truncate"
+              style={{ fontSize: 13, color: '#3a362f' }}
             >
               {page.title}
             </span>
 
             {/* Right side badges */}
             {isHome && !isPageNestTarget && !isImageDropTarget && (
-              <span className="font-mono text-[9px] uppercase tracking-[0.08em] flex-shrink-0 opacity-60 group-hover:opacity-0 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                Home
+              <span className="font-mono uppercase flex-shrink-0 group-hover:opacity-0 transition-opacity duration-[120ms]" style={{ fontSize: 9, letterSpacing: '0.08em', color: '#9e9788' }}>
+                HOME
               </span>
             )}
-            {isLink && <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>↗</span>}
+            {isLink && <span className="flex-shrink-0" style={{ fontSize: 10, color: '#9e9788' }}>↗</span>}
             {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
             {/* ... menu — appears on hover */}
             <button
               onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-              className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-opacity text-sm leading-none"
-              style={{ color: 'var(--text-muted)' }}
+              className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-opacity duration-[120ms] text-sm leading-none"
+              style={{ color: '#9e9788' }}
             >
               ···
             </button>
@@ -426,7 +421,7 @@ export default function PlatformSidebar({
           className="w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0"
           style={{ color: 'var(--text-muted)' }}
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
