@@ -6,7 +6,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
       <div
         className="w-56 flex-shrink-0 flex flex-col h-full overflow-hidden"
         style={{
-          background: 'var(--panel)',
+          background: '#efeae1',
           boxShadow: '1px 0 0 rgba(26,18,10,0.06), 3px 0 8px rgba(26,18,10,0.04)',
         }}
       >

@@ -244,7 +244,7 @@ export default function PlatformSidebar({
     )
   }
 
-  function renderPageRow(page) {
+  function renderPageRow(page, depth = 0) {
     const isImageDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag?.sourcePageId
     const isPageNestTarget = pageDropTarget?.type === 'nest' && pageDropTarget.pageId === page.id
     const isLink = page.type === 'link'
@@ -286,17 +286,17 @@ export default function PlatformSidebar({
               if (didDragRef.current || pageDragRef.current) return
               if (!isLink) onSelectPage?.(page.id)
             }}
-            className={`group relative flex items-center gap-[10px] px-[10px] py-[8px] mx-1 cursor-pointer transition-colors duration-[120ms] ${
+            className={`group relative flex items-center gap-[10px] py-[8px] mx-2 cursor-pointer transition-colors duration-[120ms] ${
               isPageNestTarget
                 ? 'ring-1 ring-blue-400 bg-blue-50'
                 : isImageDropTarget
                 ? 'ring-1 ring-blue-300 bg-blue-50'
-                : isSelected
-                ? ''
                 : ''
             }`}
             style={{
               borderRadius: 3,
+              paddingLeft: 10 + depth * 12,
+              paddingRight: 10,
               background: isSelected ? '#f6f3ec' : undefined,
             }}
             onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
