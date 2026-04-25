@@ -33,7 +33,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
             className="flex-shrink-0 flex flex-col h-full transition-all duration-300"
             style={{
               width: panelCollapsed ? 40 : 260,
-              background: '#e8e3da',
+              background: '#dedad2',
             }}
           >
             {panelCollapsed ? (

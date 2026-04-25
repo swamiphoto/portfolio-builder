@@ -221,14 +221,17 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
-          <div className="rounded-xl overflow-hidden mb-1.5" style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}>
+          <div className="overflow-hidden mb-1.5" style={{ background: '#f0ebe3', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
             <button
               className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors"
-              style={{ '--hover-bg': 'var(--card-hover)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--card-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = ''}
               onClick={() => setInfoExpanded((v) => !v)}
             >
+              <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <rect x="2" y="4" width="20" height="14" rx="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 14l5-5a2 2 0 012.8 0l3 3 2.2-2.2a2 2 0 012.8 0L22 13" />
+                </svg>
+              </span>
               <span className="text-xs font-semibold flex-1 tracking-wide" style={{ color: 'var(--text-secondary)' }}>{infoLabel}</span>
               <svg className={`w-3.5 h-3.5 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} style={{ color: 'var(--text-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
