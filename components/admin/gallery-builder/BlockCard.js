@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
@@ -23,12 +23,12 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   const ref = useRef(null);
   const adjust = useCallback(() => {
     if (!ref.current) return;
-    ref.current.style.height = 'auto';
+    ref.current.style.height = '0';
     const sh = ref.current.scrollHeight;
     ref.current.style.height = Math.min(sh, maxHeight || sh) + 'px';
     ref.current.style.overflowY = maxHeight && sh > maxHeight ? 'auto' : 'hidden';
   }, [maxHeight]);
-  useEffect(() => { adjust(); }, [value, adjust]);
+  useLayoutEffect(() => { adjust(); }, [value, adjust]);
   return (
     <textarea
       ref={ref}
@@ -58,7 +58,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }
     <div
       {...dragHandleProps}
       className={`relative group/thumb aspect-square overflow-hidden cursor-grab ${selected ? 'ring-2 ring-inset ring-blue-500' : ''}`}
-      style={{ background: 'var(--card)' }}
+      style={{ background: 'var(--card)', borderRadius: 2 }}
       onClick={onPreview}
     >
       <img
@@ -68,6 +68,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }
         loading="lazy"
         onError={(e) => { if (e.target.src !== imageRef.url) e.target.src = imageRef.url }}
       />
+      <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-colors duration-100 pointer-events-none" />
       {selected && (
         <div className="absolute top-0.5 left-0.5 bg-blue-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full z-10 leading-none pointer-events-none">
           ✓
@@ -107,6 +108,7 @@ export default function BlockCard({
   assetsByUrl,
   onUpdateLibraryCaption,
   highlighted,
+  expandedOverride,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -115,6 +117,7 @@ export default function BlockCard({
   const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
 
   const [expanded, setExpanded] = useState(true);
+  useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride]);
   const [showMenu, setShowMenu] = useState(false);
   const [showDesign, setShowDesign] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -207,9 +210,9 @@ export default function BlockCard({
 
   return (
     <div
-      className="overflow-hidden mb-1.5 transition-colors duration-150"
+      className="overflow-hidden mb-1.5"
       style={{
-        background: highlighted ? 'var(--panel-hover)' : '#f0ebe3',
+        background: 'var(--card)',
         borderRadius: 4,
         boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)',
       }}
@@ -219,7 +222,7 @@ export default function BlockCard({
       onDrop={isPhotoBlock ? handleDrop : undefined}
     >
       {/* Card header */}
-      <div className="flex items-center gap-1.5 px-3 py-2.5">
+      <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-2">
         {block.type === 'page' ? (
           <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -239,7 +242,7 @@ export default function BlockCard({
 
         <button
           className="text-xs font-semibold tracking-wide flex-1 text-left transition-colors"
-          style={{ color: 'var(--text-primary)' }}
+          style={{ color: 'var(--text-secondary)' }}
           onClick={() => setExpanded((v) => !v)}
         >
           {TYPE_LABELS[block.type] || block.type}
@@ -317,7 +320,7 @@ export default function BlockCard({
 
       {/* Expanded body */}
       {expanded && (
-        <div className="px-3 pb-3 pt-3 space-y-2.5">
+        <div className="px-3 pb-3 pt-0 space-y-2.5">
 
           {/* Single photo */}
           {block.type === "photo" && (
@@ -356,6 +359,7 @@ export default function BlockCard({
                 {block.imageUrl ? (
                   <div
                     className={`relative group/img cursor-grab transition-opacity ${photoDropHover ? 'opacity-40' : ''}`}
+                    style={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 1px 4px rgba(26,18,10,0.10)' }}
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
@@ -375,6 +379,7 @@ export default function BlockCard({
                       className="w-full aspect-video object-cover pointer-events-none"
                       onError={(e) => { if (e.target.src !== block.imageUrl) e.target.src = block.imageUrl }}
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-100 pointer-events-none" />
                     <button
                       onClick={(e) => { e.stopPropagation(); onUpdate({ ...block, imageUrl: "" }); }}
                       className="absolute top-1.5 right-1.5 bg-black/50 text-white text-[10px] px-2 py-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
@@ -409,69 +414,81 @@ export default function BlockCard({
                   {!gridDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
                 </div>
               ) : (
-                <div className={`grid grid-cols-3 gap-px transition-all ${gridDropHover ? 'bg-blue-400 opacity-60' : 'bg-[#cfc4b2]'}`}>
+                <div
+                  className={`grid grid-cols-3 transition-all ${gridDropHover ? 'opacity-60' : ''}`}
+                  style={{ gap: 1, background: 'var(--card)' }}
+                >
                   {(() => {
                     const thumbRefs = blockImageRefs.map(r => ({
                       ...r,
                       caption: resolveCaption(r, assetsByUrl || {}),
                     }));
-                    return thumbRefs.map((ref, i) => (
-                    <PhotoThumb
-                      key={ref.url}
-                      imageRef={ref}
-                      selected={selectedIndices.has(i)}
-                      onPreview={(e) => {
-                        handleThumbClick(e, i);
-                        if (!e.metaKey && !e.ctrlKey && !e.shiftKey) setLightboxIndex(i);
-                      }}
-                      dragHandleProps={{
-                        draggable: true,
-                        onDragStart: (e) => {
-                          dragPhotoIndex.current = i;
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.stopPropagation();
-                          const dragging = selectedIndices.size > 1 && selectedIndices.has(i)
-                            ? blockImageRefs.filter((_, j) => selectedIndices.has(j))
-                            : [blockImageRefs[i]];
-                          const payload = {
-                            imageRefs: dragging,
-                            sourceBlockType: block.type,
-                            sourceBlockKey: blockKeyRef.current,
-                            sourceBlockIndex: blockIndex,
-                          };
-                          e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
-                          e.dataTransfer.setData('text/plain', blockImageRefs[i].url);
-                          if (sourcePageId) {
-                            startDrag({ type: 'images', imageRefs: dragging, sourceBlockType: block.type, sourcePageId, sourceBlockIndex: blockIndex })
-                          }
-                        },
-                        onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },
-                        onDrop: (e) => {
-                          e.preventDefault(); e.stopPropagation();
-                          const raw = e.dataTransfer.getData('application/x-photo-drag');
-                          if (raw) {
-                            try {
-                              const parsed = JSON.parse(raw);
-                              if (parsed.sourceBlockKey !== blockKeyRef.current) return; // cross-block drag — let grid handle
-                            } catch { return; }
-                          }
-                          const from = dragPhotoIndex.current;
-                          if (from === null || from === i) return;
-                          const refs = normalizeImageRefs(block.images || block.imageUrls || []);
-                          const [moved] = refs.splice(from, 1);
-                          refs.splice(i, 0, moved);
-                          dragPhotoIndex.current = null;
-                          onUpdate({ ...block, ...buildMultiImageFields(refs) });
-                        },
-                        onDragEnd: () => {
-                          dragPhotoIndex.current = null
-                          endDrag()
-                          setSelectedIndices(new Set())
-                        },
-                      }}
-                      onRemove={() => onRemovePhoto(blockImageRefs[i])}
-                    />
-                    ));
+                    const remainder = thumbRefs.length % 3;
+                    const placeholderCount = remainder === 0 ? 0 : 3 - remainder;
+                    return (
+                      <>
+                        {thumbRefs.map((ref, i) => (
+                          <PhotoThumb
+                            key={ref.url}
+                            imageRef={ref}
+                            selected={selectedIndices.has(i)}
+                            onPreview={(e) => {
+                              handleThumbClick(e, i);
+                              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) setLightboxIndex(i);
+                            }}
+                            dragHandleProps={{
+                              draggable: true,
+                              onDragStart: (e) => {
+                                dragPhotoIndex.current = i;
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.stopPropagation();
+                                const dragging = selectedIndices.size > 1 && selectedIndices.has(i)
+                                  ? blockImageRefs.filter((_, j) => selectedIndices.has(j))
+                                  : [blockImageRefs[i]];
+                                const payload = {
+                                  imageRefs: dragging,
+                                  sourceBlockType: block.type,
+                                  sourceBlockKey: blockKeyRef.current,
+                                  sourceBlockIndex: blockIndex,
+                                };
+                                e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
+                                e.dataTransfer.setData('text/plain', blockImageRefs[i].url);
+                                if (sourcePageId) {
+                                  startDrag({ type: 'images', imageRefs: dragging, sourceBlockType: block.type, sourcePageId, sourceBlockIndex: blockIndex })
+                                }
+                              },
+                              onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },
+                              onDrop: (e) => {
+                                e.preventDefault(); e.stopPropagation();
+                                const raw = e.dataTransfer.getData('application/x-photo-drag');
+                                if (raw) {
+                                  try {
+                                    const parsed = JSON.parse(raw);
+                                    if (parsed.sourceBlockKey !== blockKeyRef.current) return;
+                                  } catch { return; }
+                                }
+                                const from = dragPhotoIndex.current;
+                                if (from === null || from === i) return;
+                                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+                                const [moved] = refs.splice(from, 1);
+                                refs.splice(i, 0, moved);
+                                dragPhotoIndex.current = null;
+                                onUpdate({ ...block, ...buildMultiImageFields(refs) });
+                              },
+                              onDragEnd: () => {
+                                dragPhotoIndex.current = null
+                                endDrag()
+                                setSelectedIndices(new Set())
+                              },
+                            }}
+                            onRemove={() => onRemovePhoto(blockImageRefs[i])}
+                          />
+                        ))}
+                        {Array.from({ length: placeholderCount }).map((_, i) => (
+                          <div key={`ph-${i}`} className="aspect-square" style={{ background: 'var(--panel-hover)', borderRadius: 2 }} />
+                        ))}
+                      </>
+                    );
                   })()}
                 </div>
               )}

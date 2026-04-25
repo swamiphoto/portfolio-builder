@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { useDrag } from '../../../common/dragContext';
 import Link from "next/link";
@@ -11,12 +11,12 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   const ref = useRef(null);
   const adjust = useCallback(() => {
     if (!ref.current) return;
-    ref.current.style.height = 'auto';
+    ref.current.style.height = '0';
     const sh = ref.current.scrollHeight;
     ref.current.style.height = Math.min(sh, maxHeight || sh) + 'px';
     ref.current.style.overflowY = maxHeight && sh > maxHeight ? 'auto' : 'hidden';
   }, [maxHeight]);
-  useEffect(() => { adjust(); }, [value, adjust]);
+  useLayoutEffect(() => { adjust(); }, [value, adjust]);
   return (
     <textarea
       ref={ref}
@@ -32,24 +32,31 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
 }
 
 function InsertionZone({ onInsert }) {
-  const [hovered, setHovered] = useState(false);
   return (
     <div
-      className="relative flex items-center justify-center cursor-pointer transition-all duration-150"
-      style={{ height: hovered ? 28 : 6 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="group/zone relative flex items-center justify-center cursor-pointer"
+      style={{ height: 14, marginTop: -6, zIndex: 2 }}
       onClick={onInsert}
     >
-      {hovered && (
-        <>
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px" style={{ background: 'var(--border)' }} />
-          <div className="relative z-10 w-4 h-4 rounded-full flex items-center justify-center"
-               style={{ border: '1px solid var(--border)', background: 'var(--card)' }}>
-            <span className="text-[9px] font-bold leading-none" style={{ color: 'var(--text-muted)' }}>+</span>
-          </div>
-        </>
-      )}
+      <div
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px opacity-0 group-hover/zone:opacity-100 transition-opacity duration-100"
+        style={{ background: 'radial-gradient(ellipse 70% 100% at center, rgba(160,140,110,0.6) 0%, transparent 100%)' }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full opacity-0 group-hover/zone:opacity-100 hover:scale-110 transition-all duration-150"
+        style={{
+          width: 24,
+          height: 24,
+          background: 'linear-gradient(155deg, #fefcf8 0%, #ebe5db 100%)',
+          border: 'none',
+          boxShadow: '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6)',
+          color: 'var(--text-secondary)',
+        }}
+      >
+        <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+          <path d="M4.5 1.5v6M1.5 4.5h6" />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -89,6 +96,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const [insertAtIndex, setInsertAtIndex] = useState(null);
   const [menuAnchorRect, setMenuAnchorRect] = useState(null);
   const [infoExpanded, setInfoExpanded] = useState(true);
+  const [expandedOverride, setExpandedOverride] = useState(null);
+  const [allExpanded, setAllExpanded] = useState(true);
 
   const blocksContainerRef = useRef(null);
   const isSyncingRef = useRef(false);
@@ -198,19 +207,59 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   return (
     <div
       className={className || "w-72 flex-shrink-0 flex flex-col h-full relative z-10 text-left font-sans"}
+      style={{ background: 'var(--panel)' }}
     >
 
-      {/* Top bar — collapse button */}
+      {/* Top bar */}
       {onToggleExpand && (
-        <div className="flex-shrink-0 flex items-center justify-between px-3 py-2.5" style={{ borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
-          <span className="font-mono text-[9px] uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Blocks</span>
+        <div className="flex-shrink-0 flex items-center px-3 gap-0.5" style={{ height: 36, borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
+          <span className="flex-1 text-[11px] font-semibold truncate mr-1" style={{ color: 'var(--text-secondary)' }}>
+            {gallery.name || 'Untitled'}
+          </span>
+
+          {/* Add block */}
+          <button
+            onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
+            title="Add block"
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
+          </button>
+
+          {/* Expand/collapse all toggle */}
+          <button
+            onClick={() => {
+              const next = !allExpanded
+              setAllExpanded(next)
+              setExpandedOverride({ value: next, ts: Date.now() })
+            }}
+            title={allExpanded ? 'Collapse all' : 'Expand all'}
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {allExpanded ? (
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 4h10M3 8h10M3 12h10" />
+              </svg>
+            )}
+          </button>
+
+          {/* Collapse panel */}
           <button
             onClick={onToggleExpand}
             title="Collapse panel"
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
             style={{ color: 'var(--text-muted)' }}
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13L5 8l5-5" />
             </svg>
           </button>
         </div>
@@ -221,7 +270,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
-          <div className="overflow-hidden mb-1.5" style={{ background: '#f0ebe3', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
+          <div className="overflow-hidden mb-1.5" style={{ background: 'var(--card)', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
             <button
               className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors"
               onClick={() => setInfoExpanded((v) => !v)}
@@ -359,8 +408,6 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                 {(gallery.blocks || []).map((block, index) => (
                   <div
                     key={`slot-${index}`}
-                    onMouseEnter={() => onBlockHover?.(index)}
-                    onMouseLeave={() => onBlockHover?.(null)}
                     className="rounded-lg"
                   >
                     <InsertionZone
@@ -392,6 +439,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             assetsByUrl={assetsByUrl}
                             onUpdateLibraryCaption={onUpdateLibraryCaption}
                             highlighted={highlightedBlockIndex === index}
+                            expandedOverride={expandedOverride}
                           />
                         </div>
                       )}
@@ -408,18 +456,14 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>No blocks yet</p>
         )}
 
-      </div>
-
-      {/* Footer: Add Block + controls */}
-      <div className="p-3 flex-shrink-0 space-y-2" style={{ borderTop: '1px solid var(--border)' }}>
+        {/* Terminal add block */}
         <button
           onClick={(e) => {
-            if (showBlockMenu) { setShowBlockMenu(false); return; }
             setMenuAnchorRect(e.currentTarget.getBoundingClientRect());
             setInsertAtIndex(null);
             setShowBlockMenu(true);
           }}
-          className="w-full text-xs py-2.5 transition-colors"
+          className="w-full text-xs py-2.5 mt-1 transition-colors"
           style={{
             fontFamily: 'monospace',
             letterSpacing: '0.04em',
@@ -431,23 +475,26 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         >
           + add block
         </button>
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
-            {autosaveStatus === "saving" && "Saving…"}
-            {autosaveStatus === "saved" && "Saved"}
-            {autosaveStatus === "unsaved" && "Unsaved"}
-          </span>
-          {onPublish && (
-            <button
-              onClick={onPublish}
-              disabled={publishing || (isPublished && !hasDraft)}
-              className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors disabled:opacity-40"
-              style={{ background: 'var(--sepia-accent)', color: '#fff' }}
-            >
-              {publishing ? "Publishing…" : "Publish"}
-            </button>
-          )}
-        </div>
+
+      </div>
+
+      {/* Footer: autosave + publish */}
+      <div className="px-3 py-2 flex-shrink-0 flex items-center gap-2" style={{ borderTop: '1px solid var(--border)' }}>
+        <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
+          {autosaveStatus === "saving" && "Saving…"}
+          {autosaveStatus === "saved" && "Saved"}
+          {autosaveStatus === "unsaved" && "Unsaved"}
+        </span>
+        {onPublish && (
+          <button
+            onClick={onPublish}
+            disabled={publishing || (isPublished && !hasDraft)}
+            className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+            style={{ background: 'var(--sepia-accent)', color: '#fff' }}
+          >
+            {publishing ? "Publishing…" : "Publish"}
+          </button>
+        )}
       </div>
 
       {showBlockMenu && (
