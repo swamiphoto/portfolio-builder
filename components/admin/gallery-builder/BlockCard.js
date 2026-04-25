@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
@@ -7,6 +7,7 @@ import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
 
 const TYPE_LABELS = {
+  page: "Hero",
   photo: "Photo",
   photos: "Photos",
   stacked: "Photos",
@@ -17,6 +18,30 @@ const TYPE_LABELS = {
 };
 
 const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug text-[#2c2416]";
+
+function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
+  const ref = useRef(null);
+  const adjust = useCallback(() => {
+    if (!ref.current) return;
+    ref.current.style.height = 'auto';
+    const sh = ref.current.scrollHeight;
+    ref.current.style.height = Math.min(sh, maxHeight || sh) + 'px';
+    ref.current.style.overflowY = maxHeight && sh > maxHeight ? 'auto' : 'hidden';
+  }, [maxHeight]);
+  useEffect(() => { adjust(); }, [value, adjust]);
+  return (
+    <textarea
+      ref={ref}
+      className={className}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={1}
+      style={{ resize: 'none', overflow: 'hidden', ...styleProp }}
+      {...props}
+    />
+  );
+}
 
 function PaintbrushIcon() {
   return (
@@ -182,8 +207,12 @@ export default function BlockCard({
 
   return (
     <div
-      className="rounded-xl overflow-hidden mb-1.5 group/card transition-colors duration-150"
-      style={{ background: highlighted ? 'var(--panel-hover)' : 'var(--card)', border: '1px solid var(--card-border)' }}
+      className="overflow-hidden mb-1.5 transition-colors duration-150"
+      style={{
+        background: highlighted ? 'var(--panel-hover)' : '#f0ebe3',
+        borderRadius: 4,
+        boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)',
+      }}
       onDragEnter={isPhotoBlock ? (e) => { e.preventDefault(); setGridDropHover(true); } : undefined}
       onDragOver={isPhotoBlock ? handleDragOver : undefined}
       onDragLeave={isPhotoBlock ? handleDragLeave : undefined}
@@ -191,13 +220,22 @@ export default function BlockCard({
     >
       {/* Card header */}
       <div className="flex items-center gap-1.5 px-3 py-2.5">
-        <span
-          {...dragHandleProps}
-          className="cursor-grab text-sm leading-none select-none flex-shrink-0 transition-colors"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          ⠿
-        </span>
+        {block.type === 'page' ? (
+          <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <rect x="2" y="4" width="20" height="14" rx="2" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2 14l5-5a2 2 0 012.8 0l3 3 2.2-2.2a2 2 0 012.8 0L22 13" />
+            </svg>
+          </span>
+        ) : (
+          <span
+            {...dragHandleProps}
+            className="cursor-grab text-sm leading-none select-none flex-shrink-0 transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            ⠿
+          </span>
+        )}
 
         <button
           className="text-xs font-semibold tracking-wide flex-1 text-left transition-colors"
@@ -208,7 +246,7 @@ export default function BlockCard({
         </button>
 
         {/* Hover-reveal actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+        <div className="flex items-center gap-0.5 opacity-60 transition-opacity">
           {(block.type === "photo" || isPhotoBlock) && (
             <button
               onClick={onAddPhotos}
@@ -279,7 +317,7 @@ export default function BlockCard({
 
       {/* Expanded body */}
       {expanded && (
-        <div className="px-3 pb-3 pt-3 space-y-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="px-3 pb-3 pt-3 space-y-2.5">
 
           {/* Single photo */}
           {block.type === "photo" && (
@@ -442,10 +480,10 @@ export default function BlockCard({
 
           {/* Text */}
           {block.type === "text" && (
-            <textarea
+            <AutoGrowTextarea
               className={`${INPUT} resize-none`}
               placeholder="Write something…"
-              rows={3}
+              maxHeight={160}
               value={block.content || ""}
               onChange={(e) => onUpdate({ ...block, content: e.target.value })}
             />

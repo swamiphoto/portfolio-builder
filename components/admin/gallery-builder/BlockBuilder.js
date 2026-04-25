@@ -7,14 +7,15 @@ import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
 import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 
-function AutoGrowTextarea({ className, value, onChange, placeholder, ...props }) {
+function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
   const ref = useRef(null);
   const adjust = useCallback(() => {
-    if (ref.current) {
-      ref.current.style.height = "auto";
-      ref.current.style.height = ref.current.scrollHeight + "px";
-    }
-  }, []);
+    if (!ref.current) return;
+    ref.current.style.height = 'auto';
+    const sh = ref.current.scrollHeight;
+    ref.current.style.height = Math.min(sh, maxHeight || sh) + 'px';
+    ref.current.style.overflowY = maxHeight && sh > maxHeight ? 'auto' : 'hidden';
+  }, [maxHeight]);
   useEffect(() => { adjust(); }, [value, adjust]);
   return (
     <textarea
@@ -24,7 +25,7 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, ...props })
       onChange={onChange}
       placeholder={placeholder}
       rows={1}
-      style={{ overflow: "hidden", resize: "none" }}
+      style={{ resize: 'none', overflow: 'hidden', ...styleProp }}
       {...props}
     />
   );
@@ -199,6 +200,22 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       className={className || "w-72 flex-shrink-0 flex flex-col h-full relative z-10 text-left font-sans"}
     >
 
+      {/* Top bar — collapse button */}
+      {onToggleExpand && (
+        <div className="flex-shrink-0 flex items-center justify-between px-3 py-2.5" style={{ borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Blocks</span>
+          <button
+            onClick={onToggleExpand}
+            title="Collapse panel"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* All blocks — scrollable */}
       <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
 
@@ -219,7 +236,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             </button>
 
             {infoExpanded && (
-              <div className="px-3 pb-3 pt-3 space-y-4" style={{ borderTop: '1px solid var(--border)' }}>
+              <div className="px-3 pb-3 pt-3 space-y-4">
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
                   <input
@@ -243,6 +260,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   <AutoGrowTextarea
                     className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full resize-none"
                     placeholder="Description"
+                    maxHeight={120}
                     value={gallery.description || ""}
                     onChange={(e) => updateField("description", e.target.value)}
                   />
@@ -398,28 +416,19 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             setInsertAtIndex(null);
             setShowBlockMenu(true);
           }}
-          className="w-full rounded-xl text-sm font-medium py-2.5 transition-colors border border-dashed"
+          className="w-full text-xs py-2.5 transition-colors"
           style={{
+            fontFamily: 'monospace',
+            letterSpacing: '0.04em',
+            borderRadius: 4,
+            border: '1px dashed rgba(160,140,110,0.4)',
             background: 'transparent',
-            borderColor: 'var(--border)',
-            color: 'var(--text-secondary)',
+            color: 'var(--text-muted)',
           }}
         >
-          Add Block
+          + add block
         </button>
         <div className="flex items-center gap-2">
-          {onToggleExpand && (
-            <button
-              onClick={onBack || onToggleExpand}
-              className="transition-colors flex-shrink-0"
-              style={{ color: 'var(--text-muted)' }}
-              title="Collapse sidebar"
-            >
-              <svg className="w-3.5 h-3.5 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
-          )}
           <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
             {autosaveStatus === "saving" && "Saving…"}
             {autosaveStatus === "saved" && "Saved"}
