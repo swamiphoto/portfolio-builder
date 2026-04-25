@@ -473,7 +473,7 @@ export default function BlockCard({
           {block.type === "page-gallery" && (
             <div className="space-y-1.5">
               {(!pages || pages.length === 0) ? (
-                <p className="text-xs text-stone-400">No other pages yet.</p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No other pages yet.</p>
               ) : (
                 pages.map(p => (
                   <label key={p.id} className="flex items-center gap-2 cursor-pointer">
