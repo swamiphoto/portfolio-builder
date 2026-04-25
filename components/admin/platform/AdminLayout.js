@@ -2,10 +2,10 @@
 export default function AdminLayout({ sidebar, panel, children, panelCollapsed, onTogglePanel }) {
   return (
     <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--desk)' }}>
-      {/* Site sidebar — floating pane */}
+      {/* Site sidebar — flush to edges */}
       <div
-        className="w-56 flex-shrink-0 flex flex-col h-full my-2 ml-2 rounded-xl overflow-hidden"
-        style={{ background: 'var(--panel)', boxShadow: 'var(--pane-shadow)' }}
+        className="w-56 flex-shrink-0 flex flex-col h-full overflow-hidden"
+        style={{ background: 'var(--panel)', borderRight: '1px solid var(--card-border)' }}
       >
         {sidebar}
       </div>

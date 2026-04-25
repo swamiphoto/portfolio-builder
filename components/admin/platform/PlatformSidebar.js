@@ -389,7 +389,7 @@ export default function PlatformSidebar({
   return (
     <div className="flex flex-col h-full select-none text-sm">
       {/* Header */}
-      <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--card-border)' }}>
         <div className="flex-1 min-w-0">
           <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{siteName || 'My Portfolio'}</div>
           {username && (
@@ -461,7 +461,7 @@ export default function PlatformSidebar({
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid var(--border)' }} className="flex-shrink-0">
+      <div style={{ borderTop: '1px solid var(--card-border)' }} className="flex-shrink-0">
         <button
           onClick={onShowLibrary}
           className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-[#ede8e0]"
