@@ -297,8 +297,7 @@ export default function PlatformSidebar({
             }`}
             style={{
               borderRadius: 3,
-              background: isSelected ? 'var(--panel)' : undefined,
-              boxShadow: isSelected ? 'inset 2px 0 0 #1d1b17' : undefined,
+              background: isSelected ? '#f6f3ec' : undefined,
             }}
             onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
             onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
