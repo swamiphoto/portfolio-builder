@@ -25,6 +25,8 @@ export default function PlatformSidebar({
   onShowLibrary,
   onPublish,
   username,
+  displayName,
+  avatarImage,
   email,
   onDropImagesToPage,
   onPickThumbnail,
@@ -402,15 +404,23 @@ export default function PlatformSidebar({
           style={{ gap: 10, padding: '6px 8px', background: '#f6f3ec', border: '1px solid #d8d2c3', borderRadius: 3, cursor: 'pointer' }}
           title="Account"
         >
-          <div
-            className="flex-shrink-0 flex items-center justify-center"
-            style={{ width: 26, height: 26, background: '#1d1b17', color: '#f6f3ec', fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 14, fontWeight: 500, fontStyle: 'italic' }}
-          >
-            {(username || 'U')[0].toUpperCase()}
-          </div>
+          {avatarImage ? (
+            <img
+              src={avatarImage}
+              alt=""
+              style={{ width: 32, height: 32, flexShrink: 0, objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              className="flex-shrink-0 flex items-center justify-center"
+              style={{ width: 32, height: 32, background: '#1d1b17', color: '#f6f3ec', fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, fontWeight: 500, fontStyle: 'italic' }}
+            >
+              {(displayName || username || 'U')[0].toUpperCase()}
+            </div>
+          )}
           <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.1 }} className="truncate">
-              {username || 'My Portfolio'}
+            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 15, fontWeight: 500, color: '#1d1b17', lineHeight: 1.15 }} className="truncate">
+              {displayName || username || 'My Portfolio'}
             </div>
             <div className="truncate" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 9, color: '#9e9788', letterSpacing: '0.06em', marginTop: 2 }}>
               {username ? `${username}.sepia.photo` : ''}

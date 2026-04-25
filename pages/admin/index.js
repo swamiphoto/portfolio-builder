@@ -282,6 +282,8 @@ export default function AdminIndex() {
       libraryActive={showLibrary}
       username={session?.user?.username}
       email={session?.user?.email}
+      avatarImage={session?.user?.image}
+      displayName={session?.user?.name}
       onDropImagesToPage={handleDropImagesToPage}
       onPickThumbnail={handlePickThumbnail}
       assetsByUrl={assetsByUrl}
