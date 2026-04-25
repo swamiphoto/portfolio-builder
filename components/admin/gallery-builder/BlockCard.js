@@ -32,7 +32,8 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }
   return (
     <div
       {...dragHandleProps}
-      className={`relative group/thumb aspect-square bg-stone-100 overflow-hidden cursor-grab ${selected ? 'ring-2 ring-inset ring-blue-500' : ''}`}
+      className={`relative group/thumb aspect-square overflow-hidden cursor-grab ${selected ? 'ring-2 ring-inset ring-blue-500' : ''}`}
+      style={{ background: 'var(--card)' }}
       onClick={onPreview}
     >
       <img
@@ -346,10 +347,11 @@ export default function BlockCard({
                 ) : (
                   <div
                     onClick={onAddPhotos}
-                    className={`flex flex-col items-center justify-center h-20 border border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'bg-stone-50 border-stone-200 hover:border-stone-400'}`}
+                    className={`flex flex-col items-center justify-center h-20 border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'hover:border-[#a08a68]'}`}
+                    style={photoDropHover ? {} : { background: 'var(--card)', border: '1px dashed var(--card-border)' }}
                   >
-                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : 'text-stone-500'}`}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
-                    {!photoDropHover && <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>}
+                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'var(--text-secondary)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
+                    {!photoDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
                   </div>
                 )}
               </div>
@@ -362,13 +364,14 @@ export default function BlockCard({
               {blockImageRefs.length === 0 ? (
                 <div
                   onClick={onAddPhotos}
-                  className={`flex flex-col items-center justify-center h-16 border border-dashed cursor-pointer transition-colors gap-0.5 ${gridDropHover ? 'border-blue-400 bg-blue-50' : 'bg-stone-50 border-stone-200 hover:border-stone-400'}`}
+                  className={`flex flex-col items-center justify-center h-16 border-dashed cursor-pointer transition-colors gap-0.5 ${gridDropHover ? 'border-blue-400 bg-blue-50' : 'hover:border-[#a08a68]'}`}
+                  style={gridDropHover ? {} : { background: 'var(--card)', border: '1px dashed var(--card-border)' }}
                 >
-                  <span className={`text-xs ${gridDropHover ? 'text-blue-600' : 'text-stone-500'}`}>{gridDropHover ? 'Drop photos here' : 'Drag photos here'}</span>
-                  {!gridDropHover && <span className="text-xs text-stone-400">or <span className="underline underline-offset-2 hover:text-stone-700 transition-colors">select from library</span></span>}
+                  <span className={`text-xs ${gridDropHover ? 'text-blue-600' : ''}`} style={gridDropHover ? {} : { color: 'var(--text-secondary)' }}>{gridDropHover ? 'Drop photos here' : 'Drag photos here'}</span>
+                  {!gridDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
                 </div>
               ) : (
-                <div className={`grid grid-cols-3 gap-px transition-all ${gridDropHover ? 'bg-blue-400 opacity-60' : 'bg-stone-200'}`}>
+                <div className={`grid grid-cols-3 gap-px transition-all ${gridDropHover ? 'bg-blue-400 opacity-60' : 'bg-[#cfc4b2]'}`}>
                   {(() => {
                     const thumbRefs = blockImageRefs.map(r => ({
                       ...r,
