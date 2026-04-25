@@ -392,32 +392,51 @@ export default function PlatformSidebar({
 
   return (
     <div className="flex flex-col h-full select-none text-sm">
-      {/* Header — Avatar row + Publish */}
-      <div className="px-3 pt-2.5 pb-3" style={{ borderBottom: '1px solid var(--card-border)' }}>
-        {/* Top row: avatar + autosave */}
-        <div className="flex items-center justify-between mb-2.5">
-          <button
-            ref={accountAvatarRef}
-            onClick={() => setAccountOpen(v => !v)}
-            className="flex items-center gap-2 rounded transition-colors px-1 py-0.5 -mx-1"
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,18,10,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.background = ''}
-            title="Account"
+      {/* Header — Site switcher card + Publish */}
+      <div className="px-3 pt-3 pb-3" style={{ borderBottom: '1px solid var(--card-border)' }}>
+        {/* Site switcher card */}
+        <button
+          ref={accountAvatarRef}
+          onClick={() => setAccountOpen(v => !v)}
+          className="w-full flex items-center gap-[10px] mb-2.5"
+          style={{
+            padding: '6px 8px',
+            background: '#f6f3ec',
+            border: '1px solid #d8d2c3',
+            borderRadius: 3,
+          }}
+          title="Account"
+        >
+          {/* Square serif avatar */}
+          <div
+            className="flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: 26, height: 26,
+              background: '#1d1b17',
+              color: '#f6f3ec',
+              borderRadius: 3,
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 14,
+              fontWeight: 500,
+              fontStyle: 'italic',
+            }}
           >
-            <div
-              className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
-              style={{ background: '#1d1b17', color: '#f6f3ec' }}
-            >
-              {(username || 'U')[0].toUpperCase()}
+            {(username || 'U')[0].toUpperCase()}
+          </div>
+          {/* Name + handle */}
+          <div className="flex-1 min-w-0 text-left">
+            <div className="truncate" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.2 }}>
+              {username || 'My Portfolio'}
             </div>
-            {username && (
-              <span className="font-mono text-[9px] tracking-[0.04em] truncate max-w-[100px]" style={{ color: '#9e9788' }}>
-                {username}
-              </span>
-            )}
-          </button>
-          <SaveBadge status={saveStatus} />
-        </div>
+            <div className="font-mono truncate" style={{ fontSize: 9, color: '#9e9788', letterSpacing: '0.06em', marginTop: 2 }}>
+              {username ? `${username}.sepia.photo` : ''}
+            </div>
+          </div>
+          {/* Chevron */}
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9e9788" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
         {/* Publish button */}
         <button
           onClick={onPublish}
@@ -427,6 +446,9 @@ export default function PlatformSidebar({
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }} />
           Publish
         </button>
+        <div className="mt-1.5 flex justify-center">
+          <SaveBadge status={saveStatus} />
+        </div>
       </div>
 
       {/* Pages */}
