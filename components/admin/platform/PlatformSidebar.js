@@ -329,7 +329,6 @@ export default function PlatformSidebar({
             </span>
 
             {/* Right side badges */}
-            {isLink && <span className="flex-shrink-0" style={{ fontSize: 10, color: '#9e9788' }}>↗</span>}
             {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
