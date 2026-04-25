@@ -24,6 +24,7 @@ export default function AdminIndex() {
   const [showLibrary, setShowLibrary] = useState(false)
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
   const [assetPickerTarget, setAssetPickerTarget] = useState(null) // 'logo' | 'favicon' | null
+  const [blockSidebarCollapsed, setBlockSidebarCollapsed] = useState(false)
   const autosaveTimer = useRef(null)
 
   // Hover highlight sync
@@ -308,6 +309,7 @@ export default function AdminIndex() {
       onScrollRatioChange={handleSidebarScrollRatio}
       highlightedBlockIndex={hoveredBlockIndex}
       onBlockHover={setHoveredBlockIndex}
+      onToggleSidebarCollapse={() => setBlockSidebarCollapsed(true)}
     />
   ) : null
 
@@ -413,7 +415,7 @@ export default function AdminIndex() {
 
   return (
     <DragProvider>
-      <AdminLayout sidebar={sidebar} panel={panel}>
+      <AdminLayout sidebar={sidebar} panel={panel} panelCollapsed={blockSidebarCollapsed} onTogglePanel={() => setBlockSidebarCollapsed(v => !v)}>
         {content}
       </AdminLayout>
       {thumbnailPickerPageId && (
