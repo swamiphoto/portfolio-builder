@@ -5,7 +5,10 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
       {/* Site sidebar — flush to edges */}
       <div
         className="w-56 flex-shrink-0 flex flex-col h-full overflow-hidden"
-        style={{ background: 'var(--panel)', borderRight: '1px solid var(--card-border)' }}
+        style={{
+          background: 'var(--panel)',
+          boxShadow: '2px 0 6px rgba(26,18,10,0.07), 6px 0 20px rgba(26,18,10,0.08)',
+        }}
       >
         {sidebar}
       </div>
