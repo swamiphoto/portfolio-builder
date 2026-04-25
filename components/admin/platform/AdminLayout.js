@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { ViewportProvider } from '../../../contexts/ViewportContext'
 
 // components/admin/platform/AdminLayout.js
 export default function AdminLayout({ sidebar, panel, children, panelCollapsed, onTogglePanel }) {
   const [viewport, setViewport] = useState('desktop')
+  const isMobile = viewport === 'mobile'
 
   return (
     <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--desk)' }}>
@@ -68,8 +70,8 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '3px 10px', borderRadius: 3,
               fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.06em',
-              color: viewport === 'desktop' ? 'var(--text-primary)' : 'var(--text-muted)',
-              background: viewport === 'desktop' ? 'rgba(26,18,10,0.07)' : 'transparent',
+              color: !isMobile ? 'var(--text-primary)' : 'var(--text-muted)',
+              background: !isMobile ? 'rgba(26,18,10,0.07)' : 'transparent',
               border: 'none', cursor: 'pointer', transition: 'all 0.15s',
             }}
           >
@@ -85,8 +87,8 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '3px 10px', borderRadius: 3,
               fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.06em',
-              color: viewport === 'mobile' ? 'var(--text-primary)' : 'var(--text-muted)',
-              background: viewport === 'mobile' ? 'rgba(26,18,10,0.07)' : 'transparent',
+              color: isMobile ? 'var(--text-primary)' : 'var(--text-muted)',
+              background: isMobile ? 'rgba(26,18,10,0.07)' : 'transparent',
               border: 'none', cursor: 'pointer', transition: 'all 0.15s',
             }}
           >
@@ -98,29 +100,26 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
           </button>
         </div>
 
-        {/* Preview card — floating, top + side margins, flows to bottom */}
-        <div
-          className="flex-1 overflow-hidden"
-          style={{
-            marginLeft: 32,
-            marginRight: 32,
-            borderTopLeftRadius: 4,
-            borderTopRightRadius: 4,
-            boxShadow: '0 0 0 1px rgba(26,18,10,0.06), 0 2px 6px rgba(26,18,10,0.06), 0 24px 48px -12px rgba(26,18,10,0.18)',
-            background: '#fbf9f4',
-          }}
-        >
-          <div className="h-full overflow-auto flex justify-center">
-            <div
-              className="h-full"
-              style={{
-                width: viewport === 'mobile' ? 390 : '100%',
-                transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                flexShrink: 0,
-              }}
-            >
+        {/* Preview area — centers the card in mobile mode */}
+        <div className="flex-1 flex justify-center overflow-hidden">
+          <div
+            className="h-full overflow-auto"
+            style={{
+              flex: isMobile ? '0 0 390px' : '1',
+              minWidth: 0,
+              marginLeft: isMobile ? 'auto' : 32,
+              marginRight: isMobile ? 'auto' : 32,
+              borderTopLeftRadius: 4,
+              borderTopRightRadius: 4,
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.06), 0 2px 6px rgba(26,18,10,0.06), 0 24px 48px -12px rgba(26,18,10,0.18)',
+              background: '#fbf9f4',
+              transition: 'flex 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: 'translateZ(0)',
+            }}
+          >
+            <ViewportProvider value={viewport}>
               {children}
-            </div>
+            </ViewportProvider>
           </div>
         </div>
       </div>

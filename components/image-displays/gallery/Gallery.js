@@ -4,6 +4,7 @@ import GalleryCover from "./gallery-cover/GalleryCover";
 import MasonryGallery from "./masonry-gallery/MasonryGallery";
 import StackedGallery from "./stacked-gallery/StackedGallery";
 import { useMediaQuery } from "react-responsive";
+import { useAdminViewport } from '../../../contexts/ViewportContext';
 import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
@@ -61,7 +62,9 @@ function PlaceholderText() {
 }
 
 const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover }) => {
-  const isSmallScreen = useMediaQuery({ query: "(max-width: 768px)" });
+  const adminViewport = useAdminViewport()
+  const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
+  const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
   const router = useRouter();
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
@@ -129,7 +132,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} />
                     : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
                   <WiggleLine />
                 </div>
@@ -142,7 +145,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} />
                     : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
                   <WiggleLine />
                 </div>
@@ -154,7 +157,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block"><PlaceholderGrid /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
-                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} />
                   <WiggleLine />
                 </div>
               );
