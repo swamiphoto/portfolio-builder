@@ -325,8 +325,11 @@ export default function PlatformSidebar({
 
             {/* Page title — serif */}
             <span
-              className="flex-1 truncate font-serif text-[15px] leading-snug"
-              style={{ color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+              className="flex-1 truncate text-[15px] leading-snug"
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+              }}
             >
               {page.title}
             </span>

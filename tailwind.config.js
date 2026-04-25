@@ -11,7 +11,7 @@ module.exports = {
       fontFamily: {
         sans: ["neue-haas-unica, sans-serif", "ui-sans-serif", "system-ui"],
         mono: ["Geist Mono", "monospace"],
-        serif: ['var(--font-cormorant)', '"Cormorant Garamond"', 'serif'],
+        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
         serif2: ["Muse"],
       },
       fontWeight: {
