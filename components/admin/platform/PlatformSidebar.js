@@ -392,21 +392,41 @@ export default function PlatformSidebar({
 
   return (
     <div className="flex flex-col h-full select-none text-sm">
-      {/* Header — Publish */}
-      <div className="px-3 pt-3 pb-3" style={{ borderBottom: '1px solid var(--card-border)' }}>
+      {/* Header — Avatar row + Publish */}
+      <div className="px-3 pt-2.5 pb-3" style={{ borderBottom: '1px solid var(--card-border)' }}>
+        {/* Top row: avatar + autosave */}
+        <div className="flex items-center justify-between mb-2.5">
+          <button
+            ref={accountAvatarRef}
+            onClick={() => setAccountOpen(v => !v)}
+            className="flex items-center gap-2 rounded transition-colors px-1 py-0.5 -mx-1"
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,18,10,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.background = ''}
+            title="Account"
+          >
+            <div
+              className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
+              style={{ background: '#1d1b17', color: '#f6f3ec' }}
+            >
+              {(username || 'U')[0].toUpperCase()}
+            </div>
+            {username && (
+              <span className="font-mono text-[9px] tracking-[0.04em] truncate max-w-[100px]" style={{ color: '#9e9788' }}>
+                {username}
+              </span>
+            )}
+          </button>
+          <SaveBadge status={saveStatus} />
+        </div>
+        {/* Publish button */}
         <button
           onClick={onPublish}
           className="w-full flex items-center justify-center gap-2 py-[9px] font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-90 active:opacity-75"
           style={{ background: '#1d1b17', color: '#f6f3ec', borderRadius: 2 }}
         >
-          <span
-            style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }}
-          />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }} />
           Publish
         </button>
-        <div className="mt-2 flex justify-center">
-          <SaveBadge status={saveStatus} />
-        </div>
       </div>
 
       {/* Pages */}
@@ -442,12 +462,11 @@ export default function PlatformSidebar({
         </div>
       </div>
 
-      {/* Footer — Library · Settings · Avatar */}
+      {/* Footer — Library · Settings */}
       <div
         className="flex-shrink-0 flex items-stretch"
         style={{ borderTop: '1px solid var(--card-border)', background: '#e6e0d4' }}
       >
-        {/* Library */}
         <button
           onClick={onShowLibrary}
           className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
@@ -462,7 +481,6 @@ export default function PlatformSidebar({
           <span className="font-mono text-[9px] uppercase tracking-[0.1em]">Library</span>
         </button>
 
-        {/* Settings */}
         <button
           ref={siteSettingsGearRef}
           onClick={() => setSiteSettingsOpen(v => !v)}
@@ -477,24 +495,6 @@ export default function PlatformSidebar({
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <span className="font-mono text-[9px] uppercase tracking-[0.1em]">Settings</span>
-        </button>
-
-        {/* Avatar */}
-        <button
-          ref={accountAvatarRef}
-          onClick={() => setAccountOpen(v => !v)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
-          style={{ color: '#6e685c' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,18,10,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.background = ''}
-          title="Account"
-        >
-          <div
-            className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold"
-            style={{ background: '#1d1b17', color: '#f6f3ec' }}
-          >
-            {(username || 'U')[0].toUpperCase()}
-          </div>
         </button>
       </div>
 
