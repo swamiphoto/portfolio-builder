@@ -60,20 +60,20 @@ export default function PageSettingsPanel({ page, onChange }) {
         {expanded && (
           <div className="px-3 pb-3 pt-0 space-y-4">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Label</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Label</div>
               <input
-                className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
+                className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                 placeholder="Link label"
                 value={page.title || ''}
                 onChange={(e) => update({ title: e.target.value })}
               />
             </div>
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>URL</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>URL</div>
               <input
                 type="url"
                 autoFocus={!page.url}
-                className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
+                className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                 placeholder="https://…"
                 value={page.url || ''}
                 onChange={(e) => update({ url: e.target.value })}
@@ -131,9 +131,9 @@ export default function PageSettingsPanel({ page, onChange }) {
         <div className="px-3 pb-3 pt-0 space-y-4">
           {/* Title */}
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Title</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Title</div>
             <input
-              className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
+              className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
               placeholder="Page title"
               value={page.title || ''}
               onChange={(e) => updateTitle(e.target.value)}
@@ -142,10 +142,10 @@ export default function PageSettingsPanel({ page, onChange }) {
 
           {/* Description */}
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Description</div>
             <AutoGrowTextarea
-              className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
-              placeholder="Optional"
+              className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
+              placeholder="A few words about this page…"
               maxHeight={160}
               value={page.description || ''}
               onChange={(e) => update({ description: e.target.value })}

@@ -61,7 +61,7 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick }) => {
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
   const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
@@ -119,10 +119,10 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {
-          const hoverProps = onBlockHover ? {
-            onMouseEnter: () => onBlockHover(index),
-            onMouseLeave: () => onBlockHover(null),
-          } : {};
+          const hoverProps = {
+            ...(onBlockHover ? { onMouseEnter: () => onBlockHover(index), onMouseLeave: () => onBlockHover(null) } : {}),
+            ...(onBlockClick ? { onClick: () => onBlockClick(index), style: { cursor: 'pointer' } } : {}),
+          };
 
           switch (block.type) {
             case "photos": {

@@ -13,6 +13,7 @@ module.exports = {
         mono: ["Geist Mono", "monospace"],
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
         serif2: ["Muse"],
+        fraunces: ['"Fraunces"', 'Georgia', 'serif'],
       },
       fontWeight: {
         normal: 400,

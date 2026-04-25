@@ -26,34 +26,28 @@ export default function AdminIndex() {
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
   const [assetPickerTarget, setAssetPickerTarget] = useState(null) // 'logo' | 'favicon' | null
   const [blockSidebarCollapsed, setBlockSidebarCollapsed] = useState(false)
+  const [pageSidebarCollapsed, setPageSidebarCollapsed] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState(null)
+  const [lastPublishedAt, setLastPublishedAt] = useState(null)
   const [previewViewport, setPreviewViewport] = useState('desktop') // 'desktop' | 'mobile'
   const autosaveTimer = useRef(null)
 
   // Hover highlight sync
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null)
 
-  // Scroll sync — proportional ratio between sidebar and preview
+  // Click-based scroll sync between sidebar blocks and preview
   const previewContainerRef = useRef(null)
   const blockBuilderRef = useRef(null)
-  const syncingRef = useRef(false)
 
-  const handlePreviewScroll = useCallback(() => {
-    if (syncingRef.current || !previewContainerRef.current || !blockBuilderRef.current) return
-    const el = previewContainerRef.current
-    const max = el.scrollHeight - el.clientHeight
-    if (max <= 0) return
-    const ratio = el.scrollTop / max
-    syncingRef.current = true
-    blockBuilderRef.current.scrollToRatio(ratio)
-    setTimeout(() => { syncingRef.current = false }, 100)
+  const handleScrollPreviewToBlock = useCallback((index) => {
+    if (!previewContainerRef.current) return
+    const block = previewContainerRef.current.querySelector(`[data-block-index="${index}"]`)
+    if (!block) return
+    block.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [])
 
-  const handleSidebarScrollRatio = useCallback((ratio) => {
-    if (syncingRef.current || !previewContainerRef.current) return
-    const el = previewContainerRef.current
-    syncingRef.current = true
-    el.scrollTop = ratio * Math.max(0, el.scrollHeight - el.clientHeight)
-    setTimeout(() => { syncingRef.current = false }, 100)
+  const handleScrollSidebarToBlock = useCallback((index) => {
+    blockBuilderRef.current?.scrollToBlock(index)
   }, [])
 
   useEffect(() => {
@@ -118,6 +112,7 @@ export default function AdminIndex() {
       })
       if (!res.ok) throw new Error(`Save failed: ${res.status}`)
       setSaveStatus('saved')
+      setLastSavedAt(Date.now())
       setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
       console.error('Autosave failed:', err)
@@ -280,7 +275,7 @@ export default function AdminIndex() {
       selectedPageId={selectedPageId}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
-      onPublish={() => { setHasUnpublishedChanges(false) /* TODO: publish flow */ }}
+      onPublish={() => { setHasUnpublishedChanges(false); setLastPublishedAt(Date.now()) }}
       hasUnpublishedChanges={hasUnpublishedChanges}
       libraryActive={showLibrary}
       username={session?.user?.username}
@@ -297,6 +292,9 @@ export default function AdminIndex() {
       onPickShareSquare={() => setAssetPickerTarget('shareSquare')}
       onViewCover={handleViewCover}
       onDisableCover={handleDisableCover}
+      onCollapse={() => setPageSidebarCollapsed(true)}
+      lastSavedAt={lastSavedAt}
+      lastPublishedAt={lastPublishedAt}
     />
   )
 
@@ -313,7 +311,7 @@ export default function AdminIndex() {
       onUpdateLibraryCaption={handleUpdateLibraryCaption}
       username={session?.user?.username}
       blockBuilderRef={blockBuilderRef}
-      onScrollRatioChange={handleSidebarScrollRatio}
+      onScrollPreviewToBlock={handleScrollPreviewToBlock}
       highlightedBlockIndex={hoveredBlockIndex}
       onBlockHover={setHoveredBlockIndex}
       onToggleSidebarCollapse={() => setBlockSidebarCollapsed(true)}
@@ -385,8 +383,7 @@ export default function AdminIndex() {
             <div className="flex-1 min-h-0 flex justify-center">
               <div
                 ref={previewContainerRef}
-                onScroll={handlePreviewScroll}
-                className="overflow-y-auto w-full"
+                className="overflow-y-auto w-full scroll-quiet"
               >
                 <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
                 <PageCover
@@ -414,6 +411,7 @@ export default function AdminIndex() {
                   onChildPageClick={handleSelectPage}
                   highlightedBlockIndex={hoveredBlockIndex}
                   onBlockHover={setHoveredBlockIndex}
+                  onBlockClick={handleScrollSidebarToBlock}
                 />
               </div>
             </div>
@@ -431,7 +429,14 @@ export default function AdminIndex() {
 
   return (
     <DragProvider>
-      <AdminLayout sidebar={sidebar} panel={panel} panelCollapsed={blockSidebarCollapsed} onTogglePanel={() => setBlockSidebarCollapsed(v => !v)}>
+      <AdminLayout
+        sidebar={sidebar} panel={panel}
+        panelCollapsed={blockSidebarCollapsed} onTogglePanel={() => setBlockSidebarCollapsed(v => !v)}
+        sidebarCollapsed={pageSidebarCollapsed} onToggleSidebar={() => setPageSidebarCollapsed(v => !v)}
+        panelLabel={selectedPage ? `${selectedPage.title} Blocks` : 'Blocks'}
+        username={session?.user?.username}
+        pagePath={selectedPage ? `/${selectedPage.slug || selectedPage.id}` : ''}
+      >
         {content}
       </AdminLayout>
       {thumbnailPickerPageId && (

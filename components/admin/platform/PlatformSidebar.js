@@ -8,11 +8,42 @@ import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
 
-function SaveBadge({ status }) {
-  if (status === 'saving') return <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Saving…</span>
-  if (status === 'saved') return <span className="text-xs" style={{ color: 'var(--sepia-accent)' }}>Saved</span>
-  if (status === 'error') return <span className="text-xs text-red-500">Save failed</span>
-  return null
+function countPagePhotos(page) {
+  if (!page.blocks) return 0
+  return page.blocks.reduce((sum, block) => {
+    if (block.type === 'photo') return sum + (block.imageUrl ? 1 : 0)
+    if (['photos', 'stacked', 'masonry'].includes(block.type)) {
+      const imgs = block.images || block.imageUrls || []
+      return sum + imgs.length
+    }
+    return sum
+  }, 0)
+}
+
+function relativeTime(ts) {
+  if (!ts) return null
+  const mins = Math.floor((Date.now() - ts) / 60000)
+  if (mins < 1) return 'just now'
+  if (mins === 1) return '1 min ago'
+  return `${mins} min ago`
+}
+
+function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublishedAt }) {
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => tick(n => n + 1), 30000)
+    return () => clearInterval(id)
+  }, [])
+
+  const base = { fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.04em', textAlign: 'center', marginBottom: 7 }
+
+  if (saveStatus === 'saving') return <div style={{ ...base, color: '#9e9788' }}>Saving…</div>
+  if (saveStatus === 'error') return <div style={{ ...base, color: '#c0392b' }}>Save failed</div>
+  if (saveStatus === 'saved') return <div style={{ ...base, color: '#7a9e7e' }}>Saved</div>
+  if (hasUnpublishedChanges && lastSavedAt) return <div style={{ ...base, color: '#9e9788' }}>Changes saved {relativeTime(lastSavedAt)}</div>
+  if (!hasUnpublishedChanges && lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
+  if (lastSavedAt) return <div style={{ ...base, color: '#9e9788' }}>Auto-saved {relativeTime(lastSavedAt)}</div>
+  return <div style={{ ...base, color: 'transparent' }}>·</div>
 }
 
 export default function PlatformSidebar({
@@ -39,6 +70,9 @@ export default function PlatformSidebar({
   onPickShareSquare,
   onViewCover,
   onDisableCover,
+  onCollapse,
+  lastSavedAt,
+  lastPublishedAt,
 }) {
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
@@ -304,7 +338,7 @@ export default function PlatformSidebar({
               background: isSelected ? '#f6f3ec' : undefined,
               boxShadow: isSelected ? '0 1px 3px rgba(26,18,10,0.06)' : undefined,
             }}
-            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
+            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(180,140,70,0.08)' }}
             onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
           >
             {/* Icon — page type normally, drag handle on hover */}
@@ -337,14 +371,27 @@ export default function PlatformSidebar({
             {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
-            {/* ... menu — appears on hover */}
-            <button
-              onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-              className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-opacity duration-[120ms] text-sm leading-none"
-              style={{ color: '#9e9788' }}
-            >
-              ···
-            </button>
+            {/* Count + menu share the same slot at the right edge */}
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 20, height: 20 }}>
+              {!isLink && !isPageNestTarget && !isImageDropTarget && (() => {
+                const count = countPagePhotos(page)
+                return count > 0 ? (
+                  <span
+                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms]"
+                    style={{ fontFamily: 'monospace', fontSize: 10, color: '#b0a490' }}
+                  >
+                    {count}
+                  </span>
+                ) : null
+              })()}
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] text-sm leading-none"
+                style={{ color: '#9e9788' }}
+              >
+                ···
+              </button>
+            </div>
           </div>
         )}
 
@@ -396,66 +443,93 @@ export default function PlatformSidebar({
 
   return (
     <div className="flex flex-col h-full select-none text-sm">
-      {/* Header — Site switcher + Preview / Publish */}
-      <div style={{ padding: '12px 12px 10px', borderBottom: '1px solid #d8d2c3' }}>
-        {/* Site switcher card */}
-        <button
-          ref={accountAvatarRef}
-          onClick={() => setAccountOpen(v => !v)}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '6px 8px', background: '#f6f3ec', border: '1px solid #d8d2c3', borderRadius: 3, cursor: 'pointer' }}
-          title="Account"
-        >
-          {avatarImage ? (
-            <img src={avatarImage} alt="" style={{ width: 26, height: 26, flexShrink: 0, objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: 26, height: 26, flexShrink: 0, background: '#1d1b17', color: '#f6f3ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 14, fontWeight: 500, fontStyle: 'italic' }}>
-              {(displayName || username || 'U')[0].toUpperCase()}
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {/* Header */}
+      <div style={{ padding: '12px 14px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          {/* Avatar — click for account dropdown */}
+          <button
+            ref={accountAvatarRef}
+            onClick={() => setAccountOpen(v => !v)}
+            title="Account"
+            style={{ flexShrink: 0, padding: 0, border: 'none', background: 'none', cursor: 'pointer', alignSelf: 'center' }}
+          >
+            {avatarImage ? (
+              <img src={avatarImage} alt="" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#1d1b17', color: '#f6f3ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Fraunces', Georgia, serif", fontSize: 14, fontWeight: 400 }}>
+                {(displayName || username || 'U')[0].toUpperCase()}
+              </div>
+            )}
+          </button>
+
+          {/* Name + username stacked */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 16, fontWeight: 400, color: '#1d1b17', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {displayName || username || 'My Portfolio'}
             </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#6e685c', letterSpacing: '0.06em', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {username ? `${username}.sepia.photo` : ''}
-            </div>
+            {username && (
+              <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#9e9788', letterSpacing: '0.04em', marginTop: 3, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                @{username}
+              </div>
+            )}
           </div>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9e9788" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <path d="M6 9l6 6 6-6" />
+
+          {/* Settings + Notifications + Collapse */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+            <button
+              title="Notifications"
+              style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+              </svg>
+            </button>
+            <button
+              ref={siteSettingsGearRef}
+              onClick={() => setSiteSettingsOpen(v => !v)}
+              title="Site settings"
+              style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            {onCollapse && (
+              <button
+                onClick={onCollapse}
+                title="Collapse panel"
+                style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              >
+                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 19L4 12l7-7" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Library — top of content */}
+      <div style={{ padding: '8px 12px', borderBottom: '1px solid #d8d2c3' }}>
+        <button
+          onClick={onShowLibrary}
+          className="flex items-center justify-center gap-1.5 w-full py-1.5 transition-colors"
+          style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: 'var(--text-secondary)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        >
+          <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
+          <span>View Library</span>
         </button>
-
-        {/* Preview + Publish buttons */}
-        <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-          <button
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 10px', border: '1px solid #9e9788', borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3a362f', background: 'transparent', cursor: 'pointer' }}
-          >
-            Preview
-          </button>
-          <button
-            onClick={hasUnpublishedChanges ? onPublish : undefined}
-            disabled={!hasUnpublishedChanges}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', background: '#1d1b17', color: '#f6f3ec', border: 0, borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', cursor: hasUnpublishedChanges ? 'pointer' : 'default', opacity: hasUnpublishedChanges ? 1 : 0.45 }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: hasUnpublishedChanges ? '#e8925a' : '#b4c49f', flexShrink: 0, display: 'inline-block', transition: 'background 0.3s' }} />
-            Publish
-          </button>
-        </div>
-
-        {/* Published · Autosave status — spec: 9.5px mono centered, gap 6 */}
-        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, letterSpacing: '0.06em', color: '#9e9788' }}>
-          {saveStatus === 'saving' ? (
-            <span style={{ color: '#9e9788' }}>Saving…</span>
-          ) : saveStatus === 'error' ? (
-            <span style={{ color: '#c0392b' }}>Save failed</span>
-          ) : (
-            <>
-              <span style={{ color: '#6e685c' }}>Published</span>
-              <span>·</span>
-              <span>Autosaved 2m ago</span>
-            </>
-          )}
-        </div>
       </div>
 
       {/* Pages */}
@@ -467,7 +541,7 @@ export default function PlatformSidebar({
           droppableId="main-nav"
         />
         <SidebarSection
-          label="Other Pages"
+          label="Not in nav"
           pages={flattenForOtherPages(pages).filter(p => p.id !== 'home')}
           renderRow={renderPageRow}
           droppableId="other-pages"
@@ -477,10 +551,12 @@ export default function PlatformSidebar({
         <div className="relative mx-2 mt-1" ref={addMenuRef}>
           <button
             onClick={() => setAddMenuOpen(v => !v)}
-            className="flex items-center w-full px-3 py-1.5 text-sm rounded hover:bg-[#ede8e0]"
-            style={{ color: 'var(--text-muted)' }}
+            className="w-full py-2 transition-colors"
+            style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: '0.05em', borderRadius: 4, border: '1px dashed rgba(160,140,110,0.4)', background: 'transparent', color: 'var(--text-muted)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
-            <span className="mr-1.5">+</span> Add
+            + Add Page
           </button>
           {addMenuOpen && (
             <div className="absolute left-0 bottom-full mb-1 bg-white rounded-lg shadow-popup z-20 py-1 w-36" style={{ border: '1px solid var(--border)' }}>
@@ -491,40 +567,48 @@ export default function PlatformSidebar({
         </div>
       </div>
 
-      {/* Footer — Library · Settings */}
+      {/* Footer — Preview · Publish */}
       <div
-        className="flex-shrink-0 flex items-stretch"
-        style={{ borderTop: '1px solid var(--card-border)', background: '#e6e0d4' }}
+        className="flex-shrink-0"
+        style={{ borderTop: '1px solid var(--card-border)', background: '#ede8e0', padding: '10px 12px 12px' }}
       >
-        <button
-          onClick={onShowLibrary}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
-          style={{ color: '#6e685c' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,18,10,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.background = ''}
-          title="Library"
-        >
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ opacity: 0.75 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-          </svg>
-          <span className="font-mono text-[9px] uppercase tracking-[0.1em]">Library</span>
-        </button>
+        <StatusLine saveStatus={saveStatus} hasUnpublishedChanges={hasUnpublishedChanges} lastSavedAt={lastSavedAt} lastPublishedAt={lastPublishedAt} />
+        <div className="flex items-center gap-2">
+          <button
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors"
+            style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: 'var(--text-secondary)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            onClick={() => { if (username) window.open(`/sites/${username}`, '_blank') }}
+            title="Preview site"
+          >
+            <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 16 16">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2 8a6 6 0 1012 0A6 6 0 002 8z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 2c-1.5 2-2.5 3.8-2.5 6s1 4 2.5 6" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 2c1.5 2 2.5 3.8 2.5 6S9.5 12 8 14" />
+              <path strokeLinecap="round" d="M2.5 6.5h11M2.5 9.5h11" />
+            </svg>
+            Preview
+          </button>
 
-        <button
-          ref={siteSettingsGearRef}
-          onClick={() => setSiteSettingsOpen(v => !v)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
-          style={{ color: '#6e685c' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,18,10,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.background = ''}
-          title="Site settings"
-        >
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ opacity: 0.75 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span className="font-mono text-[9px] uppercase tracking-[0.1em]">Settings</span>
-        </button>
+          {onPublish && (
+            <button
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors"
+              style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: 'none', background: hasUnpublishedChanges ? '#2c2416' : 'rgba(44,36,22,0.12)', color: hasUnpublishedChanges ? '#f6f3ec' : 'var(--text-muted)', cursor: hasUnpublishedChanges ? 'pointer' : 'default' }}
+              onMouseEnter={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#3d3020' }}
+              onMouseLeave={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#2c2416' }}
+              onClick={hasUnpublishedChanges ? onPublish : undefined}
+              title={hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes'}
+            >
+              <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 16 16">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V3M5 6l3-3 3 3" />
+                <path strokeLinecap="round" d="M3 13h10" />
+              </svg>
+              Publish
+            </button>
+          )}
+        </div>
+
       </div>
 
       {/* Drag ghost */}

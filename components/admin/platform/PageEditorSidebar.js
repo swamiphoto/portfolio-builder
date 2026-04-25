@@ -33,7 +33,7 @@ function galleryToPage(page, gallery) {
   }
 }
 
-export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onBack, onMoveBlockToPage, onUpdateLibraryCaption, username, blockBuilderRef, onScrollRatioChange, highlightedBlockIndex, onBlockHover, onToggleSidebarCollapse }) {
+export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onBack, onMoveBlockToPage, onUpdateLibraryCaption, username, blockBuilderRef, onScrollPreviewToBlock, highlightedBlockIndex, onBlockHover, onToggleSidebarCollapse }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
@@ -181,7 +181,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         ref={blockBuilderRef}
         gallery={gallery}
         onChange={handleGalleryChange}
-        onScrollRatioChange={onScrollRatioChange}
+        onScrollPreviewToBlock={onScrollPreviewToBlock}
         highlightedBlockIndex={highlightedBlockIndex}
         onBlockHover={onBlockHover}
         onPublish={null}

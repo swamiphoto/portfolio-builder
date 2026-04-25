@@ -17,7 +17,7 @@ const TYPE_LABELS = {
   "page-gallery": "Page Gallery",
 };
 
-const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug text-[#2c2416]";
+const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug text-[#2c2416]";
 
 function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
   const ref = useRef(null);
@@ -109,6 +109,8 @@ export default function BlockCard({
   onUpdateLibraryCaption,
   highlighted,
   expandedOverride,
+  onTitleClick,
+  glowing,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -210,7 +212,7 @@ export default function BlockCard({
 
   return (
     <div
-      className="overflow-hidden mb-1.5"
+      className="relative overflow-hidden mb-1.5"
       style={{
         background: 'var(--card)',
         borderRadius: 4,
@@ -221,6 +223,13 @@ export default function BlockCard({
       onDragLeave={isPhotoBlock ? handleDragLeave : undefined}
       onDrop={isPhotoBlock ? handleDrop : undefined}
     >
+      {glowing && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ animation: 'blockGlow 3.5s linear forwards', zIndex: 10, borderRadius: 4 }}
+        />
+      )}
+
       {/* Card header */}
       <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-2">
         {block.type === 'page' ? (
@@ -242,8 +251,8 @@ export default function BlockCard({
 
         <button
           className="text-xs font-semibold tracking-wide flex-1 text-left transition-colors"
-          style={{ color: 'var(--text-secondary)' }}
-          onClick={() => setExpanded((v) => !v)}
+          style={{ color: 'var(--text-secondary)', cursor: onTitleClick ? 'pointer' : 'default' }}
+          onClick={onTitleClick || undefined}
         >
           {TYPE_LABELS[block.type] || block.type}
         </button>
@@ -254,7 +263,7 @@ export default function BlockCard({
             <button
               onClick={onAddPhotos}
               title="Add photos"
-              className="w-6 h-6 flex items-center justify-center transition-colors text-base leading-none"
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-base leading-none"
               style={{ color: 'var(--text-muted)' }}
             >
               +
@@ -267,7 +276,7 @@ export default function BlockCard({
                 ref={designBtnRef}
                 onClick={() => setShowDesign((v) => !v)}
                 title="Design"
-                className="w-6 h-6 flex items-center justify-center transition-colors"
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
                 style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
               >
                 <PaintbrushIcon />
@@ -286,7 +295,7 @@ export default function BlockCard({
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu((v) => !v)}
-              className="w-6 h-6 flex items-center justify-center transition-colors text-sm leading-none"
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-sm leading-none"
               style={{ color: 'var(--text-muted)' }}
             >
               ⋯
@@ -306,7 +315,7 @@ export default function BlockCard({
 
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="transition-colors flex-shrink-0"
+          className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
           style={{ color: 'var(--text-muted)' }}
         >
           <svg

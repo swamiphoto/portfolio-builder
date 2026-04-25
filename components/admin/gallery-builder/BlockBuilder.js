@@ -52,6 +52,8 @@ function InsertionZone({ onInsert }) {
           boxShadow: '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6)',
           color: 'var(--text-secondary)',
         }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 8px rgba(220,165,45,0.35)' }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6)' }}
       >
         <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
           <path d="M4.5 1.5v6M1.5 4.5h6" />
@@ -88,7 +90,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   assetsByUrl,
   onUpdateLibraryCaption,
   className,
-  onScrollRatioChange,
+  onScrollPreviewToBlock,
   highlightedBlockIndex,
   onBlockHover,
 }, ref) {
@@ -98,30 +100,23 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const [infoExpanded, setInfoExpanded] = useState(true);
   const [expandedOverride, setExpandedOverride] = useState(null);
   const [allExpanded, setAllExpanded] = useState(true);
+  const [glowingBlockIndex, setGlowingBlockIndex] = useState(null);
 
   const blocksContainerRef = useRef(null);
-  const isSyncingRef = useRef(false);
 
   const { startDrag, endDrag, dropTargetPageId } = useDrag()
 
-  // Expose scrollToRatio so parent can drive sidebar scroll from preview
   useImperativeHandle(ref, () => ({
-    scrollToRatio(ratio) {
+    scrollToBlock(index) {
       const el = blocksContainerRef.current;
       if (!el) return;
-      isSyncingRef.current = true;
-      el.scrollTop = ratio * Math.max(0, el.scrollHeight - el.clientHeight);
-      setTimeout(() => { isSyncingRef.current = false; }, 100);
+      const card = el.querySelector(`[data-block-index="${index}"]`);
+      if (!card) return;
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setGlowingBlockIndex(index);
+      setTimeout(() => setGlowingBlockIndex(null), 3500);
     }
   }), []);
-
-  const handleBlocksScroll = useCallback(() => {
-    if (isSyncingRef.current || !onScrollRatioChange || !blocksContainerRef.current) return;
-    const el = blocksContainerRef.current;
-    const max = el.scrollHeight - el.clientHeight;
-    if (max <= 0) return;
-    onScrollRatioChange(el.scrollTop / max);
-  }, [onScrollRatioChange]);
 
   const updateField = (key, value) => onChange({ ...gallery, [key]: value });
 
@@ -266,7 +261,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       )}
 
       {/* All blocks — scrollable */}
-      <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
+      <div ref={blocksContainerRef} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
@@ -290,28 +285,28 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             {infoExpanded && (
               <div className="px-3 pb-3 pt-3 space-y-4">
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Name</div>
                   <input
-                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
+                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder={namePlaceholder}
                     value={gallery.name || ""}
                     onChange={(e) => updateField("name", e.target.value)}
                   />
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Slug</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Slug</div>
                   <input
-                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] font-mono outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
+                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] font-mono outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder="slug"
                     value={gallery.slug || ""}
                     onChange={(e) => updateField("slug", e.target.value)}
                   />
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Description</div>
                   <AutoGrowTextarea
-                    className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full resize-none"
-                    placeholder="Description"
+                    className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full resize-none"
+                    placeholder="A brief description…"
                     maxHeight={120}
                     value={gallery.description || ""}
                     onChange={(e) => updateField("description", e.target.value)}
@@ -409,6 +404,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   <div
                     key={`slot-${index}`}
                     className="rounded-lg"
+                    data-block-index={index}
                   >
                     <InsertionZone
                       onInsert={(e) => {
@@ -440,6 +436,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onUpdateLibraryCaption={onUpdateLibraryCaption}
                             highlighted={highlightedBlockIndex === index}
                             expandedOverride={expandedOverride}
+                            onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
+                            glowing={glowingBlockIndex === index}
                           />
                         </div>
                       )}
@@ -466,26 +464,28 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           className="w-full text-xs py-2.5 mt-1 transition-colors"
           style={{
             fontFamily: 'monospace',
-            letterSpacing: '0.04em',
+            letterSpacing: '0.05em',
             borderRadius: 4,
             border: '1px dashed rgba(160,140,110,0.4)',
             background: 'transparent',
             color: 'var(--text-muted)',
           }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          + add block
+          + Add Block
         </button>
 
       </div>
 
-      {/* Footer: autosave + publish */}
-      <div className="px-3 py-2 flex-shrink-0 flex items-center gap-2" style={{ borderTop: '1px solid var(--border)' }}>
-        <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
-          {autosaveStatus === "saving" && "Saving…"}
-          {autosaveStatus === "saved" && "Saved"}
-          {autosaveStatus === "unsaved" && "Unsaved"}
-        </span>
-        {onPublish && (
+      {/* Footer: autosave + publish — only when publish action exists */}
+      {onPublish && (
+        <div className="px-3 py-2 flex-shrink-0 flex items-center gap-2" style={{ borderTop: '1px solid var(--border)' }}>
+          <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
+            {autosaveStatus === "saving" && "Saving…"}
+            {autosaveStatus === "saved" && "Saved"}
+            {autosaveStatus === "unsaved" && "Unsaved"}
+          </span>
           <button
             onClick={onPublish}
             disabled={publishing || (isPublished && !hasDraft)}
@@ -494,8 +494,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           >
             {publishing ? "Publishing…" : "Publish"}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {showBlockMenu && (
         <BlockTypeMenu
