@@ -24,6 +24,7 @@ export default function PlatformSidebar({
   onSelectPage,
   onShowLibrary,
   onPublish,
+  hasUnpublishedChanges,
   username,
   displayName,
   avatarImage,
@@ -426,15 +427,16 @@ export default function PlatformSidebar({
         {/* Preview + Publish buttons */}
         <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
           <button
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 10px', border: '1.5px solid #3a362f', borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3a362f', background: 'transparent', cursor: 'pointer' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 10px', border: '1px solid #9e9788', borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3a362f', background: 'transparent', cursor: 'pointer' }}
           >
             Preview
           </button>
           <button
-            onClick={onPublish}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', background: '#1d1b17', color: '#f6f3ec', border: 0, borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', cursor: 'pointer' }}
+            onClick={hasUnpublishedChanges ? onPublish : undefined}
+            disabled={!hasUnpublishedChanges}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', background: '#1d1b17', color: '#f6f3ec', border: 0, borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', cursor: hasUnpublishedChanges ? 'pointer' : 'default', opacity: hasUnpublishedChanges ? 1 : 0.45 }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }} />
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: hasUnpublishedChanges ? '#e8925a' : '#b4c49f', flexShrink: 0, display: 'inline-block', transition: 'background 0.3s' }} />
             Publish
           </button>
         </div>

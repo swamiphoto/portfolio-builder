@@ -20,6 +20,7 @@ export default function AdminIndex() {
   const [libraryConfig, setLibraryConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('idle')
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false)
   const [selectedPageId, setSelectedPageId] = useState(null)
   const [showLibrary, setShowLibrary] = useState(false)
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
@@ -126,6 +127,7 @@ export default function AdminIndex() {
   }, [])
 
   const updateConfig = useCallback((updater) => {
+    setHasUnpublishedChanges(true)
     setSiteConfig(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
       clearTimeout(autosaveTimer.current)
@@ -278,7 +280,8 @@ export default function AdminIndex() {
       selectedPageId={selectedPageId}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
-      onPublish={() => {/* TODO: publish flow */}}
+      onPublish={() => { setHasUnpublishedChanges(false) /* TODO: publish flow */ }}
+      hasUnpublishedChanges={hasUnpublishedChanges}
       libraryActive={showLibrary}
       username={session?.user?.username}
       email={session?.user?.email}
