@@ -286,7 +286,7 @@ export default function PlatformSidebar({
               if (didDragRef.current || pageDragRef.current) return
               if (!isLink) onSelectPage?.(page.id)
             }}
-            className={`group relative flex items-center gap-[10px] py-[8px] mx-2 cursor-pointer transition-colors duration-[120ms] ${
+            className={`group relative flex items-center gap-[10px] py-[5px] mx-2 cursor-pointer transition-colors duration-[120ms] ${
               isPageNestTarget
                 ? 'ring-1 ring-blue-400 bg-blue-50'
                 : isImageDropTarget
@@ -329,11 +329,6 @@ export default function PlatformSidebar({
             </span>
 
             {/* Right side badges */}
-            {isHome && !isPageNestTarget && !isImageDropTarget && (
-              <span className="font-mono uppercase flex-shrink-0 group-hover:opacity-0 transition-opacity duration-[120ms]" style={{ fontSize: 9, letterSpacing: '0.08em', color: '#9e9788' }}>
-                HOME
-              </span>
-            )}
             {isLink && <span className="flex-shrink-0" style={{ fontSize: 10, color: '#9e9788' }}>↗</span>}
             {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
