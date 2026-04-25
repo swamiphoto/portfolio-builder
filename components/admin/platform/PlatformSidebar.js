@@ -372,7 +372,7 @@ export default function PlatformSidebar({
                 <input
                   type="url"
                   className="w-full text-sm pb-1 outline-none bg-transparent focus:border-[#8b6f47]"
-                  style={{ borderBottom: '1px solid var(--border)', '--tw-placeholder-opacity': '1' }}
+                  style={{ borderBottom: '1px solid var(--border)' }}
                   placeholder="https://…"
                   value={page.url || ''}
                   onChange={e => onConfigChange(prev => ({ ...prev, pages: prev.pages.map(p => p.id === page.id ? { ...p, url: e.target.value } : p) }))}
@@ -464,7 +464,7 @@ export default function PlatformSidebar({
       <div style={{ borderTop: '1px solid var(--border)' }} className="flex-shrink-0">
         <button
           onClick={onShowLibrary}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-[#ede8e0]"
           style={{ color: 'var(--text-secondary)' }}
         >
           <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -478,8 +478,7 @@ export default function PlatformSidebar({
       {pageDrag && ghostPos && (
         <div
           className="fixed pointer-events-none z-[9999] bg-white shadow-lg px-3 py-1.5 rounded text-sm"
-          style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-          style={{ left: ghostPos.x + 14, top: ghostPos.y - 10 }}
+          style={{ border: '1px solid var(--border)', color: 'var(--text-primary)', left: ghostPos.x + 14, top: ghostPos.y - 10 }}
         >
           {pageDrag.title}
         </div>
