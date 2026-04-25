@@ -16,7 +16,7 @@ const TYPE_LABELS = {
   "page-gallery": "Page Gallery",
 };
 
-const INPUT = "w-full border-b border-stone-200 pb-1.5 text-sm text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent";
+const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug text-[#2c2416]";
 
 function PaintbrushIcon() {
   return (
@@ -181,7 +181,8 @@ export default function BlockCard({
 
   return (
     <div
-      className={`border border-stone-200 rounded-lg shadow-sm group/card mb-1.5 transition-colors duration-150 ${highlighted ? 'bg-stone-100' : 'bg-white'}`}
+      className="rounded-xl overflow-hidden mb-1.5 group/card transition-colors duration-150"
+      style={{ background: highlighted ? 'var(--panel-hover)' : 'var(--card)', border: '1px solid var(--card-border)' }}
       onDragEnter={isPhotoBlock ? (e) => { e.preventDefault(); setGridDropHover(true); } : undefined}
       onDragOver={isPhotoBlock ? handleDragOver : undefined}
       onDragLeave={isPhotoBlock ? handleDragLeave : undefined}
@@ -191,13 +192,15 @@ export default function BlockCard({
       <div className="flex items-center gap-1.5 px-3 py-2.5">
         <span
           {...dragHandleProps}
-          className="text-stone-300 cursor-grab hover:text-stone-500 text-sm leading-none select-none flex-shrink-0 transition-colors"
+          className="cursor-grab text-sm leading-none select-none flex-shrink-0 transition-colors"
+          style={{ color: 'var(--text-muted)' }}
         >
           ⠿
         </span>
 
         <button
-          className="text-xs font-semibold text-stone-600 tracking-wide flex-1 text-left hover:text-stone-900 transition-colors"
+          className="text-xs font-semibold tracking-wide flex-1 text-left transition-colors"
+          style={{ color: 'var(--text-primary)' }}
           onClick={() => setExpanded((v) => !v)}
         >
           {TYPE_LABELS[block.type] || block.type}
@@ -209,7 +212,8 @@ export default function BlockCard({
             <button
               onClick={onAddPhotos}
               title="Add photos"
-              className="w-6 h-6 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors text-base leading-none"
+              className="w-6 h-6 flex items-center justify-center transition-colors text-base leading-none"
+              style={{ color: 'var(--text-muted)' }}
             >
               +
             </button>
@@ -221,9 +225,8 @@ export default function BlockCard({
                 ref={designBtnRef}
                 onClick={() => setShowDesign((v) => !v)}
                 title="Design"
-                className={`w-6 h-6 flex items-center justify-center transition-colors ${
-                  showDesign ? "text-stone-800" : "text-stone-400 hover:text-stone-700"
-                }`}
+                className="w-6 h-6 flex items-center justify-center transition-colors"
+                style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
               >
                 <PaintbrushIcon />
               </button>
@@ -241,15 +244,16 @@ export default function BlockCard({
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu((v) => !v)}
-              className="w-6 h-6 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors text-sm leading-none"
+              className="w-6 h-6 flex items-center justify-center transition-colors text-sm leading-none"
+              style={{ color: 'var(--text-muted)' }}
             >
               ⋯
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-stone-200 shadow-lg z-20 py-1 w-36">
+              <div className="absolute right-0 top-full mt-1 z-20 py-1 w-36 rounded-xl overflow-hidden" style={{ background: 'var(--popover)', boxShadow: 'var(--popover-shadow)', border: '1px solid var(--card-border)' }}>
                 <button
                   onClick={() => { setShowMenu(false); onRemove(); }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-stone-50 transition-colors whitespace-nowrap"
+                  className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-[#ede8e0] transition-colors whitespace-nowrap"
                 >
                   Remove block
                 </button>
@@ -260,7 +264,8 @@ export default function BlockCard({
 
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0"
+          className="transition-colors flex-shrink-0"
+          style={{ color: 'var(--text-muted)' }}
         >
           <svg
             className={`w-3.5 h-3.5 transition-transform ${expanded ? "" : "rotate-180"}`}
@@ -273,7 +278,7 @@ export default function BlockCard({
 
       {/* Expanded body */}
       {expanded && (
-        <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-2.5">
+        <div className="px-3 pb-3 pt-3 space-y-2.5" style={{ borderTop: '1px solid var(--border)' }}>
 
           {/* Single photo */}
           {block.type === "photo" && (
@@ -480,7 +485,7 @@ export default function BlockCard({
                       }}
                       className="w-3 h-3 flex-shrink-0"
                     />
-                    <span className="text-xs text-stone-700 truncate">{p.title}</span>
+                    <span className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{p.title}</span>
                   </label>
                 ))
               )}

@@ -56,21 +56,30 @@ export default function BlockTypeMenu({ onAdd, onClose, anchorRect }) {
   return (
     <div
       ref={ref}
-      className="bg-white border border-stone-200 shadow-[0_4px_20px_rgba(0,0,0,0.1)] py-1.5 overflow-hidden"
-      style={style}
+      className="rounded-xl overflow-hidden py-1.5"
+      style={{
+        ...style,
+        background: 'var(--popover)',
+        boxShadow: 'var(--popover-shadow)',
+        border: '1px solid var(--card-border)',
+      }}
     >
       {BLOCK_TYPES.map(({ type, label, desc }) => (
-        <button
-          key={type}
-          onClick={() => {
-            onAdd(defaultBlock(type));
-            onClose();
-          }}
-          className="w-full text-left px-4 py-2.5 hover:bg-stone-50 transition-colors"
-        >
-          <div className="text-sm font-medium text-stone-800">{label}</div>
-          <div className="text-xs text-stone-400 mt-0.5">{desc}</div>
-        </button>
+        <div key={type}>
+          {type === 'page-gallery' && (
+            <div className="mx-3 my-1" style={{ borderTop: '1px solid var(--border)' }} />
+          )}
+          <button
+            onClick={() => {
+              onAdd(defaultBlock(type));
+              onClose();
+            }}
+            className="w-full text-left px-4 py-2.5 hover:bg-[#ede8e0] transition-colors"
+          >
+            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{label}</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</div>
+          </button>
+        </div>
       ))}
     </div>
   );

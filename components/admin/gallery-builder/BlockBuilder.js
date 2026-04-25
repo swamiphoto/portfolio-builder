@@ -381,7 +381,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       </div>
 
       {/* Footer: Add Block + controls */}
-      <div className="p-3 border-t border-stone-200 flex-shrink-0 space-y-2">
+      <div className="p-3 flex-shrink-0 space-y-2" style={{ borderTop: '1px solid var(--border)' }}>
         <button
           onClick={(e) => {
             if (showBlockMenu) { setShowBlockMenu(false); return; }
@@ -389,7 +389,12 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             setInsertAtIndex(null);
             setShowBlockMenu(true);
           }}
-          className="w-full bg-white border border-stone-300 text-stone-700 text-sm font-medium py-2.5 hover:bg-stone-50 hover:border-stone-400 transition-colors"
+          className="w-full rounded-xl text-sm font-medium py-2.5 transition-colors border border-dashed"
+          style={{
+            background: 'transparent',
+            borderColor: 'var(--border)',
+            color: 'var(--text-secondary)',
+          }}
         >
           Add Block
         </button>
@@ -397,7 +402,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           {onToggleExpand && (
             <button
               onClick={onBack || onToggleExpand}
-              className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
+              className="transition-colors flex-shrink-0"
+              style={{ color: 'var(--text-muted)' }}
               title="Collapse sidebar"
             >
               <svg className="w-3.5 h-3.5 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -405,7 +411,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
               </svg>
             </button>
           )}
-          <span className="text-[10px] text-stone-400 flex-1">
+          <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
             {autosaveStatus === "saving" && "Saving…"}
             {autosaveStatus === "saved" && "Saved"}
             {autosaveStatus === "unsaved" && "Unsaved"}
@@ -414,7 +420,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             <button
               onClick={onPublish}
               disabled={publishing || (isPublished && !hasDraft)}
-              className="text-xs font-semibold bg-stone-900 text-white px-4 py-1.5 hover:bg-stone-700 disabled:opacity-40 transition-colors"
+              className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+              style={{ background: 'var(--sepia-accent)', color: '#fff' }}
             >
               {publishing ? "Publishing…" : "Publish"}
             </button>
