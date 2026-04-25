@@ -263,7 +263,7 @@ export default function PlatformSidebar({
                 if (e.key === 'Enter') handleRenameCommit(page.id)
                 if (e.key === 'Escape') setRenamingId(null)
               }}
-              className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-white"
+              className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-transparent"
             />
           ) : (
             <div
