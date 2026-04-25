@@ -400,29 +400,21 @@ export default function PlatformSidebar({
         <button
           ref={accountAvatarRef}
           onClick={() => setAccountOpen(v => !v)}
-          className="w-full flex items-center"
-          style={{ gap: 10, padding: '6px 8px', background: '#f6f3ec', border: '1px solid #d8d2c3', borderRadius: 3, cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '6px 8px', background: '#f6f3ec', border: '1px solid #d8d2c3', borderRadius: 3, cursor: 'pointer' }}
           title="Account"
         >
           {avatarImage ? (
-            <img
-              src={avatarImage}
-              alt=""
-              style={{ width: 26, height: 26, flexShrink: 0, objectFit: 'cover' }}
-            />
+            <img src={avatarImage} alt="" style={{ width: 26, height: 26, flexShrink: 0, objectFit: 'cover' }} />
           ) : (
-            <div
-              className="flex-shrink-0 flex items-center justify-center"
-              style={{ width: 26, height: 26, background: '#1d1b17', color: '#f6f3ec', fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 14, fontWeight: 500, fontStyle: 'italic' }}
-            >
+            <div style={{ width: 26, height: 26, flexShrink: 0, background: '#1d1b17', color: '#f6f3ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 14, fontWeight: 500, fontStyle: 'italic' }}>
               {(displayName || username || 'U')[0].toUpperCase()}
             </div>
           )}
           <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.1 }} className="truncate">
+            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13.5, fontWeight: 500, color: '#1d1b17', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {displayName || username || 'My Portfolio'}
             </div>
-            <div className="truncate" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 9, color: '#9e9788', letterSpacing: '0.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#6e685c', letterSpacing: '0.06em', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {username ? `${username}.sepia.photo` : ''}
             </div>
           </div>
@@ -434,24 +426,32 @@ export default function PlatformSidebar({
         {/* Preview + Publish buttons */}
         <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
           <button
-            className="flex-1 flex items-center justify-center font-mono uppercase transition-colors hover:bg-[rgba(26,18,10,0.04)]"
-            style={{ padding: '8px 10px', border: '1px solid #d8d2c3', borderRadius: 2, fontSize: 10, letterSpacing: '0.16em', color: '#3a362f', background: 'transparent' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 10px', border: '1.5px solid #3a362f', borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3a362f', background: 'transparent', cursor: 'pointer' }}
           >
             Preview
           </button>
           <button
             onClick={onPublish}
-            className="flex-1 flex items-center justify-center gap-1.5 font-mono uppercase transition-opacity hover:opacity-90 active:opacity-75"
-            style={{ padding: '8px 10px', background: '#1d1b17', color: '#f6f3ec', borderRadius: 2, fontSize: 10, letterSpacing: '0.16em' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', background: '#1d1b17', color: '#f6f3ec', border: 0, borderRadius: 2, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', cursor: 'pointer' }}
           >
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b4c49f', flexShrink: 0, display: 'inline-block' }} />
             Publish
           </button>
         </div>
 
-        {/* Autosave status */}
-        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <SaveBadge status={saveStatus} />
+        {/* Published · Autosave status — spec: 9.5px mono centered, gap 6 */}
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, letterSpacing: '0.06em', color: '#9e9788' }}>
+          {saveStatus === 'saving' ? (
+            <span style={{ color: '#9e9788' }}>Saving…</span>
+          ) : saveStatus === 'error' ? (
+            <span style={{ color: '#c0392b' }}>Save failed</span>
+          ) : (
+            <>
+              <span style={{ color: '#6e685c' }}>Published</span>
+              <span>·</span>
+              <span>Autosaved 2m ago</span>
+            </>
+          )}
         </div>
       </div>
 
