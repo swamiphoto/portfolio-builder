@@ -42,9 +42,10 @@ function InsertionZone({ onInsert }) {
     >
       {hovered && (
         <>
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-stone-300" />
-          <div className="relative z-10 w-4 h-4 rounded-full border border-stone-400 bg-white flex items-center justify-center">
-            <span className="text-[9px] font-bold text-stone-500 leading-none">+</span>
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px" style={{ background: 'var(--border)' }} />
+          <div className="relative z-10 w-4 h-4 rounded-full flex items-center justify-center"
+               style={{ border: '1px solid var(--border)', background: 'var(--card)' }}>
+            <span className="text-[9px] font-bold leading-none" style={{ color: 'var(--text-muted)' }}>+</span>
           </div>
         </>
       )}
@@ -195,7 +196,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
   return (
     <div
-      className={className || "w-72 flex-shrink-0 flex flex-col h-full bg-stone-50 border-r border-stone-200 relative z-10 text-left font-sans"}
+      className={className || "w-72 flex-shrink-0 flex flex-col h-full relative z-10 text-left font-sans"}
     >
 
       {/* All blocks — scrollable */}
@@ -205,17 +206,20 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         {pageSettingsSlot ? pageSettingsSlot : (
           <div className="rounded-xl overflow-hidden mb-1.5" style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}>
             <button
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors"
+              style={{ '--hover-bg': 'var(--card-hover)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--card-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}
               onClick={() => setInfoExpanded((v) => !v)}
             >
-              <span className="text-xs font-semibold text-stone-600 flex-1 tracking-wide">{infoLabel}</span>
-              <svg className={`w-3.5 h-3.5 text-stone-400 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <span className="text-xs font-semibold flex-1 tracking-wide" style={{ color: 'var(--text-secondary)' }}>{infoLabel}</span>
+              <svg className={`w-3.5 h-3.5 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} style={{ color: 'var(--text-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
               </svg>
             </button>
 
             {infoExpanded && (
-              <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
+              <div className="px-3 pb-3 pt-3 space-y-4" style={{ borderTop: '1px solid var(--border)' }}>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
                   <input
@@ -246,21 +250,22 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
                 {/* Thumbnail row */}
                 <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Thumbnail</div>
+                <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Thumbnail</div>
                 <div className="flex items-center gap-3 pt-0.5">
                   <div
                     onClick={onPickThumbnail}
-                    className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center border border-stone-200 cursor-pointer hover:border-stone-400 transition-colors ${gallery.thumbnailUrl ? "" : "bg-stone-50"}`}
+                    className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors`}
+                    style={{ border: '1px solid var(--border)', background: gallery.thumbnailUrl ? undefined : 'var(--card)' }}
                   >
                     {gallery.thumbnailUrl ? (
                       <img src={getSizedUrl(gallery.thumbnailUrl, 'thumbnail')} alt="Cover" className="w-full h-full object-cover" onError={(e) => { if (e.target.src !== gallery.thumbnailUrl) e.target.src = gallery.thumbnailUrl }} />
                     ) : (
-                      <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5" />
                       </svg>
                     )}
                   </div>
-                  <button onClick={onPickThumbnail} className="text-xs text-stone-600 hover:text-stone-900 text-left transition-colors leading-none">
+                  <button onClick={onPickThumbnail} className="text-xs text-left transition-colors leading-none" style={{ color: 'var(--text-secondary)' }}>
                     Select from library
                   </button>
                 </div>
@@ -271,10 +276,12 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   className="flex items-center gap-2 cursor-pointer pt-0.5"
                   onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
                 >
-                  <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.visibility === "unlisted" ? "bg-stone-700" : "bg-stone-300"}`}>
-                    <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                  <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
+                       style={{ background: gallery.visibility === "unlisted" ? 'var(--sepia-accent)' : 'var(--border)' }}>
+                    <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`}
+                         style={{ background: 'var(--card)' }} />
                   </div>
-                  <span className="text-xs text-stone-500 select-none">Unlisted</span>
+                  <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Unlisted</span>
                 </div>
 
                 {/* Slideshow toggle */}
@@ -283,15 +290,17 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={() => updateField("enableSlideshow", !gallery.enableSlideshow)}
                   >
-                    <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.enableSlideshow ? "bg-stone-700" : "bg-stone-300"}`}>
-                      <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                    <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
+                         style={{ background: gallery.enableSlideshow ? 'var(--sepia-accent)' : 'var(--border)' }}>
+                      <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`}
+                           style={{ background: 'var(--card)' }} />
                     </div>
-                    <span className="text-xs text-stone-500 select-none">Include slideshow</span>
+                    <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Include slideshow</span>
                   </div>
                   {gallery.enableSlideshow && gallery.slug && (
                     <Link
                       href={`/admin/galleries/${gallery.slug}/slideshow`}
-                      className="text-xs text-stone-400 hover:text-stone-700 underline underline-offset-2 transition-colors"
+                      className="text-xs underline underline-offset-2 transition-colors" style={{ color: 'var(--text-muted)' }}
                     >
                       Customize →
                     </Link>
@@ -375,7 +384,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         </DragDropContext>
 
         {(gallery.blocks || []).length === 0 && (
-          <p className="text-xs text-stone-400 text-center py-4">No blocks yet</p>
+          <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>No blocks yet</p>
         )}
 
       </div>
