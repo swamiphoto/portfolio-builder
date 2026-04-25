@@ -1,34 +1,37 @@
+import { useState } from 'react'
+
 // components/admin/platform/AdminLayout.js
 export default function AdminLayout({ sidebar, panel, children, panelCollapsed, onTogglePanel }) {
+  const [viewport, setViewport] = useState('desktop')
+
   return (
     <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--desk)' }}>
-      {/* Site sidebar — flush to edges */}
+      {/* Left column: site sidebar + block sidebar, flush together */}
       <div
-        className="flex-shrink-0 flex flex-col h-full overflow-hidden"
-        style={{
-          width: 260,
-          background: '#efeae1',
-          boxShadow: '1px 0 0 rgba(26,18,10,0.06), 3px 0 8px rgba(26,18,10,0.04)',
-        }}
-      >
-        {sidebar}
-      </div>
-
-      {/* Block sidebar + Preview — one connected card */}
-      <div
-        className="flex-1 flex min-w-0 mt-2 ml-2 rounded-tl-xl rounded-bl-xl overflow-hidden"
+        className="flex flex-shrink-0 h-full"
         style={{
           boxShadow: '0 0 0 1px rgba(26,18,10,0.06), 0 2px 6px rgba(26,18,10,0.06), 0 24px 48px -12px rgba(26,18,10,0.18)',
         }}
       >
-        {/* Block sidebar — collapsible */}
+        {/* Site sidebar */}
+        <div
+          className="flex flex-col h-full overflow-hidden"
+          style={{
+            width: 260,
+            background: '#efeae1',
+            borderRight: '1px solid rgba(26,18,10,0.07)',
+          }}
+        >
+          {sidebar}
+        </div>
+
+        {/* Block sidebar — attached to site sidebar */}
         {panel && (
           <div
             className="flex-shrink-0 flex flex-col h-full transition-all duration-300"
             style={{
-              width: panelCollapsed ? '40px' : '256px',
+              width: panelCollapsed ? 40 : 260,
               background: 'var(--panel)',
-              borderRight: '1px solid rgba(26,18,10,0.07)',
             }}
           >
             {panelCollapsed ? (
@@ -53,10 +56,72 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
             )}
           </div>
         )}
+      </div>
 
-        {/* Preview area */}
-        <div className="flex-1 min-w-0 h-full overflow-hidden" style={{ background: '#fbf9f4' }}>
-          {children}
+      {/* Right area: viewport toggle on desk + floating preview card */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Viewport toggle — sits directly on the desk surface */}
+        <div className="flex items-center justify-center gap-1" style={{ height: 40 }}>
+          <button
+            onClick={() => setViewport('desktop')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px', borderRadius: 3,
+              fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.06em',
+              color: viewport === 'desktop' ? 'var(--text-primary)' : 'var(--text-muted)',
+              background: viewport === 'desktop' ? 'rgba(26,18,10,0.07)' : 'transparent',
+              border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            <svg width="13" height="11" viewBox="0 0 24 20" fill="none" stroke="currentColor" strokeWidth={1.75}>
+              <rect x="1" y="1" width="22" height="14" rx="2" />
+              <path strokeLinecap="round" d="M8 19h8M12 15v4" />
+            </svg>
+            Desktop
+          </button>
+          <button
+            onClick={() => setViewport('mobile')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px', borderRadius: 3,
+              fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.06em',
+              color: viewport === 'mobile' ? 'var(--text-primary)' : 'var(--text-muted)',
+              background: viewport === 'mobile' ? 'rgba(26,18,10,0.07)' : 'transparent',
+              border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            <svg width="9" height="13" viewBox="0 0 16 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+              <rect x="1" y="1" width="14" height="22" rx="2.5" />
+              <circle cx="8" cy="19" r="1" fill="currentColor" stroke="none" />
+            </svg>
+            Mobile
+          </button>
+        </div>
+
+        {/* Preview card — floating, top + side margins, flows to bottom */}
+        <div
+          className="flex-1 overflow-hidden"
+          style={{
+            marginLeft: 32,
+            marginRight: 32,
+            borderTopLeftRadius: 4,
+            borderTopRightRadius: 4,
+            boxShadow: '0 0 0 1px rgba(26,18,10,0.06), 0 2px 6px rgba(26,18,10,0.06), 0 24px 48px -12px rgba(26,18,10,0.18)',
+            background: '#fbf9f4',
+          }}
+        >
+          <div className="h-full overflow-auto flex justify-center">
+            <div
+              className="h-full"
+              style={{
+                width: viewport === 'mobile' ? 390 : '100%',
+                transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                flexShrink: 0,
+              }}
+            >
+              {children}
+            </div>
+          </div>
         </div>
       </div>
     </div>
