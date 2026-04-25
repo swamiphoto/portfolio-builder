@@ -23,7 +23,7 @@ export default function PageSettingsPanel({ page, onChange }) {
   // ── Link page ──────────────────────────────────────────────────────────────
   if (isLink) {
     return (
-      <div className="bg-white border border-stone-200 rounded-lg shadow-sm mb-1.5">
+      <div className="rounded-xl overflow-hidden mb-1.5" style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}>
         <button
           onClick={() => setExpanded(v => !v)}
           className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-stone-50"
@@ -36,20 +36,20 @@ export default function PageSettingsPanel({ page, onChange }) {
         {expanded && (
           <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
             <div>
-              <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Label</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Label</div>
               <input
-                className="w-full border-b border-stone-200 p-0 pb-1 text-sm font-medium text-stone-800 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+                className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
                 placeholder="Link label"
                 value={page.title || ''}
                 onChange={(e) => update({ title: e.target.value })}
               />
             </div>
             <div>
-              <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">URL</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>URL</div>
               <input
                 type="url"
                 autoFocus={!page.url}
-                className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+                className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
                 placeholder="https://…"
                 value={page.url || ''}
                 onChange={(e) => update({ url: e.target.value })}
@@ -63,7 +63,7 @@ export default function PageSettingsPanel({ page, onChange }) {
 
   // ── Page: hero editor ──────────────────────────────────────────────────────
   return (
-    <div className="bg-white border border-stone-200 rounded-lg shadow-sm mb-1.5">
+    <div className="rounded-xl overflow-hidden mb-1.5" style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}>
       <div className="flex items-center gap-1.5 px-3 py-2.5">
         <span className="text-white text-sm leading-none select-none flex-shrink-0" aria-hidden>⠿</span>
 
@@ -99,9 +99,9 @@ export default function PageSettingsPanel({ page, onChange }) {
         <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
           {/* Title */}
           <div>
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Title</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Title</div>
             <input
-              className="w-full border-b border-stone-200 p-0 pb-1 text-sm font-medium text-stone-800 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+              className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
               placeholder="Page title"
               value={page.title || ''}
               onChange={(e) => updateTitle(e.target.value)}
@@ -110,9 +110,9 @@ export default function PageSettingsPanel({ page, onChange }) {
 
           {/* Description */}
           <div>
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Description</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
             <textarea
-              className="w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-600 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent"
+              className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full resize-none"
               placeholder="Optional"
               rows={2}
               value={page.description || ''}

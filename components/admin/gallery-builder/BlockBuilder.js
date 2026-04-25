@@ -203,7 +203,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
-          <div className="bg-white border border-stone-200 rounded-lg shadow-sm overflow-hidden mb-1.5">
+          <div className="rounded-xl overflow-hidden mb-1.5" style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}>
             <button
               className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
               onClick={() => setInfoExpanded((v) => !v)}
@@ -217,27 +217,27 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             {infoExpanded && (
               <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
                 <div>
-                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Name</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
                   <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug font-medium text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
                     placeholder={namePlaceholder}
                     value={gallery.name || ""}
                     onChange={(e) => updateField("name", e.target.value)}
                   />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Slug</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Slug</div>
                   <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-xs leading-snug text-stone-500 font-mono outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] font-mono outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full"
                     placeholder="slug"
                     value={gallery.slug || ""}
                     onChange={(e) => updateField("slug", e.target.value)}
                   />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Description</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
                   <AutoGrowTextarea
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug text-stone-600 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#a8967a] bg-transparent leading-snug w-full resize-none"
                     placeholder="Description"
                     value={gallery.description || ""}
                     onChange={(e) => updateField("description", e.target.value)}
