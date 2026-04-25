@@ -25,6 +25,7 @@ export default function AdminIndex() {
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
   const [assetPickerTarget, setAssetPickerTarget] = useState(null) // 'logo' | 'favicon' | null
   const [blockSidebarCollapsed, setBlockSidebarCollapsed] = useState(false)
+  const [previewViewport, setPreviewViewport] = useState('desktop') // 'desktop' | 'mobile'
   const autosaveTimer = useRef(null)
 
   // Hover highlight sync
@@ -373,34 +374,75 @@ export default function AdminIndex() {
         )
       } else {
         content = (
-          <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
-            <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
-            <PageCover
-              cover={selectedPage.cover}
-              title={selectedPage.title}
-              description={selectedPage.description}
-              slideshowHref={slideshowHref}
-              clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
-              primaryButton={null}
-            />
-            <GalleryPreview
-              gallery={{
-                name: selectedPage.title,
-                description: selectedPage.description || '',
-                blocks: selectedPage.blocks || [],
-              }}
-              pages={siteConfig.pages}
-              childPages={childPages}
-              activeChildId={activeChildId}
-              username={username}
-              assetsByUrl={assetsByUrl}
-              noWrap
-              enableSlideshow={!!slideshowHref}
-              onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
-              onChildPageClick={handleSelectPage}
-              highlightedBlockIndex={hoveredBlockIndex}
-              onBlockHover={setHoveredBlockIndex}
-            />
+          <div className="h-full flex flex-col">
+            {/* Viewport toggle bar */}
+            <div className="flex-shrink-0 flex items-center justify-center gap-1 py-1.5">
+              <button
+                onClick={() => setPreviewViewport('desktop')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors font-mono"
+                style={previewViewport === 'desktop'
+                  ? { background: 'var(--panel)', color: 'var(--text-primary)', boxShadow: 'var(--card)' }
+                  : { color: 'var(--text-muted)' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
+                </svg>
+                Desktop
+              </button>
+              <button
+                onClick={() => setPreviewViewport('mobile')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors font-mono"
+                style={previewViewport === 'mobile'
+                  ? { background: 'var(--panel)', color: 'var(--text-primary)', boxShadow: 'var(--card)' }
+                  : { color: 'var(--text-muted)' }}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                </svg>
+                Mobile
+              </button>
+            </div>
+
+            {/* Preview frame */}
+            <div className="flex-1 min-h-0 flex justify-center px-2 pb-2">
+              <div
+                ref={previewContainerRef}
+                onScroll={handlePreviewScroll}
+                className="rounded-xl overflow-y-auto bg-white transition-all duration-300"
+                style={{
+                  width: previewViewport === 'mobile' ? '390px' : '100%',
+                  boxShadow: 'var(--pane-shadow)',
+                }}
+              >
+                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+                <PageCover
+                  cover={selectedPage.cover}
+                  title={selectedPage.title}
+                  description={selectedPage.description}
+                  slideshowHref={slideshowHref}
+                  clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
+                  primaryButton={null}
+                />
+                <GalleryPreview
+                  gallery={{
+                    name: selectedPage.title,
+                    description: selectedPage.description || '',
+                    blocks: selectedPage.blocks || [],
+                  }}
+                  pages={siteConfig.pages}
+                  childPages={childPages}
+                  activeChildId={activeChildId}
+                  username={username}
+                  assetsByUrl={assetsByUrl}
+                  noWrap
+                  enableSlideshow={!!slideshowHref}
+                  onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
+                  onChildPageClick={handleSelectPage}
+                  highlightedBlockIndex={hoveredBlockIndex}
+                  onBlockHover={setHoveredBlockIndex}
+                />
+              </div>
+            </div>
           </div>
         )
       }
