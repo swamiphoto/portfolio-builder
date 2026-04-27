@@ -125,16 +125,13 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
   const settings = [focal, aperture, shutter, iso].filter(Boolean);
   const hasOverlayInfo = asset.caption || camera || lens || settings.length > 0;
 
-  const ratio = asset.width && asset.height ? `${asset.width} / ${asset.height}` : '3 / 2';
-
   return (
     <div
       onClick={onToggle}
       draggable
       onDragStart={(e) => e.dataTransfer.setData("text/plain", asset.publicUrl)}
-      className="group relative cursor-pointer overflow-hidden break-inside-avoid mb-1.5 transition-all"
+      className="group relative cursor-pointer overflow-hidden transition-all"
       style={{
-        aspectRatio: ratio,
         background: placeholderColor(asset.assetId),
         boxShadow: isSelected
           ? '0 0 0 2px #8b6f47, 0 4px 12px rgba(60,40,15,0.16)'
@@ -461,24 +458,34 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto scroll-quiet" style={{ padding: '10px 12px' }}>
+        <div
+          ref={gridScrollRef}
+          className="flex-1 overflow-y-auto scroll-quiet"
+          onScroll={handleGridScroll}
+          style={{ position: 'relative' }}
+        >
           {loading ? (
             <div className="text-center py-12" style={{ fontSize: 11, color: 'var(--text-muted)' }}>Loading…</div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12" style={{ fontSize: 11, color: 'var(--text-muted)' }}>No photos found</div>
           ) : (
-            <div style={{ columnCount: 3, columnGap: 6 }}>
-              {filtered.map((asset) => {
+            <div style={{ position: 'relative', height: totalHeight + PICKER_PADDING * 2 }}>
+              {visibleItems.map(({ index, x, y, width, height }) => {
+                const asset = filtered[index];
                 const key = asset.assetId || asset.publicUrl;
                 const isSelected = selected.includes(key);
                 return (
-                  <PickerTile
+                  <div
                     key={key}
-                    asset={asset}
-                    isSelected={isSelected}
-                    onToggle={() => toggle(asset)}
-                    onPreview={() => onPreview && onPreview(asset)}
-                  />
+                    style={{ position: 'absolute', left: x, top: y + PICKER_PADDING, width, height }}
+                  >
+                    <PickerTile
+                      asset={asset}
+                      isSelected={isSelected}
+                      onToggle={() => toggle(asset)}
+                      onPreview={() => onPreview && onPreview(asset)}
+                    />
+                  </div>
                 );
               })}
             </div>
