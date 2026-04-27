@@ -130,7 +130,7 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
       onClick={onToggle}
       draggable
       onDragStart={(e) => e.dataTransfer.setData("text/plain", asset.publicUrl)}
-      className="group relative cursor-pointer overflow-hidden transition-all"
+      className="group relative cursor-pointer overflow-hidden transition-all h-full"
       style={{
         background: placeholderColor(asset.assetId),
         boxShadow: isSelected
