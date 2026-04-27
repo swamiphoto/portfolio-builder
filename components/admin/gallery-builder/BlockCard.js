@@ -66,7 +66,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }
         alt=""
         className="w-full h-full object-cover pointer-events-none"
         loading="lazy"
-        onError={(e) => { e.target.style.opacity = '0'; }}
+        onError={(e) => { if (e.target.src !== imageRef.url) e.target.src = imageRef.url; }}
       />
       <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-colors duration-100 pointer-events-none" />
       {selected && (
@@ -440,7 +440,7 @@ function BlockCard({
                       src={getSizedUrl(block.imageUrl, 'thumbnail')}
                       alt=""
                       className="w-full aspect-video object-cover pointer-events-none"
-                      onError={(e) => { e.target.style.opacity = '0'; }}
+                      onError={(e) => { if (e.target.src !== block.imageUrl) e.target.src = block.imageUrl; }}
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-100 pointer-events-none" />
                     <button

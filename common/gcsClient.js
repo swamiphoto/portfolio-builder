@@ -22,8 +22,9 @@ export const PUBLIC_URL = process.env.R2_PUBLIC_URL || 'https://pub-placeholder.
 export function getSizedUrl(publicUrl, size = 'display') {
   if (!publicUrl) return publicUrl
   if (size === 'original') return publicUrl
+  const folder = size === 'thumbnail' ? 'thumbnails' : size
   return publicUrl
-    .replace('/photos/', `/${size}/`)
+    .replace('/photos/', `/${folder}/`)
     .replace(/\.[^.]+$/, '.jpg')
 }
 

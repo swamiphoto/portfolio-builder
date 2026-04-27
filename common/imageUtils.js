@@ -8,7 +8,8 @@ export function getSizedUrl(publicUrl, size = 'display') {
   if (!publicUrl || size === 'original') return publicUrl
   // Only apply to our R2 URLs — pass through anything else unchanged
   if (!publicUrl.includes('/photos/')) return publicUrl
+  const folder = size === 'thumbnail' ? 'thumbnails' : size
   return publicUrl
-    .replace('/photos/', `/${size}/`)
+    .replace('/photos/', `/${folder}/`)
     .replace(/\.[^.]+$/, '.jpg')
 }
