@@ -1,78 +1,60 @@
 import { useState, useRef } from "react";
+import CollectionPillsPicker from "./gallery-builder/CollectionPillsPicker";
+
+const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
 function readImageDimensions(file) {
   return new Promise((resolve) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }) }
-    img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: null, height: null }) }
-    img.src = url
-  })
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: null, height: null }); };
+    img.src = url;
+  });
 }
 
 async function generateThumbnail(file, maxWidth = 600) {
   try {
-    const bitmap = await createImageBitmap(file)
-    const scale = Math.min(1, maxWidth / bitmap.width)
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(bitmap.width * scale)
-    canvas.height = Math.round(bitmap.height * scale)
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-    bitmap.close()
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82))
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxWidth / bitmap.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82));
   } catch {
-    return null
+    return null;
   }
 }
 
 async function uploadToSignedUrl(signedUrl, blob, contentType) {
-  const formData = new FormData()
-  Object.entries(signedUrl.fields).forEach(([k, v]) => formData.append(k, v))
-  formData.append('file', blob)
-  const res = await fetch(signedUrl.url, { method: 'POST', body: formData })
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
-}
-
-function deriveSlug(name) {
-  return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const formData = new FormData();
+  Object.entries(signedUrl.fields).forEach(([k, v]) => formData.append(k, v));
+  formData.append('file', blob);
+  const res = await fetch(signedUrl.url, { method: 'POST', body: formData });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
 }
 
 export default function UploadModal({ collections = [], defaultCollection = null, onClose, onUploaded }) {
   const [files, setFiles] = useState([]);
-  const [selectedCollection, setSelectedCollection] = useState(defaultCollection || "");
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newParent, setNewParent] = useState("");
+  const [selectedCollections, setSelectedCollections] = useState(
+    defaultCollection ? [defaultCollection] : []
+  );
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
-
-  const sortedCollections = [...collections].sort();
-
-  const getTargetCollection = () => {
-    if (creating) {
-      const slug = deriveSlug(newName);
-      if (!slug) return null;
-      return newParent ? `${newParent}/${slug}` : slug;
-    }
-    return selectedCollection || null;
-  };
 
   const addFiles = (newFiles) => {
     const arr = Array.from(newFiles).filter((f) => /\.(jpg|jpeg|png|gif)$/i.test(f.name));
     setFiles((prev) => [...prev, ...arr]);
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    addFiles(e.dataTransfer.files);
-  };
-
   const handleUpload = async () => {
     if (files.length === 0) return;
-    const targetCollection = getTargetCollection();
+    const targetCollection = selectedCollections[0] || null;
+    const folder = targetCollection ? `photos/${targetCollection}` : undefined;
     setUploading(true);
     const uploadedAssets = [];
 
@@ -83,19 +65,21 @@ export default function UploadModal({ collections = [], defaultCollection = null
           readImageDimensions(file),
           generateThumbnail(file),
         ]);
-
         const res = await fetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, contentType: file.type, folder: targetCollection || undefined }),
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            folder,
+            collections: selectedCollections,
+          }),
         });
         const { signedUrl, thumbSignedUrl, gcsUrl } = await res.json();
-
         await Promise.all([
           uploadToSignedUrl(signedUrl, file, file.type),
           thumb && thumbSignedUrl ? uploadToSignedUrl(thumbSignedUrl, thumb, 'image/jpeg') : Promise.resolve(),
         ]);
-
         setProgress((p) => ({ ...p, [file.name]: "done" }));
         uploadedAssets.push({ url: gcsUrl, width, height });
       } catch (err) {
@@ -108,132 +92,141 @@ export default function UploadModal({ collections = [], defaultCollection = null
     if (uploadedAssets.length > 0) onUploaded(uploadedAssets, targetCollection);
   };
 
-  const previewSlug = creating && newName.trim() ? deriveSlug(newName) : null;
-  const previewKey = previewSlug ? (newParent ? `${newParent}/${previewSlug}` : previewSlug) : null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Upload Photos</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
-        </div>
-
-        {/* Drop zone */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(20,12,4,0.55)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
+    >
+      <div
+        className="flex flex-col rounded-xl overflow-hidden"
+        style={{
+          width: 480,
+          maxHeight: '85vh',
+          background: 'var(--popover)',
+          boxShadow: 'var(--popover-shadow)',
+        }}
+      >
+        {/* Header */}
         <div
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors mb-4 ${
-            dragging ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-gray-400"
-          }`}
+          className="flex items-center px-4 flex-shrink-0"
+          style={{ height: 44, borderBottom: '1px solid rgba(160,140,110,0.22)' }}
         >
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png,.gif"
-            className="hidden"
-            onChange={(e) => addFiles(e.target.files)}
-          />
-          <div className="text-3xl mb-2">📁</div>
-          <div className="text-sm font-medium text-gray-700">Drop photos here or click to browse</div>
-          <div className="text-xs text-gray-400 mt-1">JPG, PNG · Multiple files supported</div>
+          <span style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            Upload Photos
+          </span>
+          <button
+            onClick={onClose}
+            className="ml-auto w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
         </div>
 
-        {/* File list */}
-        {files.length > 0 && (
-          <div className="mb-4 max-h-32 overflow-y-auto space-y-1">
-            {files.map((f) => (
-              <div key={f.name} className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="flex-1 truncate">{f.name}</span>
-                <span className={
-                  progress[f.name] === "done" ? "text-green-500" :
-                  progress[f.name] === "error" ? "text-red-500" :
-                  progress[f.name] === "pending" ? "text-blue-400" : "text-gray-300"
-                }>
-                  {progress[f.name] === "done" ? "✓" :
-                   progress[f.name] === "error" ? "✗" :
-                   progress[f.name] === "pending" ? "↑" : "·"}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Collection picker */}
-        <div className="mb-5">
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Add to collection</label>
-          {!creating ? (
-            <div className="flex gap-2">
-              <select
-                value={selectedCollection}
-                onChange={(e) => setSelectedCollection(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500 bg-white text-gray-700"
-              >
-                <option value="">Library only (no collection)</option>
-                {sortedCollections.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => setCreating(true)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap"
-              >
-                + New
-              </button>
+        {/* Body */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scroll-quiet" style={{ padding: '14px 14px 0' }}>
+          {/* Drop zone */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
+            onClick={() => inputRef.current?.click()}
+            className="flex flex-col items-center justify-center text-center cursor-pointer transition-colors flex-shrink-0"
+            style={{
+              border: `1.5px dashed ${dragging ? 'rgba(120,90,60,0.65)' : 'rgba(160,140,110,0.32)'}`,
+              background: dragging ? 'rgba(160,140,110,0.10)' : 'rgba(255,253,248,0.45)',
+              borderRadius: 6,
+              minHeight: files.length === 0 ? 180 : 100,
+              padding: files.length === 0 ? '36px 16px' : '20px 16px',
+              transition: 'all 0.18s ease',
+            }}
+          >
+            <input ref={inputRef} type="file" multiple accept=".jpg,.jpeg,.png,.gif" className="hidden" onChange={(e) => addFiles(e.target.files)} />
+            <div
+              className="rounded-full flex items-center justify-center mb-2"
+              style={{ width: 44, height: 44, background: 'rgba(160,140,110,0.18)', color: '#8b6f47' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <path d="M17 8l-5-5-5 5" />
+                <path d="M12 3v12" />
+              </svg>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <select
-                  value={newParent}
-                  onChange={(e) => setNewParent(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500 bg-white text-gray-700"
-                  style={{ width: '45%' }}
+            <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>Drop photos here</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>or click to browse · JPG, PNG, GIF</div>
+          </div>
+
+          {/* File list */}
+          {files.length > 0 && (
+            <div className="space-y-1 scroll-quiet" style={{ marginTop: 10, paddingBottom: 4 }}>
+              {files.map((f) => (
+                <div
+                  key={f.name}
+                  className="flex items-center gap-2 group"
+                  style={{ padding: '4px 8px', borderRadius: 3, background: 'rgba(160,140,110,0.08)' }}
                 >
-                  <option value="">Top level</option>
-                  {sortedCollections.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <input
-                  autoFocus
-                  placeholder="Collection name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-500"
-                />
-              </div>
-              {previewKey && (
-                <div className="text-xs text-gray-400">
-                  Will create: <span className="font-mono text-gray-600">{previewKey}</span>
+                  <span className="flex-1 truncate" style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{f.name}</span>
+                  <span style={{
+                    fontSize: 10.5, fontFamily: MONO, fontWeight: 500,
+                    color: progress[f.name] === "done" ? '#3b8a52'
+                         : progress[f.name] === "error" ? '#c14a4a'
+                         : progress[f.name] === "pending" ? 'var(--text-secondary)'
+                         : 'var(--text-muted)',
+                  }}>
+                    {progress[f.name] === "done" ? "✓" : progress[f.name] === "error" ? "✗" : progress[f.name] === "pending" ? "…" : "·"}
+                  </span>
+                  {!progress[f.name] && (
+                    <button
+                      type="button"
+                      onClick={() => setFiles(prev => prev.filter(x => x.name !== f.name))}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#c14a4a')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4l8 8M12 4l-8 8" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
-              )}
-              <button
-                onClick={() => { setCreating(false); setNewName(""); setNewParent(""); }}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                ← Pick existing instead
-              </button>
+              ))}
             </div>
           )}
         </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+        {/* Collections */}
+        <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(160,140,110,0.18)', marginTop: 12, paddingTop: 10, paddingBottom: 10 }}>
+          <CollectionPillsPicker
+            existingSlugs={collections}
+            selectedSlugs={selectedCollections}
+            onAdd={(slug) => setSelectedCollections(prev => prev.includes(slug) ? prev : [...prev, slug])}
+            onRemove={(slug) => setSelectedCollections(prev => prev.filter(s => s !== slug))}
+            onCreate={(slug) => setSelectedCollections(prev => prev.includes(slug) ? prev : [...prev, slug])}
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="flex-shrink-0" style={{ padding: '10px 14px', borderTop: '1px solid rgba(160,140,110,0.18)' }}>
           <button
             onClick={handleUpload}
-            disabled={files.length === 0 || uploading || (creating && !previewKey)}
-            className="flex-1 bg-gray-900 text-white text-sm py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={files.length === 0 || uploading}
+            className="w-full"
+            style={{
+              background: files.length === 0 || uploading ? 'rgba(60,40,15,0.20)' : '#2c2416',
+              color: '#f5ecd6',
+              fontSize: 12,
+              fontWeight: 500,
+              padding: '8px 14px',
+              borderRadius: 4,
+              cursor: files.length === 0 || uploading ? 'not-allowed' : 'pointer',
+              transition: 'background 0.15s',
+              border: 'none',
+            }}
           >
-            {uploading ? "Uploading…" : `Upload ${files.length} photo${files.length !== 1 ? "s" : ""}`}
+            {uploading ? "Uploading…" : files.length === 0 ? "Upload photos" : `Upload ${files.length} photo${files.length !== 1 ? "s" : ""}`}
           </button>
         </div>
       </div>
