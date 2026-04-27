@@ -1035,6 +1035,7 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
   return (
     <div
       ref={panelRef}
+      data-photo-picker
       className="fixed z-50 flex flex-col rounded-xl overflow-hidden"
       style={{
         left: pos.x,

@@ -15,6 +15,7 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
 
   useEffect(() => {
     function handler(e) {
+      if (e.target.closest('[data-photo-picker]')) return
       if (ref.current && !ref.current.contains(e.target) && anchorEl && !anchorEl.contains(e.target)) onClose()
     }
     document.addEventListener('mousedown', handler)
