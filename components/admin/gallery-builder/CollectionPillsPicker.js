@@ -118,13 +118,6 @@ export default function CollectionPillsPicker({ existingSlugs, selectedSlugs, on
     return tree.some((n) => subtreeMatches(n, q));
   }, [tree, query]);
 
-  useEffect(() => {
-    function onDown(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, []);
 
   const handleAdd = (slug) => {
     onAdd(slug);
@@ -165,6 +158,8 @@ export default function CollectionPillsPicker({ existingSlugs, selectedSlugs, on
           }}
         />
         {open && (
+          <>
+          <div className="fixed inset-0 z-[29]" onClick={() => setOpen(false)} />
           <div
             style={{
               position: 'absolute', zIndex: 30, bottom: 'calc(100% + 4px)', left: 14, right: 14,
@@ -212,6 +207,7 @@ export default function CollectionPillsPicker({ existingSlugs, selectedSlugs, on
               </button>
             )}
           </div>
+          </>
         )}
       </div>
 
