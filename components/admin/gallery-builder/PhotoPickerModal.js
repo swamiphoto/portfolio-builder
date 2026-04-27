@@ -563,15 +563,29 @@ function leafLabel(slug) {
   return slug.split('/').pop().split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 function subtreeMatches(node, q) {
-  if (leafLabel(node.slug).toLowerCase().includes(q)) return true;
+  const slugLower = node.slug.toLowerCase();
+  const labelLower = leafLabel(node.slug).toLowerCase();
+  if (q.includes('/')) {
+    if (slugLower.startsWith(q) || q.startsWith(slugLower + '/') || slugLower === q.replace(/\/$/, '')) return true;
+    return node.children.some((child) => subtreeMatches(child, q));
+  }
+  if (labelLower.includes(q)) return true;
   return node.children.some((child) => subtreeMatches(child, q));
 }
 
 function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
   const q = (query || '').toLowerCase();
+  const slugLower = node.slug.toLowerCase();
   const labelLower = leafLabel(node.slug).toLowerCase();
-  const selfMatches = !q || labelLower.includes(q);
+  const hasSlash = q.includes('/');
+  const selfMatches = !q || (hasSlash
+    ? (slugLower.startsWith(q) || q.startsWith(slugLower + '/') || slugLower === q.replace(/\/$/, ''))
+    : labelLower.includes(q));
   const hasMatchingChild = q && node.children.some((c) => subtreeMatches(c, q));
+  // When this node is the matched parent in a slash query, pass only the child portion down
+  const childQuery = hasSlash && q.startsWith(slugLower + '/')
+    ? q.slice(slugLower.length + 1)
+    : query;
   const [expanded, setExpanded] = useState(depth < 1);
   const isExpanded = q ? (selfMatches || hasMatchingChild) : expanded;
   if (q && !selfMatches && !hasMatchingChild) return null;
@@ -619,7 +633,7 @@ function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
         </button>
       </div>
       {isExpanded && node.children.map((child) => (
-        <CollectionTreeRow key={child.slug} node={child} depth={depth + 1} selectedSet={selectedSet} onAdd={onAdd} query={query} />
+        <CollectionTreeRow key={child.slug} node={child} depth={depth + 1} selectedSet={selectedSet} onAdd={onAdd} query={childQuery} />
       ))}
     </div>
   );
@@ -671,53 +685,12 @@ function CollectionPillsPicker({ existingSlugs, selectedSlugs, onAdd, onRemove, 
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {selectedSlugs.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '0 14px' }}>
-          {selectedSlugs.map((slug) => {
-            const parts = slug.split('/').map(leafLabel).slice(-2);
-            const isNew = !existingSlugs.includes(slug);
-            return (
-              <span
-                key={slug}
-                title={slug}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 3,
-                  fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.03em',
-                  padding: '2px 6px 2px 8px', borderRadius: 3,
-                  background: isNew ? 'rgba(139,111,71,0.16)' : 'rgba(139,111,71,0.10)',
-                  border: `1px solid ${isNew ? 'rgba(139,111,71,0.40)' : 'rgba(139,111,71,0.22)'}`,
-                }}
-              >
-                <span>
-                  {parts.map((p, i) => (
-                    <span key={i}>
-                      {i > 0 && <span style={{ color: '#b0a490', margin: '0 2px' }}>/</span>}
-                      <span style={{ color: i === parts.length - 1 ? '#2c2416' : '#a8967a' }}>{p}</span>
-                    </span>
-                  ))}
-                  {isNew && <span style={{ marginLeft: 4, color: '#8b6f47', fontSize: 8.5 }}>NEW</span>}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onRemove(slug)}
-                  style={{ color: '#a8967a', background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', lineHeight: 1, fontSize: 13 }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#5c4f3a')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = '#a8967a')}
-                >
-                  ×
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      )}
-
       <div style={{ position: 'relative', padding: '0 14px' }}>
         <input
           ref={inputRef}
           type="text"
           value={query}
-          placeholder="Add or create collection…"
+          placeholder="Choose a collection for these uploads…"
           onFocus={() => setOpen(true)}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onKeyDown={(e) => {
@@ -792,6 +765,47 @@ function CollectionPillsPicker({ existingSlugs, selectedSlugs, onAdd, onRemove, 
           </div>
         )}
       </div>
+
+      {selectedSlugs.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '0 14px' }}>
+          {selectedSlugs.map((slug) => {
+            const parts = slug.split('/').map(leafLabel).slice(-2);
+            const isNew = !existingSlugs.includes(slug);
+            return (
+              <span
+                key={slug}
+                title={slug}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 3,
+                  fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.03em',
+                  padding: '2px 6px 2px 8px', borderRadius: 3,
+                  background: isNew ? 'rgba(139,111,71,0.16)' : 'rgba(139,111,71,0.10)',
+                  border: `1px solid ${isNew ? 'rgba(139,111,71,0.40)' : 'rgba(139,111,71,0.22)'}`,
+                }}
+              >
+                <span>
+                  {parts.map((p, i) => (
+                    <span key={i}>
+                      {i > 0 && <span style={{ color: '#b0a490', margin: '0 2px' }}>/</span>}
+                      <span style={{ color: i === parts.length - 1 ? '#2c2416' : '#a8967a' }}>{p}</span>
+                    </span>
+                  ))}
+                  {isNew && <span style={{ marginLeft: 4, color: '#8b6f47', fontSize: 8.5 }}>NEW</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemove(slug)}
+                  style={{ color: '#a8967a', background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', lineHeight: 1, fontSize: 13 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#5c4f3a')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#a8967a')}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -937,25 +951,6 @@ function UploadTab({ onUploaded, libraryConfig }) {
 
       {/* Collections picker — pills + searchable dropdown with create-new */}
       <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(160,140,110,0.18)', marginTop: 12, paddingTop: 10, paddingBottom: 10 }}>
-        <div
-          style={{
-            fontSize: 10,
-            fontFamily: MONO,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-            fontWeight: 500,
-            padding: '0 14px',
-            marginBottom: 6,
-          }}
-        >
-          Add to collections
-          {selectedCollections.length > 0 && (
-            <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--text-secondary)', fontWeight: 400 }}>
-              {selectedCollections.length}
-            </span>
-          )}
-        </div>
         <CollectionPillsPicker
           existingSlugs={existingSlugs}
           selectedSlugs={selectedCollections}
