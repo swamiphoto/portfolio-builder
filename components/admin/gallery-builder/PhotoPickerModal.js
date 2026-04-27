@@ -141,7 +141,7 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={getSizedUrl(asset.publicUrl, 'thumbnail')}
+        src={asset.publicUrl.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg')}
         alt={asset.caption || asset.originalFilename}
         className="w-full h-full object-cover transition-opacity"
         style={{ opacity: loaded ? 1 : 0 }}
@@ -330,7 +330,6 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     const set = new Set();
     allAssets.forEach((a) => {
       if (a.caption) set.add(a.caption);
-      if (a.originalFilename) set.add(a.originalFilename);
       if (a.capture?.cameraModel) set.add(a.capture.cameraModel);
       if (a.capture?.lens) set.add(a.capture.lens);
       (a.tags || []).forEach((t) => set.add(t));
@@ -402,8 +401,9 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
             className="flex-1 bg-transparent outline-none"
             placeholder="Search photos, cameras, captions…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setSearchFocused(true); }}
             onFocus={() => setSearchFocused(true)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setSearchFocused(false); }}
             style={{
               border: 'none',
               fontSize: 12.5,

@@ -261,7 +261,7 @@ export default function BlockCard({
         <div className="flex items-center gap-0.5">
           {(block.type === "photo" || isPhotoBlock) && (
             <button
-              onClick={onAddPhotos}
+              onClick={() => { onTitleClick?.(); onAddPhotos(); }}
               title="Add photos"
               className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-base leading-none"
               style={{ color: 'var(--text-muted)' }}
@@ -274,7 +274,7 @@ export default function BlockCard({
             <div className="relative">
               <button
                 ref={designBtnRef}
-                onClick={() => setShowDesign((v) => !v)}
+                onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
                 title="Design"
                 className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
                 style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
@@ -294,7 +294,7 @@ export default function BlockCard({
 
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setShowMenu((v) => !v)}
+              onClick={() => { onTitleClick?.(); setShowMenu((v) => !v); }}
               className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-sm leading-none"
               style={{ color: 'var(--text-muted)' }}
             >
@@ -511,7 +511,14 @@ export default function BlockCard({
                           />
                         ))}
                         {Array.from({ length: placeholderCount }).map((_, i) => (
-                          <div key={`ph-${i}`} className="aspect-square" style={{ background: 'var(--panel-hover)', borderRadius: 2 }} />
+                          <div
+                            key={`ph-${i}`}
+                            className="aspect-square cursor-pointer transition-colors"
+                            style={{ background: 'var(--panel-hover)', borderRadius: 2 }}
+                            onClick={() => { onTitleClick?.(); onAddPhotos(); }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-border)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--panel-hover)'; }}
+                          />
                         ))}
                       </>
                     );
