@@ -37,31 +37,54 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
     >
       {/* Header */}
       <div
-        className="px-3 pt-2.5 pb-2 flex items-center justify-between sticky top-0 z-10 rounded-t-xl"
-        style={{ background: 'var(--popover)', borderBottom: '1px solid var(--border)' }}
+        className="px-3.5 flex items-center sticky top-0 z-10 rounded-t-xl"
+        style={{
+          height: 40,
+          background: 'var(--popover)',
+          borderBottom: '1px solid rgba(160,140,110,0.22)',
+        }}
       >
-        <div className="flex items-center gap-1.5 min-w-0">
-          {onBack && (
-            <button onClick={onBack} className="transition-colors flex-shrink-0 -ml-0.5" style={{ color: 'var(--text-muted)' }}>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
-          {title && (
-            <span className="font-mono text-[11px] uppercase tracking-[0.07em] truncate" style={{ color: 'var(--text-secondary)' }}>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="transition-colors flex-shrink-0 mr-1.5 -ml-1 w-6 h-6 flex items-center justify-center rounded hover:bg-black/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        {title && (
+          typeof title === 'string' ? (
+            <span
+              className="font-mono uppercase truncate"
+              style={{
+                fontSize: 10.5,
+                letterSpacing: '0.13em',
+                color: 'var(--text-secondary)',
+                fontWeight: 500,
+              }}
+            >
               {title}
             </span>
-          )}
-          {headerRight && <div className="ml-auto">{headerRight}</div>}
+          ) : (
+            title
+          )
+        )}
+        <div className="ml-auto flex items-center gap-0.5">
+          {headerRight}
+          <button
+            onClick={onClose}
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label="Close"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="text-base leading-none transition-colors ml-2 flex-shrink-0"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          ×
-        </button>
       </div>
       {children}
     </div>

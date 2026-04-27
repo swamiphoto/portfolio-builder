@@ -1,220 +1,411 @@
-import React from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 
-function SidebarSection({ title, children, action, collapsible = false }) {
-  const [open, setOpen] = React.useState(!collapsible)
+const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
+const LINE_COLOR = 'rgba(160,140,110,0.32)';
+const ROW_HEIGHT = 26;
+const GUTTER_WIDTH = 16;
+const RIGHT_PAD = 16; // matches section content paddingLeft for visual balance
+
+function Chevron({ open, size = 10 }) {
   return (
-    <div className="mt-3">
-      <div className="flex items-center justify-between px-3 py-1">
+    <svg
+      width={size} height={size} viewBox="0 0 10 10"
+      style={{
+        transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+        transition: 'transform 0.15s ease',
+        flexShrink: 0,
+      }}
+    >
+      <path d="M3.5 2L7 5L3.5 8" stroke="currentColor" strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function PlusIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth={1.4}>
+      <path d="M7 3.25v7.5M3.25 7h7.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function MenuIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="currentColor">
+      <circle cx="3" cy="7" r="1.25" />
+      <circle cx="7" cy="7" r="1.25" />
+      <circle cx="11" cy="7" r="1.25" />
+    </svg>
+  )
+}
+
+function ToggleAllIcon({ allCollapsed }) {
+  return allCollapsed ? (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 4h10M3 8h10M3 12h10" />
+    </svg>
+  ) : (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
+    </svg>
+  )
+}
+
+function ClearIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3L11 8l-5 5" />
+    </svg>
+  )
+}
+
+function SidebarSection({ title, children, action, defaultOpen = true, dense = false, openOverride }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const { useEffect } = React
+  useEffect(() => {
+    if (openOverride !== undefined) setOpen(openOverride)
+  }, [openOverride])
+  return (
+    <div style={{ borderTop: '1px solid rgba(160,140,110,0.14)' }}>
+      <div className="flex items-stretch">
         <button
-          className="flex items-center gap-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
-          onClick={() => collapsible && setOpen(v => !v)}
+          onClick={() => setOpen(v => !v)}
+          className="flex-1 flex items-center gap-1.5 transition-colors"
+          style={{
+            padding: '10px 12px 8px 12px',
+            fontFamily: MONO,
+            fontSize: 10.5,
+            letterSpacing: '0.13em',
+            textTransform: 'uppercase',
+            color: open ? '#7a6b55' : '#a8967a',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#5c4f3a'}
+          onMouseLeave={e => e.currentTarget.style.color = open ? '#7a6b55' : '#a8967a'}
         >
-          {collapsible && <span className="text-gray-300">{open ? '▾' : '▸'}</span>}
-          {title}
+          <span style={{ color: '#c4b49a' }}><Chevron open={open} size={10} /></span>
+          <span className="flex-1 text-left">{title}</span>
         </button>
-        {action}
+        {action && (
+          <div className="flex items-center" style={{ paddingRight: RIGHT_PAD }}>
+            {action}
+          </div>
+        )}
       </div>
-      {open && <div className="space-y-0.5">{children}</div>}
+      {open && <div style={{ padding: dense ? '0 0 8px' : '0 0 10px' }}>{children}</div>}
     </div>
   )
 }
 
-function SidebarButton({ active, label, count, onClick, subtle = false }) {
+function SidebarItem({ active, label, count, onClick, capsLabel = false, indent = 28 }) {
   return (
-    <button
+    <div
       onClick={onClick}
-      className={`flex items-center w-full px-3 py-1.5 rounded-md text-sm transition-colors ${
-        active
-          ? 'bg-gray-900 text-white font-medium'
-          : subtle
-            ? 'text-gray-500 hover:bg-gray-100'
-            : 'text-gray-700 hover:bg-gray-100'
-      }`}
+      className="flex items-center cursor-pointer transition-colors"
+      style={{
+        height: ROW_HEIGHT,
+        paddingLeft: indent,
+        paddingRight: RIGHT_PAD,
+        background: active ? 'rgba(44,36,22,0.07)' : 'transparent',
+        color: active ? '#2c2416' : '#6b5d48',
+        fontSize: 13,
+        fontWeight: active ? 500 : 400,
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
     >
-      <span className="flex-1 text-left truncate">{label}</span>
+      <span
+        className="flex-1 truncate"
+        style={capsLabel ? {
+          fontFamily: MONO,
+          fontSize: 12,
+          letterSpacing: '0.04em',
+          textTransform: 'lowercase',
+        } : null}
+      >
+        {label}
+      </span>
       {typeof count === 'number' && (
-        <span className={`text-xs ${active ? 'text-gray-300' : 'text-gray-400'}`}>{count}</span>
+        <span
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            color: active ? '#8b6f47' : '#b0a490',
+            marginLeft: 6,
+          }}
+        >
+          {count}
+        </span>
       )}
-    </button>
+    </div>
+  )
+}
+
+function TreeGutter({ type }) {
+  if (type === 'space') return <div style={{ width: GUTTER_WIDTH, flexShrink: 0 }} />
+  if (type === 'line') return (
+    <div style={{ width: GUTTER_WIDTH, flexShrink: 0, position: 'relative' }}>
+      <div style={{ position: 'absolute', left: 7, top: 0, bottom: 0, width: 1, background: LINE_COLOR }} />
+    </div>
+  )
+  const mid = Math.floor(ROW_HEIGHT / 2)
+  return (
+    <div style={{ width: GUTTER_WIDTH, flexShrink: 0, position: 'relative' }}>
+      <div style={{ position: 'absolute', left: 7, top: 0, height: mid, width: 1, background: LINE_COLOR }} />
+      {type === 'branch' && (
+        <div style={{ position: 'absolute', left: 7, top: mid, bottom: 0, width: 1, background: LINE_COLOR }} />
+      )}
+      <div style={{ position: 'absolute', left: 7, top: mid, width: 8, height: 1, background: LINE_COLOR }} />
+    </div>
   )
 }
 
 function buildCollectionTree(keys) {
   const sorted = [...keys].sort()
-  return sorted.map((key) => {
+  const nodes = sorted.map((key) => {
     const parts = key.split('/')
     const depth = parts.length - 1
     const label = parts[parts.length - 1]
-    const hasChildren = sorted.some((k) => k.startsWith(key + '/'))
-    return { key, label, depth, hasChildren }
+    const parent = depth > 0 ? parts.slice(0, depth).join('/') : null
+    return { key, label, depth, parent, parts }
   })
+  for (const node of nodes) {
+    node.hasChildren = nodes.some(n => n.parent === node.key)
+  }
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]
+    let isLast = true
+    for (let j = i + 1; j < nodes.length; j++) {
+      const other = nodes[j]
+      if (other.depth < node.depth) break
+      if (other.parent === node.parent) { isLast = false; break }
+    }
+    node.isLast = isLast
+  }
+  for (const node of nodes) {
+    const gutters = []
+    for (let i = 0; i < node.depth; i++) {
+      if (i === node.depth - 1) {
+        gutters.push(node.isLast ? 'corner' : 'branch')
+      } else {
+        const ancestorKey = node.parts.slice(0, i + 1).join('/')
+        const anc = nodes.find(n => n.key === ancestorKey)
+        gutters.push(anc && !anc.isLast ? 'line' : 'space')
+      }
+    }
+    node.gutters = gutters
+  }
+  return nodes
 }
 
-export default function AlbumSidebar({
-  counts,
-  selectedAlbum,
-  onSelect,
-  onUploadClick,
-  onCreateCollection,
-  onDeleteCollection,
-  sourceCounts,
-  orientationCounts,
-  usageCounts,
-  cameraCounts,
-  lensCounts,
-  focalLengthCounts,
-  isoCounts,
-  filters,
-  onFilterChange,
+function CollectionRow({
+  node, selected, expanded, count,
+  onSelect, onToggleExpand, onCreateUnder, onDelete,
 }) {
-  const galleryKeys = Object.keys(counts).filter((key) => key !== "all");
+  const [menuOpen, setMenuOpen] = useState(false)
+  const closeTimer = useRef(null)
+  const rowRef = useRef(null)
 
-  const isSelected = (type, key) =>
-    selectedAlbum.type === type && selectedAlbum.key === key;
+  const openMenu = () => {
+    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null }
+    setMenuOpen(true)
+  }
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    closeTimer.current = setTimeout(() => setMenuOpen(false), 140)
+  }
+  const cancelClose = () => {
+    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null }
+  }
+
+  const stop = (e) => e.stopPropagation()
 
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col flex-shrink-0 h-full">
-      <div className="px-4 py-4 border-b border-gray-200">
-        <div className="font-bold text-gray-900 text-base">Library</div>
-        <div className="text-xs text-gray-400 mt-0.5">Master view of all portfolio assets</div>
+    <div
+      ref={rowRef}
+      onClick={onSelect}
+      className="relative flex items-center cursor-pointer transition-colors group"
+      style={{
+        height: ROW_HEIGHT,
+        background: selected ? 'rgba(44,36,22,0.07)' : 'transparent',
+        color: selected ? '#2c2416' : '#6b5d48',
+      }}
+      onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
+      onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
+    >
+      {/* Gutters */}
+      <div className="flex items-stretch" style={{ paddingLeft: 24 }}>
+        {node.gutters.map((g, i) => <TreeGutter key={i} type={g} />)}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2">
-        <SidebarSection title="Views">
-          <SidebarButton
-            active={isSelected("all", "all") && filters.usage === "all"}
-            label="All Photos"
-            count={counts.all ?? 0}
-            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", "all"); }}
-          />
-          <SidebarButton
-            active={filters.usage === "unused"}
-            label="Unused"
-            count={usageCounts.unused}
-            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", filters.usage === "unused" ? "all" : "unused"); }}
-            subtle
-          />
-          <SidebarButton
-            active={filters.usage === "used"}
-            label="In Use"
-            count={usageCounts.used}
-            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", filters.usage === "used" ? "all" : "used"); }}
-            subtle
-          />
-        </SidebarSection>
+      {/* Chevron for nodes with children */}
+      {node.hasChildren ? (
+        <button
+          onClick={(e) => { stop(e); onToggleExpand() }}
+          className="flex-shrink-0 flex items-center justify-center"
+          style={{
+            width: GUTTER_WIDTH, height: ROW_HEIGHT,
+            color: '#a8967a',
+          }}
+          title={expanded ? 'Collapse' : 'Expand'}
+        >
+          <Chevron open={expanded} size={9} />
+        </button>
+      ) : (
+        <div style={{ width: GUTTER_WIDTH, flexShrink: 0 }} />
+      )}
 
-        {Object.keys(sourceCounts).length > 0 && (
-          <SidebarSection title="Source">
-            {Object.entries(sourceCounts).map(([source, count]) => (
-              <SidebarButton
-                key={source}
-                active={filters.source === source}
-                label={source}
-                count={count}
-                onClick={() => onFilterChange("source", filters.source === source ? "all" : source)}
-                subtle
-              />
-            ))}
-          </SidebarSection>
-        )}
+      {/* Label — fills row width */}
+      <span
+        className="flex-1 min-w-0 truncate"
+        style={{
+          paddingLeft: 4, paddingRight: 8,
+          fontSize: 13,
+          fontWeight: selected ? 500 : 400,
+        }}
+      >
+        {node.label}
+      </span>
 
-        {Object.keys(orientationCounts).length > 0 && (
-          <SidebarSection title="Shape">
-            {Object.entries(orientationCounts).map(([orientation, count]) => (
-              <SidebarButton
-                key={orientation}
-                active={filters.orientation === orientation}
-                label={orientation}
-                count={count}
-                onClick={() => onFilterChange("orientation", filters.orientation === orientation ? "all" : orientation)}
-                subtle
-              />
-            ))}
-          </SidebarSection>
-        )}
+      {/* Right area — count by default, +/⋯ on row hover */}
+      <div
+        className="relative flex items-center"
+        style={{
+          height: ROW_HEIGHT,
+          paddingRight: RIGHT_PAD,
+          minWidth: 50,
+          justifyContent: 'flex-end',
+        }}
+        onClick={stop}
+      >
+        {/* Count */}
+        <span
+          className="transition-opacity group-hover:opacity-0"
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            color: selected ? '#8b6f47' : '#b0a490',
+            pointerEvents: 'none',
+          }}
+        >
+          {count ?? 0}
+        </span>
 
-        {Object.keys(cameraCounts).length > 0 && (
-          <SidebarSection title="Camera" collapsible>
-            {Object.entries(cameraCounts).sort((a, b) => b[1] - a[1]).map(([cam, count]) => (
-              <SidebarButton
-                key={cam}
-                active={filters.camera === cam}
-                label={cam}
-                count={count}
-                onClick={() => onFilterChange("camera", filters.camera === cam ? "all" : cam)}
-                subtle
-              />
-            ))}
-          </SidebarSection>
-        )}
+        {/* Hover icons */}
+        <div
+          className="absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ right: RIGHT_PAD, top: 0, height: ROW_HEIGHT }}
+        >
+          <button
+            onClick={(e) => { stop(e); onCreateUnder() }}
+            title={`New under ${node.label}`}
+            style={{
+              width: 18, height: 18,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 3,
+              color: '#7a6b55',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; e.currentTarget.style.color = '#2c2416' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7a6b55' }}
+          >
+            <PlusIcon size={13} />
+          </button>
 
-        {Object.keys(lensCounts).length > 0 && (
-          <SidebarSection title="Lens" collapsible>
-            {Object.entries(lensCounts).sort((a, b) => b[1] - a[1]).map(([lens, count]) => (
-              <SidebarButton
-                key={lens}
-                active={filters.lens === lens}
-                label={lens}
-                count={count}
-                onClick={() => onFilterChange("lens", filters.lens === lens ? "all" : lens)}
-                subtle
-              />
-            ))}
-          </SidebarSection>
-        )}
+          <div
+            className="relative"
+            onMouseEnter={openMenu}
+            onMouseLeave={scheduleClose}
+          >
+            <button
+              onClick={stop}
+              title="More"
+              style={{
+                width: 18, height: 18,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 3,
+                color: menuOpen ? '#2c2416' : '#7a6b55',
+                background: menuOpen ? 'rgba(44,36,22,0.08)' : 'transparent',
+              }}
+              onMouseEnter={e => { if (!menuOpen) { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; e.currentTarget.style.color = '#2c2416' } }}
+              onMouseLeave={e => { if (!menuOpen) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7a6b55' } }}
+            >
+              <MenuIcon size={13} />
+            </button>
 
-        {Object.keys(focalLengthCounts).length > 0 && (
-          <SidebarSection title="Focal Length" collapsible>
-            {[
-              { key: 'wide', label: 'Wide ≤35mm' },
-              { key: 'normal', label: 'Normal 35–85mm' },
-              { key: 'tele', label: 'Tele 85–200mm' },
-              { key: 'super', label: 'Super >200mm' },
-            ].filter(r => focalLengthCounts[r.key]).map(({ key, label }) => (
-              <SidebarButton
-                key={key}
-                active={filters.focalLength === key}
-                label={label}
-                count={focalLengthCounts[key]}
-                onClick={() => onFilterChange("focalLength", filters.focalLength === key ? "all" : key)}
-                subtle
-              />
-            ))}
-          </SidebarSection>
-        )}
+            {menuOpen && (
+              <div
+                onMouseEnter={cancelClose}
+                onMouseLeave={scheduleClose}
+                className="absolute z-30 rounded-lg overflow-hidden"
+                style={{
+                  top: '100%', right: 0, marginTop: 4,
+                  minWidth: 150,
+                  background: '#f9f6f1',
+                  boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.18)',
+                  padding: '4px 0',
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    stop(e)
+                    setMenuOpen(false)
+                    if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its sub-collections' : ''}?`)) {
+                      onDelete()
+                    }
+                  }}
+                  className="w-full text-left transition-colors"
+                  style={{
+                    padding: '7px 12px',
+                    fontSize: 13,
+                    color: '#c14a4a',
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(193,74,74,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-        {Object.keys(isoCounts).length > 0 && (
-          <SidebarSection title="ISO" collapsible>
-            {[
-              { key: 'low', label: 'Low ≤400' },
-              { key: 'mid', label: 'Mid 400–1600' },
-              { key: 'high', label: 'High >1600' },
-            ].filter(r => isoCounts[r.key]).map(({ key, label }) => (
-              <SidebarButton
-                key={key}
-                active={filters.iso === key}
-                label={label}
-                count={isoCounts[key]}
-                onClick={() => onFilterChange("iso", filters.iso === key ? "all" : key)}
-                subtle
-              />
-            ))}
-          </SidebarSection>
-        )}
+function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, onDeleteCollection, onFilterChange, openOverride }) {
+  const galleryKeys = Object.keys(counts).filter(k => k !== "all")
+  const nodes = useMemo(() => buildCollectionTree(galleryKeys), [galleryKeys.join('|')])
+  const [collapsed, setCollapsed] = useState(new Set())
+  const [creatingUnder, setCreatingUnder] = useState(undefined)
+  const [newCollectionName, setNewCollectionName] = useState('')
 
-        {(() => {
-  const nodes = buildCollectionTree(galleryKeys)
-  const [collapsed, setCollapsed] = React.useState(new Set())
-  const [creatingUnder, setCreatingUnder] = React.useState(undefined)
-  const [newCollectionName, setNewCollectionName] = React.useState('')
-
-  const visibleNodes = nodes.filter((node) => {
+  const visibleNodes = nodes.filter(node => {
     const parts = node.key.split('/')
     for (let i = 1; i < parts.length; i++) {
       if (collapsed.has(parts.slice(0, i).join('/'))) return false
     }
     return true
   })
+
+  const nodesWithChildren = nodes.filter(n => n.hasChildren)
+  const allCollapsed = nodesWithChildren.length > 0 && nodesWithChildren.every(n => collapsed.has(n.key))
+
+  function toggleAll() {
+    if (allCollapsed) {
+      setCollapsed(new Set())
+    } else {
+      setCollapsed(new Set(nodesWithChildren.map(n => n.key)))
+    }
+  }
 
   function submitCreate(parentKey) {
     const slug = newCollectionName.trim()
@@ -224,79 +415,95 @@ export default function AlbumSidebar({
     setNewCollectionName('')
   }
 
+  function toggleCollapse(key) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }
+
+  const iconBtnStyle = {
+    color: '#a8967a',
+    width: 18, height: 18,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 3,
+  }
+
   return (
     <SidebarSection
       title="Collections"
+      dense
+      openOverride={openOverride}
       action={
-        <button
-          onClick={() => { setCreatingUnder(null); setNewCollectionName('') }}
-          className="text-gray-400 hover:text-gray-700 text-base leading-none"
-          title="New collection"
-        >+</button>
+        <div className="flex items-center gap-0.5">
+          {nodesWithChildren.length > 0 && (
+            <button
+              onClick={toggleAll}
+              title={allCollapsed ? 'Expand all' : 'Collapse all'}
+              style={iconBtnStyle}
+              onMouseEnter={e => { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.background = 'rgba(44,36,22,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#a8967a'; e.currentTarget.style.background = 'transparent' }}
+            >
+              <ToggleAllIcon allCollapsed={allCollapsed} size={12} />
+            </button>
+          )}
+          <button
+            onClick={() => { setCreatingUnder(null); setNewCollectionName('') }}
+            title="New collection"
+            style={iconBtnStyle}
+            onMouseEnter={e => { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.background = 'rgba(44,36,22,0.08)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#a8967a'; e.currentTarget.style.background = 'transparent' }}
+          >
+            <PlusIcon size={13} />
+          </button>
+        </div>
       }
     >
-      {visibleNodes.map((node) => (
-        <div key={node.key} style={{ paddingLeft: node.depth * 12 }}>
-          <div className="flex items-center group">
-            <div className="flex-1 min-w-0">
-              <SidebarButton
-                active={isSelected("gallery", node.key)}
-                label={node.label}
-                count={counts[node.key] ?? 0}
-                onClick={() => { onSelect({ type: "gallery", key: node.key }); onFilterChange("usage", "all") }}
-              />
-            </div>
-            <div className="flex items-center gap-0.5 pr-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => { setCreatingUnder(node.key); setNewCollectionName('') }}
-                className="text-gray-400 hover:text-gray-700 text-xs px-1"
-                title={`New sub-collection under ${node.label}`}
-              >+</button>
-              <button
-                onClick={() => {
-                  if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its sub-collections' : ''}?`)) {
-                    onDeleteCollection(node.key)
-                  }
-                }}
-                className="text-gray-400 hover:text-red-500 text-xs px-1"
-                title={`Delete ${node.label}`}
-              >×</button>
-              {node.hasChildren && (
-                <button
-                  onClick={() => setCollapsed((prev) => {
-                    const next = new Set(prev)
-                    if (next.has(node.key)) next.delete(node.key)
-                    else next.add(node.key)
-                    return next
-                  })}
-                  className="text-gray-400 hover:text-gray-700 text-xs px-1"
-                >
-                  {collapsed.has(node.key) ? '▸' : '▾'}
-                </button>
-              )}
-            </div>
-          </div>
-          {creatingUnder === node.key && (
-            <div className="px-2 py-1" style={{ paddingLeft: (node.depth + 1) * 12 + 8 }}>
-              <input
-                autoFocus
-                type="text"
-                value={newCollectionName}
-                onChange={(e) => setNewCollectionName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') submitCreate(node.key)
-                  else if (e.key === 'Escape') setCreatingUnder(undefined)
-                }}
-                onBlur={() => setCreatingUnder(undefined)}
-                placeholder="Collection name"
-                className="w-full text-sm px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500"
-              />
-            </div>
-          )}
+      {visibleNodes.length === 0 && creatingUnder !== null && (
+        <div style={{ padding: '4px 12px', fontSize: 12, color: '#c4b49a', fontStyle: 'italic' }}>
+          No collections yet
         </div>
-      ))}
+      )}
+
+      {visibleNodes.map((node) => {
+        const expanded = !collapsed.has(node.key)
+        return (
+          <div key={node.key}>
+            <CollectionRow
+              node={node}
+              selected={isSelected("gallery", node.key)}
+              expanded={expanded}
+              count={counts[node.key]}
+              onSelect={() => { onSelect({ type: "gallery", key: node.key }); onFilterChange("usage", "all") }}
+              onToggleExpand={() => toggleCollapse(node.key)}
+              onCreateUnder={() => { setCreatingUnder(node.key); setNewCollectionName('') }}
+              onDelete={() => onDeleteCollection(node.key)}
+            />
+            {creatingUnder === node.key && (
+              <div style={{ paddingLeft: 24 + (node.depth + 1) * GUTTER_WIDTH + 4, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
+                <input
+                  autoFocus
+                  type="text"
+                  value={newCollectionName}
+                  onChange={(e) => setNewCollectionName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submitCreate(node.key)
+                    else if (e.key === 'Escape') setCreatingUnder(undefined)
+                  }}
+                  onBlur={() => setCreatingUnder(undefined)}
+                  placeholder="name…"
+                  className="w-full text-sm px-2 py-1 rounded focus:outline-none"
+                  style={{ border: '1px solid rgba(160,140,110,0.4)', background: '#f9f6f1', color: '#2c2416' }}
+                />
+              </div>
+            )}
+          </div>
+        )
+      })}
+
       {creatingUnder === null && (
-        <div className="px-2 py-1">
+        <div style={{ padding: '4px 12px 0' }}>
           <input
             autoFocus
             type="text"
@@ -307,23 +514,327 @@ export default function AlbumSidebar({
               else if (e.key === 'Escape') setCreatingUnder(undefined)
             }}
             onBlur={() => setCreatingUnder(undefined)}
-            placeholder="Collection name"
-            className="w-full text-sm px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500"
+            placeholder="name…"
+            className="w-full text-sm px-2 py-1 rounded focus:outline-none"
+            style={{ border: '1px solid rgba(160,140,110,0.4)', background: '#f9f6f1', color: '#2c2416' }}
           />
         </div>
       )}
     </SidebarSection>
   )
-})()}
+}
+
+const SIDEBAR_SHADOW = '1px 0 0 rgba(26,18,10,0.06), 2px 0 6px rgba(26,18,10,0.06), 24px 0 48px -12px rgba(26,18,10,0.18)'
+
+export default function AlbumSidebar({
+  counts,
+  selectedAlbum,
+  onSelect,
+  onCreateCollection,
+  onDeleteCollection,
+  orientationCounts,
+  usageCounts,
+  captureYearCounts,
+  uploadedCounts,
+  apertureCounts,
+  shutterCounts,
+  cameraCounts,
+  lensCounts,
+  focalLengthCounts,
+  isoCounts,
+  filters,
+  onFilterChange,
+  onBack,
+}) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
+  const isSelected = (type, key) =>
+    selectedAlbum.type === type && selectedAlbum.key === key;
+
+  const activeFilterCount = [
+    filters.orientation !== "all",
+    filters.usage !== "all",
+    filters.captureYear !== "all",
+    filters.uploaded !== "all",
+    filters.aperture !== "all",
+    filters.shutter !== "all",
+    filters.camera !== "all",
+    filters.lens !== "all",
+    filters.focalLength !== "all",
+    filters.iso !== "all",
+  ].filter(Boolean).length;
+
+  const clearAllFilters = useCallback(() => {
+    ["orientation","usage","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso"]
+      .forEach(k => onFilterChange(k, "all"));
+    onSelect({ type: "all", key: "all" });
+  }, [onFilterChange, onSelect]);
+
+  if (sidebarCollapsed) {
+    return (
+      <button
+        onClick={() => setSidebarCollapsed(false)}
+        className="flex flex-col flex-shrink-0 h-full items-center justify-center gap-2 transition-colors"
+        style={{
+          width: 40,
+          background: '#efeae1',
+          boxShadow: SIDEBAR_SHADOW,
+          position: 'relative',
+          zIndex: 1,
+          color: '#9e9788',
+        }}
+        title="Expand library"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+        <span style={{ fontFamily: 'monospace', fontSize: 13, letterSpacing: '0.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+          Library Filters
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <div
+      className="flex flex-col flex-shrink-0 h-full"
+      style={{
+        width: 288,
+        background: '#efeae1',
+        boxShadow: SIDEBAR_SHADOW,
+        position: 'relative',
+        zIndex: 1,
+      }}
+    >
+      {/* Sidebar header — matches block sidebar style */}
+      <div
+        className="flex-shrink-0 flex items-center px-3 gap-0.5"
+        style={{ height: 48, boxShadow: 'inset 0 -1px 0 rgba(26,18,10,0.07)' }}
+      >
+<span className="flex-1 truncate mr-1" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+          Library
+          {activeFilterCount > 0 && (
+            <span style={{ marginLeft: 6, fontFamily: MONO, fontSize: 10, fontWeight: 400, color: 'var(--text-muted)' }}>
+              {activeFilterCount}
+            </span>
+          )}
+        </span>
+        {activeFilterCount > 0 && (
+          <button
+            onClick={clearAllFilters}
+            title="Clear all filters"
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <ClearIcon />
+          </button>
+        )}
+        <button
+          onClick={() => setSectionsOpen(v => v !== false ? false : true)}
+          title={sectionsOpen !== false ? 'Collapse all sections' : 'Expand all sections'}
+          className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <ToggleAllIcon allCollapsed={sectionsOpen === false} />
+        </button>
+        <button
+          onClick={() => setSidebarCollapsed(true)}
+          title="Collapse library"
+          className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 3L5 8l5 5" />
+          </svg>
+        </button>
       </div>
 
-      <div className="p-3 border-t border-gray-200">
-        <button
-          onClick={onUploadClick}
-          className="w-full bg-gray-900 text-white text-sm font-medium py-2 rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          ↑ Upload Photos
-        </button>
+      <div className="flex-1 overflow-y-auto scroll-quiet" style={{ paddingBottom: 16 }}>
+        {/* All Photos — standalone reset row */}
+        <div style={{ padding: '6px 0 6px' }}>
+          <SidebarItem
+            active={isSelected("all", "all") && filters.usage === "all"}
+            label="All Photos"
+            count={counts.all ?? 0}
+            indent={12}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", "all"); }}
+          />
+        </div>
+
+        <SidebarSection title="Usage" openOverride={sectionsOpen}>
+          <SidebarItem
+            active={filters.usage === "unused"}
+            label="Unused"
+            count={usageCounts.unused}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", filters.usage === "unused" ? "all" : "unused"); }}
+          />
+          <SidebarItem
+            active={filters.usage === "used"}
+            label="In Use"
+            count={usageCounts.used}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", filters.usage === "used" ? "all" : "used"); }}
+          />
+        </SidebarSection>
+
+        {Object.keys(orientationCounts).length > 0 && (
+          <SidebarSection title="Shape" openOverride={sectionsOpen}>
+            {Object.entries(orientationCounts).map(([orientation, count]) => (
+              <SidebarItem
+                key={orientation}
+                active={filters.orientation === orientation}
+                label={orientation.charAt(0).toUpperCase() + orientation.slice(1)}
+                count={count}
+                onClick={() => onFilterChange("orientation", filters.orientation === orientation ? "all" : orientation)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(captureYearCounts).length > 0 && (
+          <SidebarSection title="Captured" openOverride={sectionsOpen}>
+            {Object.keys(captureYearCounts).sort((a, b) => b - a).map(year => (
+              <SidebarItem
+                key={year}
+                active={filters.captureYear === year}
+                label={year}
+                count={captureYearCounts[year]}
+                onClick={() => onFilterChange("captureYear", filters.captureYear === year ? "all" : year)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.values(uploadedCounts).some(Boolean) && (
+          <SidebarSection title="Uploaded" defaultOpen={false} openOverride={sectionsOpen}>
+            {[
+              { key: 'week', label: 'This week' },
+              { key: 'month', label: 'This month' },
+              { key: 'year', label: 'This year' },
+              { key: 'older', label: 'Older' },
+            ].filter(r => uploadedCounts[r.key]).map(({ key, label }) => (
+              <SidebarItem
+                key={key}
+                active={filters.uploaded === key}
+                label={label}
+                count={uploadedCounts[key]}
+                onClick={() => onFilterChange("uploaded", filters.uploaded === key ? "all" : key)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(cameraCounts).length > 0 && (
+          <SidebarSection title="Camera" defaultOpen={false} openOverride={sectionsOpen}>
+            {Object.entries(cameraCounts).sort((a, b) => b[1] - a[1]).map(([cam, count]) => (
+              <SidebarItem
+                key={cam}
+                active={filters.camera === cam}
+                label={cam}
+                count={count}
+                onClick={() => onFilterChange("camera", filters.camera === cam ? "all" : cam)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(lensCounts).length > 0 && (
+          <SidebarSection title="Lens" defaultOpen={false} openOverride={sectionsOpen}>
+            {Object.entries(lensCounts).sort((a, b) => b[1] - a[1]).map(([lens, count]) => (
+              <SidebarItem
+                key={lens}
+                active={filters.lens === lens}
+                label={lens}
+                count={count}
+                onClick={() => onFilterChange("lens", filters.lens === lens ? "all" : lens)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(focalLengthCounts).length > 0 && (
+          <SidebarSection title="Focal Length" defaultOpen={false} openOverride={sectionsOpen}>
+            {[
+              { key: 'wide', label: 'Wide ≤35mm' },
+              { key: 'normal', label: 'Normal 35–85mm' },
+              { key: 'tele', label: 'Tele 85–200mm' },
+              { key: 'super', label: 'Super >200mm' },
+            ].filter(r => focalLengthCounts[r.key]).map(({ key, label }) => (
+              <SidebarItem
+                key={key}
+                active={filters.focalLength === key}
+                label={label}
+                count={focalLengthCounts[key]}
+                onClick={() => onFilterChange("focalLength", filters.focalLength === key ? "all" : key)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(apertureCounts).length > 0 && (
+          <SidebarSection title="Aperture" defaultOpen={false} openOverride={sectionsOpen}>
+            {[
+              { key: 'wide',   label: 'Wide  ƒ < 2' },
+              { key: 'mid',    label: 'Mid  ƒ 2–4' },
+              { key: 'narrow', label: 'Narrow  ƒ 4–8' },
+              { key: 'closed', label: 'Closed  ƒ 8+' },
+            ].filter(r => apertureCounts[r.key]).map(({ key, label }) => (
+              <SidebarItem
+                key={key}
+                active={filters.aperture === key}
+                label={label}
+                count={apertureCounts[key]}
+                onClick={() => onFilterChange("aperture", filters.aperture === key ? "all" : key)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(shutterCounts).length > 0 && (
+          <SidebarSection title="Shutter Speed" defaultOpen={false} openOverride={sectionsOpen}>
+            {[
+              { key: 'fast',   label: '> 1/500' },
+              { key: 'action', label: '1/500 – 1/125' },
+              { key: 'hand',   label: '1/125 – 1/30' },
+              { key: 'slow',   label: '< 1/30' },
+            ].filter(r => shutterCounts[r.key]).map(({ key, label }) => (
+              <SidebarItem
+                key={key}
+                active={filters.shutter === key}
+                label={label}
+                count={shutterCounts[key]}
+                onClick={() => onFilterChange("shutter", filters.shutter === key ? "all" : key)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(isoCounts).length > 0 && (
+          <SidebarSection title="ISO" defaultOpen={false} openOverride={sectionsOpen}>
+            {[
+              { key: 'low', label: 'Low ≤400' },
+              { key: 'mid', label: 'Mid 400–1600' },
+              { key: 'high', label: 'High >1600' },
+            ].filter(r => isoCounts[r.key]).map(({ key, label }) => (
+              <SidebarItem
+                key={key}
+                active={filters.iso === key}
+                label={label}
+                count={isoCounts[key]}
+                onClick={() => onFilterChange("iso", filters.iso === key ? "all" : key)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        <CollectionsSection
+          counts={counts}
+          isSelected={isSelected}
+          openOverride={sectionsOpen}
+          onSelect={onSelect}
+          onCreateCollection={onCreateCollection}
+          onDeleteCollection={onDeleteCollection}
+          onFilterChange={onFilterChange}
+        />
       </div>
     </div>
   )

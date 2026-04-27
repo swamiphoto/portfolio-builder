@@ -4,10 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
-.scroll-quiet::-webkit-scrollbar { width: 4px; }
-.scroll-quiet::-webkit-scrollbar-track { background: transparent; }
-.scroll-quiet::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; transition: background 0.15s; }
-.scroll-quiet:hover::-webkit-scrollbar-thumb { background: rgba(26,18,10,0.12); }
+.scroll-quiet { scrollbar-width: none; }
+.scroll-quiet::-webkit-scrollbar { width: 0; }
+
+.site-input::placeholder { color: rgba(168,150,122,0.55); }
+.site-input:focus { border-bottom-color: rgba(92,79,58,0.65) !important; }
 
 @font-face {
   font-family: "Muse";

@@ -216,6 +216,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
       {photoPickerOpen && (
         <PhotoPickerModal
           images={libraryImages || []}
+          libraryConfig={libraryData}
           loading={libraryLoading}
           blockType={photoPickerBlockIndex === 'thumbnail' ? 'photo' : (page.blocks?.[photoPickerBlockIndex]?.type || 'photo')}
           onConfirm={handlePhotoPickerConfirm}

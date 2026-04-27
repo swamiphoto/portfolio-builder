@@ -108,8 +108,8 @@ export default function PageSettingsPanel({ page, onChange }) {
           ref={brushRef}
           onClick={() => setDesignOpen(v => !v)}
           title="Page design"
-          className="w-6 h-6 flex items-center justify-center transition-colors"
-          style={{ color: 'var(--text-muted)' }}
+          className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+          style={{ color: designOpen ? 'var(--text-primary)' : 'var(--text-muted)' }}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
@@ -131,9 +131,9 @@ export default function PageSettingsPanel({ page, onChange }) {
         <div className="px-3 pb-3 pt-0 space-y-4">
           {/* Title */}
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Title</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Title</div>
             <input
-              className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
+              className="border-b border-[rgba(160,140,110,0.3)] pt-0 pb-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
               placeholder="Page title"
               value={page.title || ''}
               onChange={(e) => updateTitle(e.target.value)}
@@ -142,9 +142,9 @@ export default function PageSettingsPanel({ page, onChange }) {
 
           {/* Description */}
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Description</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Description</div>
             <AutoGrowTextarea
-              className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
+              className="border-b border-[rgba(160,140,110,0.3)] pt-0 pb-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
               placeholder="A few words about this page…"
               maxHeight={160}
               value={page.description || ''}

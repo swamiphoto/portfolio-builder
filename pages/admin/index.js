@@ -321,9 +321,7 @@ export default function AdminIndex() {
 
 
   let content
-  if (showLibrary) {
-    content = <AdminLibrary />
-  } else if (selectedPage) {
+  if (selectedPage) {
     const username = session?.user?.username
     if (selectedPage.type === 'link') {
       content = (
@@ -439,9 +437,32 @@ export default function AdminIndex() {
       >
         {content}
       </AdminLayout>
+
+      {showLibrary && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ zIndex: 50, background: 'rgba(26,18,10,0.22)', backdropFilter: 'blur(2px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowLibrary(false) }}
+        >
+          <div
+            className="flex overflow-hidden"
+            style={{
+              position: 'absolute',
+              inset: 20,
+              borderRadius: 12,
+              background: 'var(--desk)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.1), 0 32px 80px rgba(26,18,10,0.35)',
+            }}
+          >
+            <AdminLibrary onBack={() => setShowLibrary(false)} />
+          </div>
+
+        </div>
+      )}
       {thumbnailPickerPageId && (
         <PhotoPickerModal
           images={libraryConfig?.images || []}
+          libraryConfig={libraryConfig}
           loading={!libraryConfig}
           blockType="photo"
           onConfirm={handleThumbnailConfirm}
@@ -451,6 +472,7 @@ export default function AdminIndex() {
       {assetPickerTarget && (
         <PhotoPickerModal
           images={libraryConfig?.images || []}
+          libraryConfig={libraryConfig}
           loading={!libraryConfig}
           blockType="photo"
           onConfirm={handleAssetPickerConfirm}

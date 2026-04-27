@@ -407,7 +407,15 @@ export default function PlatformSidebar({
                 Set as home
               </button>
             )}
-            <button onClick={() => { setMenuOpenId(null); handleDelete(page.id) }} className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">Delete</button>
+            <button
+              onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
+              className="w-full text-left px-3 py-1.5 text-sm transition-colors"
+              style={{ color: '#c14a4a', fontWeight: 500 }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              Delete
+            </button>
           </div>
         )}
 
@@ -624,6 +632,7 @@ export default function PlatformSidebar({
       {siteSettingsOpen && (
         <SiteSettingsPopover
           siteConfig={siteConfig}
+          username={username}
           anchorEl={siteSettingsGearRef.current}
           onUpdate={onConfigChange}
           onClose={() => setSiteSettingsOpen(false)}

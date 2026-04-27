@@ -258,7 +258,7 @@ export default function BlockCard({
         </button>
 
         {/* Hover-reveal actions */}
-        <div className="flex items-center gap-0.5 opacity-60 transition-opacity">
+        <div className="flex items-center gap-0.5">
           {(block.type === "photo" || isPhotoBlock) && (
             <button
               onClick={onAddPhotos}
@@ -301,10 +301,27 @@ export default function BlockCard({
               ⋯
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 z-20 py-1 w-36 rounded-xl overflow-hidden" style={{ background: 'var(--popover)', boxShadow: 'var(--popover-shadow)', border: '1px solid var(--card-border)' }}>
+              <div
+                className="absolute right-0 top-full z-[1000] rounded-md overflow-hidden whitespace-nowrap"
+                style={{
+                  marginTop: 4,
+                  minWidth: 144,
+                  background: 'var(--popover)',
+                  boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+                  padding: '4px 0',
+                }}
+              >
                 <button
                   onClick={() => { setShowMenu(false); onRemove(); }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-[#ede8e0] transition-colors whitespace-nowrap"
+                  className="w-full text-left transition-colors"
+                  style={{
+                    padding: '7px 12px',
+                    fontSize: 12.5,
+                    color: '#c14a4a',
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
                   Remove block
                 </button>
