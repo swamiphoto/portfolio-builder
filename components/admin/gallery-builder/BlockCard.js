@@ -123,6 +123,7 @@ export default function BlockCard({
   const [expanded, setExpanded] = useState(true);
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride]);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState(null);
   const [showDesign, setShowDesign] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [selectedIndices, setSelectedIndices] = useState(new Set());
@@ -130,6 +131,7 @@ export default function BlockCard({
   const [gridDropHover, setGridDropHover] = useState(false);
   const lastSelectedRef = useRef(null);
   const menuRef = useRef(null);
+  const menuBtnRef = useRef(null);
   const designBtnRef = useRef(null);
 
   const handleThumbClick = (e, i) => {
@@ -154,7 +156,10 @@ export default function BlockCard({
 
   useEffect(() => {
     const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false);
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        menuBtnRef.current && !menuBtnRef.current.contains(e.target)
+      ) setShowMenu(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -294,19 +299,31 @@ export default function BlockCard({
             </div>
           )}
 
-          <div className="relative" ref={menuRef}>
+          <div ref={menuRef}>
             <button
-              onClick={() => { onTitleClick?.(); setShowMenu((v) => !v); }}
+              ref={menuBtnRef}
+              onClick={() => {
+                onTitleClick?.();
+                setShowMenu((v) => {
+                  if (!v && menuBtnRef.current) {
+                    const rect = menuBtnRef.current.getBoundingClientRect();
+                    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                  }
+                  return !v;
+                });
+              }}
               className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-sm leading-none"
               style={{ color: 'var(--text-muted)' }}
             >
               ⋯
             </button>
-            {showMenu && (
+            {showMenu && menuPos && (
               <div
-                className="absolute right-0 top-full z-[1000] rounded-md overflow-hidden whitespace-nowrap"
+                ref={menuRef}
+                className="fixed z-[9999] rounded-md overflow-hidden whitespace-nowrap"
                 style={{
-                  marginTop: 4,
+                  top: menuPos.top,
+                  right: menuPos.right,
                   minWidth: 152,
                   background: 'var(--popover)',
                   boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
@@ -317,7 +334,7 @@ export default function BlockCard({
                   onClick={() => { setShowMenu(false); onMoveUp(); }}
                   disabled={!onMoveUp}
                   className="w-full text-left flex items-center gap-2 transition-colors"
-                  style={{ padding: '7px 12px', fontSize: 12.5, color: onMoveUp ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500, opacity: onMoveUp ? 1 : 0.4, cursor: onMoveUp ? 'pointer' : 'default' }}
+                  style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onMoveUp ? 1 : 0.35, cursor: onMoveUp ? 'pointer' : 'default' }}
                   onMouseEnter={(e) => { if (onMoveUp) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
@@ -328,7 +345,7 @@ export default function BlockCard({
                   onClick={() => { setShowMenu(false); onMoveDown(); }}
                   disabled={!onMoveDown}
                   className="w-full text-left flex items-center gap-2 transition-colors"
-                  style={{ padding: '7px 12px', fontSize: 12.5, color: onMoveDown ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500, opacity: onMoveDown ? 1 : 0.4, cursor: onMoveDown ? 'pointer' : 'default' }}
+                  style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onMoveDown ? 1 : 0.35, cursor: onMoveDown ? 'pointer' : 'default' }}
                   onMouseEnter={(e) => { if (onMoveDown) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
