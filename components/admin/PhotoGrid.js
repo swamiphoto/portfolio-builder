@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import PhotoTile from "./PhotoTile";
 import AdminPhotoLightbox from "./AdminPhotoLightbox";
+import Tip from "./Tip";
 
 const GAP = 12;
 const INFO_HEIGHT = 96;
@@ -461,6 +462,7 @@ export default function PhotoGrid({
           </button>
 
           {onClose && (
+            <Tip label="Close">
             <button
               onClick={onClose}
               className="flex items-center justify-center transition-colors"
@@ -470,12 +472,12 @@ export default function PhotoGrid({
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.08)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              title="Close"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
                 <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" />
               </svg>
             </button>
+            </Tip>
           )}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ViewportProvider } from '../../../contexts/ViewportContext'
+import Tip from '../Tip'
 
 // components/admin/platform/AdminLayout.js
 export default function AdminLayout({ sidebar, panel, children, panelCollapsed, onTogglePanel, sidebarCollapsed, onToggleSidebar, panelLabel, username, pagePath }) {
@@ -39,6 +40,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
             {sidebar}
           </div>
           {/* Collapsed tab — fades in after width has started closing */}
+          <Tip label="Expand pages panel" side="right">
           <button
             onClick={onToggleSidebar}
             className="absolute inset-0 flex flex-col items-center justify-center gap-2 w-full transition-colors"
@@ -48,7 +50,6 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               transition: sidebarCollapsed ? 'opacity 0.15s 0.15s' : 'opacity 0.1s',
               pointerEvents: sidebarCollapsed ? 'auto' : 'none',
             }}
-            title="Expand pages panel"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -57,6 +58,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               Pages
             </span>
           </button>
+          </Tip>
         </div>
 
         {/* Block sidebar — attached to site sidebar */}
@@ -79,6 +81,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               {panel}
             </div>
             {/* Collapsed tab — fades in once width is nearly closed */}
+            <Tip label="Expand blocks panel" side="right">
             <button
               onClick={onTogglePanel}
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 w-full"
@@ -88,7 +91,6 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
                 transition: panelCollapsed ? 'opacity 0.15s 0.2s' : 'opacity 0.1s',
                 pointerEvents: panelCollapsed ? 'auto' : 'none',
               }}
-              title="Expand blocks panel"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -97,6 +99,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
                 {panelLabel || 'Blocks'}
               </span>
             </button>
+            </Tip>
           </div>
         )}
       </div>

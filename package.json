@@ -9,6 +9,7 @@
     "@geist-ui/react-icons": "^1.0.1",
     "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.0.18",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-virtual": "^3.13.23",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",

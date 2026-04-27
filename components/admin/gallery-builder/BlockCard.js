@@ -5,6 +5,7 @@ import { resolveCaption, isCaptionOverridden } from '../../../common/captionReso
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
+import Tip from "../Tip";
 
 const TYPE_LABELS = {
   page: "Hero",
@@ -267,27 +268,33 @@ function BlockCard({
         {/* Hover-reveal actions */}
         <div className="flex items-center gap-0.5">
           {(block.type === "photo" || isPhotoBlock) && (
-            <button
-              onClick={() => { onTitleClick?.(); onAddPhotos(); }}
-              title="Add photos"
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-base leading-none"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              +
-            </button>
+            <Tip label={
+              block.type === "photo"
+                ? (block.imageUrl ? "Replace photo" : "Add a photo")
+                : (normalizeImageRefs(block.images || block.imageUrls || []).length > 0 ? "Add more photos" : "Add photos")
+            }>
+              <button
+                onClick={() => { onTitleClick?.(); onAddPhotos(); }}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-base leading-none"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                +
+              </button>
+            </Tip>
           )}
 
           {hasDesign && (
             <div className="relative">
-              <button
-                ref={designBtnRef}
-                onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
-                title="Design"
-                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-                style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
-              >
-                <PaintbrushIcon />
-              </button>
+              <Tip label="Design">
+                <button
+                  ref={designBtnRef}
+                  onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
+                  className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+                  style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
+                >
+                  <PaintbrushIcon />
+                </button>
+              </Tip>
               {showDesign && (
                 <DesignPopover
                   block={block}
@@ -367,18 +374,20 @@ function BlockCard({
           </div>
         </div>
 
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <svg
-            className={`w-3.5 h-3.5 transition-transform ${expanded ? "" : "rotate-180"}`}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+        <Tip label={expanded ? "Collapse" : "Expand"}>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
+            style={{ color: 'var(--text-muted)' }}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          </svg>
-        </button>
+            <svg
+              className={`w-3.5 h-3.5 transition-transform ${expanded ? "" : "rotate-180"}`}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+        </Tip>
       </div>
 
       {/* Expanded body */}

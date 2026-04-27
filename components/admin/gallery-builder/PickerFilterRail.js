@@ -2,6 +2,7 @@
 // Mirrors AlbumSidebar's section/row pattern, but slimmer and oriented for the right edge
 // (so it doesn't block the canvas to the left of the picker when expanded).
 import { useState } from 'react'
+import Tip from '../Tip'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 const ROW_HEIGHT = 26
@@ -89,6 +90,7 @@ function FilterRow({ active, label, count, onClick }) {
 
 function CollapsedRail({ onExpand, activeCount }) {
   return (
+    <Tip label="Expand filters" side="left">
     <button
       onClick={onExpand}
       className="flex flex-col flex-shrink-0 h-full items-center justify-center gap-2 transition-colors relative"
@@ -99,7 +101,6 @@ function CollapsedRail({ onExpand, activeCount }) {
         color: '#9e9788',
         border: 'none',
       }}
-      title="Expand filters"
     >
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -141,6 +142,7 @@ function CollapsedRail({ onExpand, activeCount }) {
         </span>
       )}
     </button>
+    </Tip>
   )
 }
 
@@ -218,18 +220,19 @@ export default function PickerFilterRail({
           )}
         </span>
         {activeCount > 0 && (
+          <Tip label="Clear all filters">
           <button
             onClick={onClearAll}
-            title="Clear all filters"
             className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
             style={{ color: 'var(--text-muted)' }}
           >
             <ClearIcon />
           </button>
+          </Tip>
         )}
+        <Tip label="Collapse filters">
         <button
           onClick={() => onToggleCollapsed(true)}
-          title="Collapse filters"
           className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
           style={{ color: 'var(--text-muted)' }}
         >
@@ -237,6 +240,7 @@ export default function PickerFilterRail({
             <path d="M10 3l-5 5 5 5" />
           </svg>
         </button>
+        </Tip>
       </div>
 
       {/* Sections */}

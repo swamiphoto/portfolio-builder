@@ -4,6 +4,7 @@ import { getSizedUrl } from "../../../common/imageUtils";
 import { applyFilters, computeFilterCounts, placeholderColor } from "../../../common/libraryFilters";
 import PickerFilterRail from "./PickerFilterRail";
 import CollectionPillsPicker from "./CollectionPillsPicker";
+import Tip from "../Tip";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
@@ -153,10 +154,10 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
       />
 
       {/* Preview (eye) — top-right, hover-only */}
+      <Tip label="Preview" side="bottom">
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onPreview && onPreview(); }}
-        title="Preview"
         className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity flex"
         style={{
           background: 'rgba(20,12,4,0.55)',
@@ -172,6 +173,7 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
           <circle cx="12" cy="12" r="3" />
         </svg>
       </button>
+      </Tip>
 
       {/* Selection check — top-right */}
       {isSelected && (
@@ -414,6 +416,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
             }}
           />
           {search && (
+            <Tip label="Clear">
             <button
               type="button"
               onClick={() => setSearch('')}
@@ -421,12 +424,12 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
               style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
               onMouseEnter={(e) => e.currentTarget.style.color = '#2c2416'}
               onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-              title="Clear"
             >
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
               </svg>
             </button>
+            </Tip>
           )}
 
           {searchFocused && suggestions.length > 0 && (
@@ -661,10 +664,10 @@ function UploadTab({ onUploaded, libraryConfig }) {
                   {progress[f.name] === "done" ? "✓" : progress[f.name] === "error" ? "✗" : progress[f.name] === "pending" ? "…" : "·"}
                 </span>
                 {!progress[f.name] && (
+                  <Tip label="Remove">
                   <button
                     type="button"
                     onClick={() => removeFile(f.name)}
-                    title="Remove"
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = '#c14a4a')}
@@ -674,6 +677,7 @@ function UploadTab({ onUploaded, libraryConfig }) {
                       <path d="M4 4l8 8M12 4l-8 8" />
                     </svg>
                   </button>
+                  </Tip>
                 )}
               </div>
             ))}

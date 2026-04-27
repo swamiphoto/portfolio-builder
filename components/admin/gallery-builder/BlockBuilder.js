@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { useDrag } from '../../../common/dragContext';
+import Tip from "../Tip";
 import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
@@ -42,20 +43,22 @@ function InsertionZone({ onInsert }) {
         className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px opacity-0 group-hover/zone:opacity-100 transition-opacity duration-100"
         style={{ background: 'radial-gradient(ellipse 70% 100% at center, rgba(160,140,110,0.6) 0%, transparent 100%)' }}
       />
-      <div
-        className="insertion-zone-btn absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full opacity-0 group-hover/zone:opacity-100 hover:scale-110 transition-all duration-150"
-        style={{
-          width: 24,
-          height: 24,
-          background: 'linear-gradient(155deg, #fefcf8 0%, #ebe5db 100%)',
-          border: 'none',
-          color: 'var(--text-secondary)',
-        }}
-      >
-        <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
-          <path d="M4.5 1.5v6M1.5 4.5h6" />
-        </svg>
-      </div>
+      <Tip label="Add a block here" side="right">
+        <div
+          className="insertion-zone-btn absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full opacity-0 group-hover/zone:opacity-100 hover:scale-110 transition-all duration-150"
+          style={{
+            width: 24,
+            height: 24,
+            background: 'linear-gradient(155deg, #fefcf8 0%, #ebe5db 100%)',
+            border: 'none',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+            <path d="M4.5 1.5v6M1.5 4.5h6" />
+          </svg>
+        </div>
+      </Tip>
     </div>
   );
 }
@@ -218,50 +221,53 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           </span>
 
           {/* Add block */}
-          <button
-            onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
-            title="Add block"
-            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
-              <path d="M8 3v10M3 8h10" />
-            </svg>
-          </button>
+          <Tip label="Add block" side="bottom">
+            <button
+              onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+            </button>
+          </Tip>
 
           {/* Expand/collapse all toggle */}
-          <button
-            onClick={() => {
-              const next = !allExpanded
-              setAllExpanded(next)
-              setExpandedOverride({ value: next, ts: Date.now() })
-            }}
-            title={allExpanded ? 'Collapse all' : 'Expand all'}
-            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {allExpanded ? (
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 4h10M3 8h10M3 12h10" />
-              </svg>
-            )}
-          </button>
+          <Tip label={allExpanded ? 'Collapse all blocks' : 'Expand all blocks'} side="bottom">
+            <button
+              onClick={() => {
+                const next = !allExpanded
+                setAllExpanded(next)
+                setExpandedOverride({ value: next, ts: Date.now() })
+              }}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {allExpanded ? (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 4h10M3 8h10M3 12h10" />
+                </svg>
+              )}
+            </button>
+          </Tip>
 
           {/* Collapse panel */}
-          <button
-            onClick={onToggleExpand}
-            title="Collapse panel"
-            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 13L5 8l5-5" />
-            </svg>
-          </button>
+          <Tip label="Collapse panel" side="bottom">
+            <button
+              onClick={onToggleExpand}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13L5 8l5-5" />
+              </svg>
+            </button>
+          </Tip>
         </div>
       )}
 

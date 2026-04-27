@@ -70,6 +70,29 @@ a {
   @apply underline hover:text-red-500;
 }
 
+/* Admin tooltips */
+.admin-tip {
+  background: #1e140a;
+  color: #f0e8d8;
+  font-size: 11px;
+  font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.03em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  user-select: none;
+  pointer-events: none;
+  z-index: 9999;
+  animation: tip-in 0.1s ease;
+}
+.admin-tip-arrow {
+  fill: #1e140a;
+}
+@keyframes tip-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 .insertion-zone-btn {
   box-shadow: 0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
   transition: box-shadow 0.15s ease, transform 0.15s ease;

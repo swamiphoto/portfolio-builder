@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
+import Tip from "./Tip";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const LINE_COLOR = 'rgba(160,140,110,0.32)';
@@ -323,9 +324,9 @@ function CollectionRow({
             onMouseEnter={openMenu}
             onMouseLeave={scheduleClose}
           >
+            <Tip label="More">
             <button
               onClick={stop}
-              title="More"
               style={{
                 width: 18, height: 18,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -338,6 +339,7 @@ function CollectionRow({
             >
               <MenuIcon size={13} />
             </button>
+            </Tip>
 
             {menuOpen && (
               <div
@@ -448,15 +450,16 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
               <ToggleAllIcon allCollapsed={allCollapsed} size={12} />
             </button>
           )}
+          <Tip label="New collection">
           <button
             onClick={() => { setCreatingUnder(null); setNewCollectionName('') }}
-            title="New collection"
             style={iconBtnStyle}
             onMouseEnter={e => { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.background = 'rgba(44,36,22,0.08)' }}
             onMouseLeave={e => { e.currentTarget.style.color = '#a8967a'; e.currentTarget.style.background = 'transparent' }}
           >
             <PlusIcon size={13} />
           </button>
+          </Tip>
         </div>
       }
     >
@@ -572,6 +575,7 @@ export default function AlbumSidebar({
 
   if (sidebarCollapsed) {
     return (
+      <Tip label="Expand library" side="right">
       <button
         onClick={() => setSidebarCollapsed(false)}
         className="flex flex-col flex-shrink-0 h-full items-center justify-center gap-2 transition-colors"
@@ -583,7 +587,6 @@ export default function AlbumSidebar({
           zIndex: 1,
           color: '#9e9788',
         }}
-        title="Expand library"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -592,6 +595,7 @@ export default function AlbumSidebar({
           Library Filters
         </span>
       </button>
+      </Tip>
     )
   }
 
@@ -620,26 +624,28 @@ export default function AlbumSidebar({
           )}
         </span>
         {activeFilterCount > 0 && (
+          <Tip label="Clear all filters">
           <button
             onClick={clearAllFilters}
-            title="Clear all filters"
             className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
             style={{ color: 'var(--text-muted)' }}
           >
             <ClearIcon />
           </button>
+          </Tip>
         )}
+        <Tip label={sectionsOpen !== false ? 'Collapse all sections' : 'Expand all sections'}>
         <button
           onClick={() => setSectionsOpen(v => v !== false ? false : true)}
-          title={sectionsOpen !== false ? 'Collapse all sections' : 'Expand all sections'}
           className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
           style={{ color: 'var(--text-muted)' }}
         >
           <ToggleAllIcon allCollapsed={sectionsOpen === false} />
         </button>
+        </Tip>
+        <Tip label="Collapse library">
         <button
           onClick={() => setSidebarCollapsed(true)}
-          title="Collapse library"
           className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
           style={{ color: 'var(--text-muted)' }}
         >
@@ -647,6 +653,7 @@ export default function AlbumSidebar({
             <path d="M10 3L5 8l5 5" />
           </svg>
         </button>
+        </Tip>
       </div>
 
       <div className="flex-1 overflow-y-auto scroll-quiet" style={{ paddingBottom: 16 }}>

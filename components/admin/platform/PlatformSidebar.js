@@ -1,5 +1,6 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
+import Tip from '../Tip'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage } from '../../../common/pagesTree'
@@ -455,10 +456,10 @@ export default function PlatformSidebar({
       <div style={{ padding: '12px 14px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           {/* Avatar — click for account dropdown */}
+          <Tip label="Account" side="right">
           <button
             ref={accountAvatarRef}
             onClick={() => setAccountOpen(v => !v)}
-            title="Account"
             style={{ flexShrink: 0, padding: 0, border: 'none', background: 'none', cursor: 'pointer', alignSelf: 'center' }}
           >
             {avatarImage ? (
@@ -469,6 +470,7 @@ export default function PlatformSidebar({
               </div>
             )}
           </button>
+          </Tip>
 
           {/* Name + username stacked */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -484,8 +486,8 @@ export default function PlatformSidebar({
 
           {/* Settings + Notifications + Collapse */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+            <Tip label="Notifications">
             <button
-              title="Notifications"
               style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
@@ -494,10 +496,11 @@ export default function PlatformSidebar({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
               </svg>
             </button>
+            </Tip>
+            <Tip label="Site settings">
             <button
               ref={siteSettingsGearRef}
               onClick={() => setSiteSettingsOpen(v => !v)}
-              title="Site settings"
               style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
@@ -507,10 +510,11 @@ export default function PlatformSidebar({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
+            </Tip>
             {onCollapse && (
+              <Tip label="Collapse panel">
               <button
                 onClick={onCollapse}
-                title="Collapse panel"
                 style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
@@ -519,6 +523,7 @@ export default function PlatformSidebar({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 19L4 12l7-7" />
                 </svg>
               </button>
+              </Tip>
             )}
           </div>
         </div>
@@ -582,13 +587,13 @@ export default function PlatformSidebar({
       >
         <StatusLine saveStatus={saveStatus} hasUnpublishedChanges={hasUnpublishedChanges} lastSavedAt={lastSavedAt} lastPublishedAt={lastPublishedAt} />
         <div className="flex items-center gap-2">
+          <Tip label="Preview site" side="top">
           <button
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors"
             style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: 'var(--text-secondary)' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             onClick={() => { if (username) window.open(`/sites/${username}`, '_blank') }}
-            title="Preview site"
           >
             <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 16 16">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2 8a6 6 0 1012 0A6 6 0 002 8z" />
@@ -598,15 +603,16 @@ export default function PlatformSidebar({
             </svg>
             Preview
           </button>
+          </Tip>
 
           {onPublish && (
+            <Tip label={hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes'} side="top">
             <button
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors"
               style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: 'none', background: hasUnpublishedChanges ? '#2c2416' : 'rgba(44,36,22,0.12)', color: hasUnpublishedChanges ? '#f6f3ec' : 'var(--text-muted)', cursor: hasUnpublishedChanges ? 'pointer' : 'default' }}
               onMouseEnter={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#3d3020' }}
               onMouseLeave={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#2c2416' }}
               onClick={hasUnpublishedChanges ? onPublish : undefined}
-              title={hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes'}
             >
               <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 16 16">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V3M5 6l3-3 3 3" />
@@ -614,6 +620,7 @@ export default function PlatformSidebar({
               </svg>
               Publish
             </button>
+            </Tip>
           )}
         </div>
 
