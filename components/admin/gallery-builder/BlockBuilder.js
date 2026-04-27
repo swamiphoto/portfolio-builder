@@ -291,9 +291,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             </button>
 
             {infoExpanded && (
-              <div className="px-3 pb-3 pt-3 space-y-4">
+              <div className="px-3 pb-3 pt-3 space-y-5">
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Name</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
                   <input
                     className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder={namePlaceholder}
@@ -302,7 +302,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   />
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Slug</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Slug</div>
                   <input
                     className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] font-mono outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder="slug"
@@ -311,7 +311,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   />
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Description</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
                   <AutoGrowTextarea
                     className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full resize-none"
                     placeholder="A brief description…"
@@ -323,8 +323,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
                 {/* Thumbnail row */}
                 <div>
-                <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Thumbnail</div>
-                <div className="flex items-center gap-3 pt-0.5">
+                <div className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Thumbnail</div>
+                <div className="flex items-center gap-3">
                   <div
                     onClick={onPickThumbnail}
                     className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors`}
