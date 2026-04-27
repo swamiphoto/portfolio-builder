@@ -358,6 +358,15 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (gridRafRef.current) {
+        cancelAnimationFrame(gridRafRef.current);
+        gridRafRef.current = null;
+      }
+    };
+  }, []);
+
   const handleGridScroll = useCallback(() => {
     if (gridRafRef.current) return;
     gridRafRef.current = requestAnimationFrame(() => {
