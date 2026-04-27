@@ -298,6 +298,19 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     });
   }, [collectionAssets, filters, search]);
 
+  const { positions, totalHeight } = useMemo(
+    () => computePickerLayout(filtered, containerSize.width),
+    [filtered, containerSize.width]
+  );
+
+  const visibleItems = useMemo(() => {
+    const top = scrollTop - PICKER_OVERSCAN;
+    const bottom = scrollTop + containerSize.height + PICKER_OVERSCAN;
+    return positions
+      .map((pos, i) => ({ ...pos, index: i }))
+      .filter(pos => pos.y + pos.height > top && pos.y < bottom);
+  }, [positions, scrollTop, containerSize.height]);
+
   const toggle = (asset) => {
     const ref = normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl });
     const key = asset.assetId || asset.publicUrl;
