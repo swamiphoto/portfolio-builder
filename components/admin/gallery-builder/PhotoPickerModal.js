@@ -10,6 +10,27 @@ const RAIL_COLLAPSED_W = 36;
 const RAIL_EXPANDED_W = 240;
 const PICKER_BASE_W = 420;
 
+const PICKER_COLUMNS = 3;
+const PICKER_GAP = 6;
+const PICKER_PADDING = 10;
+const PICKER_OVERSCAN = 300;
+
+function computePickerLayout(assets, containerWidth) {
+  if (!containerWidth || assets.length === 0) return { positions: [], totalHeight: 0 };
+  const colWidth = Math.floor((containerWidth - PICKER_PADDING * 2 - PICKER_GAP * (PICKER_COLUMNS - 1)) / PICKER_COLUMNS);
+  const colHeights = new Array(PICKER_COLUMNS).fill(0);
+  const positions = assets.map(asset => {
+    const ratio = asset.width && asset.height ? asset.width / asset.height : 1.5;
+    const height = Math.round(colWidth / ratio);
+    const colIndex = colHeights.indexOf(Math.min(...colHeights));
+    const x = PICKER_PADDING + colIndex * (colWidth + PICKER_GAP);
+    const y = colHeights[colIndex];
+    colHeights[colIndex] += height + PICKER_GAP;
+    return { x, y, width: colWidth, height };
+  });
+  return { positions, totalHeight: Math.max(...colHeights) };
+}
+
 function normalizePickerAsset(image) {
   const ref = normalizeImageRef(image);
   if (typeof image === "string" && ref) {
@@ -130,6 +151,7 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
         loading="lazy"
         decoding="async"
         onLoad={() => setLoaded(true)}
+        onError={(e) => { if (e.target.src !== asset.publicUrl) e.target.src = asset.publicUrl }}
       />
 
       {/* Preview (eye) — top-right, hover-only */}
