@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
@@ -66,7 +66,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }
         alt=""
         className="w-full h-full object-cover pointer-events-none"
         loading="lazy"
-        onError={(e) => { if (e.target.src !== imageRef.url) e.target.src = imageRef.url }}
+        onError={(e) => { e.target.style.opacity = '0'; }}
       />
       <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-colors duration-100 pointer-events-none" />
       {selected && (
@@ -89,7 +89,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }
   )
 }
 
-export default function BlockCard({
+function BlockCard({
   block,
   dragHandleProps,
   onUpdate,
@@ -440,7 +440,7 @@ export default function BlockCard({
                       src={getSizedUrl(block.imageUrl, 'thumbnail')}
                       alt=""
                       className="w-full aspect-video object-cover pointer-events-none"
-                      onError={(e) => { if (e.target.src !== block.imageUrl) e.target.src = block.imageUrl }}
+                      onError={(e) => { e.target.style.opacity = '0'; }}
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-100 pointer-events-none" />
                     <button
@@ -554,7 +554,7 @@ export default function BlockCard({
                             style={{ background: 'var(--panel-hover)', borderRadius: 2 }}
                             onClick={() => { onTitleClick?.(); onAddPhotos(); }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-border)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--panel-hover)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
                           />
                         ))}
                       </>
@@ -722,3 +722,12 @@ export default function BlockCard({
     </div>
   );
 }
+
+export default memo(BlockCard, (prev, next) =>
+  prev.block === next.block &&
+  prev.highlighted === next.highlighted &&
+  prev.glowing === next.glowing &&
+  prev.expandedOverride?.ts === next.expandedOverride?.ts &&
+  prev.blockIndex === next.blockIndex &&
+  prev.assetsByUrl === next.assetsByUrl
+);

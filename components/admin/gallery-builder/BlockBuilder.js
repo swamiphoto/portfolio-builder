@@ -43,17 +43,14 @@ function InsertionZone({ onInsert }) {
         style={{ background: 'radial-gradient(ellipse 70% 100% at center, rgba(160,140,110,0.6) 0%, transparent 100%)' }}
       />
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full opacity-0 group-hover/zone:opacity-100 hover:scale-110 transition-all duration-150"
+        className="insertion-zone-btn absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full opacity-0 group-hover/zone:opacity-100 hover:scale-110 transition-all duration-150"
         style={{
           width: 24,
           height: 24,
           background: 'linear-gradient(155deg, #fefcf8 0%, #ebe5db 100%)',
           border: 'none',
-          boxShadow: '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6)',
           color: 'var(--text-secondary)',
         }}
-        onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 8px rgba(220,165,45,0.35)' }}
-        onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6)' }}
       >
         <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
           <path d="M4.5 1.5v6M1.5 4.5h6" />
@@ -480,8 +477,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             background: 'transparent',
             color: 'var(--text-muted)',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; }}
         >
           + Add Block
         </button>
