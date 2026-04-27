@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { normalizeImageRef } from "../../../common/assetRefs";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { applyFilters, computeFilterCounts, placeholderColor } from "../../../common/libraryFilters";
@@ -238,6 +238,10 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
   const [selected, setSelected] = useState([]);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchBoxRef = useRef(null);
+  const gridScrollRef = useRef(null);
+  const gridRafRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const isMulti = blockType === "photos" || blockType === "stacked" || blockType === "masonry";
 
   const allAssets = useMemo(
@@ -342,6 +346,24 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     }
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  useEffect(() => {
+    const el = gridScrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const handleGridScroll = useCallback(() => {
+    if (gridRafRef.current) return;
+    gridRafRef.current = requestAnimationFrame(() => {
+      setScrollTop(gridScrollRef.current?.scrollTop ?? 0);
+      gridRafRef.current = null;
+    });
   }, []);
 
   return (
