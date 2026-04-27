@@ -1,39 +1,26 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import CollectionPillsPicker from "./gallery-builder/CollectionPillsPicker";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
-function readImageDimensions(file) {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: null, height: null }); };
-    img.src = url;
-  });
-}
 
-async function generateThumbnail(file, maxWidth = 600) {
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, maxWidth / bitmap.width);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    bitmap.close();
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82));
-  } catch {
-    return null;
-  }
-}
-
-async function uploadToSignedUrl(signedUrl, blob, contentType) {
-  const formData = new FormData();
-  Object.entries(signedUrl.fields).forEach(([k, v]) => formData.append(k, v));
-  formData.append('file', blob);
-  const res = await fetch(signedUrl.url, { method: 'POST', body: formData });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+function uploadFile(file, { folder, onProgress } = {}) {
+  return new Promise((resolve, reject) => {
+    const params = new URLSearchParams({ filename: file.name, contentType: file.type })
+    if (folder) params.set('folder', folder)
+    const xhr = new XMLHttpRequest()
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)) }
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText)
+        xhr.status >= 200 && xhr.status < 300 ? resolve(data) : reject(new Error(data.error || `Upload failed: ${xhr.status}`))
+      } catch { reject(new Error(`Upload failed: ${xhr.status}`)) }
+    }
+    xhr.onerror = () => reject(new Error('Network error'))
+    xhr.open('POST', `/api/admin/upload-file?${params}`)
+    xhr.setRequestHeader('Content-Type', file.type)
+    xhr.send(file)
+  })
 }
 
 export default function UploadModal({ collections = [], defaultCollection = null, onClose, onUploaded }) {
@@ -44,12 +31,22 @@ export default function UploadModal({ collections = [], defaultCollection = null
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
   const [dragging, setDragging] = useState(false);
+  const [previews, setPreviews] = useState({});
   const inputRef = useRef(null);
 
   const addFiles = (newFiles) => {
     const arr = Array.from(newFiles).filter((f) => /\.(jpg|jpeg|png|gif)$/i.test(f.name));
     setFiles((prev) => [...prev, ...arr]);
+    setPreviews((prev) => {
+      const next = { ...prev };
+      arr.forEach((f) => { if (!next[f.name]) next[f.name] = URL.createObjectURL(f); });
+      return next;
+    });
   };
+
+  useEffect(() => {
+    return () => { Object.values(previews).forEach(URL.revokeObjectURL); };
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async () => {
     if (files.length === 0) return;
@@ -59,37 +56,22 @@ export default function UploadModal({ collections = [], defaultCollection = null
     const uploadedAssets = [];
 
     for (const file of files) {
-      setProgress((p) => ({ ...p, [file.name]: "pending" }));
+      setProgress((p) => ({ ...p, [file.name]: 0 }));
       try {
-        const [{ width, height }, thumb] = await Promise.all([
-          readImageDimensions(file),
-          generateThumbnail(file),
-        ]);
-        const res = await fetch("/api/admin/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-            folder,
-            collections: selectedCollections,
-          }),
+        const { gcsUrl, width, height } = await uploadFile(file, {
+          folder,
+          onProgress: (pct) => setProgress((p) => ({ ...p, [file.name]: pct })),
         });
-        const { signedUrl, thumbSignedUrl, gcsUrl } = await res.json();
-        await Promise.all([
-          uploadToSignedUrl(signedUrl, file, file.type),
-          thumb && thumbSignedUrl ? uploadToSignedUrl(thumbSignedUrl, thumb, 'image/jpeg') : Promise.resolve(),
-        ]);
         setProgress((p) => ({ ...p, [file.name]: "done" }));
         uploadedAssets.push({ url: gcsUrl, width, height });
       } catch (err) {
         console.error("Upload error for", file.name, err);
-        setProgress((p) => ({ ...p, [file.name]: "error" }));
+        setProgress((p) => ({ ...p, [file.name]: { error: err.message || "Upload failed" } }));
       }
     }
 
     setUploading(false);
-    if (uploadedAssets.length > 0) onUploaded(uploadedAssets, targetCollection);
+    if (uploadedAssets.length > 0) onUploaded(uploadedAssets, selectedCollections);
   };
 
   return (
@@ -165,22 +147,37 @@ export default function UploadModal({ collections = [], defaultCollection = null
                 <div
                   key={f.name}
                   className="flex items-center gap-2 group"
-                  style={{ padding: '4px 8px', borderRadius: 3, background: 'rgba(160,140,110,0.08)' }}
+                  style={{ padding: '4px 8px', borderRadius: 3, background: progress[f.name]?.error ? 'rgba(193,74,74,0.08)' : 'rgba(160,140,110,0.08)' }}
                 >
-                  <span className="flex-1 truncate" style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{f.name}</span>
-                  <span style={{
-                    fontSize: 10.5, fontFamily: MONO, fontWeight: 500,
-                    color: progress[f.name] === "done" ? '#3b8a52'
-                         : progress[f.name] === "error" ? '#c14a4a'
-                         : progress[f.name] === "pending" ? 'var(--text-secondary)'
-                         : 'var(--text-muted)',
-                  }}>
-                    {progress[f.name] === "done" ? "✓" : progress[f.name] === "error" ? "✗" : progress[f.name] === "pending" ? "…" : "·"}
-                  </span>
-                  {!progress[f.name] && (
+                  {previews[f.name] && (
+                    <img
+                      src={previews[f.name]}
+                      alt=""
+                      style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 3, flexShrink: 0, opacity: 0.88 }}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate" style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{f.name}</div>
+                    {progress[f.name]?.error && (
+                      <div className="truncate" style={{ fontSize: 10.5, color: '#c14a4a', marginTop: 1 }}>{progress[f.name].error}</div>
+                    )}
+                  </div>
+                  {progress[f.name] === "done" ? (
+                    <span style={{ fontSize: 12, color: '#3b8a52', flexShrink: 0 }}>✓</span>
+                  ) : progress[f.name]?.error ? (
+                    <span style={{ fontSize: 12, color: '#c14a4a', flexShrink: 0 }}>✗</span>
+                  ) : typeof progress[f.name] === "number" ? (
+                    <div style={{ width: 64, height: 3, borderRadius: 2, background: 'rgba(160,140,110,0.22)', flexShrink: 0, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${progress[f.name]}%`, background: '#8b6f47', borderRadius: 2, transition: 'width 0.1s ease' }} />
+                    </div>
+                  ) : null}
+                  {(!progress[f.name] || progress[f.name]?.error) && (
                     <button
                       type="button"
-                      onClick={() => setFiles(prev => prev.filter(x => x.name !== f.name))}
+                      onClick={() => {
+                        setFiles(prev => prev.filter(x => x.name !== f.name));
+                        setPreviews(prev => { const next = { ...prev }; if (next[f.name]) { URL.revokeObjectURL(next[f.name]); delete next[f.name]; } return next; });
+                      }}
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = '#c14a4a')}

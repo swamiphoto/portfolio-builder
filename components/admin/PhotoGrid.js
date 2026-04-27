@@ -95,8 +95,9 @@ export default function PhotoGrid({
   allAssets,
   onAlbumSelect,
   onClose,
+  highlightedUrls,
 }) {
-  const [sort, setSort] = useState("newest-capture");
+  const [sort, setSort] = useState("newest-upload");
   const [search, setSearch] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
@@ -480,6 +481,7 @@ export default function PhotoGrid({
       </div>
 
       {/* Virtual masonry grid */}
+      <style>{`@keyframes uploadRingFade{0%,60%{opacity:1}100%{opacity:0}}`}</style>
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto scroll-quiet"
@@ -505,6 +507,13 @@ export default function PhotoGrid({
                   key={asset.assetId || asset.publicUrl}
                   style={{ position: "absolute", left: x, top: y + PADDING, width, height }}
                 >
+                  {highlightedUrls?.has(asset.publicUrl) && (
+                    <div style={{
+                      position: 'absolute', inset: 0, borderRadius: 4, pointerEvents: 'none', zIndex: 10,
+                      boxShadow: '0 0 0 2.5px #8b6f47',
+                      animation: 'uploadRingFade 2.5s ease-out forwards',
+                    }} />
+                  )}
                   <PhotoTile
                     asset={asset}
                     albumType={selectedAlbum.type}

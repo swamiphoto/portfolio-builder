@@ -24,6 +24,7 @@ export default function AdminLibrary({ onBack }) {
     iso: "all",
   });
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [highlightedUrls, setHighlightedUrls] = useState(null);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
@@ -267,43 +268,50 @@ export default function AdminLibrary({ onBack }) {
     await fetchLibrary();
   }, [fetchLibrary]);
 
-  const handleUploaded = useCallback(async (uploadedAssets, targetCollection) => {
-    // uploadedAssets: [{ url, width, height }], targetCollection: gallery key or null
+  const handleUploaded = useCallback(async (uploadedAssets, selectedCollections = []) => {
+    // uploadedAssets: [{ url, width, height }], selectedCollections: string[]
     setUploadOpen(false);
     const uploadedUrls = uploadedAssets.map(a => a.url);
 
     const config = currentConfig();
 
-    // Seed asset dimension metadata for newly uploaded files
+    // Seed asset metadata for newly uploaded files
+    const { createAssetIdFromUrl } = await import('../../common/adminConfig');
+    const now = new Date().toISOString();
     const assetUpdates = {};
     for (const { url, width, height } of uploadedAssets) {
-      if (!width || !height) continue;
-      const { createAssetIdFromUrl } = await import('../../common/adminConfig');
       const assetId = createAssetIdFromUrl(url);
-      const ratio = width / height;
+      const ratio = width && height ? width / height : null;
       assetUpdates[assetId] = {
         ...(libraryData?.assets?.[assetId] || {}),
         assetId,
         publicUrl: url,
-        width,
-        height,
-        aspectRatio: Number(ratio.toFixed(4)),
-        orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
+        createdAt: now,
+        ...(width && height ? {
+          width,
+          height,
+          aspectRatio: Number(ratio.toFixed(4)),
+          orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
+        } : {}),
       };
     }
 
-    const updated = {
-      ...config,
-      assets: { ...config.assets, ...assetUpdates },
-    };
+    const updated = { ...config, assets: { ...config.assets, ...assetUpdates } };
 
-    if (targetCollection) {
-      updated.galleries = {
-        ...config.galleries,
-        [targetCollection]: [...new Set([...(config.galleries[targetCollection] || []), ...uploadedUrls])],
-      };
-      setSelectedAlbum({ type: 'gallery', key: targetCollection });
+    // Add uploaded URLs to every selected collection
+    if (selectedCollections.length > 0) {
+      updated.galleries = { ...config.galleries };
+      for (const col of selectedCollections) {
+        updated.galleries[col] = [...new Set([...(updated.galleries[col] || []), ...uploadedUrls])];
+      }
+      setSelectedAlbum({ type: 'gallery', key: selectedCollections[0] });
+    } else {
+      setSelectedAlbum({ type: 'all', key: 'all' });
     }
+
+    // Highlight newly uploaded photos for 2.5s
+    setHighlightedUrls(new Set(uploadedUrls));
+    setTimeout(() => setHighlightedUrls(null), 2500);
 
     await saveConfig(updated);
   }, [saveConfig, fetchLibrary, currentConfig, libraryData]);
@@ -568,6 +576,7 @@ export default function AdminLibrary({ onBack }) {
         allAssets={allAssets}
         onAlbumSelect={setSelectedAlbum}
         onClose={onBack}
+        highlightedUrls={highlightedUrls}
       />
 
       {uploadOpen && (
