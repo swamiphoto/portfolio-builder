@@ -582,10 +582,6 @@ function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
     ? (slugLower.startsWith(q) || q.startsWith(slugLower + '/') || slugLower === q.replace(/\/$/, ''))
     : labelLower.includes(q));
   const hasMatchingChild = q && node.children.some((c) => subtreeMatches(c, q));
-  // When this node is the matched parent in a slash query, pass only the child portion down
-  const childQuery = hasSlash && q.startsWith(slugLower + '/')
-    ? q.slice(slugLower.length + 1)
-    : query;
   const [expanded, setExpanded] = useState(depth < 1);
   const isExpanded = q ? (selfMatches || hasMatchingChild) : expanded;
   if (q && !selfMatches && !hasMatchingChild) return null;
@@ -609,7 +605,7 @@ function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
           <button
             type="button"
             onMouseDown={(e) => { e.preventDefault(); if (!q) setExpanded((v) => !v); }}
-            style={{ width: 14, flexShrink: 0, color: '#b0a490', fontSize: 9, fontFamily: MONO, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ width: 14, flexShrink: 0, color: '#b0a490', fontSize: 12, fontFamily: MONO, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             {isExpanded ? '▾' : '▸'}
           </button>
@@ -633,7 +629,7 @@ function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
         </button>
       </div>
       {isExpanded && node.children.map((child) => (
-        <CollectionTreeRow key={child.slug} node={child} depth={depth + 1} selectedSet={selectedSet} onAdd={onAdd} query={childQuery} />
+        <CollectionTreeRow key={child.slug} node={child} depth={depth + 1} selectedSet={selectedSet} onAdd={onAdd} query={query} />
       ))}
     </div>
   );
