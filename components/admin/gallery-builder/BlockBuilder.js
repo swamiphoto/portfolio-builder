@@ -429,8 +429,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             dragHandleProps={provided.dragHandleProps}
                             onUpdate={(updated) => updateBlock(index, updated)}
                             onRemove={() => removeBlock(index)}
-                            onMoveUp={index > 0 ? () => moveBlock(index, -1) : null}
-                            onMoveDown={index < (gallery.blocks || []).length - 1 ? () => moveBlock(index, 1) : null}
+                            onMoveUp={index > 0 ? () => { moveBlock(index, -1); onScrollPreviewToBlock?.(index - 1); } : null}
+                            onMoveDown={index < (gallery.blocks || []).length - 1 ? () => { moveBlock(index, 1); onScrollPreviewToBlock?.(index + 1); } : null}
                             onAddPhotos={() => onAddPhotosToBlock(index)}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
