@@ -554,7 +554,7 @@ function BlockCard({
                             style={{ background: 'var(--panel-hover)', borderRadius: 2 }}
                             onClick={() => { onTitleClick?.(); onAddPhotos(); }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-border)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--panel-hover)'; }}
                           />
                         ))}
                       </>
