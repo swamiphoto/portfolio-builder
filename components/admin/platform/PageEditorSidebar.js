@@ -3,8 +3,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import BlockBuilder from '../gallery-builder/BlockBuilder'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
-import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail } from '../../../common/assetRefs'
+import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail, getPagePhotos } from '../../../common/assetRefs'
 import PageSettingsPanel from './PageSettingsPanel'
+import PageSettingsPopover from './PageSettingsPopover'
 
 function pageToGallery(page) {
   return {
@@ -38,11 +39,18 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
   const [photoPickerBlockIndex, setPhotoPickerBlockIndex] = useState(null)
+  const [pageSettingsAnchorEl, setPageSettingsAnchorEl] = useState(null)
+  const [thumbnailDefaultPageId, setThumbnailDefaultPageId] = useState(null)
 
   const libraryImages = libraryData?.images || null
 
   const gallery = pageToGallery(page)
   const pages = siteConfig?.pages || []
+
+  const pagesData = useMemo(() => (siteConfig?.pages || [])
+    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
+    .filter(p => p.imageUrls.length > 0)
+  , [siteConfig])
 
   const assetsByUrl = useMemo(() => {
     const map = {}
@@ -118,7 +126,12 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     setPhotoPickerBlockIndex('thumbnail')
     setPhotoPickerOpen(true)
     fetchLibrary()
-  }, [fetchLibrary])
+    // Smart default: use this page as filter if it has photos to choose from
+    const pageImages = getPagePhotos(page)
+    const explicitThumb = page.thumbnail?.imageUrl
+    const choosable = explicitThumb ? pageImages.filter(u => u !== explicitThumb) : pageImages
+    setThumbnailDefaultPageId(choosable.length > 0 ? page.id : null)
+  }, [fetchLibrary, page])
 
   const handlePhotoPickerConfirm = useCallback((refs) => {
     if (photoPickerBlockIndex === null) return
@@ -203,8 +216,11 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
           <PageSettingsPanel
             page={page}
             onChange={onPageChange}
+            onPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}
+            onAddBlockBelow={(rect) => blockBuilderRef?.current?.openAddBlockMenu(0, rect)}
           />
         }
+        onOpenPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}
         onBack={null}
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}
@@ -212,6 +228,19 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         assetsByUrl={assetsByUrl}
         className="flex flex-col h-full bg-stone-50 text-left font-sans"
       />
+
+      {pageSettingsAnchorEl && (
+        <PageSettingsPopover
+          page={page}
+          anchorEl={pageSettingsAnchorEl}
+          onUpdate={onPageChange}
+          onClose={() => setPageSettingsAnchorEl(null)}
+          username={username}
+          onPickThumbnail={() => { setPageSettingsAnchorEl(null); handlePickThumbnail() }}
+          siteConfig={siteConfig}
+          assetsByUrl={assetsByUrl}
+        />
+      )}
 
       {photoPickerOpen && (
         <PhotoPickerModal
@@ -221,6 +250,8 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
           blockType={photoPickerBlockIndex === 'thumbnail' ? 'photo' : (page.blocks?.[photoPickerBlockIndex]?.type || 'photo')}
           onConfirm={handlePhotoPickerConfirm}
           onClose={() => { setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null) }}
+          pages={pagesData}
+          defaultPageId={photoPickerBlockIndex === 'thumbnail' ? thumbnailDefaultPageId : null}
         />
       )}
     </>

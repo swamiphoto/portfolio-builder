@@ -114,6 +114,8 @@ function BlockCard({
   glowing,
   onMoveUp,
   onMoveDown,
+  onAddBlockAbove,
+  onAddBlockBelow,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -218,9 +220,32 @@ function BlockCard({
     ? [{ url: block.imageUrl || block.image?.url || '', ...(block.caption !== undefined ? { caption: block.caption } : {}) }]
     : [];
 
+  const headerMeta = (() => {
+    if (isPhotoBlock) {
+      const layout = block.type === 'masonry' ? 'masonry'
+        : block.type === 'stacked' ? 'stacked'
+        : (block.layout || '').toLowerCase();
+      if (layout === 'masonry') return 'Masonry';
+      if (layout === 'stacked') return 'Stacked';
+      return null;
+    }
+    if (block.type === 'photo') {
+      const layout = block.layout;
+      if (!layout || layout === 'Full Bleed' || layout === 'Edge to edge') return 'Full Bleed';
+      return 'Centered';
+    }
+    if (block.type === 'text') return null;
+    if (block.type === 'video') return 'Video';
+    if (block.type === 'page-gallery') {
+      const n = (block.pageIds || []).length;
+      return n > 0 ? `${n} page${n === 1 ? '' : 's'}` : null;
+    }
+    return null;
+  })();
+
   return (
     <div
-      className="relative overflow-hidden mb-1.5"
+      className="group/card relative overflow-hidden mb-1.5"
       style={{
         background: '#f6f3ec',
         borderRadius: 4,
@@ -265,129 +290,177 @@ function BlockCard({
           {TYPE_LABELS[block.type] || block.type}
         </button>
 
-        {/* Hover-reveal actions */}
-        <div className="flex items-center gap-0.5">
-          {(block.type === "photo" || isPhotoBlock) && (
-            <Tip label={
-              block.type === "photo"
-                ? (block.imageUrl ? "Replace photo" : "Add a photo")
-                : (normalizeImageRefs(block.images || block.imageUrls || []).length > 0 ? "Add more photos" : "Add photos")
-            }>
-              <button
-                onClick={() => { onTitleClick?.(); onAddPhotos(); }}
-                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-base leading-none"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                +
-              </button>
-            </Tip>
-          )}
-
-          {hasDesign && (
-            <div className="relative">
-              <Tip label="Design">
+        {/* Right side: metadata (default) ↔ toolbar pill (hover) */}
+        <div className="relative flex items-center">
+          {/* Toolbar pill: always in DOM to reserve space; cross-fades in on card hover */}
+          <div
+            className={`flex items-center gap-0.5 transition-opacity duration-150 ${showDesign || showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto'}`}
+            style={{
+              background: 'rgba(235,228,216,0.7)',
+              boxShadow: '0 1px 4px rgba(26,18,10,0.12)',
+              borderRadius: 5,
+              padding: '2px 3px',
+            }}
+          >
+            {(block.type === "photo" || isPhotoBlock) && (
+              <Tip label={
+                block.type === "photo"
+                  ? (block.imageUrl ? "Replace photo" : "Add a photo")
+                  : (blockImageRefs.length > 0 ? "Add more photos" : "Add photos")
+              }>
                 <button
-                  ref={designBtnRef}
-                  onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
-                  className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-                  style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
+                  onClick={() => { onTitleClick?.(); onAddPhotos(); }}
+                  className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] text-base leading-none"
+                  style={{ color: 'var(--text-muted)' }}
                 >
-                  <PaintbrushIcon />
+                  +
                 </button>
               </Tip>
-              {showDesign && (
-                <DesignPopover
-                  block={block}
-                  onUpdate={onUpdate}
-                  onClose={() => setShowDesign(false)}
-                  anchorEl={designBtnRef.current}
-                />
-              )}
-            </div>
-          )}
+            )}
 
-          <div ref={menuRef}>
-            <button
-              ref={menuBtnRef}
-              onClick={() => {
-                setShowMenu((v) => {
-                  if (!v && menuBtnRef.current) {
-                    const rect = menuBtnRef.current.getBoundingClientRect();
-                    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-                  }
-                  return !v;
-                });
-              }}
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 text-sm leading-none"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              ⋯
-            </button>
-            {showMenu && menuPos && (
-              <div
-                ref={menuRef}
-                className="fixed z-[9999] rounded-md overflow-hidden whitespace-nowrap"
-                style={{
-                  top: menuPos.top,
-                  right: menuPos.right,
-                  minWidth: 152,
-                  background: 'var(--popover)',
-                  boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
-                  padding: '4px 0',
-                }}
-              >
-                <button
-                  onClick={() => { setShowMenu(false); onMoveUp(); }}
-                  disabled={!onMoveUp}
-                  className="w-full text-left flex items-center gap-2 transition-colors"
-                  style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onMoveUp ? 1 : 0.35, cursor: onMoveUp ? 'pointer' : 'default' }}
-                  onMouseEnter={(e) => { if (onMoveUp) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 13V3M3 8l5-5 5 5"/></svg>
-                  Move up
-                </button>
-                <button
-                  onClick={() => { setShowMenu(false); onMoveDown(); }}
-                  disabled={!onMoveDown}
-                  className="w-full text-left flex items-center gap-2 transition-colors"
-                  style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onMoveDown ? 1 : 0.35, cursor: onMoveDown ? 'pointer' : 'default' }}
-                  onMouseEnter={(e) => { if (onMoveDown) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
-                  Move down
-                </button>
-                <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
-                <button
-                  onClick={() => { setShowMenu(false); onRemove(); }}
-                  className="w-full text-left flex items-center gap-2 transition-colors"
-                  style={{ padding: '7px 12px', fontSize: 12.5, color: '#c14a4a', fontWeight: 500 }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9"/></svg>
-                  Remove block
-                </button>
+            {hasDesign && (
+              <div className="relative">
+                <Tip label="Design">
+                  <button
+                    ref={designBtnRef}
+                    onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
+                    className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] flex-shrink-0"
+                    style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
+                  >
+                    <PaintbrushIcon />
+                  </button>
+                </Tip>
+                {showDesign && (
+                  <DesignPopover
+                    block={block}
+                    onUpdate={onUpdate}
+                    onClose={() => setShowDesign(false)}
+                    anchorEl={designBtnRef.current}
+                  />
+                )}
               </div>
             )}
+
+            <div ref={menuRef}>
+              <button
+                ref={menuBtnRef}
+                onClick={() => {
+                  setShowMenu((v) => {
+                    if (!v && menuBtnRef.current) {
+                      const rect = menuBtnRef.current.getBoundingClientRect();
+                      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                    }
+                    return !v;
+                  });
+                }}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] text-sm leading-none"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                ⋯
+              </button>
+              {showMenu && menuPos && (
+                <div
+                  ref={menuRef}
+                  className="fixed z-[9999] rounded-md overflow-hidden whitespace-nowrap"
+                  style={{
+                    top: menuPos.top,
+                    right: menuPos.right,
+                    minWidth: 152,
+                    background: 'var(--popover)',
+                    boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+                    padding: '4px 0',
+                  }}
+                >
+                  <button
+                    onClick={() => { setShowMenu(false); onAddBlockAbove?.(menuBtnRef.current.getBoundingClientRect()); }}
+                    disabled={!onAddBlockAbove}
+                    className="w-full text-left flex items-center gap-2 transition-colors"
+                    style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onAddBlockAbove ? 1 : 0.35, cursor: onAddBlockAbove ? 'pointer' : 'default' }}
+                    onMouseEnter={(e) => { if (onAddBlockAbove) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3v6M5 6l3-3 3 3"/><path d="M2 11h12" strokeOpacity="0.5"/>
+                    </svg>
+                    Add block above
+                  </button>
+                  <button
+                    onClick={() => { setShowMenu(false); onAddBlockBelow?.(menuBtnRef.current.getBoundingClientRect()); }}
+                    disabled={!onAddBlockBelow}
+                    className="w-full text-left flex items-center gap-2 transition-colors"
+                    style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onAddBlockBelow ? 1 : 0.35, cursor: onAddBlockBelow ? 'pointer' : 'default' }}
+                    onMouseEnter={(e) => { if (onAddBlockBelow) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 13V7M5 10l3 3 3-3"/><path d="M2 5h12" strokeOpacity="0.5"/>
+                    </svg>
+                    Add block below
+                  </button>
+                  <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
+                  <button
+                    onClick={() => { setShowMenu(false); onMoveUp(); }}
+                    disabled={!onMoveUp}
+                    className="w-full text-left flex items-center gap-2 transition-colors"
+                    style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onMoveUp ? 1 : 0.35, cursor: onMoveUp ? 'pointer' : 'default' }}
+                    onMouseEnter={(e) => { if (onMoveUp) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 13V3M3 8l5-5 5 5"/></svg>
+                    Move up
+                  </button>
+                  <button
+                    onClick={() => { setShowMenu(false); onMoveDown(); }}
+                    disabled={!onMoveDown}
+                    className="w-full text-left flex items-center gap-2 transition-colors"
+                    style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, opacity: onMoveDown ? 1 : 0.35, cursor: onMoveDown ? 'pointer' : 'default' }}
+                    onMouseEnter={(e) => { if (onMoveDown) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
+                    Move down
+                  </button>
+                  <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
+                  <button
+                    onClick={() => { setShowMenu(false); onRemove(); }}
+                    className="w-full text-left flex items-center gap-2 transition-colors"
+                    style={{ padding: '7px 12px', fontSize: 12.5, color: '#c14a4a', fontWeight: 500 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9"/></svg>
+                    Remove block
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <Tip label={expanded ? "Collapse" : "Expand"}>
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] flex-shrink-0"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform ${expanded ? "" : "rotate-180"}`}
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+            </Tip>
           </div>
+
+          {/* Metadata: absolute overlay that fades out on card hover */}
+          {headerMeta && (
+            <div className={`absolute inset-0 flex items-center justify-end transition-opacity duration-150 pointer-events-none pr-1 ${showDesign || showMenu ? 'opacity-0' : 'opacity-100 group-hover/card:opacity-0'}`}>
+              <span className="text-[10px] font-mono tracking-wide truncate" style={{ color: 'var(--text-muted)' }}>
+                {headerMeta}
+              </span>
+            </div>
+          )}
         </div>
 
-        <Tip label={expanded ? "Collapse" : "Expand"}>
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <svg
-              className={`w-3.5 h-3.5 transition-transform ${expanded ? "" : "rotate-180"}`}
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-        </Tip>
       </div>
 
       {/* Expanded body */}
@@ -577,7 +650,7 @@ function BlockCard({
           {/* Text */}
           {block.type === "text" && (
             <AutoGrowTextarea
-              className={`${INPUT} resize-none`}
+              className={`${INPUT} resize-none scroll-thin`}
               placeholder="Write something…"
               maxHeight={160}
               value={block.content || ""}

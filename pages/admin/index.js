@@ -2,7 +2,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { DragProvider } from '../../common/dragContext'
-import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs } from '../../common/assetRefs'
+import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getPagePhotos } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -79,6 +79,11 @@ export default function AdminIndex() {
     }
     return map
   }, [libraryConfig])
+
+  const pagesData = useMemo(() => (siteConfig?.pages || [])
+    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
+    .filter(p => p.imageUrls.length > 0)
+  , [siteConfig])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -454,7 +459,7 @@ export default function AdminIndex() {
               boxShadow: '0 0 0 1px rgba(26,18,10,0.1), 0 32px 80px rgba(26,18,10,0.35)',
             }}
           >
-            <AdminLibrary onBack={() => setShowLibrary(false)} />
+            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} />
           </div>
 
         </div>
@@ -467,6 +472,15 @@ export default function AdminIndex() {
           blockType="photo"
           onConfirm={handleThumbnailConfirm}
           onClose={() => setThumbnailPickerPageId(null)}
+          pages={pagesData}
+          defaultPageId={(() => {
+            const p = pagesData.find(p => p.id === thumbnailPickerPageId)
+            if (!p) return null
+            const page = siteConfig?.pages?.find(pg => pg.id === thumbnailPickerPageId)
+            const explicitThumb = page?.thumbnail?.imageUrl
+            const choosable = explicitThumb ? p.imageUrls.filter(u => u !== explicitThumb) : p.imageUrls
+            return choosable.length > 0 ? thumbnailPickerPageId : null
+          })()}
         />
       )}
       {assetPickerTarget && (

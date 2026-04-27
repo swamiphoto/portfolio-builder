@@ -548,6 +548,9 @@ export default function AlbumSidebar({
   filters,
   onFilterChange,
   onBack,
+  pages,
+  selectedPage,
+  onSelectPage,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
@@ -842,6 +845,20 @@ export default function AlbumSidebar({
           onDeleteCollection={onDeleteCollection}
           onFilterChange={onFilterChange}
         />
+
+        {pages?.length > 0 && (
+          <SidebarSection title="Pages" openOverride={sectionsOpen}>
+            {pages.map(p => (
+              <SidebarItem
+                key={p.id}
+                active={selectedPage === p.id}
+                label={p.title}
+                count={p.imageUrls.length}
+                onClick={() => onSelectPage?.(selectedPage === p.id ? null : p.id)}
+              />
+            ))}
+          </SidebarSection>
+        )}
       </div>
     </div>
   )

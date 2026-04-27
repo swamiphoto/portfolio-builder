@@ -3,14 +3,21 @@ import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
+import { getPagePhotos } from "../../common/assetRefs";
 
-export default function AdminLibrary({ onBack }) {
+export default function AdminLibrary({ onBack, siteConfig }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [libraryData, setLibraryData] = useState(null);
   // { allImages, portfolios, galleries, counts }
 
   const [selectedAlbum, setSelectedAlbum] = useState({ type: "all", key: "all" });
+  const [selectedPage, setSelectedPage] = useState(null);
+
+  const pagesData = useMemo(() => (siteConfig?.pages || [])
+    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
+    .filter(p => p.imageUrls.length > 0)
+  , [siteConfig]);
   const [filters, setFilters] = useState({
     orientation: "all",
     usage: "all",
@@ -174,23 +181,32 @@ export default function AdminLibrary({ onBack }) {
   const currentAssets = () => {
     if (!libraryData) return [];
 
+    let base;
     if (selectedAlbum.type === "all") {
-      return applyFilters(libraryData.images || []);
-    }
-
-    if (selectedAlbum.type === "portfolio") {
+      base = libraryData.images || [];
+    } else if (selectedAlbum.type === "portfolio") {
       const urls = libraryData.portfolios[selectedAlbum.key] || []
-      return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
+      base = urls.map(getAssetByUrl).filter(Boolean);
+    } else {
+      // Gallery rollup: own + all descendants, deduped
+      const galleries = libraryData.galleries || {}
+      const prefix = selectedAlbum.key + '/'
+      const matchingKeys = Object.keys(galleries).filter(
+        (k) => k === selectedAlbum.key || k.startsWith(prefix)
+      )
+      const urls = [...new Set(matchingKeys.flatMap((k) => galleries[k] || []))]
+      base = urls.map(getAssetByUrl).filter(Boolean);
     }
 
-    // Gallery rollup: own + all descendants, deduped
-    const galleries = libraryData.galleries || {}
-    const prefix = selectedAlbum.key + '/'
-    const matchingKeys = Object.keys(galleries).filter(
-      (k) => k === selectedAlbum.key || k.startsWith(prefix)
-    )
-    const urls = [...new Set(matchingKeys.flatMap((k) => galleries[k] || []))]
-    return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
+    if (selectedPage) {
+      const pageObj = pagesData.find(p => p.id === selectedPage);
+      if (pageObj) {
+        const pageUrls = new Set(pageObj.imageUrls);
+        base = base.filter(a => pageUrls.has(a.publicUrl));
+      }
+    }
+
+    return applyFilters(base);
   };
 
   const allCollections = useMemo(() => {
@@ -558,6 +574,9 @@ export default function AdminLibrary({ onBack }) {
         isoCounts={isoCounts}
         filters={filters}
         onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+        pages={pagesData}
+        selectedPage={selectedPage}
+        onSelectPage={setSelectedPage}
       />
       <PhotoGrid
         assets={assets}

@@ -339,7 +339,7 @@ export default function PlatformSidebar({
               background: isSelected ? '#f6f3ec' : undefined,
               boxShadow: isSelected ? '0 1px 3px rgba(26,18,10,0.06)' : undefined,
             }}
-            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(180,140,70,0.08)' }}
+            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
             onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
           >
             {/* Icon — page type normally, drag handle on hover */}
@@ -372,26 +372,45 @@ export default function PlatformSidebar({
             {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
-            {/* Count + menu share the same slot at the right edge */}
-            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 20, height: 20 }}>
-              {!isLink && !isPageNestTarget && !isImageDropTarget && (() => {
-                const count = countPagePhotos(page)
-                return count > 0 ? (
-                  <span
-                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms]"
-                    style={{ fontFamily: 'monospace', fontSize: 10, color: '#b0a490' }}
-                  >
-                    {count}
-                  </span>
-                ) : null
-              })()}
+            {/* Right side: gear + count/menu */}
+            <div className="flex-shrink-0 flex items-center gap-0.5">
+              {/* Settings gear — visible on hover */}
               <button
-                onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] text-sm leading-none"
+                onClick={e => { e.stopPropagation(); setPageSettingsId(page.id); setPageSettingsAnchorEl(e.currentTarget) }}
+                className="w-5 h-5 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] hover:bg-black/5"
                 style={{ color: '#9e9788' }}
               >
-                ···
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="2" y1="4" x2="14" y2="4"/>
+                  <line x1="2" y1="8" x2="14" y2="8"/>
+                  <line x1="2" y1="12" x2="14" y2="12"/>
+                  <circle cx="5" cy="4" r="1.5" fill="currentColor" stroke="none"/>
+                  <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+                  <circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
               </button>
+
+              {/* Count + menu share the same slot */}
+              <div className="relative flex items-center justify-center" style={{ width: 20, height: 20 }}>
+                {!isLink && !isPageNestTarget && !isImageDropTarget && (() => {
+                  const count = countPagePhotos(page)
+                  return count > 0 ? (
+                    <span
+                      className="absolute group-hover:opacity-0 transition-opacity duration-[120ms]"
+                      style={{ fontFamily: 'monospace', fontSize: 10, color: '#b0a490' }}
+                    >
+                      {count}
+                    </span>
+                  ) : null
+                })()}
+                <button
+                  onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] text-sm leading-none"
+                  style={{ color: '#9e9788' }}
+                >
+                  ···
+                </button>
+              </div>
             </div>
           </div>
         )}

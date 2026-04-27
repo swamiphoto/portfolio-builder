@@ -3,7 +3,7 @@ import { DesignSection, PillToggle } from '../platform/designControls'
 
 // Only include layout options that are actually rendered
 const LAYOUTS = {
-  photo:    [{ value: 'Edge to edge', label: 'Edge to edge' }, { value: 'Centered', label: 'Centered' }],
+  photo:    [{ value: 'Full Bleed', label: 'Full Bleed' }, { value: 'Centered', label: 'Centered' }],
   photos:   [{ value: 'Stacked',      label: 'Stacked'      }, { value: 'Masonry',  label: 'Masonry'  }],
   stacked:  [{ value: 'Stacked',      label: 'Stacked'      }, { value: 'Masonry',  label: 'Masonry'  }],
   masonry:  [{ value: 'Stacked',      label: 'Stacked'      }, { value: 'Masonry',  label: 'Masonry'  }],

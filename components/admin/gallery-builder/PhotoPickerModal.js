@@ -231,10 +231,11 @@ const DEFAULT_FILTERS = {
   iso: "all",
 };
 
-function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, railCollapsed, onToggleRail, onPreview }) {
+function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, railCollapsed, onToggleRail, onPreview, pages, defaultPageId }) {
   const [search, setSearch] = useState("");
   const [collection, setCollection] = useState("all");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [selectedPage, setSelectedPage] = useState(defaultPageId || null);
   const [selected, setSelected] = useState([]);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchBoxRef = useRef(null);
@@ -262,6 +263,17 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     return out;
   }, [libraryConfig, allAssets.length]);
 
+  // Page counts for the filter rail
+  const pageCounts = useMemo(() => {
+    if (!pages?.length) return {};
+    return Object.fromEntries(
+      pages.map(p => {
+        const urls = new Set(p.imageUrls || []);
+        return [p.id, allAssets.filter(a => urls.has(a.publicUrl)).length];
+      })
+    );
+  }, [pages, allAssets]);
+
   // Filter by selected collection (gallery)
   const collectionAssets = useMemo(() => {
     if (collection === "all") return allAssets;
@@ -276,9 +288,18 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     return allAssets.filter((a) => (a.collectionIds || []).includes(collection));
   }, [allAssets, collection, libraryConfig]);
 
+  // Filter by selected page
+  const pageFilteredAssets = useMemo(() => {
+    if (!selectedPage || !pages?.length) return collectionAssets;
+    const pageObj = pages.find(p => p.id === selectedPage);
+    if (!pageObj) return collectionAssets;
+    const urls = new Set(pageObj.imageUrls || []);
+    return collectionAssets.filter(a => urls.has(a.publicUrl));
+  }, [collectionAssets, selectedPage, pages]);
+
   // Apply attribute filters + search
   const filtered = useMemo(() => {
-    let result = applyFilters(collectionAssets, filters);
+    let result = applyFilters(pageFilteredAssets, filters);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((a) => {
@@ -296,7 +317,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
       const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bt - at;
     });
-  }, [collectionAssets, filters, search]);
+  }, [pageFilteredAssets, filters, search]);
 
   const { positions, totalHeight } = useMemo(
     () => computePickerLayout(filtered, containerSize.width),
@@ -326,6 +347,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
   function clearAll() {
     setFilters(DEFAULT_FILTERS);
     setCollection('all');
+    setSelectedPage(null);
   }
 
   // Autocomplete suggestions — distinct values from caption / filename / camera / lens / collections
@@ -540,6 +562,10 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
         counts={counts}
         collectionCounts={collectionCounts}
         onClearAll={clearAll}
+        pages={pages}
+        selectedPage={selectedPage}
+        onSelectPage={setSelectedPage}
+        pageCounts={pageCounts}
       />
     </div>
   );
@@ -722,7 +748,7 @@ function UploadTab({ onUploaded, libraryConfig }) {
 }
 
 // ── Modal shell ─────────────────────────────────────────────────────────────
-export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, libraryConfig }) {
+export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, libraryConfig, pages, defaultPageId }) {
   const [tab, setTab] = useState("library");
   const [railCollapsed, setRailCollapsed] = useState(true);
   const [previewAsset, setPreviewAsset] = useState(null);
@@ -849,6 +875,8 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
             railCollapsed={railCollapsed}
             onToggleRail={setRailCollapsed}
             onPreview={setPreviewAsset}
+            pages={pages}
+            defaultPageId={defaultPageId}
           />
         ) : (
           <UploadTab onUploaded={onConfirm} libraryConfig={libraryConfig} />

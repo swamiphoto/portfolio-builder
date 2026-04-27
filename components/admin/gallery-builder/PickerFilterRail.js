@@ -164,6 +164,10 @@ export default function PickerFilterRail({
   counts,
   collectionCounts,
   onClearAll,
+  pages,
+  selectedPage,
+  onSelectPage,
+  pageCounts,
 }) {
   const activeCount = [
     filters.orientation !== 'all',
@@ -177,6 +181,7 @@ export default function PickerFilterRail({
     filters.shutter !== 'all',
     filters.iso !== 'all',
     selectedCollection !== 'all',
+    selectedPage !== null,
   ].filter(Boolean).length
 
   if (collapsed) {
@@ -419,6 +424,20 @@ export default function PickerFilterRail({
                 label={key}
                 count={collectionCounts[key]}
                 onClick={() => onSelectCollection(selectedCollection === key ? 'all' : key)}
+              />
+            ))}
+          </FilterSection>
+        )}
+
+        {pages?.length > 0 && (
+          <FilterSection title="Pages" defaultOpen={true}>
+            {pages.map(p => (
+              <FilterRow
+                key={p.id}
+                active={selectedPage === p.id}
+                label={p.title || 'Untitled'}
+                count={pageCounts?.[p.id]}
+                onClick={() => onSelectPage(selectedPage === p.id ? null : p.id)}
               />
             ))}
           </FilterSection>

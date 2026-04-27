@@ -84,6 +84,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   infoLabel = 'Gallery Info',
   namePlaceholder = 'Gallery name',
   pageSettingsSlot,
+  onOpenPageSettings,
   onBack,
   sourcePageId,
   onMoveBlockToPage,
@@ -115,6 +116,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       card.scrollIntoView({ block: 'center', behavior: 'smooth' });
       setGlowingBlockIndex(index);
       setTimeout(() => setGlowingBlockIndex(null), 3500);
+    },
+    openAddBlockMenu(index, anchorRect) {
+      setMenuAnchorRect(anchorRect);
+      setInsertAtIndex(index);
+      setShowBlockMenu(true);
     }
   }), []);
 
@@ -220,6 +226,26 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             {gallery.name || 'Untitled'}
           </span>
 
+          {/* Page settings */}
+          {onOpenPageSettings && (
+            <Tip label="Page settings" side="bottom">
+              <button
+                onClick={(e) => onOpenPageSettings(e.currentTarget)}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="2" y1="4" x2="14" y2="4"/>
+                  <line x1="2" y1="8" x2="14" y2="8"/>
+                  <line x1="2" y1="12" x2="14" y2="12"/>
+                  <circle cx="5" cy="4" r="1.5" fill="currentColor" stroke="none"/>
+                  <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+                  <circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+            </Tip>
+          )}
+
           {/* Add block */}
           <Tip label="Add block" side="bottom">
             <button
@@ -276,11 +302,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
-          <div className="overflow-hidden mb-1.5" style={{ background: 'var(--card)', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
-            <button
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors"
-              onClick={() => setInfoExpanded((v) => !v)}
-            >
+          <div className="overflow-hidden mb-1.5" style={{ background: '#f6f3ec', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
+            <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-2">
               <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <rect x="2" y="4" width="20" height="14" rx="2" />
@@ -288,10 +311,16 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                 </svg>
               </span>
               <span className="text-xs font-semibold flex-1 tracking-wide" style={{ color: 'var(--text-secondary)' }}>{infoLabel}</span>
-              <svg className={`w-3.5 h-3.5 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} style={{ color: 'var(--text-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
+              <button
+                onClick={() => setInfoExpanded((v) => !v)}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <svg className={`w-3.5 h-3.5 transition-transform ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+            </div>
 
             {infoExpanded && (
               <div className="px-3 pb-3 pt-3 space-y-5">
@@ -435,6 +464,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onMoveUp={index > 0 ? () => { moveBlock(index, -1); onScrollPreviewToBlock?.(index - 1); } : null}
                             onMoveDown={index < (gallery.blocks || []).length - 1 ? () => { moveBlock(index, 1); onScrollPreviewToBlock?.(index + 1); } : null}
                             onAddPhotos={() => onAddPhotosToBlock(index)}
+                            onAddBlockAbove={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index); setShowBlockMenu(true); }}
+                            onAddBlockBelow={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index + 1); setShowBlockMenu(true); }}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
                             getAssetByUrl={getAssetByUrl}
