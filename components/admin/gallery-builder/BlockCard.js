@@ -111,6 +111,8 @@ export default function BlockCard({
   expandedOverride,
   onTitleClick,
   glowing,
+  onMoveUp,
+  onMoveDown,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -305,24 +307,43 @@ export default function BlockCard({
                 className="absolute right-0 top-full z-[1000] rounded-md overflow-hidden whitespace-nowrap"
                 style={{
                   marginTop: 4,
-                  minWidth: 144,
+                  minWidth: 152,
                   background: 'var(--popover)',
                   boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
                   padding: '4px 0',
                 }}
               >
                 <button
+                  onClick={() => { setShowMenu(false); onMoveUp(); }}
+                  disabled={!onMoveUp}
+                  className="w-full text-left flex items-center gap-2 transition-colors"
+                  style={{ padding: '7px 12px', fontSize: 12.5, color: onMoveUp ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500, opacity: onMoveUp ? 1 : 0.4, cursor: onMoveUp ? 'pointer' : 'default' }}
+                  onMouseEnter={(e) => { if (onMoveUp) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 13V3M3 8l5-5 5 5"/></svg>
+                  Move up
+                </button>
+                <button
+                  onClick={() => { setShowMenu(false); onMoveDown(); }}
+                  disabled={!onMoveDown}
+                  className="w-full text-left flex items-center gap-2 transition-colors"
+                  style={{ padding: '7px 12px', fontSize: 12.5, color: onMoveDown ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500, opacity: onMoveDown ? 1 : 0.4, cursor: onMoveDown ? 'pointer' : 'default' }}
+                  onMouseEnter={(e) => { if (onMoveDown) e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
+                  Move down
+                </button>
+                <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
+                <button
                   onClick={() => { setShowMenu(false); onRemove(); }}
-                  className="w-full text-left transition-colors"
-                  style={{
-                    padding: '7px 12px',
-                    fontSize: 12.5,
-                    color: '#c14a4a',
-                    fontWeight: 500,
-                  }}
+                  className="w-full text-left flex items-center gap-2 transition-colors"
+                  style={{ padding: '7px 12px', fontSize: 12.5, color: '#c14a4a', fontWeight: 500 }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9"/></svg>
                   Remove block
                 </button>
               </div>

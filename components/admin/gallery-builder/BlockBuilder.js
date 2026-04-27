@@ -150,6 +150,14 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     onChange({ ...gallery, blocks });
   };
 
+  const moveBlock = (index, direction) => {
+    const blocks = [...(gallery.blocks || [])];
+    const target = index + direction;
+    if (target < 0 || target >= blocks.length) return;
+    [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
+    onChange({ ...gallery, blocks });
+  };
+
   const removePhotoFromBlock = (blockIndex, imageRef) => {
     const blocks = [...(gallery.blocks || [])];
     blocks[blockIndex] = {
@@ -421,6 +429,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             dragHandleProps={provided.dragHandleProps}
                             onUpdate={(updated) => updateBlock(index, updated)}
                             onRemove={() => removeBlock(index)}
+                            onMoveUp={index > 0 ? () => moveBlock(index, -1) : null}
+                            onMoveDown={index < (gallery.blocks || []).length - 1 ? () => moveBlock(index, 1) : null}
                             onAddPhotos={() => onAddPhotosToBlock(index)}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
@@ -461,7 +471,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             setInsertAtIndex(null);
             setShowBlockMenu(true);
           }}
-          className="w-full text-xs py-2.5 mt-1 transition-colors"
+          className="w-full text-xs py-2.5 mt-2 transition-colors"
           style={{
             fontFamily: 'monospace',
             letterSpacing: '0.05em',
