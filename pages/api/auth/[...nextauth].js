@@ -37,13 +37,23 @@ export const authOptions = {
   cookies: {
     sessionToken: {
       name: 'next-auth.session-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: false,
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN,
-      },
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure: false, domain: process.env.NEXTAUTH_COOKIE_DOMAIN },
+    },
+    callbackUrl: {
+      name: 'next-auth.callback-url',
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure: false, domain: process.env.NEXTAUTH_COOKIE_DOMAIN },
+    },
+    csrfToken: {
+      name: 'next-auth.csrf-token',
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure: false, domain: process.env.NEXTAUTH_COOKIE_DOMAIN },
+    },
+    state: {
+      name: 'next-auth.state',
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure: false, maxAge: 900, domain: process.env.NEXTAUTH_COOKIE_DOMAIN },
+    },
+    pkceCodeVerifier: {
+      name: 'next-auth.pkce.code_verifier',
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure: false, maxAge: 900, domain: process.env.NEXTAUTH_COOKIE_DOMAIN },
     },
   },
 }

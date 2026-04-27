@@ -210,7 +210,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   return (
     <div
       className={className || "w-72 flex-shrink-0 flex flex-col h-full relative z-10 text-left font-sans"}
-      style={{ background: 'var(--panel)' }}
+      style={{ background: '#efeae1' }}
     >
 
       {/* Top bar */}

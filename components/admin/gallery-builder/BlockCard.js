@@ -222,7 +222,7 @@ function BlockCard({
     <div
       className="relative overflow-hidden mb-1.5"
       style={{
-        background: 'var(--card)',
+        background: '#f6f3ec',
         borderRadius: 4,
         boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)',
       }}
@@ -463,7 +463,7 @@ function BlockCard({
                   <div
                     onClick={onAddPhotos}
                     className={`flex flex-col items-center justify-center h-20 border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'hover:border-[#a08a68]'}`}
-                    style={photoDropHover ? {} : { background: 'var(--card)', border: '1px dashed var(--card-border)' }}
+                    style={photoDropHover ? {} : { background: '#f6f3ec', border: '1px dashed var(--card-border)' }}
                   >
                     <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'var(--text-secondary)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
                     {!photoDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
@@ -480,7 +480,7 @@ function BlockCard({
                 <div
                   onClick={onAddPhotos}
                   className={`flex flex-col items-center justify-center h-16 border-dashed cursor-pointer transition-colors gap-0.5 ${gridDropHover ? 'border-blue-400 bg-blue-50' : 'hover:border-[#a08a68]'}`}
-                  style={gridDropHover ? {} : { background: 'var(--card)', border: '1px dashed var(--card-border)' }}
+                  style={gridDropHover ? {} : { background: '#f6f3ec', border: '1px dashed var(--card-border)' }}
                 >
                   <span className={`text-xs ${gridDropHover ? 'text-blue-600' : ''}`} style={gridDropHover ? {} : { color: 'var(--text-secondary)' }}>{gridDropHover ? 'Drop photos here' : 'Drag photos here'}</span>
                   {!gridDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
@@ -488,7 +488,7 @@ function BlockCard({
               ) : (
                 <div
                   className={`grid grid-cols-3 transition-all ${gridDropHover ? 'opacity-60' : ''}`}
-                  style={{ gap: 1, background: 'var(--card)' }}
+                  style={{ gap: 1, background: '#f6f3ec' }}
                 >
                   {(() => {
                     const thumbRefs = blockImageRefs.map(r => ({
