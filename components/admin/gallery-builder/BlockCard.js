@@ -303,7 +303,6 @@ export default function BlockCard({
             <button
               ref={menuBtnRef}
               onClick={() => {
-                onTitleClick?.();
                 setShowMenu((v) => {
                   if (!v && menuBtnRef.current) {
                     const rect = menuBtnRef.current.getBoundingClientRect();
