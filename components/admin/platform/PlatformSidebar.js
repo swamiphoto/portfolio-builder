@@ -98,6 +98,36 @@ function IconPublish(p) {
 function IconPlus(p) {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 5v14M5 12h14"/></svg>
 }
+function IconImages(props) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="8" height="11" rx="1.5" />
+      <rect x="13" y="3" width="8" height="6" rx="1.5" />
+      <rect x="13" y="12" width="8" height="9" rx="1.5" />
+      <rect x="3" y="17" width="8" height="4" rx="1.5" />
+    </svg>
+  )
+}
+function IconGrid(props) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="8" height="8" rx="1.5" />
+      <rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" />
+      <rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </svg>
+  )
+}
+function IconDocument(props) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z" />
+      <path d="M14 3v6h6" />
+      <path d="M8 13h8" />
+      <path d="M8 17h6" />
+    </svg>
+  )
+}
 function IconDots(p) {
   return <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="5.5" cy="1.5" r="1"/><circle cx="9.5" cy="1.5" r="1"/></svg>
 }
@@ -262,9 +292,10 @@ export default function PlatformSidebar({
     return id
   }
 
-  function startDraft(section) {
+  function startDraft(section, template = 'gallery') {
     setAddMenuOpen(false)
-    setDraftRow({ section })
+    setNavAddMenuOpen(false)
+    setDraftRow({ section, template })
     setDraftValue('')
   }
 
@@ -279,7 +310,7 @@ export default function PlatformSidebar({
     onConfigChange(prev => {
       const sectionPeers = prev.pages.filter(p => (p.showInNav !== false) === inNav)
       const sortOrder = Math.max(0, ...sectionPeers.map(p => p.sortOrder ?? 0)) + 1
-      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: trimmed, sortOrder, showInNav: inNav, parentId: null })] }
+      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: trimmed, sortOrder, showInNav: inNav, parentId: null, template: draftRow.template })] }
     })
     onSelectPage?.(id)
     setDraftRow(null)
@@ -998,15 +1029,36 @@ export default function PlatformSidebar({
             }}
           >
             <button
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav') }}
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'gallery') }}
               className="w-full text-left transition-colors"
               style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
-              Page
+              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
+              Gallery
             </button>
+            <button
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'collection') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
+              Collection
+            </button>
+            <button
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'about') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
+              About
+            </button>
+            <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
             <button
               onClick={() => { setNavAddMenuOpen(false); handleAddLink('nav') }}
               className="w-full text-left transition-colors"
@@ -1041,15 +1093,36 @@ export default function PlatformSidebar({
             }}
           >
             <button
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden') }}
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'gallery') }}
               className="w-full text-left transition-colors"
               style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
-              Page
+              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
+              Gallery
             </button>
+            <button
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'collection') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
+              Collection
+            </button>
+            <button
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'about') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
+              About
+            </button>
+            <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
             <button
               onClick={() => { setAddMenuOpen(false); handleAddLink('hidden') }}
               className="w-full text-left transition-colors"
