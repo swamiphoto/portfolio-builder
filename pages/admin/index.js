@@ -2,7 +2,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { DragProvider } from '../../common/dragContext'
-import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs } from '../../common/assetRefs'
+import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getPagePhotos } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -20,37 +20,34 @@ export default function AdminIndex() {
   const [libraryConfig, setLibraryConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('idle')
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false)
   const [selectedPageId, setSelectedPageId] = useState(null)
   const [showLibrary, setShowLibrary] = useState(false)
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
   const [assetPickerTarget, setAssetPickerTarget] = useState(null) // 'logo' | 'favicon' | null
+  const [blockSidebarCollapsed, setBlockSidebarCollapsed] = useState(false)
+  const [pageSidebarCollapsed, setPageSidebarCollapsed] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState(null)
+  const [lastPublishedAt, setLastPublishedAt] = useState(null)
+  const [previewViewport, setPreviewViewport] = useState('desktop') // 'desktop' | 'mobile'
   const autosaveTimer = useRef(null)
 
   // Hover highlight sync
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null)
 
-  // Scroll sync — proportional ratio between sidebar and preview
+  // Click-based scroll sync between sidebar blocks and preview
   const previewContainerRef = useRef(null)
   const blockBuilderRef = useRef(null)
-  const syncingRef = useRef(false)
 
-  const handlePreviewScroll = useCallback(() => {
-    if (syncingRef.current || !previewContainerRef.current || !blockBuilderRef.current) return
-    const el = previewContainerRef.current
-    const max = el.scrollHeight - el.clientHeight
-    if (max <= 0) return
-    const ratio = el.scrollTop / max
-    syncingRef.current = true
-    blockBuilderRef.current.scrollToRatio(ratio)
-    setTimeout(() => { syncingRef.current = false }, 100)
+  const handleScrollPreviewToBlock = useCallback((index) => {
+    if (!previewContainerRef.current) return
+    const block = previewContainerRef.current.querySelector(`[data-block-index="${index}"]`)
+    if (!block) return
+    block.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [])
 
-  const handleSidebarScrollRatio = useCallback((ratio) => {
-    if (syncingRef.current || !previewContainerRef.current) return
-    const el = previewContainerRef.current
-    syncingRef.current = true
-    el.scrollTop = ratio * Math.max(0, el.scrollHeight - el.clientHeight)
-    setTimeout(() => { syncingRef.current = false }, 100)
+  const handleScrollSidebarToBlock = useCallback((index) => {
+    blockBuilderRef.current?.scrollToBlock(index)
   }, [])
 
   useEffect(() => {
@@ -82,6 +79,11 @@ export default function AdminIndex() {
     }
     return map
   }, [libraryConfig])
+
+  const pagesData = useMemo(() => (siteConfig?.pages || [])
+    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
+    .filter(p => p.imageUrls.length > 0)
+  , [siteConfig])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -115,6 +117,7 @@ export default function AdminIndex() {
       })
       if (!res.ok) throw new Error(`Save failed: ${res.status}`)
       setSaveStatus('saved')
+      setLastSavedAt(Date.now())
       setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
       console.error('Autosave failed:', err)
@@ -124,6 +127,7 @@ export default function AdminIndex() {
   }, [])
 
   const updateConfig = useCallback((updater) => {
+    setHasUnpublishedChanges(true)
     setSiteConfig(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
       clearTimeout(autosaveTimer.current)
@@ -276,9 +280,13 @@ export default function AdminIndex() {
       selectedPageId={selectedPageId}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
+      onPublish={() => { setHasUnpublishedChanges(false); setLastPublishedAt(Date.now()) }}
+      hasUnpublishedChanges={hasUnpublishedChanges}
       libraryActive={showLibrary}
       username={session?.user?.username}
       email={session?.user?.email}
+      avatarImage={session?.user?.image}
+      displayName={session?.user?.name}
       onDropImagesToPage={handleDropImagesToPage}
       onPickThumbnail={handlePickThumbnail}
       assetsByUrl={assetsByUrl}
@@ -289,6 +297,9 @@ export default function AdminIndex() {
       onPickShareSquare={() => setAssetPickerTarget('shareSquare')}
       onViewCover={handleViewCover}
       onDisableCover={handleDisableCover}
+      onCollapse={() => setPageSidebarCollapsed(true)}
+      lastSavedAt={lastSavedAt}
+      lastPublishedAt={lastPublishedAt}
     />
   )
 
@@ -305,18 +316,17 @@ export default function AdminIndex() {
       onUpdateLibraryCaption={handleUpdateLibraryCaption}
       username={session?.user?.username}
       blockBuilderRef={blockBuilderRef}
-      onScrollRatioChange={handleSidebarScrollRatio}
+      onScrollPreviewToBlock={handleScrollPreviewToBlock}
       highlightedBlockIndex={hoveredBlockIndex}
       onBlockHover={setHoveredBlockIndex}
+      onToggleSidebarCollapse={() => setBlockSidebarCollapsed(true)}
     />
   ) : null
 
 
 
   let content
-  if (showLibrary) {
-    content = <AdminLibrary />
-  } else if (selectedPage) {
+  if (selectedPage) {
     const username = session?.user?.username
     if (selectedPage.type === 'link') {
       content = (
@@ -371,34 +381,43 @@ export default function AdminIndex() {
         )
       } else {
         content = (
-          <div ref={previewContainerRef} onScroll={handlePreviewScroll} className="flex-1 h-full min-w-0 overflow-y-auto bg-white relative">
-            <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
-            <PageCover
-              cover={selectedPage.cover}
-              title={selectedPage.title}
-              description={selectedPage.description}
-              slideshowHref={slideshowHref}
-              clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
-              primaryButton={null}
-            />
-            <GalleryPreview
-              gallery={{
-                name: selectedPage.title,
-                description: selectedPage.description || '',
-                blocks: selectedPage.blocks || [],
-              }}
-              pages={siteConfig.pages}
-              childPages={childPages}
-              activeChildId={activeChildId}
-              username={username}
-              assetsByUrl={assetsByUrl}
-              noWrap
-              enableSlideshow={!!slideshowHref}
-              onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
-              onChildPageClick={handleSelectPage}
-              highlightedBlockIndex={hoveredBlockIndex}
-              onBlockHover={setHoveredBlockIndex}
-            />
+          <div className="h-full flex flex-col">
+            {/* Preview frame */}
+            <div className="flex-1 min-h-0 flex justify-center">
+              <div
+                ref={previewContainerRef}
+                className="overflow-y-auto w-full scroll-quiet"
+              >
+                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+                <PageCover
+                  cover={selectedPage.cover}
+                  title={selectedPage.title}
+                  description={selectedPage.description}
+                  slideshowHref={slideshowHref}
+                  clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
+                  primaryButton={null}
+                />
+                <GalleryPreview
+                  gallery={{
+                    name: selectedPage.title,
+                    description: selectedPage.description || '',
+                    blocks: selectedPage.blocks || [],
+                  }}
+                  pages={siteConfig.pages}
+                  childPages={childPages}
+                  activeChildId={activeChildId}
+                  username={username}
+                  assetsByUrl={assetsByUrl}
+                  noWrap
+                  enableSlideshow={!!slideshowHref}
+                  onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
+                  onChildPageClick={handleSelectPage}
+                  highlightedBlockIndex={hoveredBlockIndex}
+                  onBlockHover={setHoveredBlockIndex}
+                  onBlockClick={handleScrollSidebarToBlock}
+                />
+              </div>
+            </div>
           </div>
         )
       }
@@ -413,21 +432,61 @@ export default function AdminIndex() {
 
   return (
     <DragProvider>
-      <AdminLayout sidebar={sidebar} panel={panel}>
+      <AdminLayout
+        sidebar={sidebar} panel={panel}
+        panelCollapsed={blockSidebarCollapsed} onTogglePanel={() => setBlockSidebarCollapsed(v => !v)}
+        sidebarCollapsed={pageSidebarCollapsed} onToggleSidebar={() => setPageSidebarCollapsed(v => !v)}
+        panelLabel={selectedPage ? `${selectedPage.title} Blocks` : 'Blocks'}
+        username={session?.user?.username}
+        pagePath={selectedPage ? `/${selectedPage.slug || selectedPage.id}` : ''}
+      >
         {content}
       </AdminLayout>
+
+      {showLibrary && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ zIndex: 50, background: 'rgba(26,18,10,0.22)', backdropFilter: 'blur(2px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowLibrary(false) }}
+        >
+          <div
+            className="flex overflow-hidden"
+            style={{
+              position: 'absolute',
+              inset: 20,
+              borderRadius: 12,
+              background: 'var(--desk)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.1), 0 32px 80px rgba(26,18,10,0.35)',
+            }}
+          >
+            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} />
+          </div>
+
+        </div>
+      )}
       {thumbnailPickerPageId && (
         <PhotoPickerModal
           images={libraryConfig?.images || []}
+          libraryConfig={libraryConfig}
           loading={!libraryConfig}
           blockType="photo"
           onConfirm={handleThumbnailConfirm}
           onClose={() => setThumbnailPickerPageId(null)}
+          pages={pagesData}
+          defaultPageId={(() => {
+            const p = pagesData.find(p => p.id === thumbnailPickerPageId)
+            if (!p) return null
+            const page = siteConfig?.pages?.find(pg => pg.id === thumbnailPickerPageId)
+            const explicitThumb = page?.thumbnail?.imageUrl
+            const choosable = explicitThumb ? p.imageUrls.filter(u => u !== explicitThumb) : p.imageUrls
+            return choosable.length > 0 ? thumbnailPickerPageId : null
+          })()}
         />
       )}
       {assetPickerTarget && (
         <PhotoPickerModal
           images={libraryConfig?.images || []}
+          libraryConfig={libraryConfig}
           loading={!libraryConfig}
           blockType="photo"
           onConfirm={handleAssetPickerConfirm}

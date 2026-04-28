@@ -7,7 +7,7 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
   useEffect(() => {
     if (!anchorEl) return
     const rect = anchorEl.getBoundingClientRect()
-    const top = Math.max(8, rect.bottom + 4)
+    const top = Math.max(8, rect.bottom + 6)
     const maxHeight = window.innerHeight - top - 8
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     setPos({ left, top, maxHeight })
@@ -15,10 +15,8 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
 
   useEffect(() => {
     function handler(e) {
-      if (
-        ref.current && !ref.current.contains(e.target) &&
-        anchorEl && !anchorEl.contains(e.target)
-      ) onClose()
+      if (e.target.closest('[data-photo-picker]')) return
+      if (ref.current && !ref.current.contains(e.target) && anchorEl && !anchorEl.contains(e.target)) onClose()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -27,37 +25,68 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
   return (
     <div
       ref={ref}
-      className="fixed bg-white border border-stone-200 shadow-[0_4px_24px_rgba(0,0,0,0.12)] z-[9999] overflow-auto"
+      className="fixed z-[9999] overflow-auto rounded-xl"
       style={{
         width,
         maxHeight: pos?.maxHeight ?? '80vh',
         left: pos?.left,
         top: pos?.top,
         visibility: pos ? undefined : 'hidden',
+        background: 'var(--popover)',
+        boxShadow: 'var(--popover-shadow)',
       }}
     >
-      {title ? (
-        <div className="px-3 pt-2.5 pb-2 flex items-center justify-between sticky top-0 bg-white z-10">
-          <div className="flex items-center gap-1.5 min-w-0">
-            {onBack && (
-              <button onClick={onBack} className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0 -ml-0.5">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            )}
-            <span className="text-xs font-semibold text-stone-700 tracking-wide truncate">{title}</span>
-          </div>
-          <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-            {headerRight}
-            <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
-          </div>
+      {/* Header */}
+      <div
+        className="px-3.5 flex items-center sticky top-0 z-10 rounded-t-xl"
+        style={{
+          height: 40,
+          background: 'var(--popover)',
+          borderBottom: '1px solid rgba(160,140,110,0.22)',
+        }}
+      >
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="transition-colors flex-shrink-0 mr-1.5 -ml-1 w-6 h-6 flex items-center justify-center rounded hover:bg-black/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        {title && (
+          typeof title === 'string' ? (
+            <span
+              className="font-mono uppercase truncate"
+              style={{
+                fontSize: 10.5,
+                letterSpacing: '0.13em',
+                color: 'var(--text-secondary)',
+                fontWeight: 500,
+              }}
+            >
+              {title}
+            </span>
+          ) : (
+            title
+          )
+        )}
+        <div className="ml-auto flex items-center gap-0.5">
+          {headerRight}
+          <button
+            onClick={onClose}
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label="Close"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
         </div>
-      ) : (
-        <div className="flex justify-end px-2 pt-1.5 sticky top-0 bg-white z-10">
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-base leading-none">×</button>
-        </div>
-      )}
+      </div>
       {children}
     </div>
   )

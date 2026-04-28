@@ -1,42 +1,109 @@
 import { useState, useRef } from 'react'
 import PopoverShell from './PopoverShell'
+import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
+
+const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
+
+// ── Shared tokens ────────────────────────────────────────────────────────────
+const DIVIDER_STRONG = '1px solid rgba(160,140,110,0.20)'
+const DIVIDER_SOFT   = '1px solid rgba(160,140,110,0.12)'
+const INPUT_BORDER   = 'rgba(160,140,110,0.32)'
+const INPUT_FOCUS    = 'rgba(92,79,58,0.65)'
+
+const inputStyle = {
+  width: '100%',
+  background: 'transparent',
+  border: 'none',
+  borderBottom: `1px solid ${INPUT_BORDER}`,
+  padding: '0 0 7px',
+  fontSize: 13,
+  lineHeight: 1.35,
+  color: '#2c2416',
+  outline: 'none',
+  transition: 'border-color 0.15s',
+}
+
+const inputCls = 'site-input'
 
 function Field({ label, children }) {
   return (
     <div>
-      <div className="text-[10px] text-stone-400 mb-1">{label}</div>
+      {label && (
+        <div
+          style={{
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            fontFamily: MONO,
+            letterSpacing: '0.10em',
+            textTransform: 'uppercase',
+            marginBottom: 0,
+          }}
+        >
+          {label}
+        </div>
+      )}
       {children}
     </div>
   )
 }
 
-const inputCls = 'w-full border-b border-stone-200 p-0 pb-1 text-sm text-stone-700 outline-none focus:border-stone-500 placeholder:text-stone-300 bg-transparent'
-
-
 function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, contain, small }) {
   const displayUrl = value || fallbackUrl || null
   const imgFit = contain ? 'object-contain p-1' : 'object-cover'
-  const boxCls = contain ? 'w-20 h-10' : small ? 'w-10 h-10' : 'w-14 h-14'
+  const dim = contain ? { width: 88, height: 44 } : small ? { width: 44, height: 44 } : { width: 60, height: 60 }
 
   return (
     <div>
-      {label && <div className="text-[10px] text-stone-400 mb-1">{label}</div>}
+      {label && (
+        <div
+          style={{
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            fontFamily: MONO,
+            letterSpacing: '0.10em',
+            textTransform: 'uppercase',
+            marginBottom: 0,
+          }}
+        >
+          {label}
+        </div>
+      )}
       <div className="flex items-center gap-3">
-        <div className={`flex-shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center bg-stone-50 ${boxCls}`}>
+        <div
+          className="flex-shrink-0 overflow-hidden flex items-center justify-center"
+          style={{
+            ...dim,
+            background: 'rgba(255,253,248,0.6)',
+            border: '1px solid rgba(160,140,110,0.22)',
+            borderRadius: 4,
+          }}
+        >
           {displayUrl ? (
             <img src={displayUrl} className={`w-full h-full ${imgFit}`} alt="" />
           ) : (
-            <span className="text-stone-300 text-lg">+</span>
+            <span style={{ color: 'rgba(168,150,122,0.55)', fontSize: 18, fontWeight: 300 }}>+</span>
           )}
         </div>
         <div className="flex flex-col gap-1">
           {onPickFromLibrary && (
-            <button type="button" onClick={onPickFromLibrary} className="text-xs text-stone-500 hover:text-stone-900 text-left">
+            <button
+              type="button"
+              onClick={onPickFromLibrary}
+              style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'left', transition: 'color 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
+              onMouseLeave={e => e.currentTarget.style.color = '#7a6b55'}
+            >
               {value ? 'Change…' : 'Select image'}
             </button>
           )}
           {value && (
-            <button type="button" onClick={() => onChange('')} className="text-[10px] text-stone-400 hover:text-red-600 text-left">
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'left', fontFamily: MONO, letterSpacing: '0.08em', textTransform: 'uppercase', transition: 'color 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#c14a4a'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            >
               Remove
             </button>
           )}
@@ -48,36 +115,93 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, co
 
 function ChevronRight() {
   return (
-    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3L11 8l-5 5" />
     </svg>
   )
 }
-
 
 function DrillRow({ label, hint, onDrillIn }) {
   return (
     <button
       type="button"
       onClick={onDrillIn}
-      className="w-full px-3 py-2.5 flex items-center border-b border-stone-100 last:border-b-0 hover:bg-stone-50 transition-colors text-left"
+      className="w-full flex items-center text-left transition-colors group"
+      style={{
+        padding: '11px 14px',
+        borderBottom: DIVIDER_SOFT,
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(160,140,110,0.06)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-stone-700">{label}</div>
-        {hint && <div className="text-[10px] text-stone-400 mt-0.5">{hint}</div>}
+        <div style={{ fontSize: 13, color: '#2c2416' }}>{label}</div>
+        {hint && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, fontFamily: MONO, letterSpacing: '0.06em' }}>{hint}</div>}
       </div>
-      <span className="text-stone-400 flex-shrink-0 ml-2"><ChevronRight /></span>
+      <span style={{ color: 'var(--text-muted)', flexShrink: 0, marginLeft: 8 }}><ChevronRight /></span>
+    </button>
+  )
+}
+
+
+function ToggleSwitch({ on, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative flex-shrink-0 transition-colors"
+      style={{
+        width: 32,
+        height: 18,
+        borderRadius: 999,
+        background: on ? '#8b6f47' : 'rgba(120,90,60,0.18)',
+        boxShadow: 'inset 0 1px 1.5px rgba(60,40,15,0.12)',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+      }}
+    >
+      <span
+        className="absolute transition-transform"
+        style={{
+          top: 2,
+          left: 2,
+          width: 14,
+          height: 14,
+          borderRadius: 999,
+          background: '#f5ecd6',
+          boxShadow: '0 1px 2px rgba(60,40,15,0.22), 0 0 0 0.5px rgba(60,40,15,0.10)',
+          transform: on ? 'translateX(14px)' : 'translateX(0)',
+        }}
+      />
     </button>
   )
 }
 
 const BrushIcon = () => (
-  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
   </svg>
 )
 
-export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
+function HeaderIconButton({ children, onClick, title, innerRef }) {
+  return (
+    <button
+      ref={innerRef}
+      type="button"
+      onClick={onClick}
+      title={title}
+      className="w-6 h-6 flex items-center justify-center rounded transition-colors flex-shrink-0"
+      style={{ color: 'var(--text-muted)' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)'; e.currentTarget.style.color = '#2c2416' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+    >
+      {children}
+    </button>
+  )
+}
+
+export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
   const [designOpen, setDesignOpen] = useState(false)
@@ -115,15 +239,9 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   const logoType = config.logoType || 'sitename'
 
   const brushButton = (
-    <button
-      ref={brushRef}
-      type="button"
-      onClick={() => setDesignOpen(v => !v)}
-      className="text-stone-400 hover:text-stone-700 transition-colors"
-      title="Design options"
-    >
+    <HeaderIconButton innerRef={brushRef} onClick={() => setDesignOpen(v => !v)} title="Design options">
       <BrushIcon />
-    </button>
+    </HeaderIconButton>
   )
 
   // ── Cover page drill-in ───────────────────────────────────────────────────
@@ -131,20 +249,14 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     const cover = config.cover || {}
 
     const coverBrushButton = (
-      <button
-        ref={coverBrushRef}
-        type="button"
-        onClick={() => setCoverDesignOpen(v => !v)}
-        className="text-stone-400 hover:text-stone-700 transition-colors"
-        title="Cover design"
-      >
+      <HeaderIconButton innerRef={coverBrushRef} onClick={() => setCoverDesignOpen(v => !v)} title="Cover design">
         <BrushIcon />
-      </button>
+      </HeaderIconButton>
     )
 
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Cover page" onBack={() => setView('main')} headerRight={coverBrushButton}>
-        <div className="px-3 py-3 space-y-3">
+        <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
           <AssetField
             label="Background image"
             value={cover.imageUrl || ''}
@@ -154,6 +266,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           <Field label="Heading">
             <input
               className={inputCls}
+              style={inputStyle}
               placeholder={config.siteName || 'My Portfolio'}
               value={cover.heading || ''}
               onChange={(e) => updateCover({ heading: e.target.value })}
@@ -162,6 +275,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           <Field label="Subheading">
             <input
               className={inputCls}
+              style={inputStyle}
               placeholder={config.tagline || 'Short description'}
               value={cover.subheading || ''}
               onChange={(e) => updateCover({ subheading: e.target.value })}
@@ -170,6 +284,7 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           <Field label="Button text">
             <input
               className={inputCls}
+              style={inputStyle}
               placeholder="View my portfolio"
               value={cover.buttonText || ''}
               onChange={(e) => updateCover({ buttonText: e.target.value })}
@@ -177,26 +292,18 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
           </Field>
         </div>
         {coverDesignOpen && (
-          <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width={220} title="Cover Design">
-            <div className="px-3 py-3">
-              <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Button Style</div>
-              <div className="flex items-center gap-1.5">
-                {[
+          <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width={240} title="Cover Design">
+            <DesignSection label="Button Style">
+              <DesignPillToggle
+                value={cover.buttonStyle || 'solid'}
+                onChange={(v) => updateCover({ buttonStyle: v })}
+                options={[
                   { value: 'solid',   label: 'Solid'   },
                   { value: 'outline', label: 'Outline' },
                   { value: 'ghost',   label: 'Ghost'   },
-                ].map(({ value, label }) => {
-                  const active = (cover.buttonStyle || 'solid') === value
-                  return (
-                    <button key={value} type="button"
-                      onClick={() => updateCover({ buttonStyle: value })}
-                      className={`px-2.5 py-0.5 text-xs border transition-colors ${active ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-500 hover:border-stone-400'}`}>
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+                ]}
+              />
+            </DesignSection>
           </PopoverShell>
         )}
       </PopoverShell>
@@ -207,17 +314,18 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   if (view === 'domain') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Custom Domain" onBack={() => setView('main')}>
-        <div className="px-3 py-3 space-y-2">
+        <div style={{ padding: '14px' }} className="space-y-2">
           <input
             autoFocus
             className={inputCls}
+            style={inputStyle}
             placeholder="photos.yourname.com"
             value={config.customDomain || ''}
             onChange={(e) => update({ customDomain: e.target.value || null })}
           />
           {config.customDomain && (
-            <p className="text-[10px] text-stone-400">
-              Point a CNAME to <span className="font-mono">{config.userId}.{rootDomain}</span> to activate.
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Point a CNAME to <span style={{ fontFamily: MONO, color: 'var(--text-secondary)' }}>{config.userId}.{rootDomain}</span> to activate.
             </p>
           )}
         </div>
@@ -229,12 +337,12 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   if (view === 'analytics') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Analytics" onBack={() => setView('main')}>
-        <div className="px-3 py-3 space-y-3">
+        <div style={{ padding: '14px' }} className="space-y-5">
           <Field label="Google Analytics ID">
-            <input autoFocus className={inputCls} placeholder="G-XXXXXXXXXX" value={config.analytics?.googleId || ''} onChange={(e) => updateAnalytics({ googleId: e.target.value })} />
+            <input autoFocus className={inputCls} style={inputStyle} placeholder="G-XXXXXXXXXX" value={config.analytics?.googleId || ''} onChange={(e) => updateAnalytics({ googleId: e.target.value })} />
           </Field>
           <Field label="Plausible domain">
-            <input className={inputCls} placeholder="yourdomain.com" value={config.analytics?.plausibleDomain || ''} onChange={(e) => updateAnalytics({ plausibleDomain: e.target.value })} />
+            <input className={inputCls} style={inputStyle} placeholder="yourdomain.com" value={config.analytics?.plausibleDomain || ''} onChange={(e) => updateAnalytics({ plausibleDomain: e.target.value })} />
           </Field>
         </div>
       </PopoverShell>
@@ -245,10 +353,11 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   if (view === 'payments') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Payments" onBack={() => setView('main')}>
-        <div className="px-3 py-3 space-y-3">
+        <div style={{ padding: '14px' }} className="space-y-5">
           <Field label="Default currency">
             <select
-              className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+              className={inputCls}
+              style={{ ...inputStyle, appearance: 'none', cursor: 'pointer', paddingRight: 16, backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23a8967a' stroke-width='2'><path d='M4 6l4 4 4-4'/></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0 center', backgroundSize: '12px' }}
               value={config.clientDefaults?.defaultCurrency || 'USD'}
               onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}
             >
@@ -256,11 +365,11 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
             </select>
           </Field>
           <Field label="Default watermark">
-            <input className={inputCls} placeholder="https://…" value={config.clientDefaults?.defaultWatermarkUrl || ''} onChange={(e) => updateClientDefaults({ defaultWatermarkUrl: e.target.value })} />
+            <input className={inputCls} style={inputStyle} placeholder="https://…" value={config.clientDefaults?.defaultWatermarkUrl || ''} onChange={(e) => updateClientDefaults({ defaultWatermarkUrl: e.target.value })} />
           </Field>
-          <p className="text-[10px] text-stone-400">
+          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
             Connect Stripe to enable purchases across pages.{' '}
-            <span className="underline cursor-pointer">Set up Stripe →</span>
+            <span style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--text-secondary)' }}>Set up Stripe →</span>
           </p>
         </div>
       </PopoverShell>
@@ -272,89 +381,118 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
     const share = config.share || {}
     const largeImage = share.largeImage || config.cover?.imageUrl || ''
     const squareImage = share.squareImage || config.cover?.imageUrl || ''
-    const domain = config.customDomain || `${config.userId || 'yoursite'}.${rootDomain.replace(/:\d+$/, '')}`
+    const previewSubdomain = username || 'yoursite'
+    const domain = config.customDomain || `${previewSubdomain}.sepia.photo`
     const siteName = config.siteName || 'My Portfolio'
     const tagline = config.tagline || ''
+    const cardBorder = '1px solid rgba(160,140,110,0.22)'
+
+    const ChangeBadge = ({ size = 30 }) => (
+      <div
+        className="rounded-full flex items-center justify-center"
+        style={{
+          width: size, height: size,
+          background: 'rgba(20,12,4,0.55)',
+          backdropFilter: 'blur(3px)',
+          WebkitBackdropFilter: 'blur(3px)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.22)',
+        }}
+      >
+        <svg width={size === 30 ? 14 : 12} height={size === 30 ? 14 : 12} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+          <circle cx="12" cy="13" r="4" />
+        </svg>
+      </div>
+    )
+
+    const EmptyBadge = () => (
+      <div
+        className="rounded-full flex items-center justify-center"
+        style={{
+          width: 36, height: 36,
+          background: 'rgba(160,140,110,0.20)',
+          border: '1px solid rgba(160,140,110,0.32)',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="rgba(120,90,60,0.80)" strokeWidth="1.6" strokeLinecap="round">
+          <path d="M8 3v10M3 8h10" />
+        </svg>
+      </div>
+    )
 
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Sharing" onBack={() => setView('main')}>
-        <div className="px-3 py-3 space-y-3">
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Social Sharing" onBack={() => setView('main')}>
+        <div style={{ padding: '14px' }} className="space-y-4">
+
+          {/* Intro */}
+          <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+            How your site appears when shared online or in search results. Change an image below if you’d like — individual pages can override with their own settings.
+          </p>
 
           {/* Large card */}
           <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Social card</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 7 }}>Social card</div>
             <div
-              className="group relative w-full cursor-pointer overflow-hidden border border-stone-200"
-              style={{ paddingBottom: '52.5%' }}
+              className="group relative w-full cursor-pointer overflow-hidden"
+              style={{ paddingBottom: '52.5%', border: cardBorder, borderRadius: 4 }}
               onClick={onPickShareLarge}
             >
-              <div className="absolute inset-0 bg-stone-100">
-                {largeImage ? (
-                  <img src={largeImage} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-stone-300 text-2xl">+</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white text-xs">{largeImage ? 'Change image' : 'Add image'}</span>
-                </div>
+              <div className="absolute inset-0" style={{ background: 'rgba(160,140,110,0.10)' }}>
+                {largeImage && <img src={largeImage} className="w-full h-full object-cover" alt="" />}
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 py-1.5">
-                <div className="text-xs font-medium text-stone-800 truncate">{siteName}</div>
-                {tagline && <div className="text-[10px] text-stone-500 truncate mt-0.5">{tagline}</div>}
-                <div className="text-[10px] text-stone-400 truncate mt-0.5">{domain}</div>
+              {/* Centered change-image affordance — subtle by default, prominent on hover */}
+              <div
+                className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity ${largeImage ? 'opacity-65 group-hover:opacity-100' : 'opacity-100'}`}
+                style={{ paddingBottom: 60 }}
+              >
+                {largeImage ? <ChangeBadge /> : <EmptyBadge />}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0" style={{ background: 'rgba(255,253,248,0.96)', borderTop: cardBorder, padding: '6px 10px' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#2c2416' }} className="truncate">{siteName}</div>
+                {tagline && <div style={{ fontSize: 10.5, color: 'var(--text-secondary)', marginTop: 1 }} className="truncate">{tagline}</div>}
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, marginTop: 1 }} className="truncate">{domain}</div>
               </div>
             </div>
             {share.largeImage && (
-              <button type="button" onClick={() => updateShare({ largeImage: '' })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Remove override</button>
+              <button type="button" onClick={() => updateShare({ largeImage: '' })} style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 4 }} onMouseEnter={e => e.currentTarget.style.color = '#c14a4a'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Remove override</button>
             )}
           </div>
 
-          {/* Square card */}
+          {/* Compact card — square 72×72 thumb */}
           <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Compact card</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 7 }}>Compact card</div>
             <div
-              className="group flex gap-0 border border-stone-200 cursor-pointer overflow-hidden"
+              className="group flex cursor-pointer overflow-hidden"
+              style={{ border: cardBorder, borderRadius: 4, height: 72 }}
               onClick={onPickShareSquare}
             >
-              <div className="relative w-16 h-16 flex-shrink-0 bg-stone-100 overflow-hidden">
-                {squareImage ? (
-                  <img src={squareImage} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-stone-300 text-xl">+</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white text-[10px]">{squareImage ? '↺' : '+'}</span>
+              <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 72, height: 72, background: 'rgba(160,140,110,0.10)' }}>
+                {squareImage && <img src={squareImage} className="w-full h-full object-cover" alt="" />}
+                <div
+                  className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity ${squareImage ? 'opacity-65 group-hover:opacity-100' : 'opacity-100'}`}
+                >
+                  {squareImage ? <ChangeBadge size={26} /> : <EmptyBadge />}
                 </div>
               </div>
-              <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-center border-l border-stone-200">
-                <div className="text-xs font-medium text-stone-800 truncate">{siteName}</div>
-                {tagline && <div className="text-[10px] text-stone-500 truncate mt-0.5">{tagline}</div>}
-                <div className="text-[10px] text-stone-400 truncate mt-0.5">{domain}</div>
+              <div className="flex-1 min-w-0 px-3 flex flex-col justify-center" style={{ borderLeft: cardBorder }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#2c2416' }} className="truncate">{siteName}</div>
+                {tagline && <div style={{ fontSize: 10.5, color: 'var(--text-secondary)', marginTop: 1 }} className="truncate">{tagline}</div>}
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, marginTop: 1 }} className="truncate">{domain}</div>
               </div>
             </div>
             {share.squareImage && (
-              <button type="button" onClick={() => updateShare({ squareImage: '' })} className="text-[10px] text-stone-400 hover:text-red-600 mt-1">Remove override</button>
+              <button type="button" onClick={() => updateShare({ squareImage: '' })} style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 4 }} onMouseEnter={e => e.currentTarget.style.color = '#c14a4a'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Remove override</button>
             )}
           </div>
 
           {/* Google search result */}
           <div>
-            <div className="text-[10px] text-stone-400 mb-1.5">Search result</div>
-            <div className="border border-stone-200 px-3 py-2.5 space-y-0.5">
-              <div className="text-[10px] text-stone-400 truncate">{domain}</div>
-              <div className="text-xs text-blue-600 truncate">{siteName}</div>
-              {tagline && <div className="text-[10px] text-stone-500 line-clamp-2">{tagline}</div>}
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 7 }}>Search result</div>
+            <div style={{ border: cardBorder, borderRadius: 4, padding: '10px 12px' }} className="space-y-0.5">
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: MONO }} className="truncate">{domain}</div>
+              <div style={{ fontSize: 12, color: '#1d4fb1' }} className="truncate">{siteName}</div>
+              {tagline && <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.45 }} className="line-clamp-2">{tagline}</div>}
             </div>
-          </div>
-
-          <div className="space-y-1.5 text-[10px] text-stone-400 border-t border-stone-100 pt-3">
-            <div><span className="text-stone-500">{siteName || 'Site name'}{siteName ? ' — Page Title' : ''}</span> · Title defaults to site name; each page can set its own</div>
-            <div><span className="text-stone-500">{tagline || 'Site description'}</span> · Description defaults to tagline; can be overridden per page</div>
-            <div>Image defaults to cover · can be overridden by thumbnail set in page settings</div>
           </div>
         </div>
       </PopoverShell>
@@ -365,37 +503,19 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Site Settings" headerRight={brushButton}>
 
-      {/* Theme — compact row */}
-      <div className="px-3 py-2 border-b border-stone-100 flex items-center gap-2">
-        <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider flex-shrink-0">Theme</span>
-        <div className="relative min-w-0">
-          <select
-            className="text-xs text-stone-700 outline-none bg-transparent border-none appearance-none cursor-pointer pr-4"
-            value={config.design?.theme || 'minimal-light'}
-            onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
-          >
-            <option value="minimal-light">Minimal Light</option>
-            <option value="minimal-dark">Minimal Dark</option>
-            <option value="editorial">Editorial</option>
-          </select>
-          <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-
       {/* Identity */}
-      <div className="px-3 py-3 space-y-3 border-b border-stone-100">
+      <div style={{ padding: '14px 14px 16px', borderBottom: DIVIDER_STRONG }} className="space-y-5">
         <Field label="Site name">
-          <input className={inputCls} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
+          <input className={inputCls} style={inputStyle} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
         <Field label="Tagline">
-          <input className={inputCls} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
+          <input className={inputCls} style={inputStyle} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
         </Field>
 
         <Field label="Footer text">
           <input
             className={inputCls}
+            style={inputStyle}
             value={footer.customText || `© ${new Date().getFullYear()} ${config.siteName || 'My Portfolio'}`}
             onChange={(e) => updateFooter({ customText: e.target.value })}
           />
@@ -403,22 +523,27 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
 
         {/* Logo */}
         <div>
-          <div className="text-[10px] text-stone-400 mb-1.5">Logo</div>
-          <div className="flex gap-1.5 mb-2">
-            {[['sitename', 'Site name'], ['image', 'Image']].map(([val, lbl]) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => update({ logoType: val })}
-                className={`text-xs px-2.5 py-0.5 border transition-colors ${
-                  logoType === val
-                    ? 'border-stone-900 bg-stone-900 text-white'
-                    : 'border-stone-200 text-stone-500 hover:border-stone-400'
-                }`}
-              >
-                {lbl}
-              </button>
-            ))}
+          <div
+            style={{
+              fontSize: 10,
+              color: 'var(--text-muted)',
+              fontFamily: MONO,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              marginBottom: 7,
+            }}
+          >
+            Logo
+          </div>
+          <div className="mb-2.5">
+            <DesignPillToggle
+              value={logoType}
+              onChange={(v) => update({ logoType: v })}
+              options={[
+                { value: 'sitename', label: 'Site name' },
+                { value: 'image',    label: 'Image'     },
+              ]}
+            />
           </div>
           {logoType === 'image' && (
             <AssetField
@@ -440,20 +565,17 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         />
       </div>
 
-      {/* Cover page toggle + inline chevron */}
-      <div className="flex items-center px-3 py-2.5 border-b border-stone-100">
-        <button
-          type="button"
+      {/* Cover page toggle */}
+      <div className="flex items-center" style={{ padding: '11px 14px', borderBottom: DIVIDER_SOFT }}>
+        <ToggleSwitch
+          on={config.hasCoverPage !== false}
           onClick={() => {
-              const enabling = config.hasCoverPage === false
-              update({ hasCoverPage: enabling })
-              if (!enabling) onDisableCover?.()
-            }}
-          className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${config.hasCoverPage !== false ? 'bg-stone-700' : 'bg-stone-300'}`}
-        >
-          <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${config.hasCoverPage !== false ? 'translate-x-[14px]' : 'translate-x-[2px]'}`} />
-        </button>
-        <span className="ml-2 text-xs text-stone-700 flex-1 select-none">Include a cover page</span>
+            const enabling = config.hasCoverPage === false
+            update({ hasCoverPage: enabling })
+            if (!enabling) onDisableCover?.()
+          }}
+        />
+        <span style={{ marginLeft: 10, fontSize: 13, color: '#2c2416', flex: 1 }} className="select-none">Include a cover page</span>
         {config.hasCoverPage !== false && (
           <button
             type="button"
@@ -466,7 +588,10 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
               setView('cover')
               onViewCover?.()
             }}
-            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0 ml-2"
+            className="flex-shrink-0 ml-2 transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
             <ChevronRight />
           </button>
@@ -487,60 +612,57 @@ export default function SiteSettingsPopover({ siteConfig, anchorEl, onUpdate, on
         onDrillIn={() => setView('payments')}
       />
       <DrillRow
-        label="Sharing"
+        label="Social sharing"
         onDrillIn={() => setView('sharing')}
       />
 
       {designOpen && (
-        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={260} title="Design">
-          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Navigation</div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {[
+        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={280} title="Design">
+          <DesignSection label="Theme">
+            <DesignSelect
+              value={config.design?.theme || 'minimal-light'}
+              onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
+            >
+              <option value="minimal-light">Minimal Light</option>
+              <option value="minimal-dark">Minimal Dark</option>
+              <option value="editorial">Editorial</option>
+            </DesignSelect>
+          </DesignSection>
+
+          <DesignSection label="Navigation">
+            <DesignNumberToggle
+              value={config.design?.navStyle || 'minimal'}
+              onChange={(v) => update({ design: { ...(config.design || {}), navStyle: v } })}
+              options={[
                 { value: 'minimal',  label: '1', title: 'Minimal'  },
                 { value: 'centered', label: '2', title: 'Centered' },
                 { value: 'fixed',    label: '3', title: 'Fixed'    },
-              ].map(({ value, label, title }) => {
-                const active = (config.design?.navStyle || 'minimal') === value
-                return (
-                  <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), navStyle: value } })} title={title}
-                    className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Sub-navigation</div>
-            <select
-              className="w-full text-sm text-stone-700 border-b border-stone-200 p-0 pb-1 outline-none bg-transparent"
+              ]}
+            />
+          </DesignSection>
+
+          <DesignSection label="Sub-navigation">
+            <DesignSelect
               value={config.design?.subNavStyle || 'dropdown'}
               onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
             >
               <option value="dropdown">Dropdown</option>
               <option value="inline">Links below page title</option>
-            </select>
-          </div>
-          <div className="px-3 py-3 border-b border-stone-100 last:border-b-0">
-            <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-2.5">Footer Layout</div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {[
+            </DesignSelect>
+          </DesignSection>
+
+          <DesignSection label="Footer Layout">
+            <DesignNumberToggle
+              value={config.design?.footerLayout || 'standard'}
+              onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
+              options={[
                 { value: 'none',     label: '0', title: 'None'     },
                 { value: 'compact',  label: '1', title: 'Compact'  },
                 { value: 'standard', label: '2', title: 'Standard' },
                 { value: 'full',     label: '3', title: 'Full'     },
-              ].map(({ value, label, title }) => {
-                const active = (config.design?.footerLayout || 'standard') === value
-                return (
-                  <button key={value} type="button" onClick={() => update({ design: { ...(config.design || {}), footerLayout: value } })} title={title}
-                    className={`min-w-[28px] px-2 py-0.5 text-xs rounded-full border transition-colors ${active ? 'bg-stone-800 border-stone-800 text-white' : 'border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700'}`}>
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+              ]}
+            />
+          </DesignSection>
         </PopoverShell>
       )}
 

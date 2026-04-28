@@ -3,24 +3,35 @@ import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
+import { getPagePhotos } from "../../common/assetRefs";
 
-export default function AdminLibrary() {
+export default function AdminLibrary({ onBack, siteConfig }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [libraryData, setLibraryData] = useState(null);
   // { allImages, portfolios, galleries, counts }
 
   const [selectedAlbum, setSelectedAlbum] = useState({ type: "all", key: "all" });
+  const [selectedPage, setSelectedPage] = useState(null);
+
+  const pagesData = useMemo(() => (siteConfig?.pages || [])
+    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
+    .filter(p => p.imageUrls.length > 0)
+  , [siteConfig]);
   const [filters, setFilters] = useState({
-    source: "all",
     orientation: "all",
     usage: "all",
+    captureYear: "all",
+    uploaded: "all",
+    aperture: "all",
+    shutter: "all",
     camera: "all",
     lens: "all",
     focalLength: "all",
     iso: "all",
   });
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [highlightedUrls, setHighlightedUrls] = useState(null);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
@@ -88,12 +99,59 @@ export default function AdminLibrary() {
 
   const applyFilters = useCallback((assets) => {
     return assets.filter((asset) => {
-      if (filters.source !== "all" && asset.source?.provider !== filters.source) return false;
       if (filters.orientation !== "all" && asset.orientation !== filters.orientation) return false;
+
+      if (filters.captureYear !== "all") {
+        const capturedAt = asset.capture?.capturedAt;
+        if (!capturedAt) return false;
+        const year = new Date(capturedAt).getFullYear();
+        if (String(year) !== filters.captureYear) return false;
+      }
+
+      if (filters.uploaded !== "all") {
+        const uploadedAt = asset.createdAt ? new Date(asset.createdAt) : null;
+        if (!uploadedAt) return false;
+        const now = Date.now();
+        const age = now - uploadedAt.getTime();
+        if (filters.uploaded === "week" && age > 7 * 864e5) return false;
+        if (filters.uploaded === "month" && age > 30 * 864e5) return false;
+        if (filters.uploaded === "year" && uploadedAt.getFullYear() !== new Date().getFullYear()) return false;
+        if (filters.uploaded === "older" && uploadedAt.getFullYear() >= new Date().getFullYear()) return false;
+      }
 
       const usageCount = asset.usage?.usageCount || 0;
       if (filters.usage === "unused" && usageCount > 0) return false;
       if (filters.usage === "used" && usageCount === 0) return false;
+
+      if (filters.aperture !== "all") {
+        const raw = asset.capture?.aperture || asset.capture?.fNumber;
+        const f = raw ? parseFloat(String(raw).replace(/^[fFƒ]\/?/, '')) : NaN;
+        if (isNaN(f)) return false;
+        if (filters.aperture === "wide" && f >= 2) return false;
+        if (filters.aperture === "mid" && (f < 2 || f >= 4)) return false;
+        if (filters.aperture === "narrow" && (f < 4 || f >= 8)) return false;
+        if (filters.aperture === "closed" && f < 8) return false;
+      }
+
+      if (filters.shutter !== "all") {
+        const raw = asset.capture?.shutterSpeed || asset.capture?.exposureTime;
+        const sec = (() => {
+          if (!raw) return NaN;
+          const str = String(raw);
+          const slash = str.indexOf('/');
+          if (slash > 0) {
+            const n = parseFloat(str.slice(0, slash));
+            const d = parseFloat(str.slice(slash + 1));
+            return (!isNaN(n) && !isNaN(d) && d !== 0) ? n / d : NaN;
+          }
+          return parseFloat(str);
+        })();
+        if (isNaN(sec)) return false;
+        if (filters.shutter === "fast" && sec >= 1/500) return false;
+        if (filters.shutter === "action" && (sec < 1/500 || sec >= 1/125)) return false;
+        if (filters.shutter === "hand" && (sec < 1/125 || sec >= 1/30)) return false;
+        if (filters.shutter === "slow" && sec < 1/30) return false;
+      }
 
       if (filters.camera !== "all" && asset.capture?.cameraModel !== filters.camera) return false;
       if (filters.lens !== "all" && asset.capture?.lens !== filters.lens) return false;
@@ -123,23 +181,32 @@ export default function AdminLibrary() {
   const currentAssets = () => {
     if (!libraryData) return [];
 
+    let base;
     if (selectedAlbum.type === "all") {
-      return applyFilters(libraryData.images || []);
-    }
-
-    if (selectedAlbum.type === "portfolio") {
+      base = libraryData.images || [];
+    } else if (selectedAlbum.type === "portfolio") {
       const urls = libraryData.portfolios[selectedAlbum.key] || []
-      return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
+      base = urls.map(getAssetByUrl).filter(Boolean);
+    } else {
+      // Gallery rollup: own + all descendants, deduped
+      const galleries = libraryData.galleries || {}
+      const prefix = selectedAlbum.key + '/'
+      const matchingKeys = Object.keys(galleries).filter(
+        (k) => k === selectedAlbum.key || k.startsWith(prefix)
+      )
+      const urls = [...new Set(matchingKeys.flatMap((k) => galleries[k] || []))]
+      base = urls.map(getAssetByUrl).filter(Boolean);
     }
 
-    // Gallery rollup: own + all descendants, deduped
-    const galleries = libraryData.galleries || {}
-    const prefix = selectedAlbum.key + '/'
-    const matchingKeys = Object.keys(galleries).filter(
-      (k) => k === selectedAlbum.key || k.startsWith(prefix)
-    )
-    const urls = [...new Set(matchingKeys.flatMap((k) => galleries[k] || []))]
-    return applyFilters(urls.map(getAssetByUrl).filter(Boolean))
+    if (selectedPage) {
+      const pageObj = pagesData.find(p => p.id === selectedPage);
+      if (pageObj) {
+        const pageUrls = new Set(pageObj.imageUrls);
+        base = base.filter(a => pageUrls.has(a.publicUrl));
+      }
+    }
+
+    return applyFilters(base);
   };
 
   const allCollections = useMemo(() => {
@@ -217,43 +284,50 @@ export default function AdminLibrary() {
     await fetchLibrary();
   }, [fetchLibrary]);
 
-  const handleUploaded = useCallback(async (uploadedAssets, targetCollection) => {
-    // uploadedAssets: [{ url, width, height }], targetCollection: gallery key or null
+  const handleUploaded = useCallback(async (uploadedAssets, selectedCollections = []) => {
+    // uploadedAssets: [{ url, width, height }], selectedCollections: string[]
     setUploadOpen(false);
     const uploadedUrls = uploadedAssets.map(a => a.url);
 
     const config = currentConfig();
 
-    // Seed asset dimension metadata for newly uploaded files
+    // Seed asset metadata for newly uploaded files
+    const { createAssetIdFromUrl } = await import('../../common/adminConfig');
+    const now = new Date().toISOString();
     const assetUpdates = {};
     for (const { url, width, height } of uploadedAssets) {
-      if (!width || !height) continue;
-      const { createAssetIdFromUrl } = await import('../../common/adminConfig');
       const assetId = createAssetIdFromUrl(url);
-      const ratio = width / height;
+      const ratio = width && height ? width / height : null;
       assetUpdates[assetId] = {
         ...(libraryData?.assets?.[assetId] || {}),
         assetId,
         publicUrl: url,
-        width,
-        height,
-        aspectRatio: Number(ratio.toFixed(4)),
-        orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
+        createdAt: now,
+        ...(width && height ? {
+          width,
+          height,
+          aspectRatio: Number(ratio.toFixed(4)),
+          orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
+        } : {}),
       };
     }
 
-    const updated = {
-      ...config,
-      assets: { ...config.assets, ...assetUpdates },
-    };
+    const updated = { ...config, assets: { ...config.assets, ...assetUpdates } };
 
-    if (targetCollection) {
-      updated.galleries = {
-        ...config.galleries,
-        [targetCollection]: [...new Set([...(config.galleries[targetCollection] || []), ...uploadedUrls])],
-      };
-      setSelectedAlbum({ type: 'gallery', key: targetCollection });
+    // Add uploaded URLs to every selected collection
+    if (selectedCollections.length > 0) {
+      updated.galleries = { ...config.galleries };
+      for (const col of selectedCollections) {
+        updated.galleries[col] = [...new Set([...(updated.galleries[col] || []), ...uploadedUrls])];
+      }
+      setSelectedAlbum({ type: 'gallery', key: selectedCollections[0] });
+    } else {
+      setSelectedAlbum({ type: 'all', key: 'all' });
     }
+
+    // Highlight newly uploaded photos for 2.5s
+    setHighlightedUrls(new Set(uploadedUrls));
+    setTimeout(() => setHighlightedUrls(null), 2500);
 
     await saveConfig(updated);
   }, [saveConfig, fetchLibrary, currentConfig, libraryData]);
@@ -349,7 +423,7 @@ export default function AdminLibrary() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
+      <div className="flex items-center justify-center h-full text-sm" style={{ color: '#a8967a' }}>
         Loading library…
       </div>
     );
@@ -357,12 +431,12 @@ export default function AdminLibrary() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-4">
+      <div className="flex flex-col items-center justify-center h-full gap-4">
         <div className="text-red-500 text-sm font-medium">Error: {error}</div>
-        <div className="text-xs text-gray-400 max-w-sm text-center">
-          Make sure GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_CLIENT_EMAIL, and GOOGLE_CLOUD_PRIVATE_KEY are set in .env.local
+        <div className="text-xs max-w-sm text-center" style={{ color: '#a8967a' }}>
+          Make sure R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL are set in .env.local
         </div>
-        <button onClick={fetchLibrary} className="text-sm bg-gray-900 text-white px-4 py-2 rounded-lg">
+        <button onClick={fetchLibrary} className="text-sm px-4 py-2 rounded-lg" style={{ background: '#2c2416', color: '#f4efe8' }}>
           Retry
         </button>
       </div>
@@ -371,12 +445,23 @@ export default function AdminLibrary() {
 
   const assets = currentAssets();
   const allAssets = (libraryData?.images || []).map((asset) => asset || null).filter(Boolean);
+
+  const FILTER_LABELS = {
+    orientation: v => v.charAt(0).toUpperCase() + v.slice(1),
+    usage: v => v === 'used' ? 'In Use' : 'Unused',
+    captureYear: v => v,
+    uploaded: v => ({ week: 'This week', month: 'This month', year: 'This year', older: 'Older' }[v] || v),
+    aperture: v => ({ wide: 'ƒ < 2', mid: 'ƒ 2–4', narrow: 'ƒ 4–8', closed: 'ƒ 8+' }[v] || v),
+    shutter: v => ({ fast: '> 1/500s', action: '1/500–1/125s', hand: '1/125–1/30s', slow: '< 1/30s' }[v] || v),
+    camera: v => v,
+    lens: v => v,
+    focalLength: v => ({ wide: '≤ 35mm', normal: '35–85mm', tele: '85–200mm', super: '> 200mm' }[v] || v),
+    iso: v => ({ low: 'ISO ≤ 400', mid: 'ISO 400–1600', high: 'ISO > 1600' }[v] || v),
+  };
+  const activeFilters = Object.entries(filters)
+    .filter(([k, v]) => v !== 'all' && FILTER_LABELS[k])
+    .map(([k, v]) => ({ key: k, label: FILTER_LABELS[k](v) }));
   const counts = libraryData?.counts || {};
-  const sourceCounts = allAssets.reduce((acc, asset) => {
-    const source = asset.source?.provider || "manual";
-    acc[source] = (acc[source] || 0) + 1;
-    return acc;
-  }, {});
   const orientationCounts = allAssets.reduce((acc, asset) => {
     const orientation = asset.orientation || "unknown";
     acc[orientation] = (acc[orientation] || 0) + 1;
@@ -410,6 +495,55 @@ export default function AdminLibrary() {
     return acc;
   }, {});
 
+  const captureYearCounts = allAssets.reduce((acc, asset) => {
+    const capturedAt = asset.capture?.capturedAt;
+    if (!capturedAt) return acc;
+    const year = String(new Date(capturedAt).getFullYear());
+    acc[year] = (acc[year] || 0) + 1;
+    return acc;
+  }, {});
+
+  const now = Date.now();
+  const currentYear = new Date().getFullYear();
+  const uploadedCounts = allAssets.reduce((acc, asset) => {
+    const t = asset.createdAt ? new Date(asset.createdAt).getTime() : null;
+    if (!t) return acc;
+    const age = now - t;
+    if (age <= 7 * 864e5) acc.week = (acc.week || 0) + 1;
+    if (age <= 30 * 864e5) acc.month = (acc.month || 0) + 1;
+    if (new Date(t).getFullYear() === currentYear) acc.year = (acc.year || 0) + 1;
+    else acc.older = (acc.older || 0) + 1;
+    return acc;
+  }, {});
+
+  const apertureCounts = allAssets.reduce((acc, asset) => {
+    const raw = asset.capture?.aperture || asset.capture?.fNumber;
+    if (!raw) return acc;
+    const f = parseFloat(String(raw).replace(/^[fFƒ]\/?/, ''));
+    if (isNaN(f)) return acc;
+    if (f < 2) acc.wide = (acc.wide || 0) + 1;
+    else if (f < 4) acc.mid = (acc.mid || 0) + 1;
+    else if (f < 8) acc.narrow = (acc.narrow || 0) + 1;
+    else acc.closed = (acc.closed || 0) + 1;
+    return acc;
+  }, {});
+
+  const shutterCounts = allAssets.reduce((acc, asset) => {
+    const raw = asset.capture?.shutterSpeed || asset.capture?.exposureTime;
+    if (!raw) return acc;
+    const str = String(raw);
+    const slash = str.indexOf('/');
+    const sec = slash > 0
+      ? parseFloat(str.slice(0, slash)) / parseFloat(str.slice(slash + 1))
+      : parseFloat(str);
+    if (isNaN(sec)) return acc;
+    if (sec < 1/500) acc.fast = (acc.fast || 0) + 1;
+    else if (sec < 1/125) acc.action = (acc.action || 0) + 1;
+    else if (sec < 1/30) acc.hand = (acc.hand || 0) + 1;
+    else acc.slow = (acc.slow || 0) + 1;
+    return acc;
+  }, {});
+
   const isoCounts = allAssets.reduce((acc, asset) => {
     const iso = asset.capture?.iso;
     if (!iso) return acc;
@@ -420,23 +554,29 @@ export default function AdminLibrary() {
   }, {});
 
   return (
-    <div className="flex h-full overflow-hidden font-sans bg-white">
+    <div className="flex h-full w-full overflow-hidden font-sans">
       <AlbumSidebar
+        onBack={onBack}
         counts={counts}
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
         onCreateCollection={handleCreateCollection}
         onDeleteCollection={handleDeleteCollection}
-        onUploadClick={() => setUploadOpen(true)}
-        sourceCounts={sourceCounts}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
+        captureYearCounts={captureYearCounts}
+        uploadedCounts={uploadedCounts}
+        apertureCounts={apertureCounts}
+        shutterCounts={shutterCounts}
         cameraCounts={cameraCounts}
         lensCounts={lensCounts}
         focalLengthCounts={focalLengthCounts}
         isoCounts={isoCounts}
         filters={filters}
         onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+        pages={pagesData}
+        selectedPage={selectedPage}
+        onSelectPage={setSelectedPage}
       />
       <PhotoGrid
         assets={assets}
@@ -450,6 +590,12 @@ export default function AdminLibrary() {
         onToggleCollection={handleToggleCollection}
         onUploadClick={() => setUploadOpen(true)}
         onAddFromLibraryClick={handleAddFromLibrary}
+        activeFilters={activeFilters}
+        onRemoveFilter={k => setFilters(prev => ({ ...prev, [k]: 'all' }))}
+        allAssets={allAssets}
+        onAlbumSelect={setSelectedAlbum}
+        onClose={onBack}
+        highlightedUrls={highlightedUrls}
       />
 
       {uploadOpen && (

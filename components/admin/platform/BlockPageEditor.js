@@ -160,6 +160,7 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
       {photoPickerOpen && (
         <PhotoPickerModal
           images={libraryImages || []}
+          libraryConfig={libraryData}
           loading={libraryLoading}
           blockType={page.blocks?.[photoPickerBlockIndex]?.type || 'photo'}
           onConfirm={handlePhotoPickerConfirm}

@@ -133,7 +133,7 @@ function normalizeUsage(usage = {}) {
     pageIds,
     galleryIds,
     blockIds,
-    usageCount: (cover ? 1 : 0) + pageIds.length + blockIds.length,
+    usageCount: (cover ? 1 : 0) + pageIds.length + galleryIds.length + blockIds.length,
     lastUsedAt: usage.lastUsedAt || null,
   };
 }

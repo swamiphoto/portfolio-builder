@@ -1,21 +1,23 @@
-import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { useDrag } from '../../../common/dragContext';
+import Tip from "../Tip";
 import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
 import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 
-function AutoGrowTextarea({ className, value, onChange, placeholder, ...props }) {
+function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
   const ref = useRef(null);
   const adjust = useCallback(() => {
-    if (ref.current) {
-      ref.current.style.height = "auto";
-      ref.current.style.height = ref.current.scrollHeight + "px";
-    }
-  }, []);
-  useEffect(() => { adjust(); }, [value, adjust]);
+    if (!ref.current) return;
+    ref.current.style.height = '0';
+    const sh = ref.current.scrollHeight;
+    ref.current.style.height = Math.min(sh, maxHeight || sh) + 'px';
+    ref.current.style.overflowY = maxHeight && sh > maxHeight ? 'auto' : 'hidden';
+  }, [maxHeight]);
+  useLayoutEffect(() => { adjust(); }, [value, adjust]);
   return (
     <textarea
       ref={ref}
@@ -24,30 +26,39 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, ...props })
       onChange={onChange}
       placeholder={placeholder}
       rows={1}
-      style={{ overflow: "hidden", resize: "none" }}
+      style={{ resize: 'none', overflow: 'hidden', ...styleProp }}
       {...props}
     />
   );
 }
 
 function InsertionZone({ onInsert }) {
-  const [hovered, setHovered] = useState(false);
   return (
     <div
-      className="relative flex items-center justify-center cursor-pointer transition-all duration-150"
-      style={{ height: hovered ? 28 : 6 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="group/zone relative flex items-center justify-center cursor-pointer"
+      style={{ height: 14, marginTop: -6, zIndex: 2 }}
       onClick={onInsert}
     >
-      {hovered && (
-        <>
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-stone-300" />
-          <div className="relative z-10 w-4 h-4 rounded-full border border-stone-400 bg-white flex items-center justify-center">
-            <span className="text-[9px] font-bold text-stone-500 leading-none">+</span>
-          </div>
-        </>
-      )}
+      <div
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px opacity-0 group-hover/zone:opacity-100 transition-opacity duration-100"
+        style={{ background: 'radial-gradient(ellipse 70% 100% at center, rgba(160,140,110,0.6) 0%, transparent 100%)' }}
+      />
+      <Tip label="Add a block here" side="right">
+        <div
+          className="insertion-zone-btn absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full opacity-0 group-hover/zone:opacity-100 hover:scale-110 transition-all duration-150"
+          style={{
+            width: 24,
+            height: 24,
+            background: 'linear-gradient(155deg, #fefcf8 0%, #ebe5db 100%)',
+            border: 'none',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+            <path d="M4.5 1.5v6M1.5 4.5h6" />
+          </svg>
+        </div>
+      </Tip>
     </div>
   );
 }
@@ -73,13 +84,14 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   infoLabel = 'Gallery Info',
   namePlaceholder = 'Gallery name',
   pageSettingsSlot,
+  onOpenPageSettings,
   onBack,
   sourcePageId,
   onMoveBlockToPage,
   assetsByUrl,
   onUpdateLibraryCaption,
   className,
-  onScrollRatioChange,
+  onScrollPreviewToBlock,
   highlightedBlockIndex,
   onBlockHover,
 }, ref) {
@@ -87,30 +99,30 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const [insertAtIndex, setInsertAtIndex] = useState(null);
   const [menuAnchorRect, setMenuAnchorRect] = useState(null);
   const [infoExpanded, setInfoExpanded] = useState(true);
+  const [expandedOverride, setExpandedOverride] = useState(null);
+  const [allExpanded, setAllExpanded] = useState(true);
+  const [glowingBlockIndex, setGlowingBlockIndex] = useState(null);
 
   const blocksContainerRef = useRef(null);
-  const isSyncingRef = useRef(false);
 
   const { startDrag, endDrag, dropTargetPageId } = useDrag()
 
-  // Expose scrollToRatio so parent can drive sidebar scroll from preview
   useImperativeHandle(ref, () => ({
-    scrollToRatio(ratio) {
+    scrollToBlock(index) {
       const el = blocksContainerRef.current;
       if (!el) return;
-      isSyncingRef.current = true;
-      el.scrollTop = ratio * Math.max(0, el.scrollHeight - el.clientHeight);
-      setTimeout(() => { isSyncingRef.current = false; }, 100);
+      const card = el.querySelector(`[data-block-index="${index}"]`);
+      if (!card) return;
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setGlowingBlockIndex(index);
+      setTimeout(() => setGlowingBlockIndex(null), 3500);
+    },
+    openAddBlockMenu(index, anchorRect) {
+      setMenuAnchorRect(anchorRect);
+      setInsertAtIndex(index);
+      setShowBlockMenu(true);
     }
   }), []);
-
-  const handleBlocksScroll = useCallback(() => {
-    if (isSyncingRef.current || !onScrollRatioChange || !blocksContainerRef.current) return;
-    const el = blocksContainerRef.current;
-    const max = el.scrollHeight - el.clientHeight;
-    if (max <= 0) return;
-    onScrollRatioChange(el.scrollTop / max);
-  }, [onScrollRatioChange]);
 
   const updateField = (key, value) => onChange({ ...gallery, [key]: value });
 
@@ -141,6 +153,14 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
   const removeBlock = (index) => {
     const blocks = (gallery.blocks || []).filter((_, i) => i !== index);
+    onChange({ ...gallery, blocks });
+  };
+
+  const moveBlock = (index, direction) => {
+    const blocks = [...(gallery.blocks || [])];
+    const target = index + direction;
+    if (target < 0 || target >= blocks.length) return;
+    [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
     onChange({ ...gallery, blocks });
   };
 
@@ -195,80 +215,139 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
   return (
     <div
-      className={className || "w-72 flex-shrink-0 flex flex-col h-full bg-stone-50 border-r border-stone-200 relative z-10 text-left font-sans"}
+      className={className || "w-72 flex-shrink-0 flex flex-col h-full relative z-10 text-left font-sans"}
+      style={{ background: '#efeae1' }}
     >
-      {/* Header bar */}
-      <div className="px-3 pt-3 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-stone-200">
-        <button onClick={onBack || onToggleExpand} className="text-stone-400 hover:text-stone-700 transition-colors text-sm leading-none">←</button>
-        <span className="text-xs tracking-widest font-medium text-stone-400 flex-1">{headerLabel}</span>
-        <span className="text-[10px] text-stone-400">
-          {autosaveStatus === "saving" && "Saving…"}
-          {autosaveStatus === "saved" && "Saved"}
-          {autosaveStatus === "unsaved" && "Unsaved"}
-        </span>
-        {!onBack && (
-          <button
-            onClick={onToggleExpand}
-            className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
-            title="Collapse sidebar"
-          >
-            <svg className="w-3.5 h-3.5 -rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-        )}
-        {onPublish && (
-          <button
-            onClick={onPublish}
-            disabled={publishing || (isPublished && !hasDraft)}
-            className="text-xs font-semibold bg-stone-900 text-white px-4 py-1.5 hover:bg-stone-700 disabled:opacity-40 transition-colors"
-          >
-            {publishing ? "Publishing…" : "Publish"}
-          </button>
-        )}
-      </div>
+
+      {/* Top bar */}
+      {onToggleExpand && (
+        <div className="flex-shrink-0 flex items-center px-3 gap-0.5" style={{ height: 36, borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
+          <span className="flex-1 text-[11px] font-semibold truncate mr-1" style={{ color: 'var(--text-secondary)' }}>
+            {gallery.name || 'Untitled'}
+          </span>
+
+          {/* Page settings */}
+          {onOpenPageSettings && (
+            <Tip label="Page settings" side="bottom">
+              <button
+                onClick={(e) => onOpenPageSettings(e.currentTarget)}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="2" y1="4" x2="14" y2="4"/>
+                  <line x1="2" y1="8" x2="14" y2="8"/>
+                  <line x1="2" y1="12" x2="14" y2="12"/>
+                  <circle cx="5" cy="4" r="1.5" fill="currentColor" stroke="none"/>
+                  <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+                  <circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+            </Tip>
+          )}
+
+          {/* Add block */}
+          <Tip label="Add block" side="bottom">
+            <button
+              onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+            </button>
+          </Tip>
+
+          {/* Expand/collapse all toggle */}
+          <Tip label={allExpanded ? 'Collapse all blocks' : 'Expand all blocks'} side="bottom">
+            <button
+              onClick={() => {
+                const next = !allExpanded
+                setAllExpanded(next)
+                setExpandedOverride({ value: next, ts: Date.now() })
+              }}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {allExpanded ? (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 4h10M3 8h10M3 12h10" />
+                </svg>
+              )}
+            </button>
+          </Tip>
+
+          {/* Collapse panel */}
+          <Tip label="Collapse panel" side="bottom">
+            <button
+              onClick={onToggleExpand}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13L5 8l5-5" />
+              </svg>
+            </button>
+          </Tip>
+        </div>
+      )}
 
       {/* All blocks — scrollable */}
-      <div ref={blocksContainerRef} onScroll={handleBlocksScroll} className="flex-1 overflow-y-auto px-3 py-3">
+      <div ref={blocksContainerRef} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
 
         {/* Info card */}
         {pageSettingsSlot ? pageSettingsSlot : (
-          <div className="bg-white border border-stone-200 rounded-lg shadow-sm overflow-hidden mb-1.5">
-            <button
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
-              onClick={() => setInfoExpanded((v) => !v)}
-            >
-              <span className="text-xs font-semibold text-stone-600 flex-1 tracking-wide">{infoLabel}</span>
-              <svg className={`w-3.5 h-3.5 text-stone-400 transition-transform flex-shrink-0 ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
+          <div className="overflow-hidden mb-1.5" style={{ background: '#f6f3ec', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
+            <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-2">
+              <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <rect x="2" y="4" width="20" height="14" rx="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 14l5-5a2 2 0 012.8 0l3 3 2.2-2.2a2 2 0 012.8 0L22 13" />
+                </svg>
+              </span>
+              <span className="text-xs font-semibold flex-1 tracking-wide" style={{ color: 'var(--text-secondary)' }}>{infoLabel}</span>
+              <button
+                onClick={() => setInfoExpanded((v) => !v)}
+                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <svg className={`w-3.5 h-3.5 transition-transform ${infoExpanded ? "" : "rotate-180"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+            </div>
 
             {infoExpanded && (
-              <div className="px-3 pb-3 border-t border-stone-100 pt-3 space-y-4">
+              <div className="px-3 pb-3 pt-3 space-y-5">
                 <div>
-                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Name</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
                   <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug font-medium text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder={namePlaceholder}
                     value={gallery.name || ""}
                     onChange={(e) => updateField("name", e.target.value)}
                   />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Slug</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Slug</div>
                   <input
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-xs leading-snug text-stone-500 font-mono outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
+                    className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] font-mono outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder="slug"
                     value={gallery.slug || ""}
                     onChange={(e) => updateField("slug", e.target.value)}
                   />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Description</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
                   <AutoGrowTextarea
-                    className="w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug text-stone-600 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent"
-                    placeholder="Description"
+                    className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full resize-none"
+                    placeholder="A brief description…"
+                    maxHeight={120}
                     value={gallery.description || ""}
                     onChange={(e) => updateField("description", e.target.value)}
                   />
@@ -276,21 +355,22 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
                 {/* Thumbnail row */}
                 <div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Thumbnail</div>
-                <div className="flex items-center gap-3 pt-0.5">
+                <div className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Thumbnail</div>
+                <div className="flex items-center gap-3">
                   <div
                     onClick={onPickThumbnail}
-                    className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center border border-stone-200 cursor-pointer hover:border-stone-400 transition-colors ${gallery.thumbnailUrl ? "" : "bg-stone-50"}`}
+                    className={`w-12 h-12 overflow-hidden flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors`}
+                    style={{ border: '1px solid var(--border)', background: gallery.thumbnailUrl ? undefined : 'var(--card)' }}
                   >
                     {gallery.thumbnailUrl ? (
                       <img src={getSizedUrl(gallery.thumbnailUrl, 'thumbnail')} alt="Cover" className="w-full h-full object-cover" onError={(e) => { if (e.target.src !== gallery.thumbnailUrl) e.target.src = gallery.thumbnailUrl }} />
                     ) : (
-                      <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5" />
                       </svg>
                     )}
                   </div>
-                  <button onClick={onPickThumbnail} className="text-xs text-stone-600 hover:text-stone-900 text-left transition-colors leading-none">
+                  <button onClick={onPickThumbnail} className="text-xs text-left transition-colors leading-none" style={{ color: 'var(--text-secondary)' }}>
                     Select from library
                   </button>
                 </div>
@@ -301,10 +381,12 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   className="flex items-center gap-2 cursor-pointer pt-0.5"
                   onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
                 >
-                  <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.visibility === "unlisted" ? "bg-stone-700" : "bg-stone-300"}`}>
-                    <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                  <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
+                       style={{ background: gallery.visibility === "unlisted" ? 'var(--sepia-accent)' : 'var(--border)' }}>
+                    <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`}
+                         style={{ background: 'var(--card)' }} />
                   </div>
-                  <span className="text-xs text-stone-500 select-none">Unlisted</span>
+                  <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Unlisted</span>
                 </div>
 
                 {/* Slideshow toggle */}
@@ -313,15 +395,17 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={() => updateField("enableSlideshow", !gallery.enableSlideshow)}
                   >
-                    <div className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${gallery.enableSlideshow ? "bg-stone-700" : "bg-stone-300"}`}>
-                      <div className={`absolute top-[2px] w-[10px] h-[10px] bg-white rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                    <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
+                         style={{ background: gallery.enableSlideshow ? 'var(--sepia-accent)' : 'var(--border)' }}>
+                      <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`}
+                           style={{ background: 'var(--card)' }} />
                     </div>
-                    <span className="text-xs text-stone-500 select-none">Include slideshow</span>
+                    <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Include slideshow</span>
                   </div>
                   {gallery.enableSlideshow && gallery.slug && (
                     <Link
                       href={`/admin/galleries/${gallery.slug}/slideshow`}
-                      className="text-xs text-stone-400 hover:text-stone-700 underline underline-offset-2 transition-colors"
+                      className="text-xs underline underline-offset-2 transition-colors" style={{ color: 'var(--text-muted)' }}
                     >
                       Customize →
                     </Link>
@@ -359,9 +443,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                 {(gallery.blocks || []).map((block, index) => (
                   <div
                     key={`slot-${index}`}
-                    onMouseEnter={() => onBlockHover?.(index)}
-                    onMouseLeave={() => onBlockHover?.(null)}
                     className="rounded-lg"
+                    data-block-index={index}
                   >
                     <InsertionZone
                       onInsert={(e) => {
@@ -378,7 +461,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             dragHandleProps={provided.dragHandleProps}
                             onUpdate={(updated) => updateBlock(index, updated)}
                             onRemove={() => removeBlock(index)}
+                            onMoveUp={index > 0 ? () => { moveBlock(index, -1); onScrollPreviewToBlock?.(index - 1); } : null}
+                            onMoveDown={index < (gallery.blocks || []).length - 1 ? () => { moveBlock(index, 1); onScrollPreviewToBlock?.(index + 1); } : null}
                             onAddPhotos={() => onAddPhotosToBlock(index)}
+                            onAddBlockAbove={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index); setShowBlockMenu(true); }}
+                            onAddBlockBelow={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index + 1); setShowBlockMenu(true); }}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
                             getAssetByUrl={getAssetByUrl}
@@ -392,6 +479,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             assetsByUrl={assetsByUrl}
                             onUpdateLibraryCaption={onUpdateLibraryCaption}
                             highlighted={highlightedBlockIndex === index}
+                            expandedOverride={expandedOverride}
+                            onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
+                            glowing={glowingBlockIndex === index}
                           />
                         </div>
                       )}
@@ -405,25 +495,51 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         </DragDropContext>
 
         {(gallery.blocks || []).length === 0 && (
-          <p className="text-xs text-stone-400 text-center py-4">No blocks yet</p>
+          <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>No blocks yet</p>
         )}
 
-      </div>
-
-      {/* Add Block */}
-      <div className="p-3 border-t border-stone-200 flex-shrink-0">
+        {/* Terminal add block */}
         <button
           onClick={(e) => {
-            if (showBlockMenu) { setShowBlockMenu(false); return; }
             setMenuAnchorRect(e.currentTarget.getBoundingClientRect());
             setInsertAtIndex(null);
             setShowBlockMenu(true);
           }}
-          className="w-full bg-white border border-stone-300 text-stone-700 text-sm font-medium py-2.5 hover:bg-stone-50 hover:border-stone-400 transition-colors"
+          className="w-full text-xs py-2.5 mt-2 transition-colors"
+          style={{
+            fontFamily: 'monospace',
+            letterSpacing: '0.05em',
+            borderRadius: 4,
+            border: '1px dashed rgba(160,140,110,0.4)',
+            background: 'transparent',
+            color: 'var(--text-muted)',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; }}
         >
-          Add Block
+          + Add Block
         </button>
+
       </div>
+
+      {/* Footer: autosave + publish — only when publish action exists */}
+      {onPublish && (
+        <div className="px-3 py-2 flex-shrink-0 flex items-center gap-2" style={{ borderTop: '1px solid var(--border)' }}>
+          <span className="font-mono text-[10px] flex-1" style={{ color: 'var(--text-muted)' }}>
+            {autosaveStatus === "saving" && "Saving…"}
+            {autosaveStatus === "saved" && "Saved"}
+            {autosaveStatus === "unsaved" && "Unsaved"}
+          </span>
+          <button
+            onClick={onPublish}
+            disabled={publishing || (isPublished && !hasDraft)}
+            className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+            style={{ background: 'var(--sepia-accent)', color: '#fff' }}
+          >
+            {publishing ? "Publishing…" : "Publish"}
+          </button>
+        </div>
+      )}
 
       {showBlockMenu && (
         <BlockTypeMenu

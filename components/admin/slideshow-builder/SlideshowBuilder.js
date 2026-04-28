@@ -27,6 +27,7 @@ export default function SlideshowBuilder({ initialGallery, galleryIndex, allGall
   const [collapsed, setCollapsed] = useState(false);
   const [coverPickerOpen, setCoverPickerOpen] = useState(false);
   const [libraryImages, setLibraryImages] = useState(null);
+  const [libraryData, setLibraryData] = useState(null);
   const [libraryLoading, setLibraryLoading] = useState(false);
 
   const allGalleriesRef = useRef(allGalleries);
@@ -68,7 +69,10 @@ export default function SlideshowBuilder({ initialGallery, galleryIndex, allGall
     setLibraryLoading(true);
     fetch("/api/admin/library")
       .then(r => r.json())
-      .then(data => setLibraryImages(data.allImages || []))
+      .then(data => {
+        setLibraryImages(data.images || data.allImages || []);
+        setLibraryData(data);
+      })
       .catch(() => setLibraryImages([]))
       .finally(() => setLibraryLoading(false));
   }, [libraryImages]);
@@ -177,6 +181,7 @@ export default function SlideshowBuilder({ initialGallery, galleryIndex, allGall
       {coverPickerOpen && (
         <PhotoPickerModal
           images={libraryImages || []}
+          libraryConfig={libraryData}
           loading={libraryLoading}
           blockType="photo"
           onConfirm={handleCoverConfirm}

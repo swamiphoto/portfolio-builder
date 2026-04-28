@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { MUSIC_PRESETS } from "./musicPresets";
+import Tip from "../Tip";
 
 const THEMES = [
   { label: "Ken Burns", value: "kenburns" },
@@ -127,15 +128,16 @@ export default function SlideshowSidebar({
           {autosaveStatus === "saved" && "Saved"}
           {autosaveStatus === "unsaved" && "Unsaved"}
         </span>
+        <Tip label="Collapse sidebar">
         <button
           onClick={onCollapse}
           className="text-stone-400 hover:text-stone-700 transition-colors flex-shrink-0"
-          title="Collapse sidebar"
         >
           <svg className="w-3.5 h-3.5 -rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
           </svg>
         </button>
+        </Tip>
       </div>
 
       {/* Scrollable body */}

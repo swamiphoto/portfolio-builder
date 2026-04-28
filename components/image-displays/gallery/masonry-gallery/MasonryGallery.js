@@ -3,9 +3,9 @@ import Masonry from "react-masonry-css";
 import { getSizedUrl } from "../../../../common/imageUtils";
 import styles from "./MasonryGallery.module.css";
 
-const MasonryGallery = ({ images = [], imageUrls = [], onImageClick }) => {
+const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns }) => {
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
-  const breakpointColumnsObj = { default: 2, 700: 1 };
+  const breakpointColumnsObj = columns != null ? { default: columns } : { default: 2, 700: 1 };
 
   return (
     <div className="flex flex-col items-center">

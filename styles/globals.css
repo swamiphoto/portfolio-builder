@@ -1,6 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.scroll-quiet { scrollbar-width: none; }
+.scroll-quiet::-webkit-scrollbar { width: 0; }
+
+.scroll-thin { scrollbar-width: none; scrollbar-gutter: stable; }
+.scroll-thin::-webkit-scrollbar { width: 3px; background: transparent; }
+.scroll-thin::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }
+.scroll-thin:hover { scrollbar-width: thin; scrollbar-color: rgba(160,140,110,0.35) transparent; }
+.scroll-thin:hover::-webkit-scrollbar-thumb { background: rgba(160,140,110,0.35); }
+
+.site-input::placeholder { color: rgba(168,150,122,0.55); }
+.site-input:focus { border-bottom-color: rgba(92,79,58,0.65) !important; }
 
 @font-face {
   font-family: "Muse";
@@ -17,15 +31,33 @@
 }
 
 :root {
-  --text-primary: #111111;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --border-warm: #e5e7eb;
-  --border-warm-light: #f3f4f6;
-  --surface: #ffffff;
-  --surface-hover: #f9fafb;
-  --surface-active: #f3f4f6;
+  --text-primary: #2c2416;
+  --text-secondary: #7a6b55;
+  --text-muted: #a8967a;
+  --border-warm: rgba(160, 140, 110, 0.3);
+  --border-warm-light: rgba(180, 160, 130, 0.2);
+  --surface: #f9f6f1;
+  --surface-hover: #ede8e0;
+  --surface-active: #e8e2d9;
   --ease-out-arc: cubic-bezier(0.16, 1, 0.3, 1);
+  --desk: #e8e2d9;
+  --panel: #f4efe8;
+  --panel-hover: #ede8e0;
+  --popover: #f0ebe3;
+  --card: #f9f6f1;
+  --card-hover: #f4f0ea;
+  --card-border: rgba(180, 160, 130, 0.25);
+  --border: rgba(160, 140, 110, 0.30);
+  --border-focus: rgba(120, 100, 70, 0.60);
+  --sepia-accent: #8b6f47;
+  --pane-shadow:
+    0 0 0 1px rgba(100, 75, 40, 0.10),
+    0 2px 6px rgba(60, 40, 15, 0.08),
+    0 8px 24px rgba(40, 25, 8, 0.10);
+  --popover-shadow:
+    0 0 0 1px rgba(100, 75, 40, 0.12),
+    0 4px 16px rgba(60, 40, 15, 0.14),
+    0 16px 40px rgba(40, 25, 8, 0.12);
 }
 
 body {
@@ -42,4 +74,41 @@ a {
 
 .underlined-links a {
   @apply underline hover:text-red-500;
+}
+
+/* Admin tooltips */
+.admin-tip {
+  background: #1e140a;
+  color: #f0e8d8;
+  font-size: 11px;
+  font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.03em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  user-select: none;
+  pointer-events: none;
+  z-index: 9999;
+  animation: tip-in 0.1s ease;
+}
+.admin-tip-arrow {
+  fill: #1e140a;
+}
+@keyframes tip-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.insertion-zone-btn {
+  box-shadow: 0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.insertion-zone-btn:hover {
+  box-shadow: 0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 8px rgba(220,165,45,0.35);
+}
+
+@keyframes blockGlow {
+  0%   { background: transparent; box-shadow: inset 0 0 0px rgba(220,165,45,0); }
+  12%  { background: rgba(220,165,45,0.32); box-shadow: inset 0 0 18px rgba(220,165,45,0.35); }
+  100% { background: transparent; box-shadow: inset 0 0 0px rgba(220,165,45,0); }
 }

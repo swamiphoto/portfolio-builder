@@ -28,6 +28,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
   });
 
   const [libraryImages, setLibraryImages] = useState(null);
+  const [libraryData, setLibraryData] = useState(null);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -114,7 +115,10 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
     setLibraryLoading(true);
     fetch("/api/admin/library")
       .then((r) => r.json())
-      .then((data) => setLibraryImages(data.images || []))
+      .then((data) => {
+        setLibraryImages(data.images || []);
+        setLibraryData(data);
+      })
       .catch(() => setLibraryImages([]))
       .finally(() => setLibraryLoading(false));
   }, [libraryImages]);
@@ -248,6 +252,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
       {photoPickerOpen && (
         <PhotoPickerModal
           images={libraryImages || []}
+          libraryConfig={libraryData}
           loading={libraryLoading}
           blockType={currentBlockType}
           onConfirm={handlePhotoPickerConfirm}
@@ -257,6 +262,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
       {thumbnailPickerOpen && (
         <PhotoPickerModal
           images={libraryImages || []}
+          libraryConfig={libraryData}
           loading={libraryLoading}
           blockType="photo"
           onConfirm={handleThumbnailConfirm}
