@@ -1058,7 +1058,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
               About
             </button>
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
@@ -1069,7 +1069,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
               Blank page
             </button>
             <button
@@ -1135,7 +1135,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
               About
             </button>
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
@@ -1146,7 +1146,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
               Blank page
             </button>
             <button
