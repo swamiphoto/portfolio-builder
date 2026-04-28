@@ -91,8 +91,8 @@ export function seedBlocksForTemplate(template) {
       return [defaultBlock('page-gallery')]
     case 'text':
       return [
-        defaultBlock('text'),
-        { ...defaultBlock('text'), variant: 2 },
+        defaultBlock('text'),  // variant 1 (heading)
+        { ...defaultBlock('text'), variant: 3 },  // paragraph
       ]
     case 'blank':
     default:

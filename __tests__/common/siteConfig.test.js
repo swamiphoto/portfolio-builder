@@ -140,7 +140,7 @@ describe('seedBlocksForTemplate', () => {
     const blocks = seedBlocksForTemplate('text')
     expect(blocks).toHaveLength(2)
     expect(blocks[0]).toMatchObject({ type: 'text', variant: 1 })
-    expect(blocks[1]).toMatchObject({ type: 'text', variant: 2 })
+    expect(blocks[1]).toMatchObject({ type: 'text', variant: 3 })
   })
 
   it('returns an empty array for unknown templates', () => {

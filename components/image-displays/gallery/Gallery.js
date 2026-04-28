@@ -164,19 +164,25 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               );
             }
 
-            case "text":
+            case "text": {
               if (!block.content) return showPlaceholders ? <div key={`block-${index}`}><PlaceholderText /><WiggleLine /></div> : null;
+              const v = block.variant || 1;
+              const variantClass =
+                v === 4 ? "text-lg md:text-xl italic font-serif2 text-stone-600 leading-relaxed text-left max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300"
+                : v === 3 ? "text-base md:text-lg text-stone-700 leading-relaxed text-left max-w-2xl mx-auto px-8 py-4"
+                : v === 2 ? "text-xl md:text-2xl font-medium text-stone-700 text-center max-w-2xl mx-auto py-6"
+                : "text-3xl md:text-5xl font-light text-stone-800 text-center max-w-3xl mx-auto py-10";
               return (
                 <div
                   key={`block-${index}`}
-                  className={`text-block text-center text-2xl md:text-4xl text-gray-800 max-w-3xl mx-auto py-10 ${block.variant === 2 ? "font-serif2" : ""}`}
+                  className={`text-block ${variantClass}`}
                   data-block-index={index}
-                 
                   {...hoverProps}
                 >
                   {block.content}
                 </div>
               );
+            }
 
             case "photo": {
               if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block"><PlaceholderPhoto /><WiggleLine /></div> : null;
