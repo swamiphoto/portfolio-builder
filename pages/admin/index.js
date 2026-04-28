@@ -415,6 +415,7 @@ export default function AdminIndex() {
                   highlightedBlockIndex={hoveredBlockIndex}
                   onBlockHover={setHoveredBlockIndex}
                   onBlockClick={handleScrollSidebarToBlock}
+                  siteConfig={siteConfig}
                 />
               </div>
             </div>

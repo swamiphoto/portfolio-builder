@@ -53,6 +53,17 @@ const BLOCK_TYPES = [
     ),
   },
   {
+    type: "contact",
+    label: "Contact",
+    desc: "Email and social links",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 6l-10 7L2 6" />
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+      </svg>
+    ),
+  },
+  {
     type: "page-gallery",
     label: "Pages",
     desc: "Thumbnail links to other pages",

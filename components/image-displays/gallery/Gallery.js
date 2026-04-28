@@ -10,6 +10,7 @@ import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from "../../../common/assetRefs";
+import ContactDisplay from "components/contact/ContactDisplay";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -61,7 +62,7 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig }) => {
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
   const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
@@ -228,6 +229,18 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                       </a>
                     ))}
                   </div>
+                </div>
+              );
+            }
+
+            case "contact": {
+              return (
+                <div key={`block-${index}`} className="contact-block-wrap" data-block-index={index} {...hoverProps}>
+                  <ContactDisplay
+                    heading={block.heading}
+                    subheading={block.subheading}
+                    contact={siteConfig?.contact}
+                  />
                 </div>
               );
             }

@@ -18,7 +18,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick }) {
+export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig }) {
   const [debouncedGallery, setDebouncedGallery] = useState(gallery);
 
   useEffect(() => {
@@ -46,6 +46,7 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
       highlightedBlockIndex={highlightedBlockIndex}
       onBlockHover={onBlockHover}
       onBlockClick={onBlockClick}
+      siteConfig={siteConfig}
     />
   );
 

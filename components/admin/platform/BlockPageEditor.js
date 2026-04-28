@@ -155,7 +155,7 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
         onToggleSet={handleToggleSet}
       />
 
-      <GalleryPreview gallery={gallery} pages={pages} />
+      <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} />
 
       {photoPickerOpen && (
         <PhotoPickerModal

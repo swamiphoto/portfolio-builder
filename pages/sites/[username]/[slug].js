@@ -111,6 +111,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
           username={username}
           enableSlideshow={!!slideshowHref}
           onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
+          siteConfig={siteConfig}
         />
       </main>
     </div>

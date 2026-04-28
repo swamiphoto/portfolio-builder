@@ -16,6 +16,7 @@ const TYPE_LABELS = {
   text: "Text",
   video: "Video",
   "page-gallery": "Page Gallery",
+  contact: "Contact",
 };
 
 const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug text-[#2c2416]";
@@ -732,6 +733,27 @@ function BlockCard({
                 onChange={(e) => onUpdate({ ...block, caption: e.target.value })}
               />
             </>
+          )}
+
+          {block.type === "contact" && (
+            <div className="space-y-1.5">
+              <input
+                type="text"
+                className={INPUT}
+                placeholder="Heading (optional)"
+                value={block.heading || ""}
+                onChange={e => onUpdate({ ...block, heading: e.target.value })}
+              />
+              <AutoGrowTextarea
+                className={INPUT}
+                placeholder="Subheading (optional)"
+                value={block.subheading || ""}
+                onChange={e => onUpdate({ ...block, subheading: e.target.value })}
+              />
+              <p className="text-xs text-[#8b6f47] opacity-70 pt-1">
+                Email and social links come from site settings.
+              </p>
+            </div>
           )}
 
           {/* Page Gallery */}

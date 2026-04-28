@@ -145,6 +145,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
             pages={siteConfig.pages}
             enableSlideshow={!!slideshowHref}
             onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
+            siteConfig={siteConfig}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">

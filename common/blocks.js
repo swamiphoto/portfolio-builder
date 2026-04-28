@@ -18,6 +18,8 @@ export function defaultBlock(type) {
       return { type: "video", url: "", caption: "", variant: 1 };
     case "page-gallery":
       return { type: "page-gallery", pageIds: [] };
+    case "contact":
+      return { type: "contact", heading: "", subheading: "" };
     default:
       return { type };
   }
