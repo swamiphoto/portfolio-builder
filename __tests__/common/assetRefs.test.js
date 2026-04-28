@@ -2,7 +2,7 @@ import {
   buildMultiImageFields,
   buildSingleImageFields,
   getImageRefUrl,
-  getPagesInSet,
+  getNestedGalleries,
   mergeImageRefs,
   normalizeGalleryEntity,
   normalizeImageRef,
@@ -105,29 +105,26 @@ describe('normalize entity helpers', () => {
   })
 })
 
-describe('getPagesInSet', () => {
+describe('getNestedGalleries', () => {
   const pages = [
-    { id: 'p1', blocks: [{ type: 'photo', imageUrl: 'https://x/a.jpg' }] },
-    { id: 'p2', blocks: [{ type: 'photos', imageUrls: ['https://x/b.jpg', 'https://x/c.jpg'] }] },
-    { id: 'p3', blocks: [{ type: 'text', content: 'hello' }] },
+    { id: 'travels', kind: 'collection', parentId: null },
+    { id: 'italy', kind: 'gallery', parentId: 'travels' },
+    { id: 'japan', kind: 'gallery', parentId: 'travels' },
+    { id: 'about', kind: 'text', parentId: 'travels' },     // not a gallery — excluded
+    { id: 'standalone', kind: 'gallery', parentId: null },  // different parent
   ]
 
-  it('returns pages that contain an asset in the set', () => {
-    const setsByUrl = {
-      'https://x/a.jpg': ['s1'],
-      'https://x/b.jpg': ['s2'],
-    }
-    expect(getPagesInSet('s1', pages, setsByUrl).map(p => p.id)).toEqual(['p1'])
-    expect(getPagesInSet('s2', pages, setsByUrl).map(p => p.id)).toEqual(['p2'])
+  it('returns gallery pages nested under the given parent', () => {
+    expect(getNestedGalleries('travels', pages).map(p => p.id)).toEqual(['italy', 'japan'])
   })
 
-  it('returns empty array when nothing matches', () => {
-    expect(getPagesInSet('nope', pages, {})).toEqual([])
+  it('returns empty array when parent has no nested galleries', () => {
+    expect(getNestedGalleries('about', pages)).toEqual([])
   })
 
   it('handles missing inputs gracefully', () => {
-    expect(getPagesInSet(null, pages, {})).toEqual([])
-    expect(getPagesInSet('s1', null, {})).toEqual([])
-    expect(getPagesInSet('s1', pages, null)).toEqual([])
+    expect(getNestedGalleries(null, pages)).toEqual([])
+    expect(getNestedGalleries('travels', null)).toEqual([])
+    expect(getNestedGalleries('travels', [])).toEqual([])
   })
 })

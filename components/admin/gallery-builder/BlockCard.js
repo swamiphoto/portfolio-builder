@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
-import { normalizeImageRefs, buildMultiImageFields, getPagesInSet } from "../../../common/assetRefs";
+import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
+import PageGalleryPickerModal from "./PageGalleryPickerModal";
 import Tip from "../Tip";
 
 const TYPE_LABELS = {
@@ -133,6 +134,7 @@ function BlockCard({
   const [selectedIndices, setSelectedIndices] = useState(new Set());
   const [photoDropHover, setPhotoDropHover] = useState(false);
   const [gridDropHover, setGridDropHover] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const lastSelectedRef = useRef(null);
   const menuRef = useRef(null);
   const menuBtnRef = useRef(null);
@@ -181,14 +183,14 @@ function BlockCard({
   }, []);
 
   useEffect(() => {
-    if (block.type !== 'page-gallery' || block.source !== 'by-set' || !block.setId) return
-    const matching = getPagesInSet(block.setId, pages, setsByUrl)
+    if (block.type !== 'page-gallery' || block.source !== 'auto' || !block.parentPageId) return
+    const matching = getNestedGalleries(block.parentPageId, pages)
     const newIds = matching.map(p => p.id)
     const oldIds = block.pageIds || []
     const same = newIds.length === oldIds.length && newIds.every((id, i) => id === oldIds[i])
     if (!same) onUpdate({ ...block, pageIds: newIds })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block.type, block.source, block.setId, pages, setsByUrl]);
+  }, [block.type, block.source, block.parentPageId, pages]);
 
   const handleDragOver = (e) => { e.preventDefault(); setGridDropHover(true); };
   const handleDragLeave = (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setGridDropHover(false); };
@@ -768,89 +770,118 @@ function BlockCard({
 
           {/* Page Gallery */}
           {block.type === "page-gallery" && (() => {
-            const source = block.source || "manual"
-            const sets = Object.values(allSets || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+            const source = block.source || 'manual'
+            const isEmpty = source === 'manual'
+              ? !(block.pageIds && block.pageIds.length > 0)
+              : !block.parentPageId
 
-            function setSource(next) {
-              if (next === 'by-set') {
-                const firstSetId = block.setId || sets[0]?.setId || ''
-                const matching = getPagesInSet(firstSetId, pages, setsByUrl)
-                onUpdate({ ...block, source: 'by-set', setId: firstSetId, pageIds: matching.map(p => p.id) })
-              } else {
-                onUpdate({ ...block, source: 'manual' })
-              }
+            function PlaceholderCard() {
+              return (
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="w-full"
+                  style={{
+                    padding: '20px 16px', borderRadius: 8,
+                    border: '1.5px dashed rgba(160,140,110,0.4)',
+                    background: 'transparent', cursor: 'pointer', textAlign: 'left',
+                    transition: 'all 120ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.06)'; e.currentTarget.style.borderColor = 'rgba(139,111,71,0.55)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.4)' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(139,111,71,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, color: '#2c2416', lineHeight: 1.2 }}>Choose galleries to display</div>
+                      <div style={{ fontSize: 11.5, color: '#8b7755', lineHeight: 1.3, marginTop: 2 }}>Pick manually, or auto-list galleries nested under a page</div>
+                    </div>
+                  </div>
+                </button>
+              )
             }
 
-            function pickSet(setId) {
-              const matching = getPagesInSet(setId, pages, setsByUrl)
-              onUpdate({ ...block, source: 'by-set', setId, pageIds: matching.map(p => p.id) })
+            function FilledManual() {
+              const selected = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
+              return (
+                <div className="space-y-1.5">
+                  {selected.map(p => {
+                    const thumb = pageDisplayThumbnail(p)
+                    return (
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 6, background: 'rgba(160,140,110,0.06)' }}>
+                        <div style={{ width: 40, height: 30, borderRadius: 4, overflow: 'hidden', flexShrink: 0, background: '#e9e2d4' }}>
+                          {thumb ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#2c2416', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                          {p.description ? <div style={{ fontSize: 11, color: '#8b7755', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</div> : null}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: 12, color: '#8b6f47', background: 'transparent', border: '1px dashed rgba(160,140,110,0.35)', borderRadius: 5, cursor: 'pointer' }}
+                  >
+                    + Add or change galleries
+                  </button>
+                </div>
+              )
+            }
+
+            function FilledAuto() {
+              const parent = (pages || []).find(p => p.id === block.parentPageId)
+              const matching = getNestedGalleries(block.parentPageId, pages)
+              const previewThumbs = matching.slice(0, 5).map(p => pageDisplayThumbnail(p)).filter(Boolean)
+              return (
+                <div className="space-y-2">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 6, background: 'rgba(139,111,71,0.06)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5"/></svg>
+                    <div style={{ fontSize: 12, color: '#5a4a32', minWidth: 0 }}>
+                      Auto-listing <strong>{matching.length}</strong> {matching.length === 1 ? 'gallery' : 'galleries'} under <strong>{parent?.title || '?'}</strong>
+                    </div>
+                  </div>
+                  {previewThumbs.length > 0 && (
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {previewThumbs.map((url, i) => (
+                        <div key={i} style={{ width: 50, height: 38, borderRadius: 4, overflow: 'hidden', background: '#e9e2d4' }}>
+                          <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ))}
+                      {matching.length > previewThumbs.length && (
+                        <div style={{ width: 50, height: 38, borderRadius: 4, background: 'rgba(160,140,110,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#8b7755' }}>
+                          +{matching.length - previewThumbs.length}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: 12, color: '#8b6f47', background: 'transparent', border: '1px dashed rgba(160,140,110,0.35)', borderRadius: 5, cursor: 'pointer' }}
+                  >
+                    Change source
+                  </button>
+                </div>
+              )
             }
 
             return (
-              <div className="space-y-2">
-                <div className="flex gap-1 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setSource('manual')}
-                    className={`px-2.5 py-1 rounded transition-colors ${source === 'manual' ? 'bg-[#8b6f47] text-white' : 'bg-transparent text-[#8b6f47] hover:bg-[rgba(139,111,71,0.08)]'}`}
-                  >
-                    Manual
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSource('by-set')}
-                    className={`px-2.5 py-1 rounded transition-colors ${source === 'by-set' ? 'bg-[#8b6f47] text-white' : 'bg-transparent text-[#8b6f47] hover:bg-[rgba(139,111,71,0.08)]'}`}
-                  >
-                    From Set
-                  </button>
-                </div>
-
-                {source === 'manual' ? (
-                  (!pages || pages.length === 0) ? (
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No other pages yet.</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {pages.map(p => (
-                        <label key={p.id} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={(block.pageIds || []).includes(p.id)}
-                            onChange={e => {
-                              const pageIds = e.target.checked
-                                ? [...(block.pageIds || []), p.id]
-                                : (block.pageIds || []).filter(id => id !== p.id)
-                              onUpdate({ ...block, pageIds })
-                            }}
-                          />
-                          <span className="text-sm">{p.title}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )
-                ) : (
-                  sets.length === 0 ? (
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      No sets yet. Create a set in your library to use this mode.
-                    </p>
-                  ) : (
-                    <>
-                      <select
-                        className={INPUT}
-                        value={block.setId || ''}
-                        onChange={e => pickSet(e.target.value)}
-                      >
-                        {!block.setId && <option value="" disabled>Choose a set…</option>}
-                        {sets.map(s => (
-                          <option key={s.setId} value={s.setId}>{s.name}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs pt-1" style={{ color: 'var(--text-muted)' }}>
-                        {block.pageIds?.length || 0} {block.pageIds?.length === 1 ? 'page matches' : 'pages match'} this set
-                      </p>
-                    </>
-                  )
+              <>
+                {isEmpty ? <PlaceholderCard /> : (source === 'auto' ? <FilledAuto /> : <FilledManual />)}
+                {pickerOpen && (
+                  <PageGalleryPickerModal
+                    block={block}
+                    pages={pages}
+                    currentPageId={sourcePageId}
+                    onUpdate={onUpdate}
+                    onClose={() => setPickerOpen(false)}
+                  />
                 )}
-              </div>
+              </>
             )
           })()}
         </div>

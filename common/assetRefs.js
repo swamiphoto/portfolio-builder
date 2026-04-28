@@ -154,15 +154,12 @@ export function getPagePhotos(page) {
 }
 
 /**
- * Return pages whose images include at least one asset that belongs to the given Set.
- * `setsByUrl` maps an image URL to an array of setIds (built in the admin from libraryConfig.sets).
+ * Return gallery-kind pages whose `parentId` matches the given parent page ID.
+ * Used by page-gallery blocks in 'auto' mode.
  */
-export function getPagesInSet(setId, pages, setsByUrl) {
-  if (!setId || !pages?.length || !setsByUrl) return []
-  return pages.filter(page => {
-    const urls = getPagePhotos(page)
-    return urls.some(url => (setsByUrl[url] || []).includes(setId))
-  })
+export function getNestedGalleries(parentPageId, pages) {
+  if (!parentPageId || !pages?.length) return []
+  return pages.filter(p => p.parentId === parentPageId && p.kind === 'gallery')
 }
 
 export function pageDisplayThumbnail(page) {
