@@ -89,7 +89,7 @@ export function seedBlocksForTemplate(template) {
       return [defaultBlock('masonry')]
     case 'collection':
       return [defaultBlock('page-gallery')]
-    case 'about':
+    case 'text':
       return [
         defaultBlock('text'),
         { ...defaultBlock('text'), variant: 2 },
@@ -107,6 +107,7 @@ export function defaultPage(overrides = {}) {
     id: rest.id || 'page',
     title: rest.title || 'New Page',
     type: 'page',
+    kind: rest.kind ?? template ?? null,
     description: '',
     slug: rest.id || 'page',
     parentId: null,

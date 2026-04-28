@@ -136,8 +136,8 @@ describe('seedBlocksForTemplate', () => {
     ])
   })
 
-  it('returns a heading text block plus an empty paragraph text block for "about"', () => {
-    const blocks = seedBlocksForTemplate('about')
+  it('returns a heading text block plus an empty paragraph text block for "text"', () => {
+    const blocks = seedBlocksForTemplate('text')
     expect(blocks).toHaveLength(2)
     expect(blocks[0]).toMatchObject({ type: 'text', variant: 1 })
     expect(blocks[1]).toMatchObject({ type: 'text', variant: 2 })
@@ -160,6 +160,21 @@ describe('defaultPage with template', () => {
   it('does not include `template` as a field on the page object', () => {
     const page = defaultPage({ id: 'travel', title: 'Travel', template: 'gallery' })
     expect(page).not.toHaveProperty('template')
+  })
+
+  it('persists template choice as `kind` on the page', () => {
+    expect(defaultPage({ id: 'g', template: 'gallery' }).kind).toBe('gallery')
+    expect(defaultPage({ id: 'c', template: 'collection' }).kind).toBe('collection')
+    expect(defaultPage({ id: 't', template: 'text' }).kind).toBe('text')
+    expect(defaultPage({ id: 'b', template: 'blank' }).kind).toBe('blank')
+  })
+
+  it('kind defaults to null when no template provided', () => {
+    expect(defaultPage({ id: 'x' }).kind).toBeNull()
+  })
+
+  it('explicit kind overrides template', () => {
+    expect(defaultPage({ id: 'x', template: 'gallery', kind: 'collection' }).kind).toBe('collection')
   })
 
   it('explicit blocks override template seeding', () => {

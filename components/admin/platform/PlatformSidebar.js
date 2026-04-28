@@ -71,6 +71,9 @@ function IconHome(p) {
 function IconText(p) {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="4" y1="7" x2="14" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="17" y2="17"/></svg>
 }
+function IconGallery(p) {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+}
 function IconLink(p) {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
 }
@@ -130,6 +133,24 @@ function IconDots(p) {
 }
 function IconDragHandle(p) {
   return <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="4.5" cy="1.5" r="1"/><circle cx="1.5" cy="5" r="1"/><circle cx="4.5" cy="5" r="1"/><circle cx="1.5" cy="8.5" r="1"/><circle cx="4.5" cy="8.5" r="1"/></svg>
+}
+
+function PageMenuItem({ icon, label, desc, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left transition-colors"
+      style={{ padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      <span style={{ flexShrink: 0, color: C.textMuted, paddingTop: 1 }}>{icon}</span>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.2 }}>{label}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.3 }}>{desc}</span>
+      </span>
+    </button>
+  )
 }
 
 function IconButton({ children, onClick, label }) {
@@ -446,8 +467,13 @@ export default function PlatformSidebar({
     const isHome = siteConfig.homePageId === page.id
     if (isHome) return <IconHome />
     if (page.type === 'link') return <IconLink />
-    if (page.type === 'text') return <IconText />
-    return <IconGrid />
+    switch (page.kind) {
+      case 'collection': return <IconGrid />
+      case 'text': return <IconText />
+      case 'blank': return <IconDocument />
+      case 'gallery':
+      default: return <IconGallery />
+    }
   }
 
   function renderDraftRow() {
@@ -463,10 +489,10 @@ export default function PlatformSidebar({
           }}
         >
           <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 14, color: C.accent }}>
-            {draftRow?.template === 'about' ? <IconText />
-              : draftRow?.template === 'collection' ? <IconImages />
+            {draftRow?.template === 'text' ? <IconText />
+              : draftRow?.template === 'collection' ? <IconGrid />
               : draftRow?.template === 'blank' ? <IconDocument />
-              : <IconGrid />}
+              : <IconGallery />}
           </div>
           <input
             autoFocus
@@ -1021,7 +1047,7 @@ export default function PlatformSidebar({
               position: 'fixed',
               top: rect.bottom + 4,
               right: window.innerWidth - rect.right,
-              minWidth: 152,
+              minWidth: 240,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
               padding: '4px 0',
@@ -1031,57 +1057,37 @@ export default function PlatformSidebar({
             <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
               Start from template
             </div>
-            <button
+            <PageMenuItem
+              icon={<IconGallery />}
+              label="Gallery"
+              desc="Photos in a grid or masonry layout"
               onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'gallery') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
-              Gallery
-            </button>
-            <button
+            />
+            <PageMenuItem
+              icon={<IconGrid />}
+              label="Collection"
+              desc="An index linking to other pages"
               onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'collection') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
-              Collection
-            </button>
-            <button
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'about') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
-              About
-            </button>
+            />
+            <PageMenuItem
+              icon={<IconText />}
+              label="Text"
+              desc="Use for About, Contact, FAQ, etc."
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'text') }}
+            />
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
-            <button
+            <PageMenuItem
+              icon={<IconDocument />}
+              label="Blank page"
+              desc="Start with no content"
               onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'blank') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
-              Blank page
-            </button>
-            <button
+            />
+            <PageMenuItem
+              icon={<IconLink />}
+              label="Link"
+              desc="External URL in the navigation"
               onClick={() => { setNavAddMenuOpen(false); handleAddLink('nav') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconLink style={{ flexShrink: 0, color: C.textMuted }} />
-              Link
-            </button>
+            />
           </div>,
           document.body
         )
@@ -1098,7 +1104,7 @@ export default function PlatformSidebar({
               position: 'fixed',
               bottom: window.innerHeight - rect.top + 4,
               left: rect.left,
-              minWidth: Math.max(rect.width, 152),
+              minWidth: Math.max(rect.width, 240),
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
               padding: '4px 0',
@@ -1108,57 +1114,37 @@ export default function PlatformSidebar({
             <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
               Start from template
             </div>
-            <button
+            <PageMenuItem
+              icon={<IconGallery />}
+              label="Gallery"
+              desc="Photos in a grid or masonry layout"
               onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'gallery') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
-              Gallery
-            </button>
-            <button
+            />
+            <PageMenuItem
+              icon={<IconGrid />}
+              label="Collection"
+              desc="An index linking to other pages"
               onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'collection') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
-              Collection
-            </button>
-            <button
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'about') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
-              About
-            </button>
+            />
+            <PageMenuItem
+              icon={<IconText />}
+              label="Text"
+              desc="Use for About, Contact, FAQ, etc."
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'text') }}
+            />
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
-            <button
+            <PageMenuItem
+              icon={<IconDocument />}
+              label="Blank page"
+              desc="Start with no content"
               onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'blank') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconDocument style={{ flexShrink: 0, color: C.textMuted }} />
-              Blank page
-            </button>
-            <button
+            />
+            <PageMenuItem
+              icon={<IconLink />}
+              label="Link"
+              desc="External URL in the navigation"
               onClick={() => { setAddMenuOpen(false); handleAddLink('hidden') }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <IconLink style={{ flexShrink: 0, color: C.textMuted }} />
-              Link
-            </button>
+            />
           </div>,
           document.body
         )
