@@ -168,7 +168,7 @@ function TreeGutter({ type }) {
   )
 }
 
-function buildCollectionTree(keys) {
+function buildSetTree(keys) {
   const sorted = [...keys].sort()
   const nodes = sorted.map((key) => {
     const parts = key.split('/')
@@ -206,7 +206,7 @@ function buildCollectionTree(keys) {
   return nodes
 }
 
-function CollectionRow({
+function SetRow({
   node, selected, expanded, count,
   onSelect, onToggleExpand, onCreateUnder, onDelete,
 }) {
@@ -358,7 +358,7 @@ function CollectionRow({
                   onClick={(e) => {
                     stop(e)
                     setMenuOpen(false)
-                    if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its sub-collections' : ''}?`)) {
+                    if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its sub-sets' : ''}?`)) {
                       onDelete()
                     }
                   }}
@@ -383,12 +383,12 @@ function CollectionRow({
   )
 }
 
-function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, onDeleteCollection, onFilterChange, openOverride }) {
+function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride }) {
   const galleryKeys = Object.keys(counts).filter(k => k !== "all")
-  const nodes = useMemo(() => buildCollectionTree(galleryKeys), [galleryKeys.join('|')])
+  const nodes = useMemo(() => buildSetTree(galleryKeys), [galleryKeys.join('|')])
   const [collapsed, setCollapsed] = useState(new Set())
   const [creatingUnder, setCreatingUnder] = useState(undefined)
-  const [newCollectionName, setNewCollectionName] = useState('')
+  const [newSetName, setNewSetName] = useState('')
 
   const visibleNodes = nodes.filter(node => {
     const parts = node.key.split('/')
@@ -410,11 +410,11 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
   }
 
   function submitCreate(parentKey) {
-    const slug = newCollectionName.trim()
+    const slug = newSetName.trim()
     if (!slug) return
-    onCreateCollection(slug, parentKey ?? null)
+    onCreateSet(slug, parentKey ?? null)
     setCreatingUnder(undefined)
-    setNewCollectionName('')
+    setNewSetName('')
   }
 
   function toggleCollapse(key) {
@@ -434,7 +434,7 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
 
   return (
     <SidebarSection
-      title="Collections"
+      title="Sets"
       dense
       openOverride={openOverride}
       action={
@@ -450,9 +450,9 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
               <ToggleAllIcon allCollapsed={allCollapsed} size={12} />
             </button>
           )}
-          <Tip label="New collection">
+          <Tip label="New set">
           <button
-            onClick={() => { setCreatingUnder(null); setNewCollectionName('') }}
+            onClick={() => { setCreatingUnder(null); setNewSetName('') }}
             style={iconBtnStyle}
             onMouseEnter={e => { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.background = 'rgba(44,36,22,0.08)' }}
             onMouseLeave={e => { e.currentTarget.style.color = '#a8967a'; e.currentTarget.style.background = 'transparent' }}
@@ -465,7 +465,7 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
     >
       {visibleNodes.length === 0 && creatingUnder !== null && (
         <div style={{ padding: '4px 12px', fontSize: 12, color: '#c4b49a', fontStyle: 'italic' }}>
-          No collections yet
+          No sets yet
         </div>
       )}
 
@@ -473,23 +473,23 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
         const expanded = !collapsed.has(node.key)
         return (
           <div key={node.key}>
-            <CollectionRow
+            <SetRow
               node={node}
               selected={isSelected("gallery", node.key)}
               expanded={expanded}
               count={counts[node.key]}
               onSelect={() => { onSelect({ type: "gallery", key: node.key }); onFilterChange("usage", "all") }}
               onToggleExpand={() => toggleCollapse(node.key)}
-              onCreateUnder={() => { setCreatingUnder(node.key); setNewCollectionName('') }}
-              onDelete={() => onDeleteCollection(node.key)}
+              onCreateUnder={() => { setCreatingUnder(node.key); setNewSetName('') }}
+              onDelete={() => onDeleteSet(node.key)}
             />
             {creatingUnder === node.key && (
               <div style={{ paddingLeft: 24 + (node.depth + 1) * GUTTER_WIDTH + 4, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
                 <input
                   autoFocus
                   type="text"
-                  value={newCollectionName}
-                  onChange={(e) => setNewCollectionName(e.target.value)}
+                  value={newSetName}
+                  onChange={(e) => setNewSetName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') submitCreate(node.key)
                     else if (e.key === 'Escape') setCreatingUnder(undefined)
@@ -510,8 +510,8 @@ function CollectionsSection({ counts, isSelected, onSelect, onCreateCollection, 
           <input
             autoFocus
             type="text"
-            value={newCollectionName}
-            onChange={(e) => setNewCollectionName(e.target.value)}
+            value={newSetName}
+            onChange={(e) => setNewSetName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitCreate(null)
               else if (e.key === 'Escape') setCreatingUnder(undefined)
@@ -533,8 +533,8 @@ export default function AlbumSidebar({
   counts,
   selectedAlbum,
   onSelect,
-  onCreateCollection,
-  onDeleteCollection,
+  onCreateSet,
+  onDeleteSet,
   orientationCounts,
   usageCounts,
   captureYearCounts,
@@ -836,13 +836,13 @@ export default function AlbumSidebar({
           </SidebarSection>
         )}
 
-        <CollectionsSection
+        <SetsSection
           counts={counts}
           isSelected={isSelected}
           openOverride={sectionsOpen}
           onSelect={onSelect}
-          onCreateCollection={onCreateCollection}
-          onDeleteCollection={onDeleteCollection}
+          onCreateSet={onCreateSet}
+          onDeleteSet={onDeleteSet}
           onFilterChange={onFilterChange}
         />
 

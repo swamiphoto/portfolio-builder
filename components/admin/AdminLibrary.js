@@ -209,13 +209,13 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     return applyFilters(base);
   };
 
-  const allCollections = useMemo(() => {
+  const allSets = useMemo(() => {
     const galleries = Object.keys(libraryData?.galleries || {}).map(slug => ({ slug, type: 'gallery' }));
     const portfolios = Object.keys(libraryData?.portfolios || {}).map(slug => ({ slug, type: 'portfolio' }));
     return [...galleries, ...portfolios].sort((a, b) => a.slug.localeCompare(b.slug));
   }, [libraryData]);
 
-  const collectionsByUrl = useMemo(() => {
+  const setsByUrl = useMemo(() => {
     if (!libraryData) return {};
     const map = {};
     Object.entries(libraryData.galleries || {}).forEach(([slug, urls]) => {
@@ -239,7 +239,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     assets: libraryData?.assets || {},
   }), [libraryData]);
 
-  const handleToggleCollection = useCallback(async (imageUrl, slug, type, add) => {
+  const handleToggleSet = useCallback(async (imageUrl, slug, type, add) => {
     const section = type === 'portfolio' ? 'portfolios' : 'galleries';
     setLibraryData(prev => {
       if (!prev) return prev;
@@ -284,8 +284,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     await fetchLibrary();
   }, [fetchLibrary]);
 
-  const handleUploaded = useCallback(async (uploadedAssets, selectedCollections = []) => {
-    // uploadedAssets: [{ url, width, height }], selectedCollections: string[]
+  const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
+    // uploadedAssets: [{ url, width, height }], selectedSets: string[]
     setUploadOpen(false);
     const uploadedUrls = uploadedAssets.map(a => a.url);
 
@@ -314,13 +314,13 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
     const updated = { ...config, assets: { ...config.assets, ...assetUpdates } };
 
-    // Add uploaded URLs to every selected collection
-    if (selectedCollections.length > 0) {
+    // Add uploaded URLs to every selected set
+    if (selectedSets.length > 0) {
       updated.galleries = { ...config.galleries };
-      for (const col of selectedCollections) {
+      for (const col of selectedSets) {
         updated.galleries[col] = [...new Set([...(updated.galleries[col] || []), ...uploadedUrls])];
       }
-      setSelectedAlbum({ type: 'gallery', key: selectedCollections[0] });
+      setSelectedAlbum({ type: 'gallery', key: selectedSets[0] });
     } else {
       setSelectedAlbum({ type: 'all', key: 'all' });
     }
@@ -355,7 +355,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     });
   }, [currentConfig]);
 
-  const handleCreateCollection = useCallback(async (name, parentKey = null) => {
+  const handleCreateSet = useCallback(async (name, parentKey = null) => {
     const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
     if (!slug) return
     const key = parentKey ? `${parentKey}/${slug}` : slug
@@ -366,7 +366,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     setSelectedAlbum({ type: "gallery", key })
   }, [saveConfig, currentConfig]);
 
-  const handleDeleteCollection = useCallback(async (key) => {
+  const handleDeleteSet = useCallback(async (key) => {
     const config = currentConfig()
     const prefix = key + '/'
     const filtered = Object.fromEntries(
@@ -560,8 +560,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         counts={counts}
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
-        onCreateCollection={handleCreateCollection}
-        onDeleteCollection={handleDeleteCollection}
+        onCreateSet={handleCreateSet}
+        onDeleteSet={handleDeleteSet}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
         captureYearCounts={captureYearCounts}
@@ -581,13 +581,13 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       <PhotoGrid
         assets={assets}
         selectedAlbum={selectedAlbum}
-        collectionsByUrl={collectionsByUrl}
-        allCollections={allCollections}
+        setsByUrl={setsByUrl}
+        allSets={allSets}
         onRemove={handleRemove}
         onDelete={handleDelete}
         onAddToAlbum={handleAddToAlbum}
         onCaptionChange={handleCaptionChange}
-        onToggleCollection={handleToggleCollection}
+        onToggleSet={handleToggleSet}
         onUploadClick={() => setUploadOpen(true)}
         onAddFromLibraryClick={handleAddFromLibrary}
         activeFilters={activeFilters}
@@ -600,8 +600,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
       {uploadOpen && (
         <UploadModal
-          collections={Object.keys(libraryData?.galleries || {})}
-          defaultCollection={selectedAlbum.type === 'gallery' ? selectedAlbum.key : null}
+          sets={Object.keys(libraryData?.galleries || {})}
+          defaultSet={selectedAlbum.type === 'gallery' ? selectedAlbum.key : null}
           onClose={() => setUploadOpen(false)}
           onUploaded={handleUploaded}
         />

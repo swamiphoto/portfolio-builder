@@ -23,10 +23,10 @@ function uploadFile(file, { folder, onProgress } = {}) {
   })
 }
 
-export default function UploadModal({ collections = [], defaultCollection = null, onClose, onUploaded }) {
+export default function UploadModal({ sets = [], defaultSet = null, onClose, onUploaded }) {
   const [files, setFiles] = useState([]);
-  const [selectedCollections, setSelectedCollections] = useState(
-    defaultCollection ? [defaultCollection] : []
+  const [selectedSets, setSelectedSets] = useState(
+    defaultSet ? [defaultSet] : []
   );
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
@@ -50,8 +50,8 @@ export default function UploadModal({ collections = [], defaultCollection = null
 
   const handleUpload = async () => {
     if (files.length === 0) return;
-    const targetCollection = selectedCollections[0] || null;
-    const folder = targetCollection ? `photos/${targetCollection}` : undefined;
+    const targetSet = selectedSets[0] || null;
+    const folder = targetSet ? `photos/${targetSet}` : undefined;
     setUploading(true);
     const uploadedAssets = [];
 
@@ -71,7 +71,7 @@ export default function UploadModal({ collections = [], defaultCollection = null
     }
 
     setUploading(false);
-    if (uploadedAssets.length > 0) onUploaded(uploadedAssets, selectedCollections);
+    if (uploadedAssets.length > 0) onUploaded(uploadedAssets, selectedSets);
   };
 
   return (
@@ -194,14 +194,14 @@ export default function UploadModal({ collections = [], defaultCollection = null
           )}
         </div>
 
-        {/* Collections */}
+        {/* Sets */}
         <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(160,140,110,0.18)', marginTop: 12, paddingTop: 10, paddingBottom: 10 }}>
           <SetPillsPicker
-            existingSlugs={collections}
-            selectedSlugs={selectedCollections}
-            onAdd={(slug) => setSelectedCollections(prev => prev.includes(slug) ? prev : [...prev, slug])}
-            onRemove={(slug) => setSelectedCollections(prev => prev.filter(s => s !== slug))}
-            onCreate={(slug) => setSelectedCollections(prev => prev.includes(slug) ? prev : [...prev, slug])}
+            existingSlugs={sets}
+            selectedSlugs={selectedSets}
+            onAdd={(slug) => setSelectedSets(prev => prev.includes(slug) ? prev : [...prev, slug])}
+            onRemove={(slug) => setSelectedSets(prev => prev.filter(s => s !== slug))}
+            onCreate={(slug) => setSelectedSets(prev => prev.includes(slug) ? prev : [...prev, slug])}
           />
         </div>
 

@@ -99,9 +99,9 @@ function BlockCard({
   onRemovePhoto,
   pages,
   getAssetByUrl,
-  allCollections,
-  collectionsByUrl,
-  onToggleCollection,
+  allSets,
+  setsByUrl,
+  onToggleSet,
   sourcePageId,
   blockIndex,
   onRemoveImagesFromBlock,
@@ -782,13 +782,13 @@ function BlockCard({
             assetId: asset.assetId,
             createdAt: asset.createdAt,
             updatedAt: asset.updatedAt,
-            collections: collectionsByUrl?.[ref.url] || [],
-          } : { ...ref, caption: effectiveCaption, collections: collectionsByUrl?.[ref.url] || [] };
+            sets: setsByUrl?.[ref.url] || [],
+          } : { ...ref, caption: effectiveCaption, sets: setsByUrl?.[ref.url] || [] };
         });
         return (
           <AdminPhotoLightbox
             images={enriched}
-            allCollections={allCollections}
+            allSets={allSets}
             index={lightboxIndex}
             onClose={() => setLightboxIndex(null)}
             onNavigate={setLightboxIndex}
@@ -852,9 +852,9 @@ function BlockCard({
                 onUpdateLibraryCaption(img.assetId, newCaption);
               }
             }}
-            onToggleCollection={(slug, type, add) => {
+            onToggleSet={(slug, type, add) => {
               const img = enriched[lightboxIndex];
-              if (img && onToggleCollection) onToggleCollection(img.url, slug, type, add);
+              if (img && onToggleSet) onToggleSet(img.url, slug, type, add);
             }}
           />
         );

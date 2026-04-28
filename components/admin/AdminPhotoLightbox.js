@@ -52,11 +52,11 @@ function slugToChipLabel(slug) {
   return parts.slice(-2).map(p => p.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(' / ');
 }
 
-function buildCollectionTree(collections) {
+function buildSetTree(sets) {
   const bySlug = {};
-  collections.forEach(c => { bySlug[c.slug] = { ...c, children: [] }; });
+  sets.forEach(c => { bySlug[c.slug] = { ...c, children: [] }; });
   const roots = [];
-  collections.forEach(({ slug }) => {
+  sets.forEach(({ slug }) => {
     const parts = slug.split('/');
     if (parts.length === 1) {
       roots.push(bySlug[slug]);
@@ -137,14 +137,14 @@ function TreeNode({ node, depth, currentSlugs, onAdd, query }) {
   );
 }
 
-function CollectionPicker({ current, all, onToggle }) {
+function SetPicker({ current, all, onToggle }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
 
   const currentSlugs = new Set(current.map(c => c.slug));
-  const tree = buildCollectionTree(all || []);
+  const tree = buildSetTree(all || []);
   const hasAnyMatch = q => tree.some(node => subtreeMatches(node, q.toLowerCase()));
 
   useEffect(() => {
@@ -209,7 +209,7 @@ function CollectionPicker({ current, all, onToggle }) {
             ref={inputRef}
             type="text"
             value={query}
-            placeholder="Add to collection…"
+            placeholder="Add to set…"
             style={{
               width: '100%', boxSizing: 'border-box',
               fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.01em',
@@ -239,7 +239,7 @@ function CollectionPicker({ current, all, onToggle }) {
               }}
             >
               {query && !hasAnyMatch(query) ? (
-                <div style={{ padding: '8px 12px', fontFamily: MONO, fontSize: 10.5, color: '#a8967a' }}>No collections match</div>
+                <div style={{ padding: '8px 12px', fontFamily: MONO, fontSize: 10.5, color: '#a8967a' }}>No sets match</div>
               ) : (
                 tree.map(node => (
                   <TreeNode key={node.slug} node={node} depth={0} currentSlugs={currentSlugs} onAdd={add} query={query} />
@@ -289,7 +289,7 @@ function FilenameValue({ filename }) {
   );
 }
 
-export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allCollections, onToggleCollection }) {
+export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
@@ -349,7 +349,7 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
     : null;
 
   const blockIds = image.usage?.blockIds || [];
-  const collections = image.collections || [];
+  const sets = image.sets || [];
 
   return (
     <div
@@ -475,12 +475,12 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             </Section>
           )}
 
-          {/* Collections */}
-          <Section title="Collections">
-            <CollectionPicker
-              current={collections}
-              all={allCollections}
-              onToggle={(slug, type, add) => onToggleCollection && onToggleCollection(slug, type, add)}
+          {/* Sets */}
+          <Section title="Sets">
+            <SetPicker
+              current={sets}
+              all={allSets}
+              onToggle={(slug, type, add) => onToggleSet && onToggleSet(slug, type, add)}
             />
           </Section>
 

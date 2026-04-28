@@ -61,13 +61,13 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     return map
   }, [libraryConfig])
 
-  const allCollections = useMemo(() => {
+  const allSets = useMemo(() => {
     const galleries = Object.keys(libraryData?.galleries || {}).map(slug => ({ slug, type: 'gallery' }))
     const portfolios = Object.keys(libraryData?.portfolios || {}).map(slug => ({ slug, type: 'portfolio' }))
     return [...galleries, ...portfolios].sort((a, b) => a.slug.localeCompare(b.slug))
   }, [libraryData])
 
-  const collectionsByUrl = useMemo(() => {
+  const setsByUrl = useMemo(() => {
     const map = {}
     Object.entries(libraryData?.galleries || {}).forEach(([slug, urls]) => {
       ;(urls || []).forEach(url => { if (!map[url]) map[url] = []; map[url].push({ slug, type: 'gallery' }) })
@@ -95,7 +95,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   useEffect(() => { fetchLibrary() }, [])
 
-  const handleToggleCollection = useCallback(async (imageUrl, slug, type, add) => {
+  const handleToggleSet = useCallback(async (imageUrl, slug, type, add) => {
     const section = type === 'portfolio' ? 'portfolios' : 'galleries'
     setLibraryData(prev => {
       if (!prev) return prev
@@ -208,9 +208,9 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         onToggleExpand={onToggleSidebarCollapse}
         pages={pages}
         getAssetByUrl={getAssetByUrl}
-        allCollections={allCollections}
-        collectionsByUrl={collectionsByUrl}
-        onToggleCollection={handleToggleCollection}
+        allSets={allSets}
+        setsByUrl={setsByUrl}
+        onToggleSet={handleToggleSet}
         headerLabel="PAGE"
         pageSettingsSlot={
           <PageSettingsPanel

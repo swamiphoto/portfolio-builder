@@ -39,13 +39,13 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
     return map
   }, [libraryData])
 
-  const allCollections = useMemo(() => {
+  const allSets = useMemo(() => {
     const galleries = Object.keys(libraryData?.galleries || {}).map(slug => ({ slug, type: 'gallery' }))
     const portfolios = Object.keys(libraryData?.portfolios || {}).map(slug => ({ slug, type: 'portfolio' }))
     return [...galleries, ...portfolios].sort((a, b) => a.slug.localeCompare(b.slug))
   }, [libraryData])
 
-  const collectionsByUrl = useMemo(() => {
+  const setsByUrl = useMemo(() => {
     const map = {}
     Object.entries(libraryData?.galleries || {}).forEach(([slug, urls]) => {
       ;(urls || []).forEach(url => { if (!map[url]) map[url] = []; map[url].push({ slug, type: 'gallery' }) })
@@ -80,7 +80,7 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
       .catch(() => setLibraryLoading(false))
   }, [libraryData])
 
-  const handleToggleCollection = useCallback(async (imageUrl, slug, type, add) => {
+  const handleToggleSet = useCallback(async (imageUrl, slug, type, add) => {
     const section = type === 'portfolio' ? 'portfolios' : 'galleries'
     setLibraryData(prev => {
       if (!prev) return prev
@@ -150,9 +150,9 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
         onToggleExpand={() => setExpanded(v => !v)}
         pages={pages}
         getAssetByUrl={getAssetByUrl}
-        allCollections={allCollections}
-        collectionsByUrl={collectionsByUrl}
-        onToggleCollection={handleToggleCollection}
+        allSets={allSets}
+        setsByUrl={setsByUrl}
+        onToggleSet={handleToggleSet}
       />
 
       <GalleryPreview gallery={gallery} pages={pages} />

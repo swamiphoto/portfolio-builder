@@ -161,10 +161,10 @@ export default function PickerFilterRail({
   onToggleCollapsed,
   filters,
   onFilterChange,
-  selectedCollection,
-  onSelectCollection,
+  selectedSet,
+  onSelectSet,
   counts,
-  collectionCounts,
+  setCounts,
   onClearAll,
   pages,
   selectedPage,
@@ -182,7 +182,7 @@ export default function PickerFilterRail({
     filters.aperture !== 'all',
     filters.shutter !== 'all',
     filters.iso !== 'all',
-    selectedCollection !== 'all',
+    selectedSet !== 'all',
     selectedPage !== null,
   ].filter(Boolean).length
 
@@ -190,7 +190,7 @@ export default function PickerFilterRail({
     return <CollapsedRail onExpand={() => onToggleCollapsed(false)} activeCount={activeCount} />
   }
 
-  const collectionKeys = Object.keys(collectionCounts || {}).filter(k => k !== 'all').sort()
+  const setKeys = Object.keys(setCounts || {}).filter(k => k !== 'all').sort()
 
   return (
     <div
@@ -417,15 +417,15 @@ export default function PickerFilterRail({
           </FilterSection>
         )}
 
-        {collectionKeys.length > 0 && (
-          <FilterSection title="Collections" defaultOpen={false}>
-            {collectionKeys.map(key => (
+        {setKeys.length > 0 && (
+          <FilterSection title="Sets" defaultOpen={false}>
+            {setKeys.map(key => (
               <FilterRow
                 key={key}
-                active={selectedCollection === key}
+                active={selectedSet === key}
                 label={key}
-                count={collectionCounts[key]}
-                onClick={() => onSelectCollection(selectedCollection === key ? 'all' : key)}
+                count={setCounts[key]}
+                onClick={() => onSelectSet(selectedSet === key ? 'all' : key)}
               />
             ))}
           </FilterSection>

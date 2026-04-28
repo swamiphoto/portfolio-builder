@@ -42,7 +42,7 @@ function normalizePickerAsset(image) {
       originalFilename: ref.url.split("/").pop() || ref.url,
       caption: "",
       tags: [],
-      collectionIds: [],
+      setIds: [],
       source: { provider: "manual", type: "upload" },
       orientation: "unknown",
       usage: { usageCount: 0 },
@@ -60,7 +60,7 @@ function normalizePickerAsset(image) {
     originalFilename: image.originalFilename || image.publicUrl.split("/").pop() || image.publicUrl,
     caption: image.caption || "",
     tags: image.tags || [],
-    collectionIds: image.collectionIds || [],
+    setIds: image.setIds || [],
     source: image.source || { provider: "manual", type: "upload" },
     orientation: image.orientation || "unknown",
     usage: image.usage || { usageCount: 0 },
@@ -233,7 +233,7 @@ const DEFAULT_FILTERS = {
 
 function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, railCollapsed, onToggleRail, onPreview, pages, defaultPageId }) {
   const [search, setSearch] = useState("");
-  const [collection, setCollection] = useState("all");
+  const [selectedSet, setSelectedSet] = useState("all");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [selectedPage, setSelectedPage] = useState(defaultPageId || null);
   const [selected, setSelected] = useState([]);
@@ -253,8 +253,8 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
   // Counts over the full set — sidebar shows full options regardless of current filters
   const counts = useMemo(() => computeFilterCounts(allAssets), [allAssets]);
 
-  // Collection counts: { all: total, "<gallery key>": count }
-  const collectionCounts = useMemo(() => {
+  // Set counts: { all: total, "<gallery key>": count }
+  const setCounts = useMemo(() => {
     const galleries = libraryConfig?.galleries || {};
     const out = { all: allAssets.length };
     Object.keys(galleries).forEach(slug => {
@@ -274,28 +274,28 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     );
   }, [pages, allAssets]);
 
-  // Filter by selected collection (gallery)
-  const collectionAssets = useMemo(() => {
-    if (collection === "all") return allAssets;
+  // Filter by selected set (gallery)
+  const assetsInSet = useMemo(() => {
+    if (selectedSet === "all") return allAssets;
     if (libraryConfig?.galleries) {
-      const prefix = collection + '/';
+      const prefix = selectedSet + '/';
       const matchingKeys = Object.keys(libraryConfig.galleries).filter(
-        (k) => k === collection || k.startsWith(prefix)
+        (k) => k === selectedSet || k.startsWith(prefix)
       );
       const urls = new Set(matchingKeys.flatMap((k) => libraryConfig.galleries[k] || []));
       return allAssets.filter((a) => urls.has(a.publicUrl));
     }
-    return allAssets.filter((a) => (a.collectionIds || []).includes(collection));
-  }, [allAssets, collection, libraryConfig]);
+    return allAssets.filter((a) => (a.setIds || []).includes(selectedSet));
+  }, [allAssets, selectedSet, libraryConfig]);
 
   // Filter by selected page
   const pageFilteredAssets = useMemo(() => {
-    if (!selectedPage || !pages?.length) return collectionAssets;
+    if (!selectedPage || !pages?.length) return assetsInSet;
     const pageObj = pages.find(p => p.id === selectedPage);
-    if (!pageObj) return collectionAssets;
+    if (!pageObj) return assetsInSet;
     const urls = new Set(pageObj.imageUrls || []);
-    return collectionAssets.filter(a => urls.has(a.publicUrl));
-  }, [collectionAssets, selectedPage, pages]);
+    return assetsInSet.filter(a => urls.has(a.publicUrl));
+  }, [assetsInSet, selectedPage, pages]);
 
   // Apply attribute filters + search
   const filtered = useMemo(() => {
@@ -307,7 +307,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
           a.originalFilename, a.caption, a.publicUrl,
           a.source?.provider,
           a.capture?.cameraModel, a.capture?.lens,
-          ...(a.tags || []), ...(a.collectionIds || []),
+          ...(a.tags || []), ...(a.setIds || []),
         ].filter(Boolean).join(" ").toLowerCase();
         return hay.includes(q);
       });
@@ -346,11 +346,11 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
 
   function clearAll() {
     setFilters(DEFAULT_FILTERS);
-    setCollection('all');
+    setSelectedSet('all');
     setSelectedPage(null);
   }
 
-  // Autocomplete suggestions — distinct values from caption / filename / camera / lens / collections
+  // Autocomplete suggestions — distinct values from caption / filename / camera / lens / sets
   const suggestionPool = useMemo(() => {
     const set = new Set();
     allAssets.forEach((a) => {
@@ -557,10 +557,10 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
         onToggleCollapsed={onToggleRail}
         filters={filters}
         onFilterChange={(k, v) => setFilters((prev) => ({ ...prev, [k]: v }))}
-        selectedCollection={collection}
-        onSelectCollection={setCollection}
+        selectedSet={selectedSet}
+        onSelectSet={setSelectedSet}
         counts={counts}
-        collectionCounts={collectionCounts}
+        setCounts={setCounts}
         onClearAll={clearAll}
         pages={pages}
         selectedPage={selectedPage}
@@ -574,7 +574,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
 // ── Upload tab ──────────────────────────────────────────────────────────────
 function UploadTab({ onUploaded, libraryConfig }) {
   const [files, setFiles] = useState([]);
-  const [selectedCollections, setSelectedCollections] = useState([]); // ordered list of slugs
+  const [selectedSets, setSelectedSets] = useState([]); // ordered list of slugs
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
   const [dragging, setDragging] = useState(false);
@@ -594,18 +594,18 @@ function UploadTab({ onUploaded, libraryConfig }) {
     setFiles((prev) => prev.filter((f) => f.name !== name));
   };
 
-  const addCollection = (slug) => {
-    setSelectedCollections((prev) => prev.includes(slug) ? prev : [...prev, slug]);
+  const addSet = (slug) => {
+    setSelectedSets((prev) => prev.includes(slug) ? prev : [...prev, slug]);
   };
-  const removeCollection = (slug) => {
-    setSelectedCollections((prev) => prev.filter((s) => s !== slug));
+  const removeSet = (slug) => {
+    setSelectedSets((prev) => prev.filter((s) => s !== slug));
   };
 
   const handleUpload = async () => {
     if (files.length === 0) return;
     setUploading(true);
-    const collections = selectedCollections;
-    const folder = collections[0] ? `photos/${collections[0]}` : undefined;
+    const sets = selectedSets;
+    const folder = sets[0] ? `photos/${sets[0]}` : undefined;
     const uploadedUrls = [];
     for (const file of files) {
       setProgress((p) => ({ ...p, [file.name]: "pending" }));
@@ -613,7 +613,7 @@ function UploadTab({ onUploaded, libraryConfig }) {
         const res = await fetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, contentType: file.type, folder, collections }),
+          body: JSON.stringify({ filename: file.name, contentType: file.type, folder, sets }),
         });
         const { signedUrl, gcsUrl } = await res.json();
         const formData = new FormData();
@@ -711,14 +711,14 @@ function UploadTab({ onUploaded, libraryConfig }) {
         )}
       </div>
 
-      {/* Collections picker — pills + searchable dropdown with create-new */}
+      {/* Sets picker — pills + searchable dropdown with create-new */}
       <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(160,140,110,0.18)', marginTop: 12, paddingTop: 10, paddingBottom: 10 }}>
         <SetPillsPicker
           existingSlugs={existingSlugs}
-          selectedSlugs={selectedCollections}
-          onAdd={addCollection}
-          onRemove={removeCollection}
-          onCreate={addCollection}
+          selectedSlugs={selectedSets}
+          onAdd={addSet}
+          onRemove={removeSet}
+          onCreate={addSet}
         />
       </div>
 

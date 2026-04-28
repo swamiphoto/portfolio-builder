@@ -77,9 +77,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onToggleExpand,
   pages,
   getAssetByUrl,
-  allCollections,
-  collectionsByUrl,
-  onToggleCollection,
+  allSets,
+  setsByUrl,
+  onToggleSet,
   headerLabel = 'GALLERY',
   infoLabel = 'Gallery Info',
   namePlaceholder = 'Gallery name',
@@ -494,9 +494,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
                             getAssetByUrl={getAssetByUrl}
-                            allCollections={allCollections}
-                            collectionsByUrl={collectionsByUrl}
-                            onToggleCollection={onToggleCollection}
+                            allSets={allSets}
+                            setsByUrl={setsByUrl}
+                            onToggleSet={onToggleSet}
                             sourcePageId={sourcePageId}
                             blockIndex={index}
                             onRemoveImagesFromBlock={(srcIdx, refs) => removeImagesFromBlock(srcIdx, refs)}
