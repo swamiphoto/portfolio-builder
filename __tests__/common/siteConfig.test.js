@@ -11,8 +11,10 @@ import { downloadJSON, uploadJSON } from '../../common/gcsClient'
 import { getUserSiteConfigPath } from '../../common/gcsUser'
 import {
   createDefaultSiteConfig,
+  defaultPage,
   generatePageId,
   readSiteConfig,
+  seedBlocksForTemplate,
   writeSiteConfig,
 } from '../../common/siteConfig'
 
@@ -116,5 +118,57 @@ describe('writeSiteConfig', () => {
 
     await writeSiteConfig('user-123', config)
     expect(uploadJSON).toHaveBeenCalledWith('users/user-123/site-config.json', config)
+  })
+})
+
+describe('seedBlocksForTemplate', () => {
+  it('returns a single masonry photos block for "gallery"', () => {
+    const blocks = seedBlocksForTemplate('gallery')
+    expect(blocks).toEqual([
+      { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
+    ])
+  })
+
+  it('returns a single page-gallery block for "collection"', () => {
+    const blocks = seedBlocksForTemplate('collection')
+    expect(blocks).toEqual([
+      { type: 'page-gallery', pageIds: [] },
+    ])
+  })
+
+  it('returns a heading text block plus an empty paragraph text block for "about"', () => {
+    const blocks = seedBlocksForTemplate('about')
+    expect(blocks).toHaveLength(2)
+    expect(blocks[0]).toMatchObject({ type: 'text', variant: 1 })
+    expect(blocks[1]).toMatchObject({ type: 'text', variant: 2 })
+  })
+
+  it('returns an empty array for unknown templates', () => {
+    expect(seedBlocksForTemplate('nope')).toEqual([])
+    expect(seedBlocksForTemplate(undefined)).toEqual([])
+  })
+})
+
+describe('defaultPage with template', () => {
+  it('seeds blocks based on template', () => {
+    const page = defaultPage({ id: 'travel', title: 'Travel', template: 'gallery' })
+    expect(page.blocks).toEqual([
+      { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
+    ])
+  })
+
+  it('does not include `template` as a field on the page object', () => {
+    const page = defaultPage({ id: 'travel', title: 'Travel', template: 'gallery' })
+    expect(page).not.toHaveProperty('template')
+  })
+
+  it('explicit blocks override template seeding', () => {
+    const page = defaultPage({ id: 'x', template: 'gallery', blocks: [] })
+    expect(page.blocks).toEqual([])
+  })
+
+  it('without a template, blocks defaults to []', () => {
+    const page = defaultPage({ id: 'x', title: 'X' })
+    expect(page.blocks).toEqual([])
   })
 })

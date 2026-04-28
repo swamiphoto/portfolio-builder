@@ -77,16 +77,39 @@ export function createDefaultSiteConfig(userId) {
   }
 }
 
+/**
+ * Return the starter blocks for a page template. Templates are a UX-only
+ * concept — they seed initial blocks but don't persist on the page object.
+ * Unknown or absent template → empty array (caller can add blocks manually).
+ */
+export function seedBlocksForTemplate(template) {
+  switch (template) {
+    case 'gallery':
+      return [{ type: 'photos', images: [], imageUrls: [], layout: 'masonry' }]
+    case 'collection':
+      return [{ type: 'page-gallery', pageIds: [] }]
+    case 'about':
+      return [
+        { type: 'text', content: '', variant: 1 },
+        { type: 'text', content: '', variant: 2 },
+      ]
+    default:
+      return []
+  }
+}
+
 export function defaultPage(overrides = {}) {
+  const { template, ...rest } = overrides
+  const blocks = rest.blocks ?? seedBlocksForTemplate(template)
   return {
-    id: overrides.id || 'page',
-    title: overrides.title || 'New Page',
+    id: rest.id || 'page',
+    title: rest.title || 'New Page',
     type: 'page',
     description: '',
-    slug: overrides.id || 'page',
+    slug: rest.id || 'page',
     parentId: null,
-    showInNav: overrides.showInNav ?? true,
-    sortOrder: overrides.sortOrder ?? 0,
+    showInNav: rest.showInNav ?? true,
+    sortOrder: rest.sortOrder ?? 0,
     password: '',
     cover: null,
     thumbnail: { imageUrl: '', useCover: true },
@@ -104,8 +127,8 @@ export function defaultPage(overrides = {}) {
       purchase: { enabled: false, defaultPrice: null, currency: 'USD', tiers: { web: null, print: null, original: null } },
     },
     passwordGateMessage: '',
-    blocks: [],
-    ...overrides,
+    blocks,
+    ...rest,
   }
 }
 
