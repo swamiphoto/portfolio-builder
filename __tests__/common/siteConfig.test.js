@@ -132,7 +132,7 @@ describe('seedBlocksForTemplate', () => {
   it('returns a single page-gallery block for "collection"', () => {
     const blocks = seedBlocksForTemplate('collection')
     expect(blocks).toEqual([
-      { type: 'page-gallery', pageIds: [] },
+      { type: 'page-gallery', source: 'manual', pageIds: [] },
     ])
   })
 

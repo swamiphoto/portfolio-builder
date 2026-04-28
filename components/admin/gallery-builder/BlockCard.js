@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
-import { normalizeImageRefs, buildMultiImageFields } from "../../../common/assetRefs";
+import { normalizeImageRefs, buildMultiImageFields, getPagesInSet } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
@@ -179,6 +179,16 @@ function BlockCard({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  useEffect(() => {
+    if (block.type !== 'page-gallery' || block.source !== 'by-set' || !block.setId) return
+    const matching = getPagesInSet(block.setId, pages, setsByUrl)
+    const newIds = matching.map(p => p.id)
+    const oldIds = block.pageIds || []
+    const same = newIds.length === oldIds.length && newIds.every((id, i) => id === oldIds[i])
+    if (!same) onUpdate({ ...block, pageIds: newIds })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block.type, block.source, block.setId, pages, setsByUrl]);
 
   const handleDragOver = (e) => { e.preventDefault(); setGridDropHover(true); };
   const handleDragLeave = (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setGridDropHover(false); };
@@ -757,30 +767,92 @@ function BlockCard({
           )}
 
           {/* Page Gallery */}
-          {block.type === "page-gallery" && (
-            <div className="space-y-1.5">
-              {(!pages || pages.length === 0) ? (
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No other pages yet.</p>
-              ) : (
-                pages.map(p => (
-                  <label key={p.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(block.pageIds || []).includes(p.id)}
-                      onChange={e => {
-                        const pageIds = e.target.checked
-                          ? [...(block.pageIds || []), p.id]
-                          : (block.pageIds || []).filter(id => id !== p.id)
-                        onUpdate({ ...block, pageIds })
-                      }}
-                      className="w-3 h-3 flex-shrink-0"
-                    />
-                    <span className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{p.title}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          )}
+          {block.type === "page-gallery" && (() => {
+            const source = block.source || "manual"
+            const sets = Object.values(allSets || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+            function setSource(next) {
+              if (next === 'by-set') {
+                const firstSetId = block.setId || sets[0]?.setId || ''
+                const matching = getPagesInSet(firstSetId, pages, setsByUrl)
+                onUpdate({ ...block, source: 'by-set', setId: firstSetId, pageIds: matching.map(p => p.id) })
+              } else {
+                onUpdate({ ...block, source: 'manual' })
+              }
+            }
+
+            function pickSet(setId) {
+              const matching = getPagesInSet(setId, pages, setsByUrl)
+              onUpdate({ ...block, source: 'by-set', setId, pageIds: matching.map(p => p.id) })
+            }
+
+            return (
+              <div className="space-y-2">
+                <div className="flex gap-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSource('manual')}
+                    className={`px-2.5 py-1 rounded transition-colors ${source === 'manual' ? 'bg-[#8b6f47] text-white' : 'bg-transparent text-[#8b6f47] hover:bg-[rgba(139,111,71,0.08)]'}`}
+                  >
+                    Manual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSource('by-set')}
+                    className={`px-2.5 py-1 rounded transition-colors ${source === 'by-set' ? 'bg-[#8b6f47] text-white' : 'bg-transparent text-[#8b6f47] hover:bg-[rgba(139,111,71,0.08)]'}`}
+                  >
+                    From Set
+                  </button>
+                </div>
+
+                {source === 'manual' ? (
+                  (!pages || pages.length === 0) ? (
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No other pages yet.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {pages.map(p => (
+                        <label key={p.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={(block.pageIds || []).includes(p.id)}
+                            onChange={e => {
+                              const pageIds = e.target.checked
+                                ? [...(block.pageIds || []), p.id]
+                                : (block.pageIds || []).filter(id => id !== p.id)
+                              onUpdate({ ...block, pageIds })
+                            }}
+                          />
+                          <span className="text-sm">{p.title}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  sets.length === 0 ? (
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      No sets yet. Create a set in your library to use this mode.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className={INPUT}
+                        value={block.setId || ''}
+                        onChange={e => pickSet(e.target.value)}
+                      >
+                        {!block.setId && <option value="" disabled>Choose a set…</option>}
+                        {sets.map(s => (
+                          <option key={s.setId} value={s.setId}>{s.name}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs pt-1" style={{ color: 'var(--text-muted)' }}>
+                        {block.pageIds?.length || 0} {block.pageIds?.length === 1 ? 'page matches' : 'pages match'} this set
+                      </p>
+                    </>
+                  )
+                )}
+              </div>
+            )
+          })()}
         </div>
       )}
 

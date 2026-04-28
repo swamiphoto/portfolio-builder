@@ -2,6 +2,7 @@ import {
   buildMultiImageFields,
   buildSingleImageFields,
   getImageRefUrl,
+  getPagesInSet,
   mergeImageRefs,
   normalizeGalleryEntity,
   normalizeImageRef,
@@ -101,5 +102,32 @@ describe('normalize entity helpers', () => {
       assetId: null,
       url: 'https://example.com/photo.jpg',
     })
+  })
+})
+
+describe('getPagesInSet', () => {
+  const pages = [
+    { id: 'p1', blocks: [{ type: 'photo', imageUrl: 'https://x/a.jpg' }] },
+    { id: 'p2', blocks: [{ type: 'photos', imageUrls: ['https://x/b.jpg', 'https://x/c.jpg'] }] },
+    { id: 'p3', blocks: [{ type: 'text', content: 'hello' }] },
+  ]
+
+  it('returns pages that contain an asset in the set', () => {
+    const setsByUrl = {
+      'https://x/a.jpg': ['s1'],
+      'https://x/b.jpg': ['s2'],
+    }
+    expect(getPagesInSet('s1', pages, setsByUrl).map(p => p.id)).toEqual(['p1'])
+    expect(getPagesInSet('s2', pages, setsByUrl).map(p => p.id)).toEqual(['p2'])
+  })
+
+  it('returns empty array when nothing matches', () => {
+    expect(getPagesInSet('nope', pages, {})).toEqual([])
+  })
+
+  it('handles missing inputs gracefully', () => {
+    expect(getPagesInSet(null, pages, {})).toEqual([])
+    expect(getPagesInSet('s1', null, {})).toEqual([])
+    expect(getPagesInSet('s1', pages, null)).toEqual([])
   })
 })

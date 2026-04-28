@@ -153,6 +153,18 @@ export function getPagePhotos(page) {
   return [...new Set(urls)]
 }
 
+/**
+ * Return pages whose images include at least one asset that belongs to the given Set.
+ * `setsByUrl` maps an image URL to an array of setIds (built in the admin from libraryConfig.sets).
+ */
+export function getPagesInSet(setId, pages, setsByUrl) {
+  if (!setId || !pages?.length || !setsByUrl) return []
+  return pages.filter(page => {
+    const urls = getPagePhotos(page)
+    return urls.some(url => (setsByUrl[url] || []).includes(setId))
+  })
+}
+
 export function pageDisplayThumbnail(page) {
   const explicit = page.thumbnail?.imageUrl
   if (explicit && !page.thumbnail?.useCover) return explicit

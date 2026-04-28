@@ -17,7 +17,7 @@ export function defaultBlock(type) {
     case "video":
       return { type: "video", url: "", caption: "", variant: 1 };
     case "page-gallery":
-      return { type: "page-gallery", pageIds: [] };
+      return { type: "page-gallery", source: "manual", pageIds: [] };
     case "contact":
       return { type: "contact", heading: "", subheading: "" };
     default:
