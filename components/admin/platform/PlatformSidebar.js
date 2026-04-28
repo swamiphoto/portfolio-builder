@@ -9,6 +9,22 @@ import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
 
+// Design tokens
+const C = {
+  text: '#1d1b17',
+  textBody: '#3a362f',
+  textMuted: '#9e9788',
+  textFaint: '#b0a490',
+  accent: '#8b6f47',
+  ink: '#2c2416',
+  inkText: '#f6f3ec',
+  selected: '#f6f3ec',
+  borderSoft: 'rgba(26,18,10,0.07)',
+  borderStrong: 'rgba(26,18,10,0.14)',
+}
+const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
+const SERIF = "'Fraunces', Georgia, serif"
+
 function countPagePhotos(page) {
   if (!page.blocks) return 0
   return page.blocks.reduce((sum, block) => {
@@ -36,15 +52,98 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
     return () => clearInterval(id)
   }, [])
 
-  const base = { fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.04em', textAlign: 'center', marginBottom: 7 }
+  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginBottom: 10 }
 
-  if (saveStatus === 'saving') return <div style={{ ...base, color: '#9e9788' }}>Saving…</div>
+  if (saveStatus === 'saving') return <div style={{ ...base, color: C.textFaint }}>Saving…</div>
   if (saveStatus === 'error') return <div style={{ ...base, color: '#c0392b' }}>Save failed</div>
   if (saveStatus === 'saved') return <div style={{ ...base, color: '#7a9e7e' }}>Saved</div>
-  if (hasUnpublishedChanges && lastSavedAt) return <div style={{ ...base, color: '#9e9788' }}>Changes saved {relativeTime(lastSavedAt)}</div>
+  if (hasUnpublishedChanges && lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Saved {relativeTime(lastSavedAt)}</div>
   if (!hasUnpublishedChanges && lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
-  if (lastSavedAt) return <div style={{ ...base, color: '#9e9788' }}>Auto-saved {relativeTime(lastSavedAt)}</div>
+  if (lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Auto-saved {relativeTime(lastSavedAt)}</div>
   return <div style={{ ...base, color: 'transparent' }}>·</div>
+}
+
+// Icons
+function IconHome(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 11l9-8 9 8M5 9.5V20a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9.5"/></svg>
+}
+function IconGallery(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+}
+function IconText(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+}
+function IconLink(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v5a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h5"/></svg>
+}
+function IconLibrary(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="4" width="4" height="16" rx="0.5"/><rect x="9" y="4" width="4" height="16" rx="0.5"/><path d="M16 5l3.5-1 2 14.5-3.5 1z"/></svg>
+}
+function IconSettings(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+}
+function IconBell(p) {
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+}
+function IconCollapse(p) {
+  return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13L5 8l5-5"/></svg>
+}
+function IconPreview(p) {
+  return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+}
+function IconPublish(p) {
+  return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+}
+function IconPlus(p) {
+  return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 5v14M5 12h14"/></svg>
+}
+function IconDots(p) {
+  return <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="5.5" cy="1.5" r="1"/><circle cx="9.5" cy="1.5" r="1"/></svg>
+}
+function IconDragHandle(p) {
+  return <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="4.5" cy="1.5" r="1"/><circle cx="1.5" cy="5" r="1"/><circle cx="4.5" cy="5" r="1"/><circle cx="1.5" cy="8.5" r="1"/><circle cx="4.5" cy="8.5" r="1"/></svg>
+}
+
+function IconButton({ children, onClick, label }) {
+  return (
+    <Tip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: C.textMuted,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+      >
+        {children}
+      </button>
+    </Tip>
+  )
+}
+
+function UtilityButton({ icon, label, active, onClick, btnRef }) {
+  return (
+    <button
+      ref={btnRef}
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        height: 32, padding: '0 8px', borderRadius: 5,
+        background: active ? C.selected : 'transparent',
+        border: 'none',
+        color: active ? C.accent : C.textBody,
+        fontFamily: MONO, fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
+        cursor: 'pointer', transition: 'background 120ms',
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+    >
+      {icon}{label}
+    </button>
+  )
 }
 
 export default function PlatformSidebar({
@@ -78,10 +177,11 @@ export default function PlatformSidebar({
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [menuOpenId, setMenuOpenId] = useState(null)
+  const [dotsAnchorEl, setDotsAnchorEl] = useState(null)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [linkEditId, setLinkEditId] = useState(null)
   const [siteSettingsOpen, setSiteSettingsOpen] = useState(false)
-  const siteSettingsGearRef = useRef(null)
+  const siteSettingsRef = useRef(null)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountAvatarRef = useRef(null)
   const [pageSettingsId, setPageSettingsId] = useState(null)
@@ -91,8 +191,8 @@ export default function PlatformSidebar({
   const { drag, dropTargetPageId, setDropTargetPageId } = useDrag()
 
   // Custom page drag state
-  const [pageDrag, setPageDrag] = useState(null) // { pageId, title }
-  const [pageDropTarget, setPageDropTarget] = useState(null) // { type: 'nest'|'root'|'other', pageId? }
+  const [pageDrag, setPageDrag] = useState(null)
+  const [pageDropTarget, setPageDropTarget] = useState(null)
   const [ghostPos, setGhostPos] = useState(null)
   const pageDragRef = useRef(null)
   const pageDropTargetRef = useRef(null)
@@ -159,8 +259,8 @@ export default function PlatformSidebar({
     onConfigChange(prev => {
       const existingIds = new Set(prev.pages.map(p => p.id))
       const id = nextAvailableId(base, existingIds)
-      const sortOrder = Math.max(0, ...prev.pages.filter(p => p.showInNav).map(p => p.sortOrder ?? 0)) + 1
-      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null })] }
+      const sortOrder = Math.max(0, ...prev.pages.filter(p => !p.showInNav).map(p => p.sortOrder ?? 0)) + 1
+      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: false, parentId: null })] }
     })
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     const id = nextAvailableId(base, existingIds)
@@ -173,8 +273,8 @@ export default function PlatformSidebar({
     onConfigChange(prev => {
       const existingIds = new Set(prev.pages.map(p => p.id))
       const id = nextAvailableId(base, existingIds)
-      const sortOrder = Math.max(0, ...prev.pages.filter(p => p.showInNav).map(p => p.sortOrder ?? 0)) + 1
-      return { ...prev, pages: [...prev.pages, defaultLink({ id, title: 'New Link', sortOrder, showInNav: true, parentId: null })] }
+      const sortOrder = Math.max(0, ...prev.pages.filter(p => !p.showInNav).map(p => p.sortOrder ?? 0)) + 1
+      return { ...prev, pages: [...prev.pages, defaultLink({ id, title: 'New Link', sortOrder, showInNav: false, parentId: null })] }
     })
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     const id = nextAvailableId(base, existingIds)
@@ -260,27 +360,10 @@ export default function PlatformSidebar({
 
   function PageTypeIcon({ page }) {
     const isHome = siteConfig.homePageId === page.id
-    if (isHome) return (
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-      </svg>
-    )
-    if (page.type === 'link') return (
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-      </svg>
-    )
-    if (page.type === 'text') return (
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-      </svg>
-    )
-    // gallery / default
-    return (
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-      </svg>
-    )
+    if (isHome) return <IconHome />
+    if (page.type === 'link') return <IconLink />
+    if (page.type === 'text') return <IconText />
+    return <IconGallery />
   }
 
   function renderPageRow(page, depth = 0) {
@@ -288,7 +371,7 @@ export default function PlatformSidebar({
     const isPageNestTarget = pageDropTarget?.type === 'nest' && pageDropTarget.pageId === page.id
     const isLink = page.type === 'link'
     const isSelected = selectedPageId === page.id
-    const isHome = siteConfig.homePageId === page.id
+    const count = !isLink ? countPagePhotos(page) : null
 
     return (
       <div
@@ -321,102 +404,98 @@ export default function PlatformSidebar({
           />
         ) : (
           <div
+            className="group relative"
             onClick={() => {
               if (didDragRef.current || pageDragRef.current) return
               if (!isLink) onSelectPage?.(page.id)
             }}
-            className={`group relative flex items-center gap-[10px] py-[5px] mx-2 cursor-pointer transition-colors duration-[120ms] ${
-              isPageNestTarget
-                ? 'ring-1 ring-blue-400 bg-blue-50'
-                : isImageDropTarget
-                ? 'ring-1 ring-blue-300 bg-blue-50'
-                : ''
-            }`}
             style={{
-              borderRadius: 3,
-              paddingLeft: 10 + depth * 12,
-              paddingRight: 10,
-              background: isSelected ? '#f6f3ec' : undefined,
-              boxShadow: isSelected ? '0 1px 3px rgba(26,18,10,0.06)' : undefined,
+              display: 'flex', alignItems: 'center', gap: 10,
+              margin: '0 8px', padding: `4px 10px`,
+              paddingLeft: 10 + depth * 18,
+              borderRadius: 5, cursor: 'pointer',
+              background: isSelected
+                ? C.selected
+                : isPageNestTarget
+                ? 'rgba(60,100,200,0.06)'
+                : isImageDropTarget
+                ? 'rgba(60,100,200,0.06)'
+                : 'transparent',
+              boxShadow: isSelected ? '0 1px 2px rgba(26,18,10,0.05), inset 0 0 0 1px rgba(139,111,71,0.12)' : undefined,
+              transition: 'background 120ms',
+              outline: (isPageNestTarget || isImageDropTarget) ? '1px solid rgba(60,100,200,0.3)' : undefined,
             }}
-            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
-            onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
+            onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
+            onMouseLeave={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'transparent' }}
           >
-            {/* Icon — page type normally, drag handle on hover */}
+            {/* Icon / drag handle */}
             <div
               className="flex-shrink-0 flex items-center justify-center"
               onPointerDown={(e) => handlePageDragStart(page, e)}
-              style={{ touchAction: 'none', width: 14, color: '#6e685c' }}
+              style={{ touchAction: 'none', width: 14, color: isSelected ? C.accent : C.textMuted }}
             >
               <span className="group-hover:hidden flex items-center">
                 <PageTypeIcon page={page} />
               </span>
               <span className="hidden group-hover:flex items-center cursor-grab active:cursor-grabbing">
-                <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor">
-                  <circle cx="1.5" cy="1.5" r="1" /><circle cx="4.5" cy="1.5" r="1" />
-                  <circle cx="1.5" cy="5" r="1" /><circle cx="4.5" cy="5" r="1" />
-                  <circle cx="1.5" cy="8.5" r="1" /><circle cx="4.5" cy="8.5" r="1" />
-                </svg>
+                <IconDragHandle />
               </span>
             </div>
 
-            {/* Page title */}
+            {/* Title */}
             <span
               className="flex-1 truncate"
-              style={{ fontSize: 13, color: '#3a362f' }}
+              style={{ fontSize: 13, color: isSelected ? C.text : C.textBody, fontWeight: isSelected ? 600 : 400 }}
             >
               {page.title}
             </span>
 
-            {/* Right side badges */}
+            {/* Drop badges */}
             {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
-            {/* Right side: gear + count/menu */}
-            <div className="flex-shrink-0 flex items-center gap-0.5">
-              {/* Settings gear — visible on hover */}
-              <button
-                onClick={e => { e.stopPropagation(); setPageSettingsId(page.id); setPageSettingsAnchorEl(e.currentTarget) }}
-                className="w-5 h-5 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] hover:bg-black/5"
-                style={{ color: '#9e9788' }}
-              >
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="2" y1="4" x2="14" y2="4"/>
-                  <line x1="2" y1="8" x2="14" y2="8"/>
-                  <line x1="2" y1="12" x2="14" y2="12"/>
-                  <circle cx="5" cy="4" r="1.5" fill="currentColor" stroke="none"/>
-                  <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/>
-                  <circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-                </svg>
-              </button>
-
-              {/* Count + menu share the same slot */}
-              <div className="relative flex items-center justify-center" style={{ width: 20, height: 20 }}>
-                {!isLink && !isPageNestTarget && !isImageDropTarget && (() => {
-                  const count = countPagePhotos(page)
-                  return count > 0 ? (
-                    <span
-                      className="absolute group-hover:opacity-0 transition-opacity duration-[120ms]"
-                      style={{ fontFamily: 'monospace', fontSize: 10, color: '#b0a490' }}
-                    >
-                      {count}
-                    </span>
-                  ) : null
-                })()}
+            {/* Right slot: count / dots */}
+            {!isPageNestTarget && !isImageDropTarget && (
+              <div className="relative flex-shrink-0" style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {count != null && count > 0 && (
+                  <span
+                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
+                    style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}
+                  >
+                    {count}
+                  </span>
+                )}
                 <button
-                  onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === page.id ? null : page.id) }}
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] text-sm leading-none"
-                  style={{ color: '#9e9788' }}
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation()
+                    setDotsAnchorEl(e.currentTarget)
+                    setMenuOpenId(menuOpenId === page.id ? null : page.id)
+                  }}
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms]"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted }}
                 >
-                  ···
+                  <IconDots />
                 </button>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {menuOpenId === page.id && (
           <div ref={menuRef} className="absolute right-2 top-7 z-10 rounded-lg shadow-popup py-1 w-40" style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
+            <button
+              onClick={() => {
+                const anchor = dotsAnchorEl
+                setMenuOpenId(null)
+                setPageSettingsId(page.id)
+                setPageSettingsAnchorEl(anchor)
+              }}
+              className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Settings
+            </button>
             <button onClick={() => handleRenameStart(page)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Rename</button>
             {page.showInNav && page.type !== 'link' && siteConfig.homePageId !== page.id && (
               <button
@@ -469,180 +548,203 @@ export default function PlatformSidebar({
     )
   }
 
+  const navPages = buildNavTree(pages)
+  const hiddenPages = flattenForOtherPages(pages).filter(p => p.id !== 'home')
+
   return (
     <div className="flex flex-col h-full select-none text-sm">
-      {/* Header */}
-      <div style={{ padding: '12px 14px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          {/* Avatar — click for account dropdown */}
-          <Tip label="Account" side="right">
-          <button
-            ref={accountAvatarRef}
-            onClick={() => setAccountOpen(v => !v)}
-            style={{ flexShrink: 0, padding: 0, border: 'none', background: 'none', cursor: 'pointer', alignSelf: 'center' }}
-          >
-            {avatarImage ? (
-              <img src={avatarImage} alt="" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
-            ) : (
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#1d1b17', color: '#f6f3ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Fraunces', Georgia, serif", fontSize: 14, fontWeight: 400 }}>
-                {(displayName || username || 'U')[0].toUpperCase()}
-              </div>
-            )}
-          </button>
-          </Tip>
 
-          {/* Name + username stacked */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 16, fontWeight: 400, color: '#1d1b17', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {displayName || username || 'My Portfolio'}
-            </div>
-            {username && (
-              <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#9e9788', letterSpacing: '0.04em', marginTop: 3, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                @{username}
-              </div>
-            )}
-          </div>
-
-          {/* Settings + Notifications + Collapse */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-            <Tip label="Notifications">
-            <button
-              style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-            >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-              </svg>
-            </button>
-            </Tip>
-            <Tip label="Site settings">
-            <button
-              ref={siteSettingsGearRef}
-              onClick={() => setSiteSettingsOpen(v => !v)}
-              style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-            >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-            </Tip>
+      {/* MASTHEAD */}
+      <div style={{ padding: '18px 16px 14px', borderBottom: `1px solid ${C.borderSoft}` }}>
+        {/* Top utility row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint }}>
+            ◐ Sepia
+          </span>
+          <div style={{ display: 'flex', gap: 2 }}>
+            <IconButton label="Notifications">
+              <IconBell />
+            </IconButton>
             {onCollapse && (
-              <Tip label="Collapse panel">
-              <button
-                onClick={onCollapse}
-                style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4, color: '#9e9788' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-              >
-                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 19L4 12l7-7" />
-                </svg>
-              </button>
-              </Tip>
+              <IconButton label="Collapse panel" onClick={onCollapse}>
+                <IconCollapse />
+              </IconButton>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Library — top of content */}
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid #d8d2c3' }}>
-        <button
-          onClick={onShowLibrary}
-          className="flex items-center justify-center gap-1.5 w-full py-1.5 transition-colors"
-          style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: 'var(--text-secondary)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        {/* Headline */}
+        <div
+          style={{
+            fontFamily: SERIF, fontSize: 22, color: C.text,
+            lineHeight: 1.05, fontWeight: 500, letterSpacing: '-0.01em',
+            overflow: 'hidden', display: '-webkit-box',
+            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          }}
         >
-          <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-          </svg>
-          <span>View Library</span>
-        </button>
+          {displayName || username || 'My Portfolio'}
+        </div>
+
+        {/* URL */}
+        {username && (
+          <div style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', marginTop: 4 }}>
+            {username}.sepia.photo
+          </div>
+        )}
+
+        {/* Preview / Publish */}
+        <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+          <Tip label="Preview site" side="bottom">
+            <button
+              type="button"
+              onClick={() => { if (username) window.open(`/sites/${username}`, '_blank') }}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 28, padding: '0 10px', borderRadius: 5,
+                background: 'transparent', border: `1px solid ${C.borderStrong}`,
+                color: C.textBody, cursor: 'pointer',
+                fontFamily: MONO, fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
+                transition: 'background 120ms',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconPreview />
+              Preview
+            </button>
+          </Tip>
+
+          <Tip label={hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes'} side="bottom">
+            <button
+              type="button"
+              onClick={hasUnpublishedChanges ? onPublish : undefined}
+              disabled={!hasUnpublishedChanges}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 28, padding: '0 10px', borderRadius: 5, border: 'none',
+                background: hasUnpublishedChanges ? C.ink : 'rgba(44,36,22,0.12)',
+                color: hasUnpublishedChanges ? C.inkText : C.textMuted,
+                cursor: hasUnpublishedChanges ? 'pointer' : 'default',
+                fontFamily: MONO, fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
+                transition: 'background 120ms',
+              }}
+              onMouseEnter={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#3d3020' }}
+              onMouseLeave={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = C.ink }}
+            >
+              <IconPublish style={{ color: hasUnpublishedChanges ? undefined : C.textMuted }} />
+              Publish
+            </button>
+          </Tip>
+        </div>
       </div>
 
-      {/* Pages */}
-      <div className="flex-1 overflow-y-auto">
+      {/* PAGES LIST */}
+      <div className="flex-1 overflow-y-auto" style={{ paddingTop: 2 }}>
+
+        {/* Pages section label */}
+        {navPages.length > 0 && (
+          <div style={{ padding: '14px 14px 6px' }}>
+            <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
+              Pages
+            </span>
+          </div>
+        )}
         <SidebarSection
-          label="Main Nav"
-          pages={buildNavTree(pages)}
+          label=""
+          pages={navPages}
           renderRow={renderPageRow}
           droppableId="main-nav"
         />
+
+        {/* Hidden section — always rendered so it's a valid drop target and visible default for new pages */}
+        <div style={{ padding: '14px 14px 6px' }}>
+          <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
+            Hidden
+          </span>
+        </div>
         <SidebarSection
-          label="Not in nav"
-          pages={flattenForOtherPages(pages).filter(p => p.id !== 'home')}
+          label=""
+          pages={hiddenPages}
           renderRow={renderPageRow}
           droppableId="other-pages"
         />
 
-        {/* Add menu */}
-        <div className="relative mx-2 mt-1" ref={addMenuRef}>
+        {/* Add Page button */}
+        <div className="relative" ref={addMenuRef} style={{ margin: '8px 8px 0' }}>
           <button
+            type="button"
             onClick={() => setAddMenuOpen(v => !v)}
-            className="w-full py-2 transition-colors"
-            style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: '0.05em', borderRadius: 4, border: '1px dashed rgba(160,140,110,0.4)', background: 'transparent', color: 'var(--text-muted)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '4px 10px', borderRadius: 5,
+              background: 'transparent', border: `1px dashed ${C.borderStrong}`,
+              fontFamily: MONO, fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
+              color: C.textMuted, cursor: 'pointer', transition: 'background 120ms',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
-            + Add Page
+            <IconPlus />
+            Add Page
           </button>
           {addMenuOpen && (
-            <div className="absolute left-0 bottom-full mb-1 bg-white rounded-lg shadow-popup z-20 py-1 w-36" style={{ border: '1px solid var(--border)' }}>
+            <div className="absolute left-0 bottom-full mb-1 rounded-lg shadow-popup z-20 py-1 w-36" style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
               <button onClick={handleAddPage} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Page</button>
               <button onClick={handleAddLink} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Link ↗</button>
             </div>
           )}
         </div>
+
+        {/* Bottom padding */}
+        <div style={{ height: 8 }} />
       </div>
 
-      {/* Footer — Preview · Publish */}
+      {/* BOTTOM ROW — avatar + Library + Settings */}
       <div
-        className="flex-shrink-0"
-        style={{ borderTop: '1px solid var(--card-border)', background: '#ede8e0', padding: '10px 12px 12px' }}
+        style={{
+          borderTop: `1px solid ${C.borderSoft}`,
+          padding: '8px 8px',
+          display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+        }}
       >
-        <StatusLine saveStatus={saveStatus} hasUnpublishedChanges={hasUnpublishedChanges} lastSavedAt={lastSavedAt} lastPublishedAt={lastPublishedAt} />
-        <div className="flex items-center gap-2">
-          <Tip label="Preview site" side="top">
-          <button
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors"
-            style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: 'var(--text-secondary)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            onClick={() => { if (username) window.open(`/sites/${username}`, '_blank') }}
-          >
-            <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 16 16">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2 8a6 6 0 1012 0A6 6 0 002 8z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 2c-1.5 2-2.5 3.8-2.5 6s1 4 2.5 6" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 2c1.5 2 2.5 3.8 2.5 6S9.5 12 8 14" />
-              <path strokeLinecap="round" d="M2.5 6.5h11M2.5 9.5h11" />
-            </svg>
-            Preview
-          </button>
-          </Tip>
-
-          {onPublish && (
-            <Tip label={hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes'} side="top">
+        {/* Avatar */}
+        <Tip label="Account" side="top">
+          <div style={{ padding: '0 4px' }}>
             <button
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors"
-              style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.05em', borderRadius: 5, border: 'none', background: hasUnpublishedChanges ? '#2c2416' : 'rgba(44,36,22,0.12)', color: hasUnpublishedChanges ? '#f6f3ec' : 'var(--text-muted)', cursor: hasUnpublishedChanges ? 'pointer' : 'default' }}
-              onMouseEnter={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#3d3020' }}
-              onMouseLeave={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#2c2416' }}
-              onClick={hasUnpublishedChanges ? onPublish : undefined}
+              ref={accountAvatarRef}
+              type="button"
+              onClick={() => setAccountOpen(v => !v)}
+              style={{
+                width: 28, height: 28, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: C.ink, color: C.inkText,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 0 1px rgba(26,18,10,0.08)',
+                flexShrink: 0, padding: 0,
+              }}
             >
-              <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 16 16">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V3M5 6l3-3 3 3" />
-                <path strokeLinecap="round" d="M3 13h10" />
-              </svg>
-              Publish
+              {avatarImage ? (
+                <img src={avatarImage} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <span style={{ fontFamily: SERIF, fontSize: 13, fontWeight: 400 }}>
+                  {(displayName || username || 'U')[0].toUpperCase()}
+                </span>
+              )}
             </button>
-            </Tip>
-          )}
-        </div>
+          </div>
+        </Tip>
 
+        <UtilityButton
+          icon={<IconLibrary />}
+          label="Library"
+          onClick={onShowLibrary}
+        />
+
+        <UtilityButton
+          icon={<IconSettings />}
+          label="Settings"
+          onClick={() => setSiteSettingsOpen(v => !v)}
+          btnRef={siteSettingsRef}
+        />
       </div>
 
       {/* Drag ghost */}
@@ -659,7 +761,7 @@ export default function PlatformSidebar({
         <SiteSettingsPopover
           siteConfig={siteConfig}
           username={username}
-          anchorEl={siteSettingsGearRef.current}
+          anchorEl={siteSettingsRef.current}
           onUpdate={onConfigChange}
           onClose={() => setSiteSettingsOpen(false)}
           onPickLogo={onPickLogo}
