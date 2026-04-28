@@ -36,6 +36,7 @@ function mergeIncomingConfig(existingConfig, incomingConfig) {
     galleries: incomingConfig.galleries ?? existingConfig.galleries,
     assets: incomingConfig.assets ?? existingConfig.assets,
     assetOrder: incomingConfig.assetOrder ?? existingConfig.assetOrder,
+    // Legacy `collections` key accepted for in-flight clients; remove once all clients ship `sets`.
     sets: incomingConfig.sets ?? incomingConfig.collections ?? existingConfig.sets,
     savedViews: incomingConfig.savedViews ?? existingConfig.savedViews,
   })
