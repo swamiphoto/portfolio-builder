@@ -14,7 +14,7 @@ describe('createEmptyLibraryConfig', () => {
       version: LIBRARY_CONFIG_VERSION,
       assets: {},
       assetOrder: [],
-      collections: {},
+      sets: {},
       savedViews: {},
       portfolios: {},
       galleries: {},
@@ -215,6 +215,43 @@ describe('mergeLibraryData rollup counts', () => {
     )
     expect(merged.counts['portraits']).toBe(2)
     expect(merged.counts['portraits/mala']).toBe(2)
+  })
+})
+
+describe('normalizeLibraryConfig — sets back-compat', () => {
+  it('reads legacy `collections` key and exposes it as `sets`', () => {
+    const legacy = {
+      assets: {},
+      collections: {
+        wed24: { collectionId: 'wed24', name: 'Weddings 2024', kind: 'manual', assetIds: ['ast_a'] },
+      },
+    }
+    const out = normalizeLibraryConfig(legacy)
+    expect(out.sets).toBeDefined()
+    expect(out.sets.wed24).toMatchObject({ setId: 'wed24', name: 'Weddings 2024', assetIds: ['ast_a'] })
+    expect(out.collections).toBeUndefined()
+  })
+
+  it('reads modern `sets` key as-is', () => {
+    const modern = {
+      assets: {},
+      sets: {
+        wed24: { setId: 'wed24', name: 'Weddings 2024', kind: 'manual', assetIds: ['ast_a'] },
+      },
+    }
+    const out = normalizeLibraryConfig(modern)
+    expect(out.sets.wed24.setId).toBe('wed24')
+  })
+
+  it('migrates asset.collectionIds → asset.setIds', () => {
+    const legacy = {
+      assets: {
+        ast_a: { url: 'https://x/a.jpg', collectionIds: ['wed24'] },
+      },
+    }
+    const out = normalizeLibraryConfig(legacy)
+    expect(out.assets.ast_a.setIds).toEqual(['wed24'])
+    expect(out.assets.ast_a.collectionIds).toBeUndefined()
   })
 })
 

@@ -31,18 +31,18 @@ function normalizeLegacySection(section = {}) {
   return normalized;
 }
 
-function normalizeCollections(collections = {}) {
+function normalizeSets(sets = {}) {
   const normalized = {};
-  for (const [collectionId, collection] of Object.entries(collections || {})) {
-    if (!collection || typeof collection !== "object") continue;
-    normalized[collectionId] = {
-      collectionId,
-      name: collection.name || collectionId,
-      kind: collection.kind || "manual",
-      assetIds: uniqueStrings(collection.assetIds),
-      rule: collection.rule || null,
-      createdAt: collection.createdAt || null,
-      updatedAt: collection.updatedAt || null,
+  for (const [setId, set] of Object.entries(sets || {})) {
+    if (!set || typeof set !== "object") continue;
+    normalized[setId] = {
+      setId,
+      name: set.name || setId,
+      kind: set.kind || "manual",
+      assetIds: uniqueStrings(set.assetIds),
+      rule: set.rule || null,
+      createdAt: set.createdAt || null,
+      updatedAt: set.updatedAt || null,
     };
   }
   return normalized;
@@ -185,7 +185,7 @@ function createAssetRecord(assetId, imageRecord, existingAsset = {}, portfolios 
     caption: existingAsset.caption || "",
     alt: existingAsset.alt || "",
     tags: uniqueStrings(existingAsset.tags),
-    collectionIds: uniqueStrings(existingAsset.collectionIds),
+    setIds: uniqueStrings(existingAsset.setIds || existingAsset.collectionIds),
     forSale: existingAsset.forSale ?? false,
     source: {
       type: existingAsset.source?.type || "upload",
@@ -231,7 +231,7 @@ export function createEmptyLibraryConfig() {
     version: LIBRARY_CONFIG_VERSION,
     assets: {},
     assetOrder: [],
-    collections: {},
+    sets: {},
     savedViews: {},
     portfolios: {},
     galleries: {},
@@ -254,7 +254,7 @@ export function normalizeLibraryConfig(config = {}, allImages = []) {
     version: LIBRARY_CONFIG_VERSION,
     portfolios: normalizeLegacySection(raw.portfolios),
     galleries: normalizeLegacySection(raw.galleries),
-    collections: normalizeCollections(raw.collections),
+    sets: normalizeSets({ ...(raw.collections || {}), ...(raw.sets || {}) }),
     savedViews: normalizeSavedViews(raw.savedViews),
   };
 
@@ -376,7 +376,7 @@ export function mergeLibraryData(allImages, config) {
     assets: normalized.assets,
     assetOrder: normalized.assetOrder,
     assetIdByUrl,
-    collections: normalized.collections,
+    sets: normalized.sets,
     savedViews: normalized.savedViews,
     portfolios: normalized.portfolios,
     galleries: normalized.galleries,
