@@ -3,6 +3,7 @@ import { downloadJSON, uploadJSON } from './gcsClient'
 import { normalizePageEntity } from './assetRefs'
 import { getUserSiteConfigPath } from './gcsUser'
 import { slugify } from './pageUtils'
+import { defaultBlock } from './blocks'
 
 /**
  * Slugify a title into a URL-safe page ID.
@@ -85,13 +86,13 @@ export function createDefaultSiteConfig(userId) {
 export function seedBlocksForTemplate(template) {
   switch (template) {
     case 'gallery':
-      return [{ type: 'photos', images: [], imageUrls: [], layout: 'masonry' }]
+      return [defaultBlock('masonry')]
     case 'collection':
-      return [{ type: 'page-gallery', pageIds: [] }]
+      return [defaultBlock('page-gallery')]
     case 'about':
       return [
-        { type: 'text', content: '', variant: 1 },
-        { type: 'text', content: '', variant: 2 },
+        defaultBlock('text'),
+        { ...defaultBlock('text'), variant: 2 },
       ]
     default:
       return []

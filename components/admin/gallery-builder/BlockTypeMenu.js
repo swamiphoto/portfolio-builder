@@ -1,4 +1,7 @@
 import { useEffect, useRef } from "react";
+import { defaultBlock } from "../../../common/blocks";
+
+export { defaultBlock };
 
 const BLOCK_TYPES = [
   {
@@ -63,27 +66,6 @@ const BLOCK_TYPES = [
     ),
   },
 ];
-
-export function defaultBlock(type) {
-  switch (type) {
-    case "photo":
-      return { type: "photo", imageUrl: "", caption: "", variant: 1 };
-    case "photos":
-      return { type: "photos", images: [], imageUrls: [], layout: "stacked" };
-    case "stacked":
-      return { type: "photos", images: [], imageUrls: [], layout: "stacked" };
-    case "masonry":
-      return { type: "photos", images: [], imageUrls: [], layout: "masonry" };
-    case "text":
-      return { type: "text", content: "", variant: 1 };
-    case "video":
-      return { type: "video", url: "", caption: "", variant: 1 };
-    case "page-gallery":
-      return { type: "page-gallery", pageIds: [] };
-    default:
-      return { type };
-  }
-}
 
 export default function BlockTypeMenu({ onAdd, onClose, anchorRect }) {
   const ref = useRef(null);
