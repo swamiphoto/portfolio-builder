@@ -36,7 +36,7 @@ function mergeIncomingConfig(existingConfig, incomingConfig) {
     galleries: incomingConfig.galleries ?? existingConfig.galleries,
     assets: incomingConfig.assets ?? existingConfig.assets,
     assetOrder: incomingConfig.assetOrder ?? existingConfig.assetOrder,
-    collections: incomingConfig.collections ?? existingConfig.collections,
+    sets: incomingConfig.sets ?? incomingConfig.collections ?? existingConfig.sets,
     savedViews: incomingConfig.savedViews ?? existingConfig.savedViews,
   })
 }
