@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
-function buildCollectionTree(slugs) {
+function buildSetTree(slugs) {
   const bySlug = {};
   slugs.forEach((slug) => { bySlug[slug] = { slug, children: [] }; });
   const roots = [];
@@ -34,7 +34,7 @@ function subtreeMatches(node, q) {
   return node.children.some((child) => subtreeMatches(child, q));
 }
 
-function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
+function SetTreeRow({ node, depth, selectedSet, onAdd, query }) {
   const q = (query || '').toLowerCase();
   const slugLower = node.slug.toLowerCase();
   const labelLower = leafLabel(node.slug).toLowerCase();
@@ -90,18 +90,18 @@ function CollectionTreeRow({ node, depth, selectedSet, onAdd, query }) {
         </button>
       </div>
       {isExpanded && node.children.map((child) => (
-        <CollectionTreeRow key={child.slug} node={child} depth={depth + 1} selectedSet={selectedSet} onAdd={onAdd} query={query} />
+        <SetTreeRow key={child.slug} node={child} depth={depth + 1} selectedSet={selectedSet} onAdd={onAdd} query={query} />
       ))}
     </div>
   );
 }
 
-export default function CollectionPillsPicker({ existingSlugs, selectedSlugs, onAdd, onRemove, onCreate }) {
+export default function SetPillsPicker({ existingSlugs, selectedSlugs, onAdd, onRemove, onCreate }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
-  const tree = useMemo(() => buildCollectionTree(existingSlugs), [existingSlugs]);
+  const tree = useMemo(() => buildSetTree(existingSlugs), [existingSlugs]);
   const selectedSet = useMemo(() => new Set(selectedSlugs), [selectedSlugs]);
 
   const createSlug = useMemo(() => {
@@ -139,7 +139,7 @@ export default function CollectionPillsPicker({ existingSlugs, selectedSlugs, on
           ref={inputRef}
           type="text"
           value={query}
-          placeholder="Choose a collection for these uploads…"
+          placeholder="Choose a set for these uploads…"
           onFocus={() => setOpen(true)}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onKeyDown={(e) => {
@@ -171,17 +171,17 @@ export default function CollectionPillsPicker({ existingSlugs, selectedSlugs, on
             }}
           >
             {tree.length > 0 ? tree.map((node) => (
-              <CollectionTreeRow key={node.slug} node={node} depth={0} selectedSet={selectedSet} onAdd={handleAdd} query={query} />
+              <SetTreeRow key={node.slug} node={node} depth={0} selectedSet={selectedSet} onAdd={handleAdd} query={query} />
             )) : (
               !showCreate && (
                 <div style={{ padding: '8px 12px', fontFamily: MONO, fontSize: 10.5, color: 'var(--text-muted)' }}>
-                  No collections yet
+                  No sets yet
                 </div>
               )
             )}
             {query.trim() && !hasAnyMatch && !showCreate && (
               <div style={{ padding: '8px 12px', fontFamily: MONO, fontSize: 10.5, color: 'var(--text-muted)' }}>
-                No collections match
+                No sets match
               </div>
             )}
             {showCreate && (

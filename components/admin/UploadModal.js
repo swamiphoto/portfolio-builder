@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import CollectionPillsPicker from "./gallery-builder/CollectionPillsPicker";
+import SetPillsPicker from "./gallery-builder/SetPillsPicker";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
@@ -196,7 +196,7 @@ export default function UploadModal({ collections = [], defaultCollection = null
 
         {/* Collections */}
         <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(160,140,110,0.18)', marginTop: 12, paddingTop: 10, paddingBottom: 10 }}>
-          <CollectionPillsPicker
+          <SetPillsPicker
             existingSlugs={collections}
             selectedSlugs={selectedCollections}
             onAdd={(slug) => setSelectedCollections(prev => prev.includes(slug) ? prev : [...prev, slug])}

@@ -3,7 +3,7 @@ import { normalizeImageRef } from "../../../common/assetRefs";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { applyFilters, computeFilterCounts, placeholderColor } from "../../../common/libraryFilters";
 import PickerFilterRail from "./PickerFilterRail";
-import CollectionPillsPicker from "./CollectionPillsPicker";
+import SetPillsPicker from "./SetPillsPicker";
 import Tip from "../Tip";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
@@ -713,7 +713,7 @@ function UploadTab({ onUploaded, libraryConfig }) {
 
       {/* Collections picker — pills + searchable dropdown with create-new */}
       <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(160,140,110,0.18)', marginTop: 12, paddingTop: 10, paddingBottom: 10 }}>
-        <CollectionPillsPicker
+        <SetPillsPicker
           existingSlugs={existingSlugs}
           selectedSlugs={selectedCollections}
           onAdd={addCollection}
