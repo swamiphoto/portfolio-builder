@@ -1,5 +1,6 @@
 // components/admin/platform/PlatformSidebar.js
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Tip from '../Tip'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
@@ -179,6 +180,8 @@ export default function PlatformSidebar({
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [dotsAnchorEl, setDotsAnchorEl] = useState(null)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
+  const [navAddMenuOpen, setNavAddMenuOpen] = useState(false)
+  const navAddMenuRef = useRef(null)
   const [linkEditId, setLinkEditId] = useState(null)
   // Draft row for type-first page creation: { section: 'nav' | 'hidden' } or null
   const [draftRow, setDraftRow] = useState(null)
@@ -191,6 +194,8 @@ export default function PlatformSidebar({
   const [pageSettingsAnchorEl, setPageSettingsAnchorEl] = useState(null)
   const menuRef = useRef(null)
   const addMenuRef = useRef(null)
+  const addBtnRef = useRef(null)
+  const navAddBtnRef = useRef(null)
   const { drag, dropTargetPageId, setDropTargetPageId } = useDrag()
 
   // Custom page drag state
@@ -202,14 +207,15 @@ export default function PlatformSidebar({
   const didDragRef = useRef(false)
 
   useEffect(() => {
-    if (!menuOpenId && !addMenuOpen) return
+    if (!menuOpenId && !addMenuOpen && !navAddMenuOpen) return
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpenId(null)
-      if (addMenuRef.current && !addMenuRef.current.contains(e.target)) setAddMenuOpen(false)
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target) && addBtnRef.current && !addBtnRef.current.contains(e.target)) setAddMenuOpen(false)
+      if (navAddMenuRef.current && !navAddMenuRef.current.contains(e.target) && navAddBtnRef.current && !navAddBtnRef.current.contains(e.target)) setNavAddMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuOpenId, addMenuOpen])
+  }, [menuOpenId, addMenuOpen, navAddMenuOpen])
 
   useEffect(() => {
     if (pageDrag) {
@@ -285,14 +291,16 @@ export default function PlatformSidebar({
     setDraftValue('')
   }
 
-  function handleAddLink() {
+  function handleAddLink(section = 'hidden') {
     setAddMenuOpen(false)
+    setNavAddMenuOpen(false)
+    const inNav = section === 'nav'
     const base = 'new-link'
     onConfigChange(prev => {
       const existingIds = new Set(prev.pages.map(p => p.id))
       const id = nextAvailableId(base, existingIds)
-      const sortOrder = Math.max(0, ...prev.pages.filter(p => !p.showInNav).map(p => p.sortOrder ?? 0)) + 1
-      return { ...prev, pages: [...prev.pages, defaultLink({ id, title: 'New Link', sortOrder, showInNav: false, parentId: null })] }
+      const sortOrder = Math.max(0, ...prev.pages.filter(p => (p.showInNav !== false) === inNav).map(p => p.sortOrder ?? 0)) + 1
+      return { ...prev, pages: [...prev.pages, defaultLink({ id, title: 'New Link', sortOrder, showInNav: inNav, parentId: null })] }
     })
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     const id = nextAvailableId(base, existingIds)
@@ -604,41 +612,6 @@ export default function PlatformSidebar({
           </div>
         )}
 
-        {menuOpenId === page.id && (
-          <div ref={menuRef} className="absolute right-2 top-7 z-10 rounded-lg shadow-popup py-1 w-40" style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
-            <button
-              onClick={() => {
-                const anchor = dotsAnchorEl
-                setMenuOpenId(null)
-                setPageSettingsId(page.id)
-                setPageSettingsAnchorEl(anchor)
-              }}
-              className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Settings
-            </button>
-            <button onClick={() => handleRenameStart(page)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Rename</button>
-            {page.showInNav && page.type !== 'link' && siteConfig.homePageId !== page.id && (
-              <button
-                onClick={() => { setMenuOpenId(null); onConfigChange(prev => ({ ...prev, homePageId: page.id })) }}
-                className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                Set as home
-              </button>
-            )}
-            <button
-              onClick={() => { setMenuOpenId(null); handleDelete(page.id) }}
-              className="w-full text-left px-3 py-1.5 text-sm transition-colors"
-              style={{ color: '#c14a4a', fontWeight: 500 }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-            >
-              Delete
-            </button>
-          </div>
-        )}
 
         {isLink && linkEditId === page.id && (
           <div className="mx-2 mb-2 p-2.5 rounded-lg shadow-popup space-y-2" style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
@@ -768,21 +741,24 @@ export default function PlatformSidebar({
             <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
               Pages
             </span>
-            <Tip label="Add page to nav" side="left">
-              <button
-                type="button"
-                onClick={() => startDraft('nav')}
-                style={{
-                  width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'transparent', border: 'none', borderRadius: 3, cursor: 'pointer', color: C.textFaint,
-                  transition: 'background 120ms, color 120ms',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)'; e.currentTarget.style.color = C.textBody }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textFaint }}
-              >
-                <IconPlus width={14} height={14} />
-              </button>
-            </Tip>
+            <div ref={navAddMenuRef}>
+              <Tip label="Add page to nav" side="left">
+                <button
+                  ref={navAddBtnRef}
+                  type="button"
+                  onClick={() => setNavAddMenuOpen(v => !v)}
+                  style={{
+                    width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'transparent', border: 'none', borderRadius: 3, cursor: 'pointer', color: C.textFaint,
+                    transition: 'background 120ms, color 120ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)'; e.currentTarget.style.color = C.textBody }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textFaint }}
+                >
+                  <IconPlus width={14} height={14} />
+                </button>
+              </Tip>
+            </div>
           </div>
         <SidebarSection
           label=""
@@ -807,8 +783,9 @@ export default function PlatformSidebar({
         {draftRow?.section === 'hidden' && renderDraftRow()}
 
         {/* Add Page button */}
-        <div className="relative" ref={addMenuRef} style={{ margin: '10px 8px 0' }}>
+        <div ref={addMenuRef} style={{ margin: '10px 8px 0' }}>
           <button
+            ref={addBtnRef}
             type="button"
             onClick={() => setAddMenuOpen(v => !v)}
             style={{
@@ -824,12 +801,6 @@ export default function PlatformSidebar({
             <IconPlus />
             Add Page
           </button>
-          {addMenuOpen && (
-            <div className="absolute left-0 bottom-full mb-1 rounded-lg shadow-popup z-20 py-1 w-36" style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
-              <button onClick={() => startDraft('hidden')} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Page</button>
-              <button onClick={handleAddLink} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Link ↗</button>
-            </div>
-          )}
         </div>
 
         {/* Bottom padding */}
@@ -938,6 +909,161 @@ export default function PlatformSidebar({
           onSignOut={onSignOut}
         />
       )}
+
+      {/* Page "..." menu — portalled to body to escape overflow-y:auto clipping */}
+      {menuOpenId && dotsAnchorEl && typeof document !== 'undefined' && (() => {
+        const menuPage = pages.find(p => p.id === menuOpenId)
+        if (!menuPage) return null
+        const rect = dotsAnchorEl.getBoundingClientRect()
+        return createPortal(
+          <div
+            ref={menuRef}
+            className="rounded-md overflow-hidden whitespace-nowrap"
+            style={{
+              position: 'fixed',
+              top: rect.bottom + 4,
+              right: window.innerWidth - rect.right - 4,
+              minWidth: 128,
+              background: 'var(--popover)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+              padding: '4px 0',
+              zIndex: 9999,
+            }}
+          >
+            <button
+              onClick={() => {
+                const anchor = dotsAnchorEl
+                setMenuOpenId(null)
+                setPageSettingsId(menuPage.id)
+                setPageSettingsAnchorEl(anchor)
+              }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              Settings
+            </button>
+            <button
+              onClick={() => handleRenameStart(menuPage)}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              Rename
+            </button>
+            {menuPage.showInNav && menuPage.type !== 'link' && siteConfig.homePageId !== menuPage.id && (
+              <button
+                onClick={() => { setMenuOpenId(null); onConfigChange(prev => ({ ...prev, homePageId: menuPage.id })) }}
+                className="w-full text-left transition-colors"
+                style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                Set as home
+              </button>
+            )}
+            <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
+            <button
+              onClick={() => { setMenuOpenId(null); handleDelete(menuPage.id) }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: '#c14a4a', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              Delete
+            </button>
+          </div>,
+          document.body
+        )
+      })()}
+
+      {/* Nav "+" add menu — portalled */}
+      {navAddMenuOpen && navAddBtnRef.current && typeof document !== 'undefined' && (() => {
+        const rect = navAddBtnRef.current.getBoundingClientRect()
+        return createPortal(
+          <div
+            ref={navAddMenuRef}
+            className="rounded-md overflow-hidden whitespace-nowrap"
+            style={{
+              position: 'fixed',
+              top: rect.bottom + 4,
+              right: window.innerWidth - rect.right,
+              minWidth: 152,
+              background: 'var(--popover)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+              padding: '4px 0',
+              zIndex: 9999,
+            }}
+          >
+            <button
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
+              Page
+            </button>
+            <button
+              onClick={() => { setNavAddMenuOpen(false); handleAddLink('nav') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconLink style={{ flexShrink: 0, color: C.textMuted }} />
+              Link
+            </button>
+          </div>,
+          document.body
+        )
+      })()}
+
+      {/* Bottom "Add Page" menu — portalled, opens above the button */}
+      {addMenuOpen && addBtnRef.current && typeof document !== 'undefined' && (() => {
+        const rect = addBtnRef.current.getBoundingClientRect()
+        return createPortal(
+          <div
+            ref={addMenuRef}
+            className="rounded-md overflow-hidden whitespace-nowrap"
+            style={{
+              position: 'fixed',
+              bottom: window.innerHeight - rect.top + 4,
+              left: rect.left,
+              minWidth: Math.max(rect.width, 152),
+              background: 'var(--popover)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+              padding: '4px 0',
+              zIndex: 9999,
+            }}
+          >
+            <button
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
+              Page
+            </button>
+            <button
+              onClick={() => { setAddMenuOpen(false); handleAddLink('hidden') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconLink style={{ flexShrink: 0, color: C.textMuted }} />
+              Link
+            </button>
+          </div>,
+          document.body
+        )
+      })()}
 
       {pageSettingsId && pageSettingsAnchorEl && (() => {
         const settingsPage = pages.find(p => p.id === pageSettingsId)
