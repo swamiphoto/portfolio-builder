@@ -68,9 +68,6 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
 function IconHome(p) {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
 }
-function IconGallery(p) {
-  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
-}
 function IconText(p) {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="4" y1="7" x2="14" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="17" y2="17"/></svg>
 }
@@ -450,7 +447,7 @@ export default function PlatformSidebar({
     if (isHome) return <IconHome />
     if (page.type === 'link') return <IconLink />
     if (page.type === 'text') return <IconText />
-    return <IconGallery />
+    return <IconGrid />
   }
 
   function renderDraftRow() {
@@ -466,7 +463,10 @@ export default function PlatformSidebar({
           }}
         >
           <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 14, color: C.accent }}>
-            <IconGallery />
+            {draftRow?.template === 'about' ? <IconText />
+              : draftRow?.template === 'collection' ? <IconImages />
+              : draftRow?.template === 'blank' ? <IconDocument />
+              : <IconGrid />}
           </div>
           <input
             autoFocus
@@ -1038,7 +1038,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
               Gallery
             </button>
             <button
@@ -1048,7 +1048,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
               Collection
             </button>
             <button
@@ -1115,7 +1115,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
               Gallery
             </button>
             <button
@@ -1125,7 +1125,7 @@ export default function PlatformSidebar({
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <IconGrid style={{ flexShrink: 0, color: C.textMuted }} />
+              <IconImages style={{ flexShrink: 0, color: C.textMuted }} />
               Collection
             </button>
             <button
