@@ -1,5 +1,7 @@
 # Library Spec
 
+> **2026-04-28 update:** "Collections" in this spec are now called "Sets". The term "Collection" is reserved for the public-facing Collection page template. Read `collection*` → `set*` throughout.
+
 ## Purpose
 
 This document turns the library concept into an implementation-ready model for the current product.

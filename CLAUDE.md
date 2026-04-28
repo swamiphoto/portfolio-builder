@@ -28,6 +28,7 @@ See `docs/designs/photohub-platform-design.md` for the full product design.
 - Draft/publish workflow with 1.5s debounced autosave
 - GCS JSON config files for all persistent data
 - PhotoPickerModal for image selection across all editors
+- Library "Sets" = curated groupings of assets (renamed from "Collections" 2026-04-28; "Collection" is now reserved for the public-facing Collection page template).
 
 ## What Needs Building (from design doc)
 
