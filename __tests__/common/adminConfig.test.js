@@ -253,6 +253,27 @@ describe('normalizeLibraryConfig — sets back-compat', () => {
     expect(out.assets.ast_a.setIds).toEqual(['wed24'])
     expect(out.assets.ast_a.collectionIds).toBeUndefined()
   })
+
+  it('prefers modern `sets` over legacy `collections` on key collision', () => {
+    const both = {
+      assets: {},
+      collections: { wed24: { name: 'Old Name', assetIds: ['ast_x'] } },
+      sets: { wed24: { name: 'New Name', assetIds: ['ast_y'] } },
+    }
+    const out = normalizeLibraryConfig(both)
+    expect(out.sets.wed24.name).toBe('New Name')
+    expect(out.sets.wed24.assetIds).toEqual(['ast_y'])
+  })
+
+  it('prefers asset.setIds over legacy asset.collectionIds when both present', () => {
+    const mixed = {
+      assets: {
+        ast_a: { url: 'https://x/a.jpg', setIds: ['new'], collectionIds: ['old'] },
+      },
+    }
+    const out = normalizeLibraryConfig(mixed)
+    expect(out.assets.ast_a.setIds).toEqual(['new'])
+  })
 })
 
 describe('normalizeLibraryConfig — forSale reserved', () => {
