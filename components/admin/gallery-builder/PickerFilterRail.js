@@ -164,7 +164,7 @@ export default function PickerFilterRail({
   selectedSet,
   onSelectSet,
   counts,
-  setCounts,
+  countsBySet,
   onClearAll,
   pages,
   selectedPage,
@@ -190,7 +190,7 @@ export default function PickerFilterRail({
     return <CollapsedRail onExpand={() => onToggleCollapsed(false)} activeCount={activeCount} />
   }
 
-  const setKeys = Object.keys(setCounts || {}).filter(k => k !== 'all').sort()
+  const setSlugs = Object.keys(countsBySet || {}).filter(k => k !== 'all').sort()
 
   return (
     <div
@@ -417,14 +417,14 @@ export default function PickerFilterRail({
           </FilterSection>
         )}
 
-        {setKeys.length > 0 && (
+        {setSlugs.length > 0 && (
           <FilterSection title="Sets" defaultOpen={false}>
-            {setKeys.map(key => (
+            {setSlugs.map(key => (
               <FilterRow
                 key={key}
                 active={selectedSet === key}
                 label={key}
-                count={setCounts[key]}
+                count={countsBySet[key]}
                 onClick={() => onSelectSet(selectedSet === key ? 'all' : key)}
               />
             ))}

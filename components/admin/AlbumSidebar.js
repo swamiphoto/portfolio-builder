@@ -358,7 +358,7 @@ function SetRow({
                   onClick={(e) => {
                     stop(e)
                     setMenuOpen(false)
-                    if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its sub-sets' : ''}?`)) {
+                    if (confirm(`Delete "${node.label}"${node.hasChildren ? ' and all its children' : ''}?`)) {
                       onDelete()
                     }
                   }}

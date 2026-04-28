@@ -250,11 +250,11 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     [images]
   );
 
-  // Counts over the full set — sidebar shows full options regardless of current filters
+  // Counts over all assets — sidebar shows full options regardless of current filters
   const counts = useMemo(() => computeFilterCounts(allAssets), [allAssets]);
 
   // Set counts: { all: total, "<gallery key>": count }
-  const setCounts = useMemo(() => {
+  const countsBySet = useMemo(() => {
     const galleries = libraryConfig?.galleries || {};
     const out = { all: allAssets.length };
     Object.keys(galleries).forEach(slug => {
@@ -560,7 +560,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
         selectedSet={selectedSet}
         onSelectSet={setSelectedSet}
         counts={counts}
-        setCounts={setCounts}
+        countsBySet={countsBySet}
         onClearAll={clearAll}
         pages={pages}
         selectedPage={selectedPage}
