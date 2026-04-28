@@ -122,7 +122,7 @@ function ManualTab({ pages, currentPageId, selectedIds, onChange }) {
       {selectedRows.length > 0 && (
         <>
           <div style={{ padding: '4px 8px 8px', fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', color: C.textMuted, fontWeight: 500 }}>
-            Selected ({selectedRows.length}) — drag to reorder
+            Selected ({selectedRows.length}) — use arrows to reorder
           </div>
           {selectedRows.map((p, idx) => (
             <GalleryRow key={p.id} page={p} checked onToggle={() => toggle(p.id)}
