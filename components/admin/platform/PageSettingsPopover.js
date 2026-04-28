@@ -5,6 +5,7 @@ import { getSizedUrl } from '../../../common/imageUtils'
 import { buildPreviewSequence, MUSIC_POOL, musicIdToUrl, musicUrlToId, randomMusicUrl } from '../../../common/slideshowSync'
 import { resolveCaption } from '../../../common/captionResolver'
 import PopoverShell from './PopoverShell'
+import Tip from '../Tip'
 
 const BORDER = 'rgba(160,140,110,0.18)'
 const INPUT = 'w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug'
@@ -116,7 +117,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const isPoolTrack = MUSIC_POOL.some(t => t.id === currentMusicId)
   const [musicMode, setMusicMode] = useState(isPoolTrack || !slideshow.musicUrl ? 'pool' : 'custom')
   const [customMusicUrl, setCustomMusicUrl] = useState(!isPoolTrack ? (slideshow.musicUrl || '') : '')
-  const [tooltip, setTooltip] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   function update(patch) { onUpdate({ ...page, ...patch }) }
   function updateCf(key, patch) {
@@ -153,15 +154,28 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const textCount = sequence.filter(s => s.type === 'text').length
 
   const selectStyle = {
-    border: `1px solid ${BORDER}`,
-    borderRadius: 4,
-    padding: '4px 8px',
+    width: '100%',
+    background: 'transparent',
+    border: 'none',
+    borderBottom: `1px solid ${BORDER}`,
+    padding: '0 0 7px',
     fontSize: 12,
     color: 'var(--text-secondary)',
-    background: 'var(--card)',
     outline: 'none',
-    width: '100%',
+    transition: 'border-color 0.15s',
+    appearance: 'none',
+    cursor: 'pointer',
+    paddingRight: 16,
+    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23a8967a' stroke-width='2'><path d='M4 6l4 4 4-4'/></svg>")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 0 center',
+    backgroundSize: '12px',
   }
+
+  const rootDomain = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
+  const isLocalhost = rootDomain.includes('localhost')
+  const protocol = isLocalhost ? 'http' : 'https'
+  const slideshowUrl = `${protocol}://${username}.${rootDomain}/${displaySlug}/slideshow`
 
   // ── Password drill-in ─────────────────────────────────────────────────────
   if (view === 'password') {
@@ -197,7 +211,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
         {slideshow.enabled && <>
           <div className="px-3 pt-3 space-y-3">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Theme</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Style</div>
               <select
                 style={selectStyle}
                 value={slideshow.layout || 'kenburns'}
@@ -239,7 +253,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             </div>
           </div>
 
-          <div className="px-3 pb-3">
+          <div className="px-3 py-3">
             <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-2" style={{ color: 'var(--text-muted)' }}>
               Sequence · {includedCount} image{includedCount !== 1 ? 's' : ''}{textCount > 0 ? ` · ${textCount} text` : ''}
             </div>
@@ -255,57 +269,93 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 {sequence.map((item, i) => {
                   if (item.type === 'text') {
                     return (
-                      <div
-                        key={`text-${i}`}
-                        onMouseEnter={(e) => { if (item.content) { const r = e.currentTarget.getBoundingClientRect(); setTooltip({ text: item.content, x: r.left + r.width / 2, y: r.top }) } }}
-                        onMouseLeave={() => setTooltip(null)}
-                        className="w-10 h-10 rounded flex items-center justify-center cursor-default flex-shrink-0"
-                        style={{ background: 'var(--panel)', border: `1px solid ${BORDER}` }}
-                      >
-                        <svg className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-                        </svg>
-                      </div>
+                      <Tip key={`text-${i}`} label={item.content || 'Text slide'} side="top">
+                        <div
+                          className="w-10 h-10 rounded flex items-center justify-center cursor-default flex-shrink-0"
+                          style={{ background: 'var(--panel)', border: `1px solid ${BORDER}` }}
+                        >
+                          <svg className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                          </svg>
+                        </div>
+                      </Tip>
                     )
                   }
                   return (
-                    <button
-                      key={`img-${item.url}-${i}`}
-                      onClick={() => toggleExcluded(item.url)}
-                      onMouseEnter={(e) => { if (item.caption) { const r = e.currentTarget.getBoundingClientRect(); setTooltip({ text: item.caption, x: r.left + r.width / 2, y: r.top }) } }}
-                      onMouseLeave={() => setTooltip(null)}
-                      className={`relative group w-10 h-10 overflow-hidden rounded flex-shrink-0 transition-all`}
-                      style={{ opacity: item.excluded ? 0.25 : 1, border: `1px solid ${BORDER}` }}
-                    >
-                      <img src={item.url} alt="" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none">
-                        {item.excluded ? (
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
+                    <Tip key={`img-${item.url}-${i}`} label={item.excluded ? 'Include in slideshow' : 'Exclude from slideshow'} side="top">
+                      <button
+                        onClick={() => toggleExcluded(item.url)}
+                        className={`relative group w-10 h-10 overflow-hidden rounded flex-shrink-0 transition-all`}
+                        style={{ opacity: item.excluded ? 0.25 : 1, border: `1px solid ${BORDER}` }}
+                      >
+                        <img src={getSizedUrl(item.url, 'thumbnail')} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none">
+                          {item.excluded ? (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    </Tip>
                   )
                 })}
               </div>
             )}
           </div>
+
+          <div className="px-3 py-3" style={{ borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ border: `1px solid ${BORDER}`, borderRadius: 6, overflow: 'hidden' }}>
+              {/* URL row */}
+              <div className="flex items-center gap-2 px-2.5 py-2" style={{ borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,253,250,0.6)' }}>
+                <svg className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                </svg>
+                <span className="flex-1 font-mono text-[10px] truncate" style={{ color: 'var(--text-secondary)' }}>
+                  {username}.{rootDomain}/{displaySlug}/slideshow
+                </span>
+                <Tip label={copied ? 'Copied!' : 'Copy link'} side="top">
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(slideshowUrl); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+                    className="flex-shrink-0 transition-colors"
+                    style={{ color: copied ? 'var(--sepia-accent)' : 'var(--text-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    onMouseEnter={e => { if (!copied) e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    onMouseLeave={e => { if (!copied) e.currentTarget.style.color = 'var(--text-muted)' }}
+                  >
+                    {copied ? (
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                      </svg>
+                    )}
+                  </button>
+                </Tip>
+              </div>
+              {/* Preview button */}
+              <button
+                onClick={() => window.open(slideshowUrl, '_blank')}
+                className="w-full flex items-center justify-center gap-1.5 py-2 transition-colors"
+                style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.04em', color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.07)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                Preview slideshow
+              </button>
+            </div>
+          </div>
         </>}
 
-        {tooltip && (
-          <div
-            className="fixed z-[10000] px-2 py-1 text-white text-[10px] rounded pointer-events-none max-w-[200px] leading-snug"
-            style={{ left: tooltip.x, top: tooltip.y - 6, transform: 'translate(-50%, -100%)', background: 'rgba(26,18,10,0.88)' }}
-          >
-            {tooltip.text}
-          </div>
-        )}
       </PopoverShell>
     )
   }
