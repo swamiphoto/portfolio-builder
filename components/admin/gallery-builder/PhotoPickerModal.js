@@ -754,9 +754,9 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
   const [previewAsset, setPreviewAsset] = useState(null);
   const panelRef = useRef(null);
   const dragState = useRef(null);
-  // Default position: right of platform sidebar (~280) + block sidebar (~260) so the
-  // picker opens beside the block being edited, not over it.
-  const [pos, setPos] = useState({ x: 560, y: 80 });
+  // Default position: right of site sidebar (256) + block sidebar (260) = 516, with a
+  // small gap so the picker opens beside the block being edited, not over it.
+  const [pos, setPos] = useState({ x: 526, y: 80 });
 
   // ESC closes preview
   useEffect(() => {

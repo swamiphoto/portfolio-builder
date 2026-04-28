@@ -579,11 +579,11 @@ function BlockCard({
                 ) : (
                   <div
                     onClick={onAddPhotos}
-                    className={`flex flex-col items-center justify-center h-20 border-dashed cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'border-blue-400 bg-blue-50' : 'hover:border-[#a08a68]'}`}
-                    style={photoDropHover ? {} : { background: '#f6f3ec', border: '1px dashed var(--card-border)' }}
+                    className={`flex flex-col items-center justify-center h-20 cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'bg-blue-50' : ''}`}
+                    style={photoDropHover ? { border: '1px solid #93c5fd', borderRadius: 2 } : { background: '#ece4d2', borderRadius: 2 }}
                   >
-                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'var(--text-secondary)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
-                    {!photoDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
+                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'rgba(58,54,47,0.55)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
+                    {!photoDropHover && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'rgba(58,54,47,0.7)' }}>select from library</span></span>}
                   </div>
                 )}
               </div>
