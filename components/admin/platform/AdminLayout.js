@@ -22,7 +22,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
         <div
           className="flex-shrink-0 h-full overflow-hidden relative"
           style={{
-            width: sidebarCollapsed ? 40 : 280,
+            width: sidebarCollapsed ? 40 : 256,
             background: '#efeae1',
             borderRight: '1px solid rgba(26,18,10,0.07)',
             transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',

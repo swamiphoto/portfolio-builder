@@ -7,8 +7,13 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
   useEffect(() => {
     if (!anchorEl) return
     const rect = anchorEl.getBoundingClientRect()
-    const top = Math.max(8, rect.bottom + 6)
-    const maxHeight = window.innerHeight - top - 8
+    const belowSpace = window.innerHeight - rect.bottom - 8
+    const aboveSpace = rect.top - 8
+    const shouldOpenUp = belowSpace < 320 && aboveSpace > belowSpace
+    const maxHeight = Math.max(180, Math.min(560, shouldOpenUp ? aboveSpace : belowSpace))
+    const top = shouldOpenUp
+      ? Math.max(8, rect.top - maxHeight - 6)
+      : Math.max(8, rect.bottom + 6)
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     setPos({ left, top, maxHeight })
   }, [anchorEl, width])

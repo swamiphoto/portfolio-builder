@@ -245,11 +245,12 @@ function BlockCard({
 
   return (
     <div
-      className="group/card relative overflow-hidden mb-1.5"
+      className="group/card relative overflow-hidden block-card-spec"
       style={{
         background: '#f6f3ec',
-        borderRadius: 4,
-        boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)',
+        borderRadius: 5,
+        boxShadow: '0 1px 2px rgba(26,18,10,0.05), 0 0 0 1px rgba(26,18,10,0.06)',
+        transition: 'box-shadow 150ms',
       }}
       onDragEnter={isPhotoBlock ? (e) => { e.preventDefault(); setGridDropHover(true); } : undefined}
       onDragOver={isPhotoBlock ? handleDragOver : undefined}
@@ -259,47 +260,63 @@ function BlockCard({
       {glowing && (
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ animation: 'blockGlow 3.5s linear forwards', zIndex: 10, borderRadius: 4 }}
+          style={{ animation: 'blockGlow 3.5s linear forwards', zIndex: 10, borderRadius: 5 }}
         />
       )}
 
       {/* Card header */}
-      <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-2">
+      <div className="flex items-center" style={{ gap: 8, padding: '8px 10px 7px' }}>
         {block.type === 'page' ? (
-          <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <rect x="2" y="4" width="20" height="14" rx="2" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2 14l5-5a2 2 0 012.8 0l3 3 2.2-2.2a2 2 0 012.8 0L22 13" />
+          <span className="flex-shrink-0" style={{ color: '#9e9788', display: 'flex', alignItems: 'center', width: 13 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="14" rx="1.5"/>
+              <circle cx="8.5" cy="9.5" r="1.4"/>
+              <path d="M3 16l5-4 4 3 4-3 5 4"/>
             </svg>
           </span>
         ) : (
           <span
             {...dragHandleProps}
-            className="cursor-grab text-sm leading-none select-none flex-shrink-0 transition-colors"
-            style={{ color: 'var(--text-muted)' }}
+            className="cursor-grab select-none flex-shrink-0 transition-colors group-hover/card:text-[#9e9788]"
+            style={{ color: '#b0a490', display: 'flex', alignItems: 'center', width: 7 }}
           >
-            ⠿
+            <svg width="7" height="11" viewBox="0 0 7 11" fill="currentColor">
+              <circle cx="2" cy="2" r="1"/><circle cx="5" cy="2" r="1"/>
+              <circle cx="2" cy="5.5" r="1"/><circle cx="5" cy="5.5" r="1"/>
+              <circle cx="2" cy="9" r="1"/><circle cx="5" cy="9" r="1"/>
+            </svg>
           </span>
         )}
 
         <button
-          className="text-xs font-semibold tracking-wide flex-1 text-left transition-colors"
-          style={{ color: 'var(--text-secondary)', cursor: onTitleClick ? 'pointer' : 'default' }}
+          className="flex-1 text-left transition-colors"
+          style={{
+            fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+            fontSize: 9.5,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            fontWeight: 500,
+            color: '#3a362f',
+            cursor: onTitleClick ? 'pointer' : 'default',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+          }}
           onClick={onTitleClick || undefined}
         >
           {TYPE_LABELS[block.type] || block.type}
         </button>
 
         {/* Right side: metadata (default) ↔ toolbar pill (hover) */}
-        <div className="relative flex items-center">
+        <div className="relative flex items-center" style={{ minHeight: 22 }}>
           {/* Toolbar pill: always in DOM to reserve space; cross-fades in on card hover */}
           <div
-            className={`flex items-center gap-0.5 transition-opacity duration-150 ${showDesign || showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto'}`}
+            className={`flex items-center transition-opacity duration-150 ${showDesign || showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto'}`}
             style={{
-              background: 'rgba(235,228,216,0.7)',
-              boxShadow: '0 1px 4px rgba(26,18,10,0.12)',
-              borderRadius: 5,
-              padding: '2px 3px',
+              background: showDesign || showMenu ? 'rgba(232,225,212,0.9)' : 'rgba(232,225,212,0.9)',
+              borderRadius: 4,
+              padding: '1px 2px',
+              gap: 1,
             }}
           >
             {(block.type === "photo" || isPhotoBlock) && (
@@ -310,10 +327,14 @@ function BlockCard({
               }>
                 <button
                   onClick={() => { onTitleClick?.(); onAddPhotos(); }}
-                  className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] text-base leading-none"
-                  style={{ color: 'var(--text-muted)' }}
+                  className="flex items-center justify-center rounded transition-colors"
+                  style={{ width: 24, height: 24, color: '#9e9788', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  +
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
+                    <path d="M8 3v10M3 8h10" />
+                  </svg>
                 </button>
               </Tip>
             )}
@@ -324,8 +345,10 @@ function BlockCard({
                   <button
                     ref={designBtnRef}
                     onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
-                    className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] flex-shrink-0"
-                    style={{ color: showDesign ? 'var(--text-primary)' : 'var(--text-muted)' }}
+                    className="flex items-center justify-center rounded transition-colors flex-shrink-0"
+                    style={{ width: 24, height: 24, color: showDesign ? '#1d1b17' : '#9e9788', background: showDesign ? 'rgba(26,18,10,0.06)' : 'transparent', border: 'none', cursor: 'pointer' }}
+                    onMouseEnter={e => { if (!showDesign) e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                    onMouseLeave={e => { if (!showDesign) e.currentTarget.style.background = 'transparent' }}
                   >
                     <PaintbrushIcon />
                   </button>
@@ -353,10 +376,16 @@ function BlockCard({
                     return !v;
                   });
                 }}
-                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] text-sm leading-none"
-                style={{ color: 'var(--text-muted)' }}
+                className="flex items-center justify-center rounded transition-colors"
+                style={{ width: 24, height: 24, color: showMenu ? '#1d1b17' : '#9e9788', background: showMenu ? 'rgba(26,18,10,0.06)' : 'transparent', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => { if (!showMenu) e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                onMouseLeave={e => { if (!showMenu) e.currentTarget.style.background = 'transparent' }}
               >
-                ⋯
+                <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor">
+                  <circle cx="1.5" cy="1.5" r="1"/>
+                  <circle cx="5.5" cy="1.5" r="1"/>
+                  <circle cx="9.5" cy="1.5" r="1"/>
+                </svg>
               </button>
               {showMenu && menuPos && (
                 <div
@@ -438,23 +467,38 @@ function BlockCard({
             <Tip label={expanded ? "Collapse" : "Expand"}>
               <button
                 onClick={() => setExpanded((v) => !v)}
-                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/[0.06] flex-shrink-0"
-                style={{ color: 'var(--text-muted)' }}
+                className="flex items-center justify-center rounded transition-colors flex-shrink-0"
+                style={{ width: 24, height: 24, color: '#9e9788', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
               >
-                <svg
-                  className={`w-3.5 h-3.5 transition-transform ${expanded ? "" : "rotate-180"}`}
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                </svg>
+                {expanded ? (
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 10l4-4 4 4"/>
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 6l4 4 4-4"/>
+                  </svg>
+                )}
               </button>
             </Tip>
           </div>
 
           {/* Metadata: absolute overlay that fades out on card hover */}
           {headerMeta && (
-            <div className={`absolute inset-0 flex items-center justify-end transition-opacity duration-150 pointer-events-none pr-1 ${showDesign || showMenu ? 'opacity-0' : 'opacity-100 group-hover/card:opacity-0'}`}>
-              <span className="text-[10px] font-mono tracking-wide truncate" style={{ color: 'var(--text-muted)' }}>
+            <div className={`absolute inset-0 flex items-center justify-end transition-opacity duration-150 pointer-events-none ${showDesign || showMenu ? 'opacity-0' : 'opacity-100 group-hover/card:opacity-0'}`} style={{ paddingRight: 4 }}>
+              <span
+                className="truncate"
+                style={{
+                  fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+                  fontSize: 9.5,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: '#b0a490',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {headerMeta}
               </span>
             </div>
@@ -465,7 +509,7 @@ function BlockCard({
 
       {/* Expanded body */}
       {expanded && (
-        <div className="px-3 pb-3 pt-0 space-y-2.5">
+        <div style={{ padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Single photo */}
           {block.type === "photo" && (
@@ -552,16 +596,26 @@ function BlockCard({
               {blockImageRefs.length === 0 ? (
                 <div
                   onClick={onAddPhotos}
-                  className={`flex flex-col items-center justify-center h-16 border-dashed cursor-pointer transition-colors gap-0.5 ${gridDropHover ? 'border-blue-400 bg-blue-50' : 'hover:border-[#a08a68]'}`}
-                  style={gridDropHover ? {} : { background: '#f6f3ec', border: '1px dashed var(--card-border)' }}
+                  className={`grid grid-cols-3 cursor-pointer transition-opacity ${gridDropHover ? 'opacity-60' : ''}`}
+                  style={{ gap: 1, background: '#e8dfcd', borderRadius: 2, overflow: 'hidden' }}
                 >
-                  <span className={`text-xs ${gridDropHover ? 'text-blue-600' : ''}`} style={gridDropHover ? {} : { color: 'var(--text-secondary)' }}>{gridDropHover ? 'Drop photos here' : 'Drag photos here'}</span>
-                  {!gridDropHover && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'var(--text-primary)' }}>select from library</span></span>}
+                  {(() => {
+                    const SEPIA_PLACEHOLDERS = ['#9a8466', '#a08a68', '#8a7252', '#c4a987', '#7a6244', '#5a4a36', '#a08a68', '#9a8466', '#c4a987']
+                    return SEPIA_PLACEHOLDERS.map((c, i) => (
+                      <div
+                        key={i}
+                        className="aspect-square transition-opacity"
+                        style={{ background: c, opacity: 0.85 }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.85' }}
+                      />
+                    ))
+                  })()}
                 </div>
               ) : (
                 <div
                   className={`grid grid-cols-3 transition-all ${gridDropHover ? 'opacity-60' : ''}`}
-                  style={{ gap: 1, background: '#f6f3ec' }}
+                  style={{ gap: 1, background: '#e8dfcd', borderRadius: 2, overflow: 'hidden' }}
                 >
                   {(() => {
                     const thumbRefs = blockImageRefs.map(r => ({
@@ -629,16 +683,20 @@ function BlockCard({
                             onRemove={() => onRemovePhoto(blockImageRefs[i])}
                           />
                         ))}
-                        {Array.from({ length: placeholderCount }).map((_, i) => (
-                          <div
-                            key={`ph-${i}`}
-                            className="aspect-square cursor-pointer transition-colors"
-                            style={{ background: 'var(--panel-hover)', borderRadius: 2 }}
-                            onClick={() => { onTitleClick?.(); onAddPhotos(); }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-border)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--panel-hover)'; }}
-                          />
-                        ))}
+                        {Array.from({ length: placeholderCount }).map((_, i) => {
+                          const SEPIA_PLACEHOLDERS = ['#9a8466', '#a08a68', '#8a7252', '#c4a987', '#7a6244', '#5a4a36']
+                          const baseColor = SEPIA_PLACEHOLDERS[(thumbRefs.length + i) % SEPIA_PLACEHOLDERS.length]
+                          return (
+                            <div
+                              key={`ph-${i}`}
+                              className="aspect-square cursor-pointer transition-opacity"
+                              style={{ background: baseColor, opacity: 0.85 }}
+                              onClick={() => { onTitleClick?.(); onAddPhotos(); }}
+                              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
+                              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                            />
+                          )
+                        })}
                       </>
                     );
                   })()}

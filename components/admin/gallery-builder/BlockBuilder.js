@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle, cloneElement, isValidElement } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { useDrag } from '../../../common/dragContext';
 import Tip from "../Tip";
@@ -36,7 +36,7 @@ function InsertionZone({ onInsert }) {
   return (
     <div
       className="group/zone relative flex items-center justify-center cursor-pointer"
-      style={{ height: 14, marginTop: -6, zIndex: 2 }}
+      style={{ height: 6, marginTop: 0, zIndex: 2 }}
       onClick={onInsert}
     >
       <div
@@ -219,81 +219,105 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       style={{ background: '#efeae1' }}
     >
 
-      {/* Top bar */}
+      {/* MASTHEAD — Editing eyebrow + page title (mirrors page sidebar masthead) */}
       {onToggleExpand && (
-        <div className="flex-shrink-0 flex items-center px-3 gap-0.5" style={{ height: 36, borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
-          <span className="flex-1 text-[11px] font-semibold truncate mr-1" style={{ color: 'var(--text-secondary)' }}>
-            {gallery.name || 'Untitled'}
-          </span>
-
-          {/* Page settings */}
-          {onOpenPageSettings && (
-            <Tip label="Page settings" side="bottom">
-              <button
-                onClick={(e) => onOpenPageSettings(e.currentTarget)}
-                className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="2" y1="4" x2="14" y2="4"/>
-                  <line x1="2" y1="8" x2="14" y2="8"/>
-                  <line x1="2" y1="12" x2="14" y2="12"/>
-                  <circle cx="5" cy="4" r="1.5" fill="currentColor" stroke="none"/>
-                  <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/>
-                  <circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-                </svg>
-              </button>
-            </Tip>
-          )}
-
-          {/* Add block */}
-          <Tip label="Add block" side="bottom">
-            <button
-              onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
-                <path d="M8 3v10M3 8h10" />
-              </svg>
-            </button>
-          </Tip>
-
-          {/* Expand/collapse all toggle */}
-          <Tip label={allExpanded ? 'Collapse all blocks' : 'Expand all blocks'} side="bottom">
-            <button
-              onClick={() => {
-                const next = !allExpanded
-                setAllExpanded(next)
-                setExpandedOverride({ value: next, ts: Date.now() })
-              }}
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {allExpanded ? (
-                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
-                </svg>
-              ) : (
-                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 4h10M3 8h10M3 12h10" />
-                </svg>
+        <div className="flex-shrink-0" style={{ padding: '18px 14px 12px', borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b0a490' }}>
+              Editing
+            </span>
+            <div style={{ display: 'flex', gap: 1 }}>
+              {/* Page settings */}
+              {onOpenPageSettings && (
+                <Tip label="Page settings" side="bottom">
+                  <button
+                    onClick={(e) => onOpenPageSettings(e.currentTarget)}
+                    style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: '#9e9788', transition: 'background 120ms' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="2" y1="4" x2="14" y2="4"/>
+                      <line x1="2" y1="8" x2="14" y2="8"/>
+                      <line x1="2" y1="12" x2="14" y2="12"/>
+                      <circle cx="5" cy="4" r="1.4" fill="currentColor" stroke="none"/>
+                      <circle cx="10" cy="8" r="1.4" fill="currentColor" stroke="none"/>
+                      <circle cx="6.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>
+                    </svg>
+                  </button>
+                </Tip>
               )}
-            </button>
-          </Tip>
 
-          {/* Collapse panel */}
-          <Tip label="Collapse panel" side="bottom">
-            <button
-              onClick={onToggleExpand}
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 13L5 8l5-5" />
-              </svg>
-            </button>
-          </Tip>
+              {/* Add block */}
+              <Tip label="Add block" side="bottom">
+                <button
+                  onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
+                  style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: '#9e9788', transition: 'background 120ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
+                    <path d="M8 3v10M3 8h10" />
+                  </svg>
+                </button>
+              </Tip>
+
+              {/* Collapse/expand all */}
+              <Tip label={allExpanded ? 'Collapse all blocks' : 'Expand all blocks'} side="bottom">
+                <button
+                  onClick={() => {
+                    const next = !allExpanded
+                    setAllExpanded(next)
+                    setExpandedOverride({ value: next, ts: Date.now() })
+                  }}
+                  style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: '#9e9788', transition: 'background 120ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  {allExpanded ? (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 4h10M3 8h10M3 12h10" />
+                    </svg>
+                  )}
+                </button>
+              </Tip>
+
+              {/* Collapse panel */}
+              <Tip label="Collapse panel" side="bottom">
+                <button
+                  onClick={onToggleExpand}
+                  style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: '#9e9788', transition: 'background 120ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13L5 8l5-5"/>
+                  </svg>
+                </button>
+              </Tip>
+            </div>
+          </div>
+
+          {/* Page title — Fraunces 22px */}
+          <div
+            style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: 22,
+              color: '#1d1b17',
+              lineHeight: 1.05,
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {gallery.name || 'Untitled'}
+          </div>
         </div>
       )}
 
@@ -301,7 +325,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       <div ref={blocksContainerRef} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
 
         {/* Info card */}
-        {pageSettingsSlot ? pageSettingsSlot : (
+        {pageSettingsSlot ? (isValidElement(pageSettingsSlot) ? cloneElement(pageSettingsSlot, { expandedOverride }) : pageSettingsSlot) : (
           <div className="overflow-hidden mb-1.5" style={{ background: '#f6f3ec', borderRadius: 4, boxShadow: '0 1px 3px rgba(26,18,10,0.07), 0 0 0 1px rgba(26,18,10,0.05)' }}>
             <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-2">
               <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
@@ -494,30 +518,39 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           </Droppable>
         </DragDropContext>
 
-        {(gallery.blocks || []).length === 0 && (
-          <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>No blocks yet</p>
-        )}
-
-        {/* Terminal add block */}
+        {/* Terminal add block — dashed-border mono caps */}
         <button
           onClick={(e) => {
             setMenuAnchorRect(e.currentTarget.getBoundingClientRect());
             setInsertAtIndex(null);
             setShowBlockMenu(true);
           }}
-          className="w-full text-xs py-2.5 mt-2 transition-colors"
+          className="w-full transition-colors"
           style={{
-            fontFamily: 'monospace',
-            letterSpacing: '0.05em',
-            borderRadius: 4,
-            border: '1px dashed rgba(160,140,110,0.4)',
+            marginTop: 6,
+            padding: '8px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
             background: 'transparent',
-            color: 'var(--text-muted)',
+            border: '1px dashed rgba(26,18,10,0.14)',
+            borderRadius: 5,
+            fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+            fontSize: 10,
+            letterSpacing: '0.10em',
+            textTransform: 'uppercase',
+            fontWeight: 500,
+            color: '#9e9788',
+            cursor: 'pointer',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.12)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          + Add Block
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Add Block
         </button>
 
       </div>

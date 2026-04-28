@@ -76,6 +76,11 @@ a {
   @apply underline hover:text-red-500;
 }
 
+/* Block card hover — slight shadow bump per Sepia spec */
+.block-card-spec:hover {
+  box-shadow: 0 1px 3px rgba(26,18,10,0.08), 0 0 0 1px rgba(26,18,10,0.09) !important;
+}
+
 /* Admin tooltips */
 .admin-tip {
   background: #1e140a;
@@ -90,6 +95,11 @@ a {
   pointer-events: none;
   z-index: 9999;
   animation: tip-in 0.1s ease;
+  max-width: 220px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.35;
 }
 .admin-tip-arrow {
   fill: #1e140a;
