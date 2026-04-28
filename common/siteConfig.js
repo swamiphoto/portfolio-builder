@@ -94,6 +94,7 @@ export function seedBlocksForTemplate(template) {
         defaultBlock('text'),
         { ...defaultBlock('text'), variant: 2 },
       ]
+    case 'blank':
     default:
       return []
   }

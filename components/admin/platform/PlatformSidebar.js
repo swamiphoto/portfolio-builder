@@ -1028,6 +1028,9 @@ export default function PlatformSidebar({
               zIndex: 9999,
             }}
           >
+            <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
+              Start from template
+            </div>
             <button
               onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'gallery') }}
               className="w-full text-left transition-colors"
@@ -1059,6 +1062,16 @@ export default function PlatformSidebar({
               About
             </button>
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
+            <button
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'blank') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
+              Blank page
+            </button>
             <button
               onClick={() => { setNavAddMenuOpen(false); handleAddLink('nav') }}
               className="w-full text-left transition-colors"
@@ -1092,6 +1105,9 @@ export default function PlatformSidebar({
               zIndex: 9999,
             }}
           >
+            <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
+              Start from template
+            </div>
             <button
               onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'gallery') }}
               className="w-full text-left transition-colors"
@@ -1123,6 +1139,16 @@ export default function PlatformSidebar({
               About
             </button>
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
+            <button
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'blank') }}
+              className="w-full text-left transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <IconText style={{ flexShrink: 0, color: C.textMuted }} />
+              Blank page
+            </button>
             <button
               onClick={() => { setAddMenuOpen(false); handleAddLink('hidden') }}
               className="w-full text-left transition-colors"
