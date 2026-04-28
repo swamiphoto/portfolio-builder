@@ -588,13 +588,13 @@ export default function AlbumSidebar({
           boxShadow: SIDEBAR_SHADOW,
           position: 'relative',
           zIndex: 1,
-          color: '#9e9788',
+          color: '#b0a490',
         }}
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-        <span style={{ fontFamily: 'monospace', fontSize: 13, letterSpacing: '0.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+        <span style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 11, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: '#5a5043' }}>
           Library Filters
         </span>
       </button>

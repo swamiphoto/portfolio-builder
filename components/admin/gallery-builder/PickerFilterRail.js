@@ -98,7 +98,7 @@ function CollapsedRail({ onExpand, activeCount }) {
         width: 36,
         background: RAIL_BG,
         boxShadow: RAIL_SHADOW,
-        color: '#9e9788',
+        color: '#b0a490',
         border: 'none',
       }}
     >
@@ -108,11 +108,13 @@ function CollapsedRail({ onExpand, activeCount }) {
       <span
         style={{
           fontFamily: MONO,
-          fontSize: 10,
-          letterSpacing: '0.13em',
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: '0.14em',
           textTransform: 'uppercase',
           writingMode: 'vertical-rl',
           transform: 'rotate(180deg)',
+          color: '#5a5043',
         }}
       >
         Filters

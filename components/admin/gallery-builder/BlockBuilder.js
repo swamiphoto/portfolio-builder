@@ -308,12 +308,13 @@ const BlockBuilder = forwardRef(function BlockBuilder({
               fontFamily: "'Fraunces', Georgia, serif",
               fontSize: 22,
               color: '#1d1b17',
-              lineHeight: 1.05,
+              lineHeight: 1.2,
               fontWeight: 500,
               letterSpacing: '-0.01em',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              paddingBottom: 2,
             }}
           >
             {gallery.name || 'Untitled'}

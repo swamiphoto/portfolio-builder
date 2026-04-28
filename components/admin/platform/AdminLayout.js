@@ -24,7 +24,6 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
           style={{
             width: sidebarCollapsed ? 40 : 256,
             background: '#efeae1',
-            borderRight: '1px solid rgba(26,18,10,0.07)',
             transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             willChange: 'width',
           }}
@@ -45,7 +44,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
             onClick={onToggleSidebar}
             className="absolute inset-0 flex flex-col items-center justify-center gap-2 w-full transition-colors"
             style={{
-              color: '#9e9788',
+              color: '#b0a490',
               opacity: sidebarCollapsed ? 1 : 0,
               transition: sidebarCollapsed ? 'opacity 0.15s 0.15s' : 'opacity 0.1s',
               pointerEvents: sidebarCollapsed ? 'auto' : 'none',
@@ -54,7 +53,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
-            <span style={{ fontFamily: 'monospace', fontSize: 13, letterSpacing: '0.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: '#9e9788' }}>
+            <span style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 11, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: '#5a5043' }}>
               Pages
             </span>
           </button>
@@ -72,6 +71,32 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               willChange: 'width',
             }}
           >
+            {/* Divider — soft sepia shadow when block panel is open, single hairline when collapsed */}
+            {panelCollapsed ? (
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  left: 0, top: 0, bottom: 0,
+                  width: 1,
+                  pointerEvents: 'none',
+                  background: 'rgba(26,18,10,0.10)',
+                  zIndex: 5,
+                }}
+              />
+            ) : (
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  left: 0, top: 0, bottom: 0,
+                  width: 24,
+                  pointerEvents: 'none',
+                  background: 'linear-gradient(to right, rgba(60,40,15,0.06) 0%, rgba(60,40,15,0.03) 25%, rgba(60,40,15,0) 100%)',
+                  zIndex: 5,
+                }}
+              />
+            )}
             {/* Full panel — always rendered, clipped by overflow hidden as width collapses */}
             <div style={{ width: 260, height: '100%', display: 'flex', flexDirection: 'column',
               opacity: panelCollapsed ? 0 : 1,
@@ -86,7 +111,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               onClick={onTogglePanel}
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 w-full"
               style={{
-                color: '#9e9788',
+                color: '#b0a490',
                 opacity: panelCollapsed ? 1 : 0,
                 transition: panelCollapsed ? 'opacity 0.15s 0.2s' : 'opacity 0.1s',
                 pointerEvents: panelCollapsed ? 'auto' : 'none',
@@ -95,7 +120,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-              <span style={{ fontFamily: 'monospace', fontSize: 13, letterSpacing: '0.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: '#9e9788' }}>
+              <span style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 11, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: '#5a5043' }}>
                 {panelLabel || 'Blocks'}
               </span>
             </button>
@@ -123,12 +148,12 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
                   border: '1px solid rgba(26,18,10,0.11)',
                 }}
               >
-                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ flexShrink: 0, color: '#b0a490' }}>
+                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ flexShrink: 0, color: '#3a362f' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: '#b0a490' }}>{username}.sepia.photo</span>
+                  <span style={{ color: '#3a362f' }}>{username}.sepia.photo</span>
                   {pagePath && <span style={{ color: '#3a362f' }}>{pagePath}</span>}
                 </span>
               </div>

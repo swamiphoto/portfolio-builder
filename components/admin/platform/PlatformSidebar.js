@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Tip from '../Tip'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
-import { buildNavTree, flattenForOtherPages, movePage } from '../../../common/pagesTree'
+import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
@@ -180,6 +180,9 @@ export default function PlatformSidebar({
   const [dotsAnchorEl, setDotsAnchorEl] = useState(null)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [linkEditId, setLinkEditId] = useState(null)
+  // Draft row for type-first page creation: { section: 'nav' | 'hidden' } or null
+  const [draftRow, setDraftRow] = useState(null)
+  const [draftValue, setDraftValue] = useState('')
   const [siteSettingsOpen, setSiteSettingsOpen] = useState(false)
   const siteSettingsRef = useRef(null)
   const [accountOpen, setAccountOpen] = useState(false)
@@ -253,18 +256,33 @@ export default function PlatformSidebar({
     return id
   }
 
-  function handleAddPage() {
+  function startDraft(section) {
     setAddMenuOpen(false)
-    const base = 'new-page'
-    onConfigChange(prev => {
-      const existingIds = new Set(prev.pages.map(p => p.id))
-      const id = nextAvailableId(base, existingIds)
-      const sortOrder = Math.max(0, ...prev.pages.filter(p => !p.showInNav).map(p => p.sortOrder ?? 0)) + 1
-      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: false, parentId: null })] }
-    })
+    setDraftRow({ section })
+    setDraftValue('')
+  }
+
+  function handleDraftCommit() {
+    const trimmed = draftValue.trim()
+    if (!trimmed || !draftRow) { setDraftRow(null); setDraftValue(''); return }
+    const inNav = draftRow.section === 'nav'
+    const base = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'page'
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     const id = nextAvailableId(base, existingIds)
-    onSelectPage?.(id); setRenamingId(id); setRenameValue('New Page')
+    // Append at end of section; user can drag to reorder.
+    onConfigChange(prev => {
+      const sectionPeers = prev.pages.filter(p => (p.showInNav !== false) === inNav)
+      const sortOrder = Math.max(0, ...sectionPeers.map(p => p.sortOrder ?? 0)) + 1
+      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: trimmed, sortOrder, showInNav: inNav, parentId: null })] }
+    })
+    onSelectPage?.(id)
+    setDraftRow(null)
+    setDraftValue('')
+  }
+
+  function handleDraftCancel() {
+    setDraftRow(null)
+    setDraftValue('')
   }
 
   function handleAddLink() {
@@ -282,6 +300,7 @@ export default function PlatformSidebar({
   }
 
   function handlePageDragStart(page, e) {
+    if (e.button !== undefined && e.button !== 0) return
     e.preventDefault()
     const startX = e.clientX, startY = e.clientY
     const dragInfo = { pageId: page.id, title: page.title }
@@ -302,10 +321,31 @@ export default function PlatformSidebar({
       const inOtherPages = !!el?.closest('[data-droppable="other-pages"]')
 
       let target = null
-      if (pageRow && inMainNav) {
+      const draggedId = pageDragRef.current?.pageId
+
+      if (pageRow) {
         const targetId = pageRow.dataset.pageId
-        if (targetId !== pageDragRef.current?.pageId) {
-          target = { type: 'nest', pageId: targetId }
+        const targetPage = pages.find(p => p.id === targetId)
+        if (targetId && targetId !== draggedId && targetPage) {
+          // Don't allow dropping onto a descendant of the dragged page (would create a cycle)
+          const cyclical = isDescendantOf(pages, targetId, draggedId)
+          if (!cyclical) {
+            const rect = pageRow.getBoundingClientRect()
+            const rel = (e.clientY - rect.top) / rect.height
+            const sectionInNav = inMainNav
+
+            // Top 28% = before, bottom 28% = after, middle 44% = nest
+            if (rel < 0.28) {
+              target = { type: 'before', pageId: targetId, parentId: targetPage.parentId ?? null, inNav: sectionInNav }
+            } else if (rel > 0.72) {
+              target = { type: 'after', pageId: targetId, parentId: targetPage.parentId ?? null, inNav: sectionInNav }
+            } else if (sectionInNav && targetPage.type !== 'link') {
+              target = { type: 'nest', pageId: targetId }
+            } else {
+              // Fallback for hidden or link rows: treat middle as 'after'
+              target = { type: 'after', pageId: targetId, parentId: targetPage.parentId ?? null, inNav: sectionInNav }
+            }
+          }
         }
       } else if (inMainNav) {
         target = { type: 'root' }
@@ -331,26 +371,34 @@ export default function PlatformSidebar({
       setGhostPos(null)
       setPageDropTarget(null)
 
-      if (!currentDrag || !wasDrag) return
+      if (!currentDrag || !wasDrag || !target) return
 
-      if (target?.type === 'nest') {
-        onConfigChange(prev => {
-          const siblings = prev.pages.filter(p => p.parentId === target.pageId && p.showInNav)
-          const sortOrder = Math.max(0, ...siblings.map(p => p.sortOrder ?? 0)) + 1
-          return { ...prev, pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: target.pageId, sortOrder }) }
-        })
-      } else if (target?.type === 'root') {
-        onConfigChange(prev => {
-          const roots = prev.pages.filter(p => p.showInNav && !p.parentId)
-          const sortOrder = Math.max(0, ...roots.map(p => p.sortOrder ?? 0)) + 1
-          return { ...prev, pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: null, sortOrder }) }
-        })
-      } else if (target?.type === 'other') {
-        onConfigChange(prev => {
-          const others = prev.pages.filter(p => !p.showInNav)
-          const sortOrder = Math.max(0, ...others.map(p => p.sortOrder ?? 0)) + 1
-          return { ...prev, pages: movePage(prev.pages, currentDrag.pageId, { showInNav: false, sortOrder }) }
-        })
+      if (target.type === 'before' || target.type === 'after') {
+        const inNav = target.inNav
+        const parentId = inNav ? (target.parentId ?? null) : null
+        onConfigChange(prev => ({
+          ...prev,
+          pages: movePage(prev.pages, currentDrag.pageId, {
+            showInNav: inNav,
+            parentId,
+            ...(target.type === 'before' ? { beforeId: target.pageId } : { afterId: target.pageId }),
+          }),
+        }))
+      } else if (target.type === 'nest') {
+        onConfigChange(prev => ({
+          ...prev,
+          pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: target.pageId, position: 'end' }),
+        }))
+      } else if (target.type === 'root') {
+        onConfigChange(prev => ({
+          ...prev,
+          pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: null, position: 'end' }),
+        }))
+      } else if (target.type === 'other') {
+        onConfigChange(prev => ({
+          ...prev,
+          pages: movePage(prev.pages, currentDrag.pageId, { showInNav: false, position: 'end' }),
+        }))
       }
     }
 
@@ -366,12 +414,51 @@ export default function PlatformSidebar({
     return <IconGallery />
   }
 
+  function renderDraftRow() {
+    return (
+      <div style={{ position: 'relative' }}>
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            margin: '0 8px', padding: '4px 10px',
+            borderRadius: 5,
+            background: 'transparent',
+            boxShadow: 'inset 0 0 0 1px rgba(139,111,71,0.22)',
+          }}
+        >
+          <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 14, color: C.accent }}>
+            <IconGallery />
+          </div>
+          <input
+            autoFocus
+            value={draftValue}
+            onChange={e => setDraftValue(e.target.value)}
+            onBlur={handleDraftCommit}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); handleDraftCommit() }
+              if (e.key === 'Escape') { e.preventDefault(); handleDraftCancel() }
+            }}
+            placeholder="Untitled"
+            style={{
+              flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500,
+              color: '#3a2e1f', background: 'transparent',
+              border: 'none', outline: 'none', padding: 0,
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
   function renderPageRow(page, depth = 0) {
     const isImageDropTarget = drag !== null && dropTargetPageId === page.id && page.id !== drag?.sourcePageId
     const isPageNestTarget = pageDropTarget?.type === 'nest' && pageDropTarget.pageId === page.id
+    const isPageBeforeTarget = pageDropTarget?.type === 'before' && pageDropTarget.pageId === page.id
+    const isPageAfterTarget = pageDropTarget?.type === 'after' && pageDropTarget.pageId === page.id
     const isLink = page.type === 'link'
     const isSelected = selectedPageId === page.id
     const count = !isLink ? countPagePhotos(page) : null
+    const lineLeft = 8 + 10 + depth * 18 // outer margin + row padding + indent
 
     return (
       <div
@@ -390,21 +477,57 @@ export default function PlatformSidebar({
           }
         }}
       >
-        {renamingId === page.id ? (
-          <input
-            autoFocus
-            value={renameValue}
-            onChange={e => setRenameValue(e.target.value)}
-            onBlur={() => handleRenameCommit(page.id)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleRenameCommit(page.id)
-              if (e.key === 'Escape') setRenamingId(null)
+        {/* Drop indicator lines for reorder */}
+        {(isPageBeforeTarget || isPageAfterTarget) && (
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute', left: lineLeft, right: 12,
+              top: isPageBeforeTarget ? -1 : 'auto',
+              bottom: isPageAfterTarget ? -1 : 'auto',
+              height: 2, background: C.accent, borderRadius: 2, pointerEvents: 'none', zIndex: 2,
             }}
-            className="w-full px-3 py-1.5 text-sm border border-purple-400 rounded outline-none bg-transparent mx-1"
           />
+        )}
+        {renamingId === page.id ? (
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              margin: '0 8px', padding: `4px 10px`,
+              paddingLeft: 10 + depth * 18,
+              borderRadius: 5,
+              background: C.selected,
+              boxShadow: 'inset 0 0 0 1px rgba(139,111,71,0.28)',
+            }}
+          >
+            <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 14, color: C.accent }}>
+              <PageTypeIcon page={page} />
+            </div>
+            <input
+              autoFocus
+              onFocus={e => e.target.select()}
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onBlur={() => handleRenameCommit(page.id)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleRenameCommit(page.id)
+                if (e.key === 'Escape') setRenamingId(null)
+              }}
+              style={{
+                flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500,
+                color: '#3a2e1f', background: 'transparent',
+                border: 'none', outline: 'none', padding: 0,
+              }}
+            />
+          </div>
         ) : (
           <div
             className="group relative"
+            onPointerDown={(e) => {
+              // Ignore drag from buttons (dots menu, link edit, etc.)
+              if (e.target.closest('button')) return
+              handlePageDragStart(page, e)
+            }}
             onClick={() => {
               if (didDragRef.current || pageDragRef.current) return
               if (!isLink) onSelectPage?.(page.id)
@@ -413,17 +536,17 @@ export default function PlatformSidebar({
               display: 'flex', alignItems: 'center', gap: 10,
               margin: '0 8px', padding: `4px 10px`,
               paddingLeft: 10 + depth * 18,
-              borderRadius: 5, cursor: 'pointer',
+              borderRadius: 5, cursor: 'pointer', touchAction: 'none',
               background: isSelected
                 ? C.selected
                 : isPageNestTarget
-                ? 'rgba(60,100,200,0.06)'
+                ? 'rgba(139,111,71,0.10)'
                 : isImageDropTarget
                 ? 'rgba(60,100,200,0.06)'
                 : 'transparent',
               boxShadow: isSelected ? '0 1px 2px rgba(26,18,10,0.05), inset 0 0 0 1px rgba(139,111,71,0.12)' : undefined,
               transition: 'background 120ms',
-              outline: (isPageNestTarget || isImageDropTarget) ? '1px solid rgba(60,100,200,0.3)' : undefined,
+              outline: isImageDropTarget ? '1px solid rgba(60,100,200,0.3)' : isPageNestTarget ? `1px solid ${C.accent}` : undefined,
             }}
             onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
             onMouseLeave={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'transparent' }}
@@ -431,8 +554,7 @@ export default function PlatformSidebar({
             {/* Icon / drag handle */}
             <div
               className="flex-shrink-0 flex items-center justify-center"
-              onPointerDown={(e) => handlePageDragStart(page, e)}
-              style={{ touchAction: 'none', width: 14, color: isSelected ? C.accent : C.textMuted }}
+              style={{ width: 14, color: isSelected ? C.accent : C.textMuted }}
             >
               <span className="group-hover:hidden flex items-center">
                 <PageTypeIcon page={page} />
@@ -445,13 +567,13 @@ export default function PlatformSidebar({
             {/* Title */}
             <span
               className="flex-1 truncate"
-              style={{ fontSize: 13, color: isSelected ? C.text : C.textBody, fontWeight: isSelected ? 600 : 400 }}
+              style={{ fontSize: 13, color: isSelected ? '#3a2e1f' : C.textBody, fontWeight: isSelected ? 600 : 400 }}
             >
               {page.title}
             </span>
 
             {/* Drop badges */}
-            {isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">nest</span>}
+            {isPageNestTarget && <span className="text-[10px] flex-shrink-0" style={{ color: C.accent, fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' }}>nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
             {/* Right slot: count / dots */}
@@ -639,22 +761,36 @@ export default function PlatformSidebar({
       </div>
 
       {/* PAGES LIST */}
-      <div className="flex-1 overflow-y-auto" style={{ paddingTop: 2 }}>
+      <div className="flex-1 overflow-y-auto">
 
-        {/* Pages section label */}
-        {navPages.length > 0 && (
-          <div style={{ padding: '14px 14px 6px' }}>
+        {/* Pages section header */}
+        <div style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
               Pages
             </span>
+            <Tip label="Add page to nav" side="left">
+              <button
+                type="button"
+                onClick={() => startDraft('nav')}
+                style={{
+                  width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent', border: 'none', borderRadius: 3, cursor: 'pointer', color: C.textFaint,
+                  transition: 'background 120ms, color 120ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)'; e.currentTarget.style.color = C.textBody }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textFaint }}
+              >
+                <IconPlus width={14} height={14} />
+              </button>
+            </Tip>
           </div>
-        )}
         <SidebarSection
           label=""
           pages={navPages}
           renderRow={renderPageRow}
           droppableId="main-nav"
         />
+        {draftRow?.section === 'nav' && renderDraftRow()}
 
         {/* Hidden section — always rendered so it's a valid drop target and visible default for new pages */}
         <div style={{ padding: '14px 14px 6px' }}>
@@ -668,9 +804,10 @@ export default function PlatformSidebar({
           renderRow={renderPageRow}
           droppableId="other-pages"
         />
+        {draftRow?.section === 'hidden' && renderDraftRow()}
 
         {/* Add Page button */}
-        <div className="relative" ref={addMenuRef} style={{ margin: '2px 8px 0' }}>
+        <div className="relative" ref={addMenuRef} style={{ margin: '10px 8px 0' }}>
           <button
             type="button"
             onClick={() => setAddMenuOpen(v => !v)}
@@ -689,7 +826,7 @@ export default function PlatformSidebar({
           </button>
           {addMenuOpen && (
             <div className="absolute left-0 bottom-full mb-1 rounded-lg shadow-popup z-20 py-1 w-36" style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
-              <button onClick={handleAddPage} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Page</button>
+              <button onClick={() => startDraft('hidden')} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Page</button>
               <button onClick={handleAddLink} className="w-full text-left px-3 py-1.5 text-sm hover:bg-[#ede8e0]" style={{ color: 'var(--text-primary)' }}>Link ↗</button>
             </div>
           )}
@@ -748,14 +885,30 @@ export default function PlatformSidebar({
       </div>
 
       {/* Drag ghost */}
-      {pageDrag && ghostPos && (
-        <div
-          className="fixed pointer-events-none z-[9999] bg-white shadow-lg px-3 py-1.5 rounded text-sm"
-          style={{ border: '1px solid var(--border)', color: 'var(--text-primary)', left: ghostPos.x + 14, top: ghostPos.y - 10 }}
-        >
-          {pageDrag.title}
-        </div>
-      )}
+      {pageDrag && ghostPos && (() => {
+        const draggedPage = pages.find(p => p.id === pageDrag.pageId)
+        return (
+          <div
+            className="fixed pointer-events-none z-[9999] text-sm"
+            style={{
+              left: ghostPos.x + 14, top: ghostPos.y - 10,
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '5px 12px', borderRadius: 5,
+              background: '#f9f6f1',
+              color: C.text,
+              fontWeight: 500,
+              boxShadow: '0 0 0 1px rgba(100,75,40,0.12), 0 4px 14px rgba(40,25,8,0.14)',
+            }}
+          >
+            {draggedPage && (
+              <span style={{ display: 'flex', alignItems: 'center', color: C.accent }}>
+                <PageTypeIcon page={draggedPage} />
+              </span>
+            )}
+            <span>{pageDrag.title}</span>
+          </div>
+        )
+      })()}
 
       {siteSettingsOpen && (
         <SiteSettingsPopover
