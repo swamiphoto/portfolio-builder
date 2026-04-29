@@ -17,6 +17,10 @@ const VARIANTS = {
     { value: 3, label: 'Paragraph' },
     { value: 4, label: 'Quote' },
   ],
+  testimonial: [
+    { value: 1, label: 'Photo above' },
+    { value: 2, label: 'Quote above' },
+  ],
 }
 
 export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {

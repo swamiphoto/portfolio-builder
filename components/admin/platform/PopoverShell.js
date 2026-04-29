@@ -26,12 +26,15 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
     const belowSpace = window.innerHeight - rect.bottom - 8
     const aboveSpace = rect.top - 8
     const shouldOpenUp = belowSpace < 320 && aboveSpace > belowSpace
-    const maxHeight = Math.max(180, Math.min(560, shouldOpenUp ? aboveSpace : belowSpace))
-    const top = shouldOpenUp
-      ? Math.max(8, rect.top - maxHeight - 6)
-      : Math.max(8, rect.bottom + 6)
+    const maxHeight = Math.max(180, Math.min(680, shouldOpenUp ? aboveSpace : belowSpace))
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
-    setPos({ left, top, maxHeight })
+    if (shouldOpenUp) {
+      const bottom = window.innerHeight - rect.top + 6
+      setPos({ left, bottom, maxHeight, openUp: true })
+    } else {
+      const top = Math.max(8, rect.bottom + 6)
+      setPos({ left, top, maxHeight, openUp: false })
+    }
   }, [anchorEl, anchorRectProp, width, placement])
 
   useEffect(() => {
@@ -78,7 +81,9 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
         width,
         maxHeight: pos?.maxHeight ?? '80vh',
         left: (pos?.left ?? 0) + dragDelta.x,
-        top: (pos?.top ?? 0) + dragDelta.y,
+        ...(pos?.openUp
+          ? { bottom: pos.bottom - dragDelta.y }
+          : { top: (pos?.top ?? 0) + dragDelta.y }),
         visibility: pos ? undefined : 'hidden',
         background: 'var(--popover)',
         boxShadow: 'var(--popover-shadow)',

@@ -268,6 +268,66 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               );
             }
 
+            case "testimonial": {
+              const photoUrl = getImageRefUrl(block.image || block.imageUrl)
+              const v = block.variant || 1
+              const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
+              const FR = '"Fraunces", Georgia, serif'
+
+              if (!block.text && !block.name && !photoUrl) {
+                if (!showPlaceholders) return null
+                return (
+                  <div key={`block-${index}`} className="testimonial-block" data-block-index={index} {...hoverProps}>
+                    <figure style={{ maxWidth: '36rem', margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #ede7dc, #d9cebd)', flexShrink: 0 }} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '28rem' }}>
+                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '88%', margin: '0 auto' }} />
+                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '72%', margin: '0 auto' }} />
+                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '56%', margin: '0 auto' }} />
+                      </div>
+                      <div style={{ height: 9, borderRadius: 4, background: '#e0d8c8', width: '6rem' }} />
+                    </figure>
+                    <WiggleLine />
+                  </div>
+                )
+              }
+
+              const avatar = photoUrl && (
+                <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, boxShadow: '0 2px 8px rgba(26,18,10,0.12)' }}>
+                  <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )
+              const quote = block.text && (
+                <blockquote style={{ fontFamily: CG, fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', fontStyle: 'italic', fontWeight: 400, color: '#2c2416', lineHeight: 1.65, margin: 0, padding: 0 }}>
+                  &#8220;{block.text}&#8221;
+                </blockquote>
+              )
+              const byline = block.name && (
+                <div style={{ fontFamily: FR, fontSize: '1rem', fontWeight: 400, color: '#7a6b55', letterSpacing: '0.03em' }}>
+                  — {block.name}
+                </div>
+              )
+
+              return (
+                <div key={`block-${index}`} className="testimonial-block" data-block-index={index} {...hoverProps}>
+                  <figure style={{ maxWidth: '40rem', margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                    {v === 1 ? <>
+                      {avatar}
+                      {byline}
+                      {quote}
+                    </> : <>
+                      {quote}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                        {avatar}
+                        {byline}
+                      </div>
+                    </>}
+                  </figure>
+                  <WiggleLine />
+                </div>
+              )
+            }
+
             case "contact": {
               return (
                 <div key={`block-${index}`} className="contact-block-wrap" data-block-index={index} {...hoverProps}>

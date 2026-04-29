@@ -236,9 +236,9 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
           <div>
             <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Title</div>
             <input
-              className="bg-transparent outline-none w-full transition-colors"
+              className="bg-transparent outline-none w-full transition-colors placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
-              placeholder="Page title"
+              placeholder="Untitled"
               value={page.title || ''}
               onChange={(e) => updateTitle(e.target.value)}
               onFocus={e => { e.currentTarget.style.borderBottomColor = '#8b6f47' }}
@@ -250,7 +250,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
           <div>
             <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Description</div>
             <AutoGrowTextarea
-              className="bg-transparent outline-none w-full transition-colors resize-none"
+              className="bg-transparent outline-none w-full transition-colors resize-none placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)', lineHeight: 1.4 }}
               placeholder="A few words about this page…"
               maxHeight={160}

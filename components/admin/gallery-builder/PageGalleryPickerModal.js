@@ -32,7 +32,7 @@ const DotIcon = () => (
 
 // ─── Thumb ───────────────────────────────────────────────────────────────────
 
-function Thumb({ page, size = 28, radius = 3 }) {
+function Thumb({ page, size = 36, radius = 3 }) {
   const url = pageDisplayThumbnail(page)
   if (!url) {
     return (
@@ -131,7 +131,7 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         margin: '1px 8px',
-        height: 48,
+        height: 44,
         paddingLeft: 10 + indent,
         paddingRight: 10,
         borderRadius: 5,

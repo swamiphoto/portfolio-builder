@@ -19,7 +19,9 @@ export function defaultBlock(type) {
     case "page-gallery":
       return { type: "page-gallery", source: "manual", pageIds: [] };
     case "contact":
-      return { type: "contact", heading: "", subheading: "", buttonText: "" };
+      return { type: "contact", heading: "Get in touch", subheading: "I'd love to hear from you", buttonText: "Send message" };
+    case "testimonial":
+      return { type: "testimonial", imageUrl: "", name: "", text: "", variant: 1 };
     default:
       return { type };
   }
