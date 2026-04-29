@@ -632,7 +632,7 @@ export default function PlatformSidebar({
             {/* Title */}
             <span
               className="flex-1 truncate"
-              style={{ fontSize: 13, color: isSelected ? '#3a2e1f' : C.textBody, fontWeight: isSelected ? 600 : 400 }}
+              style={{ fontSize: 13, color: isSelected ? '#3a2e1f' : C.textBody, fontWeight: isSelected ? 500 : 400 }}
             >
               {page.title}
             </span>
