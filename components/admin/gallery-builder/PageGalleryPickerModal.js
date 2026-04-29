@@ -119,7 +119,7 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
   }
   function onRowLeave() {
     if (!rowRef.current) return
-    rowRef.current.style.background = selected ? C.card2 : 'transparent'
+    rowRef.current.style.background = selected ? 'rgba(139,111,71,0.09)' : 'transparent'
   }
 
   return (
