@@ -422,9 +422,13 @@ function EmptyNoCandidates({ onSwitchToManual }) {
 // ─── Main picker ──────────────────────────────────────────────────────────────
 
 export default function PageGalleryPickerModal({ block, pages, currentPageId, onUpdate, onClose, anchorRect }) {
-  const [mode, setMode] = useState(block.source === 'auto' ? 'auto' : 'manual')
-  const [selectedIds, setSelectedIds] = useState(block.pageIds || [])
-  const [parentPageId, setParentPageId] = useState(block.parentPageId || '')
+  const initialMode = useRef(block.source === 'auto' ? 'auto' : 'manual').current
+  const initialSelectedIds = useRef(block.pageIds || []).current
+  const initialParentPageId = useRef(block.parentPageId || '').current
+
+  const [mode, setMode] = useState(initialMode)
+  const [selectedIds, setSelectedIds] = useState(initialSelectedIds)
+  const [parentPageId, setParentPageId] = useState(initialParentPageId)
   const [query, setQuery] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [dropdownTriggerRect, setDropdownTriggerRect] = useState(null)
@@ -491,7 +495,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
     })
     const topLevel = all.filter(p => !p.parentId || !byId[p.parentId])
     const allParentIds = Object.keys(childrenOf)
-    const candidates = topLevel
+    const candidates = all
       .filter(p => childrenOf[p.id]?.length > 0)
       .map(p => ({ ...p, _childCount: childrenOf[p.id].length }))
 
@@ -529,6 +533,15 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
   function toggleExpand(id) {
     setExpandedIds(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   }
+
+  const hasChanges = useMemo(() => {
+    if (mode !== initialMode) return true
+    if (mode === 'manual') {
+      if (selectedIds.length !== initialSelectedIds.length) return true
+      return selectedIds.some((id, i) => id !== initialSelectedIds[i])
+    }
+    return parentPageId !== initialParentPageId
+  }, [mode, selectedIds, parentPageId, initialMode, initialSelectedIds, initialParentPageId])
 
   function handleDone() {
     if (mode === 'manual') {
@@ -771,10 +784,18 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         ) : <span />}
         <button
           onClick={handleDone}
-          style={{ padding: '6px 14px', borderRadius: 4, background: C.ink, border: 'none', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, color: '#f5ecd6', cursor: 'pointer' }}
+          disabled={!hasChanges}
+          style={{
+            padding: '6px 14px', borderRadius: 4, border: 'none',
+            fontFamily: 'inherit', fontSize: 12, fontWeight: 500,
+            background: hasChanges ? C.ink : 'rgba(44,36,22,0.15)',
+            color: hasChanges ? '#f5ecd6' : '#a89880',
+            cursor: hasChanges ? 'pointer' : 'default',
+            transition: 'background 150ms, color 150ms',
+          }}
         >
           {mode === 'auto'
-            ? (parentPageId ? 'Apply rule' : 'Apply rule')
+            ? 'Apply rule'
             : selectedIds.length > 0
               ? `Apply ${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
               : 'Apply'}

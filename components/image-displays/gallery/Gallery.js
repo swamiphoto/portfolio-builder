@@ -9,7 +9,7 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from "../../../common/assetRefs";
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -215,26 +215,61 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 .map(id => (pages || []).find(p => p.id === id))
                 .filter(Boolean);
               if (linkedPages.length === 0) return null;
+              const basePath = username ? `/sites/${username}` : '';
               return (
-                <div key={`block-${index}`} className="page-gallery-block px-8 py-4" data-block-index={index} {...hoverProps}>
-                  <div className="grid grid-cols-2 gap-6">
-                    {linkedPages.map(p => (
-                      <a key={p.id} href="#" className="block group">
-                        {pageDisplayThumbnail(p) ? (
-                          <img
-                            src={pageDisplayThumbnail(p)}
-                            alt={p.title}
-                            className="w-full aspect-[4/3] object-cover"
-                          />
-                        ) : (
-                          <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center text-gray-300 text-sm">
-                            No thumbnail
+                <div key={`block-${index}`} className="page-gallery-block" data-block-index={index} {...hoverProps}
+                  style={{ maxWidth: '52rem', margin: '0 auto', padding: '0 2rem' }}>
+                  {linkedPages.map((p, i) => {
+                    const thumb = pageDisplayThumbnail(p);
+                    const href = `${basePath}/${p.slug || p.id}`;
+                    return (
+                      <a
+                        key={p.id}
+                        href={href}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '2.5rem',
+                          padding: '1.75rem 0',
+                          borderBottom: i < linkedPages.length - 1 ? '1px solid rgba(26,18,10,0.08)' : 'none',
+                          textDecoration: 'none', color: 'inherit',
+                        }}
+                      >
+                        {/* Stacked thumbnail */}
+                        <div style={{ position: 'relative', width: 128, height: 90, flexShrink: 0 }}>
+                          {[0, 1, 2].map(layer => {
+                            const isTop = layer === 2;
+                            const rots = [-5, 3, 0];
+                            const txs = [-10, 5, 0];
+                            const tys = [3, -4, 0];
+                            return (
+                              <div key={layer} style={{
+                                position: 'absolute', left: '50%', top: '50%',
+                                width: 86, height: 64, borderRadius: 5,
+                                transform: `translate(calc(-50% + ${txs[layer]}px), calc(-50% + ${tys[layer]}px)) rotate(${rots[layer]}deg)`,
+                                zIndex: layer,
+                                overflow: 'hidden',
+                                border: '2.5px solid #f9f6f1',
+                                boxShadow: '0 2px 8px rgba(26,18,10,0.15)',
+                                background: isTop && thumb ? undefined : pageThumbGradient(p.id),
+                              }}>
+                                {isTop && thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Title + description */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '1.4rem', fontWeight: 300, color: '#1a1410', lineHeight: 1.15, marginBottom: p.description ? '0.4rem' : 0 }}>
+                            {p.title}
                           </div>
-                        )}
-                        <div className="mt-2 text-sm text-gray-800 font-medium">{p.title}</div>
+                          {p.description && (
+                            <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1rem', color: '#7a6b55', lineHeight: 1.55, fontStyle: 'italic' }}>
+                              {p.description}
+                            </div>
+                          )}
+                        </div>
                       </a>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               );
             }
