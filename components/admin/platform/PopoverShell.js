@@ -1,12 +1,28 @@
 import { useRef, useEffect, useState } from 'react'
 
-export default function PopoverShell({ anchorEl, onClose, width = 320, title, children, headerRight, onBack }) {
+export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onClose, width = 320, title, children, headerRight, onBack, placement = 'below', draggable = false }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
+  const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 })
+  const dragStateRef = useRef(null)
 
   useEffect(() => {
-    if (!anchorEl) return
-    const rect = anchorEl.getBoundingClientRect()
+    const rect = anchorRectProp || (anchorEl ? anchorEl.getBoundingClientRect() : null)
+    if (!rect) return
+
+    if (placement === 'right') {
+      const rightSpace = window.innerWidth - rect.right - 8
+      const leftSpace = rect.left - 8
+      const openLeft = rightSpace < width && leftSpace > rightSpace
+      const left = openLeft
+        ? Math.max(8, rect.left - width - 8)
+        : Math.min(rect.right + 8, window.innerWidth - width - 8)
+      const maxHeight = Math.max(200, window.innerHeight - 16)
+      const top = Math.max(8, Math.min(rect.top, window.innerHeight - maxHeight - 8))
+      setPos({ left, top, maxHeight })
+      return
+    }
+
     const belowSpace = window.innerHeight - rect.bottom - 8
     const aboveSpace = rect.top - 8
     const shouldOpenUp = belowSpace < 320 && aboveSpace > belowSpace
@@ -16,16 +32,43 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
       : Math.max(8, rect.bottom + 6)
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     setPos({ left, top, maxHeight })
-  }, [anchorEl, width])
+  }, [anchorEl, anchorRectProp, width, placement])
 
   useEffect(() => {
     function handler(e) {
       if (e.target.closest('[data-photo-picker]')) return
-      if (ref.current && !ref.current.contains(e.target) && anchorEl && !anchorEl.contains(e.target)) onClose()
+      const outsidePopover = ref.current && !ref.current.contains(e.target)
+      const outsideAnchor = !anchorEl || !anchorEl.contains(e.target)
+      if (outsidePopover && outsideAnchor) onClose()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [onClose, anchorEl])
+
+  useEffect(() => {
+    if (!draggable) return
+    function onMove(e) {
+      if (!dragStateRef.current) return
+      setDragDelta({
+        x: dragStateRef.current.origX + (e.clientX - dragStateRef.current.startX),
+        y: dragStateRef.current.origY + (e.clientY - dragStateRef.current.startY),
+      })
+    }
+    function onUp() { dragStateRef.current = null }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [draggable])
+
+  function handleHeaderMouseDown(e) {
+    if (!draggable) return
+    if (e.target.closest('button')) return
+    dragStateRef.current = { startX: e.clientX, startY: e.clientY, origX: dragDelta.x, origY: dragDelta.y }
+    e.preventDefault()
+  }
 
   return (
     <div
@@ -34,8 +77,8 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
       style={{
         width,
         maxHeight: pos?.maxHeight ?? '80vh',
-        left: pos?.left,
-        top: pos?.top,
+        left: (pos?.left ?? 0) + dragDelta.x,
+        top: (pos?.top ?? 0) + dragDelta.y,
         visibility: pos ? undefined : 'hidden',
         background: 'var(--popover)',
         boxShadow: 'var(--popover-shadow)',
@@ -43,11 +86,14 @@ export default function PopoverShell({ anchorEl, onClose, width = 320, title, ch
     >
       {/* Header */}
       <div
+        onMouseDown={handleHeaderMouseDown}
         className="px-3.5 flex items-center sticky top-0 z-10 rounded-t-xl"
         style={{
           height: 40,
           background: 'var(--popover)',
           borderBottom: '1px solid rgba(160,140,110,0.22)',
+          cursor: draggable ? 'move' : undefined,
+          userSelect: draggable ? 'none' : undefined,
         }}
       >
         {onBack && (

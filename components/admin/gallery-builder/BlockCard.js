@@ -135,6 +135,9 @@ function BlockCard({
   const [photoDropHover, setPhotoDropHover] = useState(false);
   const [gridDropHover, setGridDropHover] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerAnchorRect, setPickerAnchorRect] = useState(null);
+  const [pgDragIdx, setPgDragIdx] = useState(null);
+  const [pgDropTarget, setPgDropTarget] = useState(null); // { idx, pos: 'before'|'after' }
   const lastSelectedRef = useRef(null);
   const menuRef = useRef(null);
   const menuBtnRef = useRef(null);
@@ -347,6 +350,22 @@ function BlockCard({
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
                     <path d="M8 3v10M3 8h10" />
+                  </svg>
+                </button>
+              </Tip>
+            )}
+
+            {block.type === 'page-gallery' && (
+              <Tip label="Edit pages">
+                <button
+                  onClick={e => { onTitleClick?.(); setPickerAnchorRect(e.currentTarget.getBoundingClientRect()); setPickerOpen(v => !v); }}
+                  className="flex items-center justify-center rounded transition-colors"
+                  style={{ width: 24, height: 24, color: pickerOpen ? '#1d1b17' : '#9e9788', background: pickerOpen ? 'rgba(26,18,10,0.06)' : 'transparent', border: 'none', cursor: 'pointer' }}
+                  onMouseEnter={e => { if (!pickerOpen) e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                  onMouseLeave={e => { if (!pickerOpen) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                   </svg>
                 </button>
               </Tip>
@@ -775,103 +794,133 @@ function BlockCard({
               ? !(block.pageIds && block.pageIds.length > 0)
               : !block.parentPageId
 
-            function PlaceholderCard() {
-              return (
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(true)}
-                  className="w-full"
-                  style={{
-                    padding: '20px 16px', borderRadius: 8,
-                    border: '1.5px dashed rgba(160,140,110,0.4)',
-                    background: 'transparent', cursor: 'pointer', textAlign: 'left',
-                    transition: 'all 120ms',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.06)'; e.currentTarget.style.borderColor = 'rgba(139,111,71,0.55)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.4)' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(139,111,71,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 500, color: '#2c2416', lineHeight: 1.2 }}>Choose galleries to display</div>
-                      <div style={{ fontSize: 11.5, color: '#8b7755', lineHeight: 1.3, marginTop: 2 }}>Pick manually, or auto-list galleries nested under a page</div>
-                    </div>
+            const placeholderCard = (
+              <button
+                type="button"
+                onClick={e => { setPickerAnchorRect(e.currentTarget.getBoundingClientRect()); setPickerOpen(true); }}
+                className="w-full"
+                style={{
+                  padding: '20px 16px', borderRadius: 8,
+                  border: '1.5px dashed rgba(160,140,110,0.4)',
+                  background: 'transparent', cursor: 'pointer', textAlign: 'left',
+                  transition: 'all 120ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.06)'; e.currentTarget.style.borderColor = 'rgba(139,111,71,0.55)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.4)' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(139,111,71,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                   </div>
-                </button>
-              )
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, color: '#2c2416', lineHeight: 1.2 }}>Choose pages to display</div>
+                    <div style={{ fontSize: 11.5, color: '#8b7755', lineHeight: 1.3, marginTop: 2 }}>Pick manually, or auto-list pages nested under a parent</div>
+                  </div>
+                </div>
+              </button>
+            )
+
+            const pgSelected = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
+
+            function pgHandleDragOver(e, idx) {
+              e.preventDefault()
+              const rect = e.currentTarget.getBoundingClientRect()
+              const pos = (e.clientY - rect.top) / rect.height < 0.5 ? 'before' : 'after'
+              setPgDropTarget(prev => (prev?.idx === idx && prev?.pos === pos) ? prev : { idx, pos })
             }
 
-            function FilledManual() {
-              const selected = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
-              return (
-                <div className="space-y-1.5">
-                  {selected.map(p => {
-                    const thumb = pageDisplayThumbnail(p)
-                    return (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 6, background: 'rgba(160,140,110,0.06)' }}>
-                        <div style={{ width: 40, height: 30, borderRadius: 4, overflow: 'hidden', flexShrink: 0, background: '#e9e2d4' }}>
-                          {thumb ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: '#2c2416', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
-                          {p.description ? <div style={{ fontSize: 11, color: '#8b7755', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</div> : null}
+            function pgHandleDrop(e, idx) {
+              e.preventDefault()
+              const sourceIdx = parseInt(e.dataTransfer.getData('text/plain'), 10)
+              if (isNaN(sourceIdx)) { setPgDragIdx(null); setPgDropTarget(null); return }
+              const rect = e.currentTarget.getBoundingClientRect()
+              const pos = (e.clientY - rect.top) / rect.height < 0.5 ? 'before' : 'after'
+              let insertAt = pos === 'before' ? idx : idx + 1
+              if (sourceIdx < insertAt) insertAt -= 1
+              if (insertAt !== sourceIdx) {
+                const newIds = [...block.pageIds]
+                const [moved] = newIds.splice(sourceIdx, 1)
+                newIds.splice(insertAt, 0, moved)
+                onUpdate({ ...block, pageIds: newIds })
+              }
+              setPgDragIdx(null)
+              setPgDropTarget(null)
+            }
+
+            const filledManual = (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {pgSelected.map((p, idx) => {
+                  const thumb = pageDisplayThumbnail(p)
+                  const isBefore = pgDropTarget?.idx === idx && pgDropTarget.pos === 'before'
+                  const isAfter = pgDropTarget?.idx === idx && pgDropTarget.pos === 'after'
+                  const isDragging = pgDragIdx === idx
+                  return (
+                    <div
+                      key={p.id}
+                      className="group/pgrow"
+                      draggable
+                      onDragStart={e => { e.dataTransfer.setData('text/plain', String(idx)); e.dataTransfer.effectAllowed = 'move'; setPgDragIdx(idx) }}
+                      onDragEnd={() => { setPgDragIdx(null); setPgDropTarget(null) }}
+                      onDragOver={e => pgHandleDragOver(e, idx)}
+                      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setPgDropTarget(null) }}
+                      onDrop={e => pgHandleDrop(e, idx)}
+                      style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px 5px 6px', borderRadius: 6, background: isDragging ? 'transparent' : 'rgba(160,140,110,0.07)', cursor: 'pointer', opacity: isDragging ? 0.35 : 1, userSelect: 'none' }}
+                    >
+                      {isBefore && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, top: -2, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
+                      {isAfter && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, bottom: -2, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
+                      <div style={{ position: 'relative', width: 36, height: 36, borderRadius: 4, overflow: 'hidden', flexShrink: 0, background: '#d4c4a8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {thumb
+                          ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(60,40,15,0.30)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.4"/><path d="M21 15l-5-5L5 21"/></svg>
+                        }
+                        <div className="opacity-0 group-hover/pgrow:opacity-100 transition-opacity duration-100" style={{ position: 'absolute', inset: 0, background: 'rgba(26,18,10,0.40)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>
+                          </svg>
                         </div>
                       </div>
-                    )
-                  })}
-                  <button
-                    type="button"
-                    onClick={() => setPickerOpen(true)}
-                    style={{ width: '100%', padding: '6px 10px', fontSize: 12, color: '#8b6f47', background: 'transparent', border: '1px dashed rgba(160,140,110,0.35)', borderRadius: 5, cursor: 'pointer' }}
-                  >
-                    + Add or change galleries
-                  </button>
-                </div>
-              )
-            }
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 500, color: '#2c2416', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.25 }}>{p.title}</div>
+                        {p.description ? <div style={{ fontSize: 11, color: '#8b7755', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{p.description}</div> : null}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
 
-            function FilledAuto() {
-              const parent = (pages || []).find(p => p.id === block.parentPageId)
-              const matching = getNestedGalleries(block.parentPageId, pages)
-              const previewThumbs = matching.slice(0, 5).map(p => pageDisplayThumbnail(p)).filter(Boolean)
-              return (
-                <div className="space-y-2">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 6, background: 'rgba(139,111,71,0.06)' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5"/></svg>
-                    <div style={{ fontSize: 12, color: '#5a4a32', minWidth: 0 }}>
-                      Auto-listing <strong>{matching.length}</strong> {matching.length === 1 ? 'gallery' : 'galleries'} under <strong>{parent?.title || '?'}</strong>
-                    </div>
+            const pgParent = (pages || []).find(p => p.id === block.parentPageId)
+            const pgMatching = getNestedGalleries(block.parentPageId, pages)
+            const pgPreviewThumbs = pgMatching.slice(0, 5).map(p => pageDisplayThumbnail(p)).filter(Boolean)
+
+            const filledAuto = (
+              <div className="space-y-2">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 6, background: 'rgba(139,111,71,0.06)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5"/></svg>
+                  <div style={{ fontSize: 12, color: '#5a4a32', minWidth: 0 }}>
+                    Auto-listing <strong>{pgMatching.length}</strong> {pgMatching.length === 1 ? 'page' : 'pages'} under <strong>{pgParent?.title || '?'}</strong>
                   </div>
-                  {previewThumbs.length > 0 && (
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {previewThumbs.map((url, i) => (
-                        <div key={i} style={{ width: 50, height: 38, borderRadius: 4, overflow: 'hidden', background: '#e9e2d4' }}>
-                          <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      ))}
-                      {matching.length > previewThumbs.length && (
-                        <div style={{ width: 50, height: 38, borderRadius: 4, background: 'rgba(160,140,110,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#8b7755' }}>
-                          +{matching.length - previewThumbs.length}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setPickerOpen(true)}
-                    style={{ width: '100%', padding: '6px 10px', fontSize: 12, color: '#8b6f47', background: 'transparent', border: '1px dashed rgba(160,140,110,0.35)', borderRadius: 5, cursor: 'pointer' }}
-                  >
-                    Change source
-                  </button>
                 </div>
-              )
-            }
+                {pgPreviewThumbs.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {pgPreviewThumbs.map((url, i) => (
+                      <div key={i} style={{ width: 42, height: 42, borderRadius: 3, overflow: 'hidden', background: '#e9e2d4' }}>
+                        <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                    {pgMatching.length > pgPreviewThumbs.length && (
+                      <div style={{ width: 42, height: 42, borderRadius: 3, background: 'rgba(160,140,110,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#8b7755' }}>
+                        +{pgMatching.length - pgPreviewThumbs.length}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
 
             return (
               <>
-                {isEmpty ? <PlaceholderCard /> : (source === 'auto' ? <FilledAuto /> : <FilledManual />)}
+                {isEmpty ? placeholderCard : (source === 'auto' ? filledAuto : filledManual)}
                 {pickerOpen && (
                   <PageGalleryPickerModal
                     block={block}
@@ -879,6 +928,7 @@ function BlockCard({
                     currentPageId={sourcePageId}
                     onUpdate={onUpdate}
                     onClose={() => setPickerOpen(false)}
+                    anchorRect={pickerAnchorRect}
                   />
                 )}
               </>
