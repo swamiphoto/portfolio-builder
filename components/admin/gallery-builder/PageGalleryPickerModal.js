@@ -78,7 +78,7 @@ function ThumbCascade({ pages, ghost = false }) {
               transform: `translate(calc(-50% + ${offset}px), -50%) rotate(${rot}deg)`,
               zIndex: i,
               width: THUMB, height: THUMB, borderRadius: RADIUS,
-              border: `2px solid ${C.card}`,
+              border: '2px solid var(--popover)',
               boxShadow: '0 1px 3px rgba(26,18,10,0.18)',
               overflow: 'hidden',
               flexShrink: 0,
@@ -130,14 +130,16 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
       onClick={onToggle}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        margin: '0 8px',
-        padding: '6px 10px',
+        margin: '1px 8px',
+        height: 40,
         paddingLeft: 10 + indent,
+        paddingRight: 10,
         borderRadius: 5,
         cursor: 'pointer',
         background: selected ? C.card2 : 'transparent',
         boxShadow: selected ? `0 1px 2px rgba(26,18,10,0.04), inset 0 0 0 1px ${C.accentRing}` : 'none',
         position: 'relative',
+        flexShrink: 0,
       }}
     >
       {/* Tree guide — L-shape connector for nested rows; hidden when selected so ring isn't pierced */}
@@ -158,21 +160,15 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
 
       <Thumb page={page} />
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <span style={{
-          fontSize: 13,
-          color: selected ? C.text : C.textBody,
-          fontWeight: selected ? 500 : 400,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {page.title}
-        </span>
-        {page.description && (
-          <span style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {page.description}
-          </span>
-        )}
-      </div>
+      <span style={{
+        flex: 1, minWidth: 0,
+        fontSize: 13,
+        color: selected ? C.text : C.textBody,
+        fontWeight: selected ? 500 : 400,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {page.title}
+      </span>
 
       {/* Right-side affordance: check if selected, disclosure if parent, nothing for leaves */}
       {selected ? (
@@ -554,9 +550,9 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         left: pos?.left ?? -9999,
         top: pos?.top ?? -9999,
         width: WIDTH,
-        background: C.card,
+        background: 'var(--popover)',
         borderRadius: 10,
-        boxShadow: '0 0 0 1px rgba(26,18,10,0.07), 0 1px 2px rgba(26,18,10,0.05), 0 14px 32px -6px rgba(26,18,10,0.16), 0 28px 56px -12px rgba(26,18,10,0.20)',
+        boxShadow: 'var(--popover-shadow)',
         display: 'flex', flexDirection: 'column',
         maxHeight: 560,
         overflow: 'hidden',
@@ -747,7 +743,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         ) : <span />}
         <button
           onClick={handleDone}
-          style={{ height: 32, padding: '0 16px', borderRadius: 6, background: C.ink, border: 'none', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 500, color: C.inkText, cursor: 'pointer' }}
+          style={{ padding: '6px 14px', borderRadius: 4, background: C.ink, border: 'none', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, color: '#f5ecd6', cursor: 'pointer' }}
         >
           Done
         </button>
