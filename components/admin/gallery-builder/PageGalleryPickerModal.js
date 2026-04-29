@@ -6,7 +6,10 @@ const C = {
   card2: '#faf7f1',
   thumbEmpty: '#ede7dc',
   borderSoft: 'rgba(26,18,10,0.07)',
+  border: 'rgba(26,18,10,0.10)',
+  borderStrong: 'rgba(26,18,10,0.14)',
   hover: 'rgba(26,18,10,0.04)',
+  hover2: 'rgba(26,18,10,0.05)',
   text: '#1d1b17',
   textBody: '#3a362f',
   textMuted: '#9e9788',
@@ -18,14 +21,17 @@ const C = {
 }
 
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
+const SERIF = "'Fraunces', Georgia, serif"
 const WIDTH = 340
 
-function Thumb({ page }) {
+// ─── Thumb ───────────────────────────────────────────────────────────────────
+
+function Thumb({ page, size = 28, radius = 3 }) {
   const url = pageDisplayThumbnail(page)
   if (!url) {
     return (
       <div style={{
-        width: 28, height: 28, borderRadius: 3,
+        width: size, height: size, borderRadius: radius,
         background: C.thumbEmpty,
         boxShadow: `inset 0 0 0 1px ${C.borderSoft}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -38,21 +44,26 @@ function Thumb({ page }) {
     )
   }
   return (
-    <div style={{ width: 28, height: 28, borderRadius: 3, overflow: 'hidden', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.10)', flexShrink: 0 }}>
+    <div style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.10)', flexShrink: 0 }}>
       <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
     </div>
   )
 }
 
-// No useState — hover applied directly to DOM to avoid React re-renders
+// ─── PickerRow ────────────────────────────────────────────────────────────────
+// Row-level hover via direct DOM mutation (no setState) to survive parent re-renders.
+// Disclosure button uses a tiny useState just for count ↔ caret swap.
+
 function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onToggleExpand }) {
   const rowRef = useRef(null)
+  const [discHover, setDiscHover] = useState(false)
+  const indent = depth * 16
 
-  function handleMouseEnter() {
+  function onRowEnter() {
     if (!rowRef.current || selected) return
     rowRef.current.style.background = C.hover
   }
-  function handleMouseLeave() {
+  function onRowLeave() {
     if (!rowRef.current) return
     rowRef.current.style.background = selected ? C.card2 : 'transparent'
   }
@@ -60,14 +71,14 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
   return (
     <div
       ref={rowRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={onRowEnter}
+      onMouseLeave={onRowLeave}
       onClick={onToggle}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         margin: '0 8px',
         padding: '6px 10px',
-        paddingLeft: 10 + depth * 18,
+        paddingLeft: 10 + indent,
         borderRadius: 5,
         cursor: 'pointer',
         background: selected ? C.card2 : 'transparent',
@@ -75,31 +86,21 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
         position: 'relative',
       }}
     >
-      {/* Tree guide lines */}
-      {depth > 0 && <>
-        <span style={{ position: 'absolute', left: 10 + (depth - 1) * 18 + 9, top: 0, bottom: 0, width: 1, background: C.borderSoft, pointerEvents: 'none' }} />
-        <span style={{ position: 'absolute', left: 10 + (depth - 1) * 18 + 9, top: '50%', width: 8, height: 1, background: C.borderSoft, pointerEvents: 'none' }} />
+      {/* Tree guide — L-shape connector for nested rows; hidden when selected so ring isn't pierced */}
+      {depth > 0 && !selected && <>
+        <span style={{
+          position: 'absolute',
+          left: 10 + (depth - 1) * 16 + 9,
+          top: -1, height: '50%',
+          width: 1, background: C.borderSoft, pointerEvents: 'none',
+        }} />
+        <span style={{
+          position: 'absolute',
+          left: 10 + (depth - 1) * 16 + 9,
+          top: 'calc(50% - 0.5px)',
+          width: 7, height: 1, background: C.borderSoft, pointerEvents: 'none',
+        }} />
       </>}
-
-      {/* Disclosure caret */}
-      {hasChildren ? (
-        <button
-          onClick={e => { e.stopPropagation(); onToggleExpand() }}
-          style={{
-            width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-            color: C.textMuted, flexShrink: 0,
-            transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
-            transition: 'transform 120ms',
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 6l4 4 4-4" />
-          </svg>
-        </button>
-      ) : (
-        <span style={{ width: 14, flexShrink: 0 }} />
-      )}
 
       <Thumb page={page} />
 
@@ -119,22 +120,164 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
         )}
       </div>
 
-      {hasChildren && !expanded && !selected && (
-        <span style={{ fontFamily: MONO, fontSize: 9.5, color: C.textFaint, letterSpacing: '0.06em', flexShrink: 0 }}>
-          {page._childCount}
-        </span>
-      )}
-
-      {selected && (
+      {/* Right-side affordance: check if selected, disclosure if parent, nothing for leaves */}
+      {selected ? (
         <span style={{ color: C.accent, display: 'flex', flexShrink: 0 }}>
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8.5l3.5 3.5L13 5" />
           </svg>
         </span>
-      )}
+      ) : hasChildren ? (
+        <button
+          onClick={e => { e.stopPropagation(); onToggleExpand() }}
+          onMouseEnter={() => setDiscHover(true)}
+          onMouseLeave={() => setDiscHover(false)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            minWidth: 18, height: 18, padding: '0 4px',
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: discHover ? C.textBody : C.textFaint,
+            fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.06em',
+            flexShrink: 0, transition: 'color 120ms',
+          }}
+        >
+          {discHover ? (
+            <span style={{ display: 'flex', transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 120ms' }}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+            </span>
+          ) : page._childCount}
+        </button>
+      ) : null}
     </div>
   )
 }
+
+// ─── ParentPickerDropdown ─────────────────────────────────────────────────────
+// Second-level dropdown for selecting the parent page in auto mode.
+
+function ParentPickerDropdown({ open, candidates, currentId, onChange, onClose, triggerRect }) {
+  const ref = useRef(null)
+  const [pos, setPos] = useState(null)
+  const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    if (!open || !triggerRect) return
+    setPos({ top: triggerRect.bottom + 6, left: triggerRect.left })
+  }, [open, triggerRect])
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e) {
+      if (ref.current && !ref.current.contains(e.target)) onClose()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open, onClose])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return candidates
+    return candidates.filter(p => p.title?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q))
+  }, [candidates, query])
+
+  if (!open) return null
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        top: pos?.top ?? -9999,
+        left: pos?.left ?? -9999,
+        width: 260,
+        background: C.card,
+        borderRadius: 8,
+        boxShadow: '0 0 0 1px rgba(26,18,10,0.07), 0 1px 2px rgba(26,18,10,0.05), 0 10px 24px -6px rgba(26,18,10,0.16), 0 22px 44px -12px rgba(26,18,10,0.20)',
+        zIndex: 10000,
+        overflow: 'hidden',
+        maxHeight: 340,
+        display: 'flex', flexDirection: 'column',
+      }}
+    >
+      <div style={{ padding: '10px 14px 6px', flexShrink: 0 }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
+          Show pages nested inside…
+        </span>
+      </div>
+      {candidates.length >= 8 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 14px 8px', borderBottom: `1px solid ${C.borderSoft}`, flexShrink: 0 }}>
+          <span style={{ color: C.textMuted, display: 'flex' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+            </svg>
+          </span>
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search…"
+            autoFocus
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: 12.5, color: C.text }}
+          />
+        </div>
+      )}
+      <div style={{ overflowY: 'auto', padding: '2px 0 6px' }}>
+        {filtered.map(p => {
+          const isCurrent = p.id === currentId
+          return (
+            <ParentDropdownRow key={p.id} page={p} current={isCurrent} onClick={() => { onChange(p.id); onClose() }} />
+          )
+        })}
+        {filtered.length === 0 && (
+          <div style={{ padding: '16px 14px', textAlign: 'center', fontSize: 12, color: C.textMuted }}>No pages found.</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ParentDropdownRow({ page, current, onClick }) {
+  const rowRef = useRef(null)
+  function onEnter() { if (rowRef.current && !current) rowRef.current.style.background = C.hover }
+  function onLeave() { if (rowRef.current) rowRef.current.style.background = current ? C.card2 : 'transparent' }
+
+  return (
+    <button
+      ref={rowRef}
+      onClick={onClick}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        width: 'calc(100% - 8px)', margin: '1px 4px',
+        padding: '7px 10px',
+        background: current ? C.card2 : 'transparent',
+        border: 'none', cursor: 'pointer', borderRadius: 5,
+        boxShadow: current ? `inset 0 0 0 1px ${C.accentRing}` : 'none',
+        textAlign: 'left', transition: 'background 100ms',
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, color: C.text, fontWeight: current ? 500 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {page.title}
+        </div>
+        <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.10em', color: C.textFaint, textTransform: 'uppercase', fontWeight: 500, marginTop: 2 }}>
+          /{page.slug || page.id} · {page._childCount} {page._childCount === 1 ? 'page' : 'pages'}
+        </div>
+      </div>
+      {current && (
+        <span style={{ color: C.accent, display: 'flex', flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </span>
+      )}
+    </button>
+  )
+}
+
+// ─── Main picker ──────────────────────────────────────────────────────────────
 
 export default function PageGalleryPickerModal({ block, pages, currentPageId, onUpdate, onClose, anchorRect }) {
   const [mode, setMode] = useState(block.source === 'auto' ? 'auto' : 'manual')
@@ -149,13 +292,14 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
     })
     return [...parentIds]
   })
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [dropdownTriggerRect, setDropdownTriggerRect] = useState(null)
 
-  // Snapshot pages at mount — avoids re-renders from parent autosave creating new array refs
   const frozenPages = useRef(pages)
-
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
 
+  // Position picker to the right of the anchor
   useEffect(() => {
     if (!anchorRect) return
     const rightSpace = window.innerWidth - anchorRect.right - 8
@@ -168,16 +312,17 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
     setPos({ left, top })
   }, [anchorRect])
 
+  // Outside click + ESC
   useEffect(() => {
     function onDown(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    function onKey(e) { if (e.key === 'Escape') onClose() }
+    function onKey(e) { if (e.key === 'Escape') { if (dropdownOpen) setDropdownOpen(false); else onClose() } }
     document.addEventListener('mousedown', onDown)
     window.addEventListener('keydown', onKey)
     return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey) }
-  }, [onClose])
+  }, [onClose, dropdownOpen])
 
-  // Build page tree once at mount from the frozen snapshot
-  const { byId, topLevelVisible, topLevelHidden, childrenOf } = useMemo(() => {
+  // Build page tree once at mount from frozen snapshot
+  const { byId, topLevelVisible, topLevelHidden, childrenOf, candidates } = useMemo(() => {
     const seen = new Set()
     const all = (frozenPages.current || [])
       .filter(p => p.type !== 'link' && p.id !== currentPageId)
@@ -193,14 +338,21 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
       }
     })
     const topLevel = all.filter(p => !p.parentId || !byId[p.parentId])
+
+    // Candidate parents: pages that have at least one child
+    const candidates = topLevel
+      .filter(p => childrenOf[p.id]?.length > 0)
+      .map(p => ({ ...p, _childCount: childrenOf[p.id].length }))
+
     return {
       byId,
       topLevelVisible: topLevel.filter(p => p.showInNav !== false),
       topLevelHidden: topLevel.filter(p => p.showInNav === false),
       childrenOf,
+      candidates,
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // empty deps: pages frozen at mount, currentPageId stable during picker session
+  }, []) // frozen at mount
 
   const { filteredVisible, filteredHidden } = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -235,8 +387,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
   function renderRow(page, depth = 0) {
     const kids = childrenOf[page.id] || []
     const isExpanded = expandedIds.includes(page.id)
-    const isSelected = mode === 'manual' ? selectedIds.includes(page.id) : page.id === parentPageId
-
+    const isSelected = selectedIds.includes(page.id)
     return (
       <Fragment key={page.id}>
         <PickerRow
@@ -246,10 +397,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
           hasChildren={kids.length > 0}
           expanded={isExpanded}
           onToggleExpand={() => toggleExpand(page.id)}
-          onToggle={() => mode === 'manual'
-            ? setSelectedIds(s => s.includes(page.id) ? s.filter(x => x !== page.id) : [...s, page.id])
-            : setParentPageId(page.id)
-          }
+          onToggle={() => setSelectedIds(s => s.includes(page.id) ? s.filter(x => x !== page.id) : [...s, page.id])}
         />
         {isExpanded && kids.map(c => renderRow(c, depth + 1))}
       </Fragment>
@@ -257,6 +405,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
   }
 
   const parentPage = parentPageId ? byId[parentPageId] : null
+  const childrenOfParent = parentPageId ? (childrenOf[parentPageId] || []) : []
   const hasContent = filteredVisible.length > 0 || filteredHidden.length > 0
 
   return (
@@ -277,12 +426,12 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         visibility: pos ? 'visible' : 'hidden',
       }}
     >
-      {/* Tabs + close */}
-      <div style={{ padding: '14px 18px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      {/* Segmented tab control + close */}
+      <div style={{ padding: '12px 14px 10px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, borderBottom: `1px solid ${C.borderSoft}` }}>
+        <div style={{ flex: 1, display: 'flex', background: 'rgba(26,18,10,0.05)', borderRadius: 6, padding: 2, gap: 0 }}>
           {[
-            { value: 'manual', label: 'Pick manually' },
-            { value: 'auto', label: 'Auto from parent' },
+            { value: 'manual', label: 'Choose pages' },
+            { value: 'auto', label: 'Set a rule' },
           ].map(t => {
             const active = mode === t.value
             return (
@@ -290,12 +439,15 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
                 key={t.value}
                 onClick={() => setMode(t.value)}
                 style={{
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  padding: '0 0 8px',
-                  fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 500,
+                  flex: 1, height: 26,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: active ? C.card : 'transparent',
+                  border: 'none', borderRadius: 4,
+                  fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
                   color: active ? C.text : C.textMuted,
-                  borderBottom: active ? `1.5px solid ${C.text}` : '1.5px solid transparent',
-                  transition: 'color 120ms',
+                  cursor: 'pointer',
+                  boxShadow: active ? '0 1px 2px rgba(26,18,10,0.06), 0 0 0 1px rgba(26,18,10,0.06)' : 'none',
+                  transition: 'all 120ms',
                 }}
               >
                 {t.label}
@@ -305,7 +457,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         </div>
         <button
           onClick={onClose}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, color: C.textMuted, display: 'flex', alignItems: 'center', marginTop: 2 }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, color: C.textMuted, display: 'flex', alignItems: 'center', flexShrink: 0 }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
             <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
@@ -313,9 +465,10 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         </button>
       </div>
 
-      {/* Search row — manual mode only */}
-      {mode === 'manual' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', borderBottom: `1px solid ${C.borderSoft}`, flexShrink: 0 }}>
+      {/* ── MANUAL MODE ── */}
+      {mode === 'manual' && <>
+        {/* Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: `1px solid ${C.borderSoft}`, flexShrink: 0 }}>
           <span style={{ color: C.textMuted, display: 'flex' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
@@ -329,54 +482,113 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
             style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: 13, color: C.text }}
           />
         </div>
-      )}
 
-      {/* Auto mode explainer */}
-      {mode === 'auto' && (
-        <div style={{ margin: '14px 18px 0', padding: '12px 14px', borderRadius: 6, background: 'rgba(26,18,10,0.025)', flexShrink: 0 }}>
-          {parentPage ? (
-            <span style={{ fontSize: 13, color: C.textBody, lineHeight: 1.5 }}>
-              Auto-listing pages under <strong style={{ color: C.text }}>{parentPage.title}</strong>. Click another page below to change the parent.
-            </span>
-          ) : (
-            <span style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
-              Pick a parent page below. This gallery will automatically show all pages nested under it.
-            </span>
+        {/* Page list */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0 6px' }}>
+          {filteredVisible.map(p => renderRow(p, 0))}
+          {filteredHidden.length > 0 && (
+            <div style={{ padding: '12px 18px 4px' }}>
+              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Hidden</span>
+            </div>
           )}
+          {filteredHidden.map(p => renderRow(p, 0))}
+          {!hasContent && (
+            <div style={{ padding: '20px 16px', textAlign: 'center', fontSize: 12, color: C.textMuted }}>
+              {query ? `No pages match "${query}".` : 'No pages yet.'}
+            </div>
+          )}
+        </div>
+      </>}
+
+      {/* ── AUTO MODE ── */}
+      {mode === 'auto' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Parent chip + helpful copy */}
+          <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.borderSoft}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button
+              onClick={e => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                setDropdownTriggerRect(rect)
+                setDropdownOpen(o => !o)
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                background: dropdownOpen ? 'rgba(26,18,10,0.05)' : 'transparent',
+                border: 'none', padding: '2px 6px 3px', cursor: 'pointer',
+                fontFamily: 'inherit', fontSize: 13.5,
+                color: C.text, fontWeight: 500,
+                borderRadius: 4,
+                borderBottom: `1px dashed ${C.borderStrong}`,
+                alignSelf: 'flex-start',
+                transition: 'background 100ms',
+              }}
+            >
+              {parentPage?.title || 'Choose a parent page'}
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <p style={{ margin: 0, fontSize: 12.5, color: C.textBody, lineHeight: 1.5, fontFamily: SERIF, fontStyle: 'italic' }}>
+              Any page nested inside that page will show up here. Add a nested page there, it shows up here. Reorder them there, this updates too.
+            </p>
+          </div>
+
+          {/* Children preview */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0 8px' }}>
+            {parentPage && childrenOfParent.length > 0 && (
+              <>
+                <div style={{ padding: '6px 18px 4px' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Pages that will display</span>
+                </div>
+                {childrenOfParent.map(p => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 18px', minHeight: 40 }}>
+                    <Thumb page={p} size={32} radius={3} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, color: C.text, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {p.title}
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.10em', color: C.textFaint, textTransform: 'uppercase', fontWeight: 500, marginTop: 2 }}>
+                        /{p.slug || p.id}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            {parentPage && childrenOfParent.length === 0 && (
+              <div style={{ padding: '24px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.14em', color: C.textFaint, textTransform: 'uppercase' }}>No pages</span>
+                <span style={{ fontSize: 12.5, color: C.textMuted, textAlign: 'center', lineHeight: 1.5 }}>
+                  {parentPage.title} doesn't have any pages nested inside it yet.
+                </span>
+              </div>
+            )}
+            {!parentPage && (
+              <div style={{ padding: '24px 18px', textAlign: 'center', fontSize: 12.5, color: C.textMuted, lineHeight: 1.5 }}>
+                Choose a parent page above to see which pages will display.
+              </div>
+            )}
+          </div>
+
+          {/* Parent picker dropdown */}
+          <ParentPickerDropdown
+            open={dropdownOpen}
+            candidates={candidates}
+            currentId={parentPageId}
+            onChange={id => { setParentPageId(id); setDropdownOpen(false) }}
+            onClose={() => setDropdownOpen(false)}
+            triggerRect={dropdownTriggerRect}
+          />
         </div>
       )}
 
-      {/* Page list — always interactive (no pointer-events: none in auto mode) */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0 6px' }}>
-        {filteredVisible.length > 0 && (
-          <div style={{ padding: '4px 18px 4px', marginBottom: 2 }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Pages</span>
-          </div>
-        )}
-        {filteredVisible.map(p => renderRow(p, 0))}
-
-        {filteredHidden.length > 0 && (
-          <div style={{ padding: '12px 18px 4px' }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Hidden</span>
-          </div>
-        )}
-        {filteredHidden.map(p => renderRow(p, 0))}
-
-        {!hasContent && (
-          <div style={{ padding: '20px 16px', textAlign: 'center', fontSize: 12, color: C.textMuted }}>
-            {query ? `No pages match "${query}".` : 'No pages yet.'}
-          </div>
-        )}
-      </div>
-
       {/* Footer */}
       <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderTop: `1px solid ${C.borderSoft}`, flexShrink: 0 }}>
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textMuted, fontWeight: 500 }}>
-          {mode === 'manual'
-            ? `${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
-            : parentPage ? `Auto · ${parentPage.title}` : 'No parent'
-          }
-        </span>
+        {mode === 'manual' ? (
+          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textMuted, fontWeight: 500 }}>
+            {selectedIds.length} {selectedIds.length === 1 ? 'page' : 'pages'}
+          </span>
+        ) : <span />}
         <button
           onClick={handleDone}
           style={{ height: 32, padding: '0 16px', borderRadius: 6, background: C.ink, border: 'none', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 500, color: C.inkText, cursor: 'pointer' }}
