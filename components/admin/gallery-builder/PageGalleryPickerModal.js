@@ -1,230 +1,382 @@
-import { useState, useMemo, useRef } from 'react'
-import PopoverShell from '../platform/PopoverShell'
+import { useState, useMemo, useRef, useEffect, Fragment } from 'react'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
 
 const C = {
-  border: 'rgba(160,140,110,0.22)',
-  textPrimary: '#2c2416',
-  textSecondary: '#5a4a32',
-  textMuted: '#8b7755',
+  card: '#f6f3ec',
+  card2: '#faf7f1',
+  thumbEmpty: '#ede7dc',
+  borderSoft: 'rgba(26,18,10,0.07)',
+  border: 'rgba(26,18,10,0.10)',
+  hover: 'rgba(26,18,10,0.04)',
+  text: '#1d1b17',
+  textBody: '#3a362f',
+  textMuted: '#9e9788',
+  textFaint: '#b0a490',
   accent: '#8b6f47',
-  hover: 'rgba(139,111,71,0.07)',
-  selected: 'rgba(139,111,71,0.16)',
-  thumbBg: '#d4c4a8',
+  accentRing: 'rgba(139,111,71,0.20)',
+  ink: '#2c2416',
+  inkText: '#f6f3ec',
 }
 
-function PlaceholderIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(60,40,15,0.30)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-      <circle cx="8.5" cy="8.5" r="1.4" />
-      <path d="M21 15l-5-5L5 21" />
-    </svg>
-  )
-}
+const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
+const WIDTH = 340
 
-function Thumb({ page, size = 36 }) {
+function Thumb({ page }) {
   const url = pageDisplayThumbnail(page)
+  if (!url) {
+    return (
+      <div style={{
+        width: 28, height: 28, borderRadius: 3,
+        background: C.thumbEmpty,
+        boxShadow: `inset 0 0 0 1px ${C.borderSoft}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, color: C.textFaint,
+      }}>
+        <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+          <circle cx="4.5" cy="4.5" r="1" fill="currentColor" />
+        </svg>
+      </div>
+    )
+  }
   return (
-    <div style={{ width: size, height: size, borderRadius: 4, overflow: 'hidden', flexShrink: 0, background: C.thumbBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {url ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} /> : <PlaceholderIcon />}
+    <div style={{ width: 28, height: 28, borderRadius: 3, overflow: 'hidden', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.10)', flexShrink: 0 }}>
+      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
     </div>
   )
 }
 
-function buildTree(pages, currentPageId) {
-  const ordered = (pages || [])
-    .filter(p => p.type !== 'link' && p.id !== currentPageId)
-    .slice()
-    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+function PickerRow({ page, selected, onToggle, depth = 0, hasChildren, expanded, onToggleExpand, dim }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onToggle}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        margin: '0 8px',
+        padding: '6px 10px',
+        paddingLeft: 10 + depth * 18,
+        borderRadius: 5,
+        cursor: 'pointer',
+        background: selected ? C.card2 : hover ? C.hover : 'transparent',
+        boxShadow: selected ? `0 1px 2px rgba(26,18,10,0.04), inset 0 0 0 1px ${C.accentRing}` : 'none',
+        transition: 'background 120ms, box-shadow 120ms',
+        position: 'relative',
+      }}
+    >
+      {/* Tree guide lines for nested rows */}
+      {depth > 0 && <>
+        <span style={{ position: 'absolute', left: 10 + (depth - 1) * 18 + 9, top: 0, bottom: 0, width: 1, background: C.borderSoft, pointerEvents: 'none' }} />
+        <span style={{ position: 'absolute', left: 10 + (depth - 1) * 18 + 9, top: '50%', width: 8, height: 1, background: C.borderSoft, pointerEvents: 'none' }} />
+      </>}
 
-  const seen = new Set()
-  const all = ordered.filter(p => {
-    if (seen.has(p.id)) return false
-    seen.add(p.id)
-    return true
-  })
+      {/* Disclosure caret */}
+      {hasChildren ? (
+        <button
+          onClick={e => { e.stopPropagation(); onToggleExpand() }}
+          style={{
+            width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+            color: C.textMuted, flexShrink: 0,
+            transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+            transition: 'transform 120ms',
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </button>
+      ) : (
+        <span style={{ width: 14, flexShrink: 0 }} />
+      )}
 
-  const byId = Object.fromEntries(all.map(p => [p.id, p]))
-  const topLevel = all.filter(p => !p.parentId || !byId[p.parentId])
-  const result = []
-  const placed = new Set()
-  for (const p of topLevel) {
-    result.push({ page: p, depth: 0 })
-    placed.add(p.id)
-    const children = all.filter(c => c.parentId === p.id)
-    for (const c of children) {
-      result.push({ page: c, depth: 1 })
-      placed.add(c.id)
-    }
-  }
-  for (const p of all) {
-    if (!placed.has(p.id)) result.push({ page: p, depth: 0 })
-  }
-  return result
-}
+      <Thumb page={page} />
 
-function arraysEqual(a, b) {
-  if (a.length !== b.length) return false
-  return a.every((v, i) => v === b[i])
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <span style={{
+          fontSize: 13,
+          color: dim ? C.textMuted : (selected ? C.text : C.textBody),
+          fontWeight: selected ? 500 : 400,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {page.title}
+        </span>
+        {page.description && (
+          <span style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {page.description}
+          </span>
+        )}
+      </div>
+
+      {/* Child count when parent is collapsed */}
+      {hasChildren && !expanded && !selected && (
+        <span style={{ fontFamily: MONO, fontSize: 9.5, color: C.textFaint, letterSpacing: '0.06em', flexShrink: 0 }}>
+          {page._childCount}
+        </span>
+      )}
+
+      {selected && (
+        <span style={{ color: C.accent, display: 'flex', flexShrink: 0 }}>
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 8.5l3.5 3.5L13 5" />
+          </svg>
+        </span>
+      )}
+    </div>
+  )
 }
 
 export default function PageGalleryPickerModal({ block, pages, currentPageId, onUpdate, onClose, anchorRect }) {
-  const initial = useRef({
-    mode: block.source === 'auto' ? 'auto' : 'manual',
-    pageIds: block.pageIds || [],
-    parentPageId: block.parentPageId || '',
-  }).current
+  const [mode, setMode] = useState(block.source === 'auto' ? 'auto' : 'manual')
+  const [selectedIds, setSelectedIds] = useState(block.pageIds || [])
+  const [parentPageId, setParentPageId] = useState(block.parentPageId || '')
+  const [query, setQuery] = useState('')
+  const [expandedIds, setExpandedIds] = useState(() => {
+    const parentIds = new Set()
+    ;(block.pageIds || []).forEach(id => {
+      const p = (pages || []).find(pg => pg.id === id)
+      if (p?.parentId) parentIds.add(p.parentId)
+    })
+    return [...parentIds]
+  })
+  const ref = useRef(null)
+  const [pos, setPos] = useState(null)
 
-  const [mode, setMode] = useState(initial.mode)
-  const [pageIds, setPageIds] = useState(initial.pageIds)
-  const [parentPageId, setParentPageId] = useState(initial.parentPageId)
+  useEffect(() => {
+    if (!anchorRect) return
+    const rightSpace = window.innerWidth - anchorRect.right - 8
+    const leftSpace = anchorRect.left - 8
+    const openLeft = rightSpace < WIDTH && leftSpace > rightSpace
+    const left = openLeft
+      ? Math.max(8, anchorRect.left - WIDTH - 8)
+      : Math.min(anchorRect.right + 8, window.innerWidth - WIDTH - 8)
+    const top = Math.max(8, Math.min(anchorRect.top, window.innerHeight - 480 - 8))
+    setPos({ left, top })
+  }, [anchorRect])
 
-  const tree = useMemo(() => buildTree(pages, currentPageId), [pages, currentPageId])
+  useEffect(() => {
+    function onDown(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    function onKey(e) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey) }
+  }, [onClose])
 
-  function togglePage(id) {
-    setPageIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  const { byId, topLevelVisible, topLevelHidden, childrenOf } = useMemo(() => {
+    const seen = new Set()
+    const all = (pages || [])
+      .filter(p => p.type !== 'link' && p.id !== currentPageId)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
+
+    const byId = Object.fromEntries(all.map(p => [p.id, p]))
+    const childrenOf = {}
+    all.forEach(p => {
+      if (p.parentId && byId[p.parentId]) {
+        if (!childrenOf[p.parentId]) childrenOf[p.parentId] = []
+        childrenOf[p.parentId].push(p)
+      }
+    })
+    const topLevel = all.filter(p => !p.parentId || !byId[p.parentId])
+    return {
+      byId,
+      topLevelVisible: topLevel.filter(p => p.showInNav !== false),
+      topLevelHidden: topLevel.filter(p => p.showInNav === false),
+      childrenOf,
+    }
+  }, [pages, currentPageId])
+
+  const { filteredVisible, filteredHidden } = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return { filteredVisible: topLevelVisible, filteredHidden: topLevelHidden }
+    const matchingIds = new Set(
+      Object.values(byId)
+        .filter(p => p.title?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q))
+        .map(p => p.id)
+    )
+    Object.values(byId).forEach(p => {
+      if (matchingIds.has(p.id) && p.parentId && byId[p.parentId]) matchingIds.add(p.parentId)
+    })
+    return {
+      filteredVisible: topLevelVisible.filter(p => matchingIds.has(p.id)),
+      filteredHidden: topLevelHidden.filter(p => matchingIds.has(p.id)),
+    }
+  }, [query, topLevelVisible, topLevelHidden, byId])
+
+  function toggleExpand(id) {
+    setExpandedIds(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   }
 
-  const selectedManualSet = new Set(pageIds)
-
-  const autoChildren = useMemo(() => {
-    if (!parentPageId) return new Set()
-    return new Set(
-      (pages || []).filter(p => p.parentId === parentPageId && p.type !== 'link').map(p => p.id)
-    )
-  }, [parentPageId, pages])
-
-  const hasChanges = (() => {
-    if (mode !== initial.mode) return true
-    if (mode === 'manual') return !arraysEqual(pageIds, initial.pageIds)
-    return parentPageId !== initial.parentPageId
-  })()
-
-  const canConfirm = hasChanges
-
-  function handleConfirm() {
-    if (!canConfirm) return
+  function handleDone() {
     if (mode === 'manual') {
-      onUpdate({ ...block, source: 'manual', pageIds, parentPageId: undefined })
+      onUpdate({ ...block, source: 'manual', pageIds: selectedIds, parentPageId: undefined })
     } else {
       onUpdate({ ...block, source: 'auto', parentPageId, pageIds: [] })
     }
     onClose()
   }
 
-  const modeToggle = (
-    <div style={{ display: 'flex', padding: '8px 10px 6px' }}>
-      <div style={{ flex: 1, display: 'flex', background: 'rgba(160,140,110,0.10)', borderRadius: 5, padding: 2, gap: 2 }}>
-        {[['manual', 'Pick manually'], ['auto', 'Auto from parent']].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setMode(id)}
-            style={{
-              flex: 1, padding: '4px 8px', borderRadius: 4, border: 'none', cursor: 'pointer',
-              fontSize: 11.5, fontWeight: mode === id ? 500 : 400,
-              background: mode === id ? 'var(--popover, #fff)' : 'transparent',
-              color: mode === id ? C.textPrimary : C.textMuted,
-              boxShadow: mode === id ? '0 1px 3px rgba(26,18,10,0.10)' : 'none',
-              transition: 'all 120ms',
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
+  function renderRow(page, depth = 0) {
+    const kids = childrenOf[page.id] || []
+    const isExpanded = expandedIds.includes(page.id)
+    const isSelected = mode === 'manual' ? selectedIds.includes(page.id) : page.id === parentPageId
+    const isDimmed = mode === 'auto' && !!parentPageId
+
+    return (
+      <Fragment key={page.id}>
+        <PickerRow
+          page={{ ...page, _childCount: kids.length }}
+          selected={isSelected}
+          dim={isDimmed}
+          depth={depth}
+          hasChildren={kids.length > 0}
+          expanded={isExpanded}
+          onToggleExpand={() => toggleExpand(page.id)}
+          onToggle={() => mode === 'manual'
+            ? setSelectedIds(s => s.includes(page.id) ? s.filter(x => x !== page.id) : [...s, page.id])
+            : setParentPageId(page.id)
+          }
+        />
+        {isExpanded && kids.map(c => renderRow(c, depth + 1))}
+      </Fragment>
+    )
+  }
+
+  const parentPage = parentPageId ? byId[parentPageId] : null
+  const hasContent = filteredVisible.length > 0 || filteredHidden.length > 0
 
   return (
-    <PopoverShell anchorRect={anchorRect} onClose={onClose} width={360} title="Page Gallery" placement="right" draggable={true}>
-      {modeToggle}
-
-      <div style={{ overflowY: 'auto', maxHeight: 380, padding: '4px 8px 8px' }}>
-        {tree.length === 0 ? (
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: C.textMuted, fontSize: 12 }}>
-            No pages yet. Add pages from the sidebar first.
-          </div>
-        ) : tree.map(({ page: p, depth }) => {
-          const isSelected = mode === 'manual' ? selectedManualSet.has(p.id) : p.id === parentPageId
-          const isAutoChild = mode === 'auto' && autoChildren.has(p.id)
-          const isHidden = p.showInNav === false
-
-          return (
-            <div
-              key={p.id}
-              onClick={() => mode === 'manual' ? togglePage(p.id) : setParentPageId(p.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 9,
-                padding: '5px 8px',
-                marginLeft: depth * 14,
-                marginRight: depth * 4,
-                marginBottom: 1,
-                borderRadius: 5,
-                background: isSelected ? C.selected : isAutoChild ? 'rgba(139,111,71,0.06)' : 'transparent',
-                cursor: 'pointer',
-                transition: 'background 100ms',
-              }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = C.hover }}
-              onMouseLeave={e => { e.currentTarget.style.background = isSelected ? C.selected : isAutoChild ? 'rgba(139,111,71,0.06)' : 'transparent' }}
-            >
-              <Thumb page={p} size={34} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 13, fontWeight: isSelected ? 500 : 450,
-                    color: isSelected ? C.accent : C.textPrimary,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
-                    {p.title}
-                  </div>
-                  {isHidden && (
-                    <span style={{ fontSize: 9.5, color: C.textMuted, fontStyle: 'italic', flexShrink: 0 }}>hidden</span>
-                  )}
-                </div>
-                {p.description ? (
-                  <div style={{ fontSize: 11, color: C.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
-                    {p.description}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          )
-        })}
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? -9999,
+        width: WIDTH,
+        background: C.card,
+        borderRadius: 10,
+        boxShadow: '0 0 0 1px rgba(26,18,10,0.07), 0 1px 2px rgba(26,18,10,0.05), 0 14px 32px -6px rgba(26,18,10,0.16), 0 28px 56px -12px rgba(26,18,10,0.20)',
+        display: 'flex', flexDirection: 'column',
+        maxHeight: 560,
+        overflow: 'hidden',
+        zIndex: 9999,
+        visibility: pos ? 'visible' : 'hidden',
+      }}
+    >
+      {/* Header: tabs + close */}
+      <div style={{ padding: '14px 18px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          {[
+            { value: 'manual', label: 'Pick manually' },
+            { value: 'auto', label: 'Auto from parent' },
+          ].map(t => {
+            const active = mode === t.value
+            return (
+              <button
+                key={t.value}
+                onClick={() => setMode(t.value)}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  padding: '0 0 8px',
+                  fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 500,
+                  color: active ? C.text : C.textMuted,
+                  borderBottom: active ? `1.5px solid ${C.text}` : '1.5px solid transparent',
+                  transition: 'color 120ms',
+                }}
+              >
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+        <button
+          onClick={onClose}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, color: C.textMuted, display: 'flex', alignItems: 'center', marginTop: 2 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
+            <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+          </svg>
+        </button>
       </div>
 
-      {mode === 'auto' && parentPageId && (
-        <div style={{ padding: '0 16px 4px', fontSize: 11, color: autoChildren.size > 0 ? C.textSecondary : C.textMuted, fontStyle: autoChildren.size === 0 ? 'italic' : 'normal' }}>
-          {autoChildren.size > 0
-            ? `Will auto-list ${autoChildren.size} nested ${autoChildren.size === 1 ? 'page' : 'pages'}.`
-            : 'No nested pages found under this page yet.'}
+      {/* Search row — manual mode only */}
+      {mode === 'manual' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', borderBottom: `1px solid ${C.borderSoft}`, flexShrink: 0 }}>
+          <span style={{ color: C.textMuted, display: 'flex' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+            </svg>
+          </span>
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search pages…"
+            autoFocus
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: 13, color: C.text }}
+          />
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '8px 12px', borderTop: `1px solid ${C.border}` }}>
-        {mode === 'manual' && pageIds.length > 0 && (
-          <button type="button" onClick={() => setPageIds([])}
-            style={{ marginRight: 'auto', padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 11.5, color: C.textMuted }}>
-            Clear
-          </button>
+      {/* Auto explainer */}
+      {mode === 'auto' && (
+        <div style={{ margin: '14px 18px 0', padding: '12px 14px', borderRadius: 6, background: 'rgba(26,18,10,0.025)', flexShrink: 0 }}>
+          {parentPage ? (
+            <span style={{ fontSize: 13, color: C.textBody, lineHeight: 1.5 }}>
+              Pages are inherited from <strong style={{ color: C.text }}>{parentPage.title}</strong>. Add or reorder pages there and this gallery follows.
+            </span>
+          ) : (
+            <span style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
+              Pick a parent page below. This gallery will automatically list all pages nested under it.
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Page list */}
+      <div style={{
+        flex: 1, overflowY: 'auto',
+        padding: '8px 0 6px',
+        opacity: mode === 'auto' && !!parentPage ? 0.55 : 1,
+        pointerEvents: mode === 'auto' && !!parentPage ? 'none' : 'auto',
+        transition: 'opacity 150ms',
+      }}>
+        {filteredVisible.length > 0 && (
+          <div style={{ padding: '4px 18px 4px', marginBottom: 2 }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Pages</span>
+          </div>
         )}
+        {filteredVisible.map(p => renderRow(p, 0))}
+
+        {filteredHidden.length > 0 && (
+          <div style={{ padding: '12px 18px 4px' }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Hidden</span>
+          </div>
+        )}
+        {filteredHidden.map(p => renderRow(p, 0))}
+
+        {!hasContent && (
+          <div style={{ padding: '20px 16px', textAlign: 'center', fontSize: 12, color: C.textMuted }}>
+            {query ? `No pages match "${query}".` : 'No pages yet.'}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderTop: `1px solid ${C.borderSoft}`, flexShrink: 0 }}>
+        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textMuted, fontWeight: 500 }}>
+          {mode === 'manual'
+            ? `${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
+            : parentPage ? 'Auto' : 'No parent'
+          }
+        </span>
         <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={!canConfirm}
-          style={{
-            padding: '6px 14px', borderRadius: 5, border: 'none',
-            cursor: canConfirm ? 'pointer' : 'default',
-            fontSize: 12.5, fontWeight: 500,
-            background: canConfirm ? '#2c2416' : 'rgba(60,40,15,0.15)',
-            color: canConfirm ? '#f5ecd6' : C.textMuted,
-            transition: 'background 0.15s',
-          }}
+          onClick={handleDone}
+          style={{ height: 32, padding: '0 16px', borderRadius: 6, background: C.ink, border: 'none', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 500, color: C.inkText, cursor: 'pointer' }}
         >
-          {canConfirm ? 'Save changes' : 'No changes'}
+          Done
         </button>
       </div>
-    </PopoverShell>
+    </div>
   )
 }
