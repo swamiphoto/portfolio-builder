@@ -770,30 +770,29 @@ function BlockCard({
             </>
           )}
 
-          {block.type === "contact" && (
-            <div className="space-y-1.5">
-              <input
-                type="text"
-                className={INPUT}
-                placeholder="Heading"
-                value={block.heading || ""}
-                onChange={e => onUpdate({ ...block, heading: e.target.value })}
-              />
-              <AutoGrowTextarea
-                className={INPUT}
-                placeholder="Subheading"
-                value={block.subheading || ""}
-                onChange={e => onUpdate({ ...block, subheading: e.target.value })}
-              />
-              <input
-                type="text"
-                className={INPUT}
-                placeholder="Button text"
-                value={block.buttonText || ""}
-                onChange={e => onUpdate({ ...block, buttonText: e.target.value })}
-              />
-            </div>
-          )}
+          {block.type === "contact" && (() => {
+            const fieldLabel = (text) => (
+              <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#9e9788', marginBottom: 4 }}>
+                {text}
+              </div>
+            )
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  {fieldLabel('Heading')}
+                  <input type="text" className={INPUT} value={block.heading || ""} onChange={e => onUpdate({ ...block, heading: e.target.value })} />
+                </div>
+                <div>
+                  {fieldLabel('Subheading')}
+                  <AutoGrowTextarea className={INPUT} value={block.subheading || ""} onChange={e => onUpdate({ ...block, subheading: e.target.value })} />
+                </div>
+                <div>
+                  {fieldLabel('Button text')}
+                  <input type="text" className={INPUT} value={block.buttonText || ""} onChange={e => onUpdate({ ...block, buttonText: e.target.value })} />
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Page Gallery */}
           {block.type === "page-gallery" && (() => {
