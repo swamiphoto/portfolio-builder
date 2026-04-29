@@ -89,7 +89,7 @@ function ThumbCascade({ pages, ghost = false }) {
             ) : (
               <div style={{
                 width: '100%', height: '100%',
-                background: C.thumbEmpty,
+                background: ghost ? C.thumbEmpty : pageThumbGradient(page?.id),
                 boxShadow: `inset 0 0 0 1px ${C.borderSoft}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: C.textFaint,
