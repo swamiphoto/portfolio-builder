@@ -153,7 +153,7 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: '#3a362f' }}>{username}.sepia.photo</span>
+                  <span style={{ color: '#a09080' }}>{username}.sepia.photo</span>
                   {pagePath && <span style={{ color: '#3a362f' }}>{pagePath}</span>}
                 </span>
               </div>

@@ -18,6 +18,7 @@ const TYPE_LABELS = {
   video: "Video",
   "page-gallery": "Page Gallery",
   contact: "Contact",
+  testimonial: "Testimonial",
 };
 
 const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug text-[#2c2416]";
@@ -123,7 +124,7 @@ function BlockCard({
   const dragPhotoIndex = useRef(null);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
   const { startDrag, endDrag } = useDrag()
-  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
+  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video" || block.type === "contact" || block.type === "testimonial";
 
   const [expanded, setExpanded] = useState(true);
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride]);
@@ -744,7 +745,7 @@ function BlockCard({
           {/* Text */}
           {block.type === "text" && (
             <AutoGrowTextarea
-              className={`${INPUT} resize-none scroll-thin`}
+              className={`${INPUT} resize-none scroll-thin !pt-0`}
               placeholder="Write something…"
               maxHeight={160}
               value={block.content || ""}
@@ -771,25 +772,79 @@ function BlockCard({
           )}
 
           {block.type === "contact" && (
-            <div className="space-y-1.5">
-              <input
-                type="text"
-                className={INPUT}
-                placeholder="Heading (optional)"
-                value={block.heading || ""}
-                onChange={e => onUpdate({ ...block, heading: e.target.value })}
-              />
-              <AutoGrowTextarea
-                className={INPUT}
-                placeholder="Subheading (optional)"
-                value={block.subheading || ""}
-                onChange={e => onUpdate({ ...block, subheading: e.target.value })}
-              />
-              <p className="text-xs text-[#8b6f47] opacity-70 pt-1">
-                Email and social links come from site settings.
-              </p>
+            <div className="space-y-5">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Heading</div>
+                <input
+                  className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
+                  placeholder="Get in touch"
+                  value={block.heading || ""}
+                  onChange={e => onUpdate({ ...block, heading: e.target.value })}
+                />
+              </div>
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Subheading</div>
+                <AutoGrowTextarea
+                  className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full resize-none"
+                  placeholder="I'd love to hear from you…"
+                  maxHeight={80}
+                  value={block.subheading || ""}
+                  onChange={e => onUpdate({ ...block, subheading: e.target.value })}
+                />
+              </div>
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Button text</div>
+                <input
+                  className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
+                  placeholder="Send message"
+                  value={block.buttonText || ""}
+                  onChange={e => onUpdate({ ...block, buttonText: e.target.value })}
+                />
+              </div>
             </div>
           )}
+
+          {block.type === "testimonial" && (() => {
+            const photoUrl = block.imageUrl || block.image?.url || block.image || ''
+            return (
+              <div className="space-y-5">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Photo</div>
+                  <div
+                    onClick={onAddPhotos}
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={e => {
+                      e.preventDefault()
+                      let url = null
+                      const raw = e.dataTransfer.getData('application/x-photo-drag')
+                      if (raw) { try { url = JSON.parse(raw).imageRefs?.[0]?.url ?? null } catch {} }
+                      if (!url) url = e.dataTransfer.getData('text/plain')
+                      if (url) onUpdate({ ...block, imageUrl: url })
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', padding: '3px 0' }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 3, flexShrink: 0, overflow: photoUrl ? 'hidden' : undefined, background: photoUrl ? undefined : '#ece4d2', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)' }}>
+                      {photoUrl && <img src={getSizedUrl(photoUrl, 'thumbnail')} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                    </div>
+                    <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>
+                      {photoUrl
+                        ? <span style={{ color: 'rgba(58,54,47,0.7)' }}>Replace photo</span>
+                        : <span className="underline underline-offset-2" style={{ color: 'rgba(58,54,47,0.7)' }}>Select from library</span>
+                      }
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
+                  <input className={INPUT} placeholder="Jane Smith" value={block.name || ''} onChange={e => onUpdate({ ...block, name: e.target.value })} />
+                </div>
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Testimonial</div>
+                  <AutoGrowTextarea className={`${INPUT} resize-none scroll-thin`} placeholder={`Working with ${block.name || 'Jane Smith'} was an absolute pleasure…`} maxHeight={120} value={block.text || ''} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Page Gallery */}
           {block.type === "page-gallery" && (() => {
@@ -848,11 +903,11 @@ function BlockCard({
             )
 
             const ghostRows = (
-              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 2 }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {[0, 1, 2].map(i => (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '6px 6px',
+                    padding: '4px 6px',
                     borderBottom: i < 2 ? '1px solid rgba(26,18,10,0.07)' : 'none',
                   }}>
                     <div style={{ width: 26, height: 26, borderRadius: 3, flexShrink: 0, background: '#ede7dc', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)' }} />
@@ -900,7 +955,7 @@ function BlockCard({
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                       style={{
                         position: 'relative',
-                        display: 'flex', alignItems: 'center', gap: 9,
+                        display: 'flex', alignItems: 'center', gap: 10,
                         padding: '4px 6px',
                         borderRadius: 4,
                         background: 'transparent',
@@ -913,7 +968,7 @@ function BlockCard({
                       {isBefore && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, top: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
                       {isAfter && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, bottom: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
                       <div style={{
-                        width: 26, height: 26, borderRadius: 3, flexShrink: 0,
+                        width: 36, height: 36, borderRadius: 3, flexShrink: 0,
                         background: thumb ? undefined : pageThumbGradient(p.id),
                         boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)',
                         overflow: thumb ? 'hidden' : undefined,

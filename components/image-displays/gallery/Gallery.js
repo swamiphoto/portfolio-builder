@@ -9,7 +9,7 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from "../../../common/assetRefs";
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -215,28 +215,117 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 .map(id => (pages || []).find(p => p.id === id))
                 .filter(Boolean);
               if (linkedPages.length === 0) return null;
+              const basePath = username ? `/sites/${username}` : '';
+              const pgStackVariants = [
+                {
+                  first: "absolute -right-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -right-1 -bottom-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+                {
+                  first: "absolute -left-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -left-1 -bottom-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+                {
+                  first: "absolute -right-2 -top-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -right-1 -top-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+                {
+                  first: "absolute -left-2 -top-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -left-1 -top-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+              ];
               return (
-                <div key={`block-${index}`} className="page-gallery-block px-8 py-4" data-block-index={index} {...hoverProps}>
-                  <div className="grid grid-cols-2 gap-6">
-                    {linkedPages.map(p => (
-                      <a key={p.id} href="#" className="block group">
-                        {pageDisplayThumbnail(p) ? (
-                          <img
-                            src={pageDisplayThumbnail(p)}
-                            alt={p.title}
-                            className="w-full aspect-[4/3] object-cover"
-                          />
-                        ) : (
-                          <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center text-gray-300 text-sm">
-                            No thumbnail
+                <div key={`block-${index}`} className="page-gallery-block max-w-7xl mx-auto p-4" data-block-index={index} {...hoverProps}>
+                  <div className="space-y-8">
+                    {linkedPages.map((p, i) => {
+                      const thumb = pageDisplayThumbnail(p);
+                      const href = `${basePath}/${p.slug || p.id}`;
+                      const stackStyle = pgStackVariants[i % pgStackVariants.length];
+                      return (
+                        <a key={p.id} href={href} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <div className="relative md:w-7/12">
+                            <div className="relative">
+                              <div className={stackStyle.first} />
+                              <div className={stackStyle.second} />
+                              <div className="relative overflow-hidden shadow-lg rounded-3xl">
+                                {thumb ? (
+                                  <img src={thumb} alt={p.title} className="w-full h-[400px] md:h-[500px] object-cover relative z-10 rounded-3xl" />
+                                ) : (
+                                  <div className="w-full h-[400px] md:h-[500px] rounded-3xl" style={{ background: pageThumbGradient(p.id) }} />
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        )}
-                        <div className="mt-2 text-sm text-gray-800 font-medium">{p.title}</div>
-                      </a>
-                    ))}
+                          <div className="md:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-0 md:px-8">
+                            <h2 className="text-4xl font-medium tracking-tight" style={{ color: '#1a1410', fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400 }}>{p.title}</h2>
+                            {p.description && <p style={{ color: '#7a6b55', fontSize: '1.1rem', lineHeight: 1.6 }}>{p.description}</p>}
+                          </div>
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               );
+            }
+
+            case "testimonial": {
+              const photoUrl = getImageRefUrl(block.image || block.imageUrl)
+              const v = block.variant || 1
+              const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
+              const FR = '"Fraunces", Georgia, serif'
+
+              if (!block.text && !block.name && !photoUrl) {
+                if (!showPlaceholders) return null
+                return (
+                  <div key={`block-${index}`} className="testimonial-block" data-block-index={index} {...hoverProps}>
+                    <figure style={{ maxWidth: '36rem', margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #ede7dc, #d9cebd)', flexShrink: 0 }} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '28rem' }}>
+                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '88%', margin: '0 auto' }} />
+                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '72%', margin: '0 auto' }} />
+                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '56%', margin: '0 auto' }} />
+                      </div>
+                      <div style={{ height: 9, borderRadius: 4, background: '#e0d8c8', width: '6rem' }} />
+                    </figure>
+                    <WiggleLine />
+                  </div>
+                )
+              }
+
+              const avatar = photoUrl && (
+                <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, boxShadow: '0 2px 8px rgba(26,18,10,0.12)' }}>
+                  <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )
+              const quote = block.text && (
+                <blockquote style={{ fontFamily: CG, fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', fontStyle: 'italic', fontWeight: 400, color: '#2c2416', lineHeight: 1.65, margin: 0, padding: 0 }}>
+                  &#8220;{block.text}&#8221;
+                </blockquote>
+              )
+              const byline = block.name && (
+                <div style={{ fontFamily: FR, fontSize: '1rem', fontWeight: 400, color: '#7a6b55', letterSpacing: '0.03em' }}>
+                  — {block.name}
+                </div>
+              )
+
+              return (
+                <div key={`block-${index}`} className="testimonial-block" data-block-index={index} {...hoverProps}>
+                  <figure style={{ maxWidth: '40rem', margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                    {v === 1 ? <>
+                      {avatar}
+                      {byline}
+                      {quote}
+                    </> : <>
+                      {quote}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                        {avatar}
+                        {byline}
+                      </div>
+                    </>}
+                  </figure>
+                  <WiggleLine />
+                </div>
+              )
             }
 
             case "contact": {
@@ -245,7 +334,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <ContactDisplay
                     heading={block.heading}
                     subheading={block.subheading}
-                    contact={siteConfig?.contact}
+                    buttonText={block.buttonText}
+                    toEmail={siteConfig?.contact?.email}
                   />
                 </div>
               );

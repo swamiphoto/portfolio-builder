@@ -635,7 +635,7 @@ export default function PlatformSidebar({
               className="flex-1 truncate"
               style={{ fontSize: 13, color: isSelected ? '#3a2e1f' : C.textBody, fontWeight: isSelected ? 600 : 400 }}
             >
-              {page.title}
+              {page.title || 'Untitled'}
             </span>
 
             {/* Drop badges */}
