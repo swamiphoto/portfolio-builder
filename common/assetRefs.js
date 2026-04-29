@@ -162,6 +162,25 @@ export function getNestedGalleries(parentPageId, pages) {
   return pages.filter(p => p.parentId === parentPageId && p.kind === 'gallery')
 }
 
+// Warm sepia gradients assigned to pages that have no cover image.
+// Deterministic per page ID so the color is stable across renders.
+const SEPIA_GRADIENTS = [
+  'linear-gradient(135deg, #b87a6e 0%, #c9856e 40%, #d3a07a 100%)', // sunset
+  'linear-gradient(160deg, #4a3a52 0%, #6b5560 50%, #8a6f5e 100%)', // pier
+  'linear-gradient(150deg, #7a6b8c 0%, #9e8a9e 50%, #c0a99e 100%)', // lavender
+  'linear-gradient(140deg, #8a4a3a 0%, #b56a4e 45%, #d39a7a 100%)', // desert
+  'linear-gradient(150deg, #7a3a26 0%, #a85a3a 50%, #c98e6e 100%)', // canyon
+  'linear-gradient(160deg, #2e3a2a 0%, #4a5a3a 50%, #7a8a5e 100%)', // forest
+  'linear-gradient(150deg, #6e7e8c 0%, #98a8b4 50%, #c8d2d8 100%)', // ice
+]
+
+export function pageThumbGradient(pageId) {
+  if (!pageId) return SEPIA_GRADIENTS[0]
+  let h = 0
+  for (let i = 0; i < pageId.length; i++) h = (h * 31 + pageId.charCodeAt(i)) >>> 0
+  return SEPIA_GRADIENTS[h % SEPIA_GRADIENTS.length]
+}
+
 export function pageDisplayThumbnail(page) {
   const explicit = page.thumbnail?.imageUrl
   if (explicit && !page.thumbnail?.useCover) return explicit

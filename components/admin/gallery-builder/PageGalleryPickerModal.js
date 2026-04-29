@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, Fragment } from 'react'
-import { pageDisplayThumbnail } from '../../../common/assetRefs'
+import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 
 const C = {
   card: '#f6f3ec',
@@ -38,13 +38,10 @@ function Thumb({ page, size = 28, radius = 3 }) {
     return (
       <div style={{
         width: size, height: size, borderRadius: radius,
-        background: C.thumbEmpty,
+        background: pageThumbGradient(page?.id),
         boxShadow: `inset 0 0 0 1px ${C.borderSoft}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, color: C.textFaint,
-      }}>
-        <DotIcon />
-      </div>
+        flexShrink: 0,
+      }} />
     )
   }
   return (

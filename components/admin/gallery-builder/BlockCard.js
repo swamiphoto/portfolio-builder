@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
 import { getSizedUrl } from "../../../common/imageUtils";
-import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail } from "../../../common/assetRefs";
+import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
@@ -877,15 +877,11 @@ function BlockCard({
                       {isAfter && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, bottom: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
                       <div style={{
                         width: 26, height: 26, borderRadius: 3, flexShrink: 0,
-                        background: '#ede7dc',
+                        background: thumb ? undefined : pageThumbGradient(p.id),
                         boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)',
                         overflow: thumb ? 'hidden' : undefined,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        {thumb
-                          ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
-                          : <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><circle cx="4.5" cy="4.5" r="1" fill="#b0a490" /></svg>
-                        }
+                        {thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12.5, color: '#1d1b17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
