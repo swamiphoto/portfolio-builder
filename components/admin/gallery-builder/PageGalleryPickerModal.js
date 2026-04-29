@@ -131,15 +131,14 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         margin: '1px 8px',
-        height: 40,
+        minHeight: 40,
+        padding: '6px 10px',
         paddingLeft: 10 + indent,
-        paddingRight: 10,
         borderRadius: 5,
         cursor: 'pointer',
         background: selected ? C.card2 : 'transparent',
         boxShadow: selected ? `0 1px 2px rgba(26,18,10,0.04), inset 0 0 0 1px ${C.accentRing}` : 'none',
         position: 'relative',
-        flexShrink: 0,
       }}
     >
       {/* Tree guide — L-shape connector for nested rows; hidden when selected so ring isn't pierced */}
@@ -160,15 +159,21 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
 
       <Thumb page={page} />
 
-      <span style={{
-        flex: 1, minWidth: 0,
-        fontSize: 13,
-        color: selected ? C.text : C.textBody,
-        fontWeight: selected ? 500 : 400,
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
-        {page.title}
-      </span>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <span style={{
+          fontSize: 13,
+          color: selected ? C.text : C.textBody,
+          fontWeight: selected ? 500 : 400,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {page.title}
+        </span>
+        {page.description && (
+          <span style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {page.description}
+          </span>
+        )}
+      </div>
 
       {/* Right-side affordance: check if selected, disclosure if parent, nothing for leaves */}
       {selected ? (
@@ -421,32 +426,44 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
   const [selectedIds, setSelectedIds] = useState(block.pageIds || [])
   const [parentPageId, setParentPageId] = useState(block.parentPageId || '')
   const [query, setQuery] = useState('')
-  const [expandedIds, setExpandedIds] = useState(() => {
-    const parentIds = new Set()
-    ;(block.pageIds || []).forEach(id => {
-      const p = (pages || []).find(pg => pg.id === id)
-      if (p?.parentId) parentIds.add(p.parentId)
-    })
-    return [...parentIds]
-  })
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [dropdownTriggerRect, setDropdownTriggerRect] = useState(null)
+  const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 })
 
   const frozenPages = useRef(pages)
   const ref = useRef(null)
+  const dragStartRef = useRef(null)
   const [pos, setPos] = useState(null)
 
+  // Position to the right of the block card, clamped within viewport
   useEffect(() => {
     if (!anchorRect) return
-    const rightSpace = window.innerWidth - anchorRect.right - 8
-    const leftSpace = anchorRect.left - 8
-    const openLeft = rightSpace < WIDTH && leftSpace > rightSpace
-    const left = openLeft
-      ? Math.max(8, anchorRect.left - WIDTH - 8)
-      : Math.min(anchorRect.right + 8, window.innerWidth - WIDTH - 8)
-    const top = Math.max(8, Math.min(anchorRect.top, window.innerHeight - 480 - 8))
+    const GAP = 10
+    const MAX_H = 560
+    const BOTTOM_MARGIN = 16
+    let left = anchorRect.right + GAP
+    if (left + WIDTH > window.innerWidth - 8) left = Math.max(8, anchorRect.left - WIDTH - GAP)
+    const top = Math.max(8, Math.min(anchorRect.top, window.innerHeight - MAX_H - BOTTOM_MARGIN))
     setPos({ left, top })
   }, [anchorRect])
+
+  // Drag-to-reposition via header
+  function onHeaderMouseDown(e) {
+    if (e.target.closest('button')) return
+    e.preventDefault()
+    const startX = e.clientX - dragDelta.x
+    const startY = e.clientY - dragDelta.y
+    dragStartRef.current = { startX, startY }
+    function onMove(e) {
+      setDragDelta({ x: e.clientX - dragStartRef.current.startX, y: e.clientY - dragStartRef.current.startY })
+    }
+    function onUp() {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   useEffect(() => {
     function onDown(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
@@ -457,7 +474,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
   }, [onClose, dropdownOpen])
 
   // Build page tree once at mount from frozen snapshot
-  const { byId, topLevelVisible, topLevelHidden, childrenOf, candidates } = useMemo(() => {
+  const { byId, topLevelVisible, topLevelHidden, childrenOf, candidates, allParentIds } = useMemo(() => {
     const seen = new Set()
     const all = (frozenPages.current || [])
       .filter(p => p.type !== 'link' && p.id !== currentPageId)
@@ -473,6 +490,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
       }
     })
     const topLevel = all.filter(p => !p.parentId || !byId[p.parentId])
+    const allParentIds = Object.keys(childrenOf)
     const candidates = topLevel
       .filter(p => childrenOf[p.id]?.length > 0)
       .map(p => ({ ...p, _childCount: childrenOf[p.id].length }))
@@ -483,9 +501,13 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
       topLevelHidden: topLevel.filter(p => p.showInNav === false),
       childrenOf,
       candidates,
+      allParentIds,
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // frozen at mount
+
+  // Expand all parents by default so nesting is immediately visible
+  const [expandedIds, setExpandedIds] = useState(allParentIds)
 
   const { filteredVisible, filteredHidden } = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -547,8 +569,8 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
       ref={ref}
       style={{
         position: 'fixed',
-        left: pos?.left ?? -9999,
-        top: pos?.top ?? -9999,
+        left: pos ? pos.left + dragDelta.x : -9999,
+        top: pos ? pos.top + dragDelta.y : -9999,
         width: WIDTH,
         background: 'var(--popover)',
         borderRadius: 10,
@@ -558,16 +580,22 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         overflow: 'hidden',
         zIndex: 9999,
         visibility: pos ? 'visible' : 'hidden',
+        willChange: 'left, top',
       }}
     >
       {/* ── Tab header — underline style matching library picker ── */}
-      <div style={{
-        height: 40,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: `1px solid ${C.borderSoft}`,
-        flexShrink: 0,
-        paddingRight: 10,
-      }}>
+      <div
+        onMouseDown={onHeaderMouseDown}
+        style={{
+          height: 40,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: `1px solid ${C.borderSoft}`,
+          flexShrink: 0,
+          paddingRight: 10,
+          cursor: 'grab',
+          userSelect: 'none',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', height: '100%', paddingLeft: 6 }}>
           {[
             { value: 'manual', label: 'Choose pages' },

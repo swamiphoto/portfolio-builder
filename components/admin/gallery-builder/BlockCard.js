@@ -139,9 +139,12 @@ function BlockCard({
   const [pgDragIdx, setPgDragIdx] = useState(null);
   const [pgDropTarget, setPgDropTarget] = useState(null); // { idx, pos: 'before'|'after' }
   const lastSelectedRef = useRef(null);
+  const cardRef = useRef(null);
   const menuRef = useRef(null);
   const menuBtnRef = useRef(null);
   const designBtnRef = useRef(null);
+
+  function openPicker() { setPickerAnchorRect(cardRef.current?.getBoundingClientRect() ?? null); setPickerOpen(true) }
 
   const handleThumbClick = (e, i) => {
     if (e.metaKey || e.ctrlKey) {
@@ -261,6 +264,7 @@ function BlockCard({
 
   return (
     <div
+      ref={cardRef}
       className="group/card relative overflow-hidden block-card-spec"
       style={{
         background: '#f6f3ec',
@@ -358,7 +362,7 @@ function BlockCard({
             {block.type === 'page-gallery' && (
               <Tip label="Edit pages">
                 <button
-                  onClick={e => { onTitleClick?.(); setPickerAnchorRect(e.currentTarget.getBoundingClientRect()); setPickerOpen(v => !v); }}
+                  onClick={() => { onTitleClick?.(); openPicker() }}
                   className="flex items-center justify-center rounded transition-colors"
                   style={{ width: 24, height: 24, color: pickerOpen ? '#1d1b17' : '#9e9788', background: pickerOpen ? 'rgba(26,18,10,0.06)' : 'transparent', border: 'none', cursor: 'pointer' }}
                   onMouseEnter={e => { if (!pickerOpen) e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
@@ -822,7 +826,7 @@ function BlockCard({
             const editPagesBtn = (
               <button
                 type="button"
-                onClick={e => { setPickerAnchorRect(e.currentTarget.getBoundingClientRect()); setPickerOpen(true) }}
+                onClick={() => openPicker()}
                 onMouseEnter={e => { e.currentTarget.style.color = '#3a362f' }}
                 onMouseLeave={e => { e.currentTarget.style.color = '#9e9788' }}
                 style={{
