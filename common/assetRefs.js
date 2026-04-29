@@ -234,8 +234,15 @@ export function normalizePageEntity(page) {
 
   const slug = page.slug || slugify(page.title || '') || page.id || ''
 
+  // Infer kind for pages created before the kind field existed
+  let kind = page.kind
+  if (!kind && Array.isArray(page.blocks)) {
+    if (page.blocks.some(b => b.type === 'page-gallery')) kind = 'collection'
+  }
+
   return {
     ...page,
+    kind,
     type: page.type === 'link' ? 'link' : 'page',
     slug,
     url: page.url || '',
