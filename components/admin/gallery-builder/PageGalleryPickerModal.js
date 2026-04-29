@@ -6,7 +6,6 @@ const C = {
   card2: '#faf7f1',
   thumbEmpty: '#ede7dc',
   borderSoft: 'rgba(26,18,10,0.07)',
-  border: 'rgba(26,18,10,0.10)',
   hover: 'rgba(26,18,10,0.04)',
   text: '#1d1b17',
   textBody: '#3a362f',
@@ -45,12 +44,24 @@ function Thumb({ page }) {
   )
 }
 
-function PickerRow({ page, selected, onToggle, depth = 0, hasChildren, expanded, onToggleExpand, dim }) {
-  const [hover, setHover] = useState(false)
+// No useState — hover applied directly to DOM to avoid React re-renders
+function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onToggleExpand }) {
+  const rowRef = useRef(null)
+
+  function handleMouseEnter() {
+    if (!rowRef.current || selected) return
+    rowRef.current.style.background = C.hover
+  }
+  function handleMouseLeave() {
+    if (!rowRef.current) return
+    rowRef.current.style.background = selected ? C.card2 : 'transparent'
+  }
+
   return (
     <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      ref={rowRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onClick={onToggle}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
@@ -59,13 +70,12 @@ function PickerRow({ page, selected, onToggle, depth = 0, hasChildren, expanded,
         paddingLeft: 10 + depth * 18,
         borderRadius: 5,
         cursor: 'pointer',
-        background: selected ? C.card2 : hover ? C.hover : 'transparent',
+        background: selected ? C.card2 : 'transparent',
         boxShadow: selected ? `0 1px 2px rgba(26,18,10,0.04), inset 0 0 0 1px ${C.accentRing}` : 'none',
-        transition: 'background 120ms, box-shadow 120ms',
         position: 'relative',
       }}
     >
-      {/* Tree guide lines for nested rows */}
+      {/* Tree guide lines */}
       {depth > 0 && <>
         <span style={{ position: 'absolute', left: 10 + (depth - 1) * 18 + 9, top: 0, bottom: 0, width: 1, background: C.borderSoft, pointerEvents: 'none' }} />
         <span style={{ position: 'absolute', left: 10 + (depth - 1) * 18 + 9, top: '50%', width: 8, height: 1, background: C.borderSoft, pointerEvents: 'none' }} />
@@ -96,7 +106,7 @@ function PickerRow({ page, selected, onToggle, depth = 0, hasChildren, expanded,
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <span style={{
           fontSize: 13,
-          color: dim ? C.textMuted : (selected ? C.text : C.textBody),
+          color: selected ? C.text : C.textBody,
           fontWeight: selected ? 500 : 400,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
@@ -109,7 +119,6 @@ function PickerRow({ page, selected, onToggle, depth = 0, hasChildren, expanded,
         )}
       </div>
 
-      {/* Child count when parent is collapsed */}
       {hasChildren && !expanded && !selected && (
         <span style={{ fontFamily: MONO, fontSize: 9.5, color: C.textFaint, letterSpacing: '0.06em', flexShrink: 0 }}>
           {page._childCount}
@@ -140,6 +149,10 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
     })
     return [...parentIds]
   })
+
+  // Snapshot pages at mount — avoids re-renders from parent autosave creating new array refs
+  const frozenPages = useRef(pages)
+
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
 
@@ -163,9 +176,10 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
     return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey) }
   }, [onClose])
 
+  // Build page tree once at mount from the frozen snapshot
   const { byId, topLevelVisible, topLevelHidden, childrenOf } = useMemo(() => {
     const seen = new Set()
-    const all = (pages || [])
+    const all = (frozenPages.current || [])
       .filter(p => p.type !== 'link' && p.id !== currentPageId)
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
@@ -185,7 +199,8 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
       topLevelHidden: topLevel.filter(p => p.showInNav === false),
       childrenOf,
     }
-  }, [pages, currentPageId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // empty deps: pages frozen at mount, currentPageId stable during picker session
 
   const { filteredVisible, filteredHidden } = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -221,14 +236,12 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
     const kids = childrenOf[page.id] || []
     const isExpanded = expandedIds.includes(page.id)
     const isSelected = mode === 'manual' ? selectedIds.includes(page.id) : page.id === parentPageId
-    const isDimmed = mode === 'auto' && !!parentPageId
 
     return (
       <Fragment key={page.id}>
         <PickerRow
           page={{ ...page, _childCount: kids.length }}
           selected={isSelected}
-          dim={isDimmed}
           depth={depth}
           hasChildren={kids.length > 0}
           expanded={isExpanded}
@@ -264,7 +277,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         visibility: pos ? 'visible' : 'hidden',
       }}
     >
-      {/* Header: tabs + close */}
+      {/* Tabs + close */}
       <div style={{ padding: '14px 18px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
           {[
@@ -318,29 +331,23 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         </div>
       )}
 
-      {/* Auto explainer */}
+      {/* Auto mode explainer */}
       {mode === 'auto' && (
         <div style={{ margin: '14px 18px 0', padding: '12px 14px', borderRadius: 6, background: 'rgba(26,18,10,0.025)', flexShrink: 0 }}>
           {parentPage ? (
             <span style={{ fontSize: 13, color: C.textBody, lineHeight: 1.5 }}>
-              Pages are inherited from <strong style={{ color: C.text }}>{parentPage.title}</strong>. Add or reorder pages there and this gallery follows.
+              Auto-listing pages under <strong style={{ color: C.text }}>{parentPage.title}</strong>. Click another page below to change the parent.
             </span>
           ) : (
             <span style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
-              Pick a parent page below. This gallery will automatically list all pages nested under it.
+              Pick a parent page below. This gallery will automatically show all pages nested under it.
             </span>
           )}
         </div>
       )}
 
-      {/* Page list */}
-      <div style={{
-        flex: 1, overflowY: 'auto',
-        padding: '8px 0 6px',
-        opacity: mode === 'auto' && !!parentPage ? 0.55 : 1,
-        pointerEvents: mode === 'auto' && !!parentPage ? 'none' : 'auto',
-        transition: 'opacity 150ms',
-      }}>
+      {/* Page list — always interactive (no pointer-events: none in auto mode) */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0 6px' }}>
         {filteredVisible.length > 0 && (
           <div style={{ padding: '4px 18px 4px', marginBottom: 2 }}>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>Pages</span>
@@ -367,7 +374,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textMuted, fontWeight: 500 }}>
           {mode === 'manual'
             ? `${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
-            : parentPage ? 'Auto' : 'No parent'
+            : parentPage ? `Auto · ${parentPage.title}` : 'No parent'
           }
         </span>
         <button
