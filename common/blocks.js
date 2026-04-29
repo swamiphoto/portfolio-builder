@@ -19,7 +19,7 @@ export function defaultBlock(type) {
     case "page-gallery":
       return { type: "page-gallery", source: "manual", pageIds: [] };
     case "contact":
-      return { type: "contact", heading: "", subheading: "" };
+      return { type: "contact", heading: "", subheading: "", buttonText: "" };
     default:
       return { type };
   }

@@ -123,7 +123,7 @@ function BlockCard({
   const dragPhotoIndex = useRef(null);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
   const { startDrag, endDrag } = useDrag()
-  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video";
+  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video" || block.type === "contact";
 
   const [expanded, setExpanded] = useState(true);
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride]);
@@ -775,19 +775,23 @@ function BlockCard({
               <input
                 type="text"
                 className={INPUT}
-                placeholder="Heading (optional)"
+                placeholder="Heading"
                 value={block.heading || ""}
                 onChange={e => onUpdate({ ...block, heading: e.target.value })}
               />
               <AutoGrowTextarea
                 className={INPUT}
-                placeholder="Subheading (optional)"
+                placeholder="Subheading"
                 value={block.subheading || ""}
                 onChange={e => onUpdate({ ...block, subheading: e.target.value })}
               />
-              <p className="text-xs text-[#8b6f47] opacity-70 pt-1">
-                Email and social links come from site settings.
-              </p>
+              <input
+                type="text"
+                className={INPUT}
+                placeholder="Button text"
+                value={block.buttonText || ""}
+                onChange={e => onUpdate({ ...block, buttonText: e.target.value })}
+              />
             </div>
           )}
 

@@ -1,34 +1,166 @@
-export default function ContactDisplay({ heading, subheading, contact }) {
-  if (!contact) return null;
-  const { email, instagram, facebook, twitter, tiktok, youtube, website } = contact;
-  const hasSocial = !!(instagram || facebook || twitter || tiktok || youtube || website);
-  if (!email && !hasSocial && !heading && !subheading) return null;
+import { useState } from 'react'
 
-  const socialLink = (href, label, svgPath) => href ? (
-    <a key={label} href={href.startsWith('http') ? href : `https://${href.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" aria-label={label} className="text-stone-600 hover:text-stone-900 transition-colors">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">{svgPath}</svg>
-    </a>
-  ) : null;
+const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
+const SERIF = "'Fraunces', Georgia, serif"
+
+const labelStyle = {
+  display: 'block',
+  fontFamily: MONO,
+  fontSize: 10,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  color: '#a8967a',
+  marginBottom: 6,
+}
+
+const inputStyle = {
+  display: 'block',
+  width: '100%',
+  background: 'transparent',
+  border: 'none',
+  borderBottom: '1px solid rgba(160,140,110,0.3)',
+  outline: 'none',
+  padding: '6px 0 8px',
+  fontSize: 15,
+  color: '#2c2416',
+  fontFamily: 'inherit',
+  transition: 'border-color 150ms',
+}
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  )
+}
+
+export default function ContactDisplay({ heading, subheading, buttonText, toEmail }) {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [status, setStatus] = useState('idle') // idle | sending | sent | error
+
+  function set(key) {
+    return e => setForm(s => ({ ...s, [key]: e.target.value }))
+  }
+
+  function focusStyle(e) { e.target.style.borderBottomColor = 'rgba(92,79,58,0.65)' }
+  function blurStyle(e) { e.target.style.borderBottomColor = 'rgba(160,140,110,0.3)' }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setStatus('sending')
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, toEmail }),
+      })
+      if (!res.ok) throw new Error('send failed')
+      setStatus('sent')
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  if (status === 'sent') {
+    return (
+      <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '5rem 2rem', textAlign: 'center' }}>
+        <div style={{ fontFamily: SERIF, fontSize: '1.6rem', fontWeight: 300, color: '#2c2416', marginBottom: '0.75rem' }}>
+          Message sent
+        </div>
+        <p style={{ color: '#7a6b55', fontSize: '1rem' }}>Thank you for reaching out. I'll be in touch soon.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="contact-block max-w-2xl mx-auto px-8 py-16 text-center">
-      {heading ? <h2 className="text-3xl md:text-4xl font-light text-stone-800 mb-4">{heading}</h2> : null}
-      {subheading ? <p className="text-base md:text-lg text-stone-600 mb-8 leading-relaxed">{subheading}</p> : null}
-      {email ? (
-        <p className="mb-6">
-          <a href={`mailto:${email}`} className="text-stone-800 underline underline-offset-4 decoration-stone-300 hover:decoration-stone-700 transition-colors">{email}</a>
+    <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '3rem 2rem' }}>
+      {heading && (
+        <h2 style={{ fontFamily: SERIF, fontSize: '2rem', fontWeight: 300, color: '#1a1410', lineHeight: 1.15, marginBottom: subheading ? '0.75rem' : '2rem', marginTop: 0 }}>
+          {heading}
+        </h2>
+      )}
+      {subheading && (
+        <p style={{ color: '#7a6b55', fontSize: '1rem', lineHeight: 1.6, marginBottom: '2rem', marginTop: 0 }}>
+          {subheading}
         </p>
-      ) : null}
-      {hasSocial ? (
-        <div className="flex justify-center gap-5">
-          {socialLink(instagram, 'Instagram', <><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></>)}
-          {socialLink(facebook, 'Facebook', <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>)}
-          {socialLink(twitter, 'Twitter', <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>)}
-          {socialLink(tiktok, 'TikTok', <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/>)}
-          {socialLink(youtube, 'YouTube', <><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></>)}
-          {socialLink(website, 'Website', <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></>)}
-        </div>
-      ) : null}
+      )}
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <Field label="Your name">
+          <input
+            required
+            value={form.name}
+            onChange={set('name')}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </Field>
+
+        <Field label="Email">
+          <input
+            required
+            type="email"
+            value={form.email}
+            onChange={set('email')}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </Field>
+
+        <Field label="Subject">
+          <input
+            value={form.subject}
+            onChange={set('subject')}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </Field>
+
+        <Field label="Message">
+          <textarea
+            required
+            rows={4}
+            value={form.message}
+            onChange={set('message')}
+            style={{ ...inputStyle, resize: 'vertical' }}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </Field>
+
+        {status === 'error' && (
+          <p style={{ margin: 0, color: '#c14a4a', fontSize: 13 }}>
+            Something went wrong. Please try again.
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={status === 'sending'}
+          style={{
+            alignSelf: 'flex-start',
+            padding: '10px 24px',
+            background: status === 'sending' ? 'rgba(44,36,22,0.5)' : '#2c2416',
+            color: '#f6f3ec',
+            border: 'none',
+            borderRadius: 4,
+            fontSize: 13,
+            fontWeight: 500,
+            fontFamily: 'inherit',
+            letterSpacing: '0.02em',
+            cursor: status === 'sending' ? 'wait' : 'pointer',
+            transition: 'background 150ms',
+          }}
+        >
+          {status === 'sending' ? 'Sending…' : (buttonText || 'Send message')}
+        </button>
+      </form>
     </div>
-  );
+  )
 }

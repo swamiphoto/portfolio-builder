@@ -274,7 +274,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <ContactDisplay
                     heading={block.heading}
                     subheading={block.subheading}
-                    contact={siteConfig?.contact}
+                    buttonText={block.buttonText}
+                    toEmail={siteConfig?.contact?.email}
                   />
                 </div>
               );
