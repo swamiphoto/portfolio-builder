@@ -927,7 +927,6 @@ function BlockCard({
                     </div>
                   )
                 })}
-                {editPagesBtn}
               </div>
             )
 
