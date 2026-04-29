@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui"],
+        sans: ["-apple-system", "BlinkMacSystemFont", "ui-sans-serif", "system-ui"],
         mono: ["Geist Mono", "monospace"],
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
         serif2: ["Muse"],
