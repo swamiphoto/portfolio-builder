@@ -881,7 +881,7 @@ function BlockCard({
             )
 
             const manualRows = (
-              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 2 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 2 }}>
                 {pgSelected.map((p, idx) => {
                   const thumb = pageDisplayThumbnail(p)
                   const isBefore = pgDropTarget?.idx === idx && pgDropTarget.pos === 'before'
@@ -896,13 +896,13 @@ function BlockCard({
                       onDragOver={e => pgHandleDragOver(e, idx)}
                       onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setPgDropTarget(null) }}
                       onDrop={e => pgHandleDrop(e, idx)}
-                      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'rgba(26,18,10,0.03)' }}
+                      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                       style={{
                         position: 'relative',
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '8px 6px',
-                        borderBottom: idx < pgSelected.length - 1 ? '1px solid rgba(26,18,10,0.07)' : 'none',
+                        display: 'flex', alignItems: 'center', gap: 9,
+                        padding: '4px 6px',
+                        borderRadius: 4,
                         background: 'transparent',
                         cursor: 'grab',
                         opacity: isDragging ? 0.35 : 1,
@@ -912,31 +912,17 @@ function BlockCard({
                     >
                       {isBefore && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, top: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
                       {isAfter && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, bottom: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
-                      {/* Stacked thumbnail */}
-                      <div style={{ position: 'relative', width: 52, height: 40, flexShrink: 0 }}>
-                        {[0, 1].map(layer => {
-                          const isTop = layer === 1
-                          const rots = [4, 0]
-                          const txs = [-4, 0]
-                          return (
-                            <div key={layer} style={{
-                              position: 'absolute', left: '50%', top: '50%',
-                              width: 36, height: 30, borderRadius: 3,
-                              transform: `translate(calc(-50% + ${txs[layer]}px), -50%) rotate(${rots[layer]}deg)`,
-                              zIndex: layer,
-                              overflow: 'hidden',
-                              border: '1.5px solid #f6f3ec',
-                              boxShadow: '0 1px 3px rgba(26,18,10,0.18)',
-                              background: isTop && thumb ? undefined : pageThumbGradient(p.id),
-                            }}>
-                              {isTop && thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />}
-                            </div>
-                          )
-                        })}
+                      <div style={{
+                        width: 26, height: 26, borderRadius: 3, flexShrink: 0,
+                        background: thumb ? undefined : pageThumbGradient(p.id),
+                        boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)',
+                        overflow: thumb ? 'hidden' : undefined,
+                      }}>
+                        {thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 13.5, fontWeight: 300, color: '#1d1b17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{p.title}</div>
-                        {p.description && <div style={{ fontSize: 11, color: '#9e9788', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2, fontStyle: 'italic' }}>{p.description}</div>}
+                        <div style={{ fontSize: 12.5, color: '#1d1b17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                        {p.description && <div style={{ fontSize: 11, color: '#9e9788', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{p.description}</div>}
                       </div>
                     </div>
                   )
