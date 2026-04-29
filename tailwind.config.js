@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["neue-haas-unica, sans-serif", "ui-sans-serif", "system-ui"],
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
         mono: ["Geist Mono", "monospace"],
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
         serif2: ["Muse"],
