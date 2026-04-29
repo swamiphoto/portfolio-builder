@@ -216,60 +216,54 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 .filter(Boolean);
               if (linkedPages.length === 0) return null;
               const basePath = username ? `/sites/${username}` : '';
+              const pgStackVariants = [
+                {
+                  first: "absolute -right-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -right-1 -bottom-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+                {
+                  first: "absolute -left-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -left-1 -bottom-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+                {
+                  first: "absolute -right-2 -top-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -right-1 -top-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+                {
+                  first: "absolute -left-2 -top-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
+                  second: "absolute -left-1 -top-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
+                },
+              ];
               return (
-                <div key={`block-${index}`} className="page-gallery-block" data-block-index={index} {...hoverProps}
-                  style={{ maxWidth: '52rem', margin: '0 auto', padding: '0 2rem' }}>
-                  {linkedPages.map((p, i) => {
-                    const thumb = pageDisplayThumbnail(p);
-                    const href = `${basePath}/${p.slug || p.id}`;
-                    return (
-                      <a
-                        key={p.id}
-                        href={href}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '2.5rem',
-                          padding: '1.75rem 0',
-                          borderBottom: i < linkedPages.length - 1 ? '1px solid rgba(26,18,10,0.08)' : 'none',
-                          textDecoration: 'none', color: 'inherit',
-                        }}
-                      >
-                        {/* Stacked thumbnail */}
-                        <div style={{ position: 'relative', width: 128, height: 90, flexShrink: 0 }}>
-                          {[0, 1, 2].map(layer => {
-                            const isTop = layer === 2;
-                            const rots = [-5, 3, 0];
-                            const txs = [-10, 5, 0];
-                            const tys = [3, -4, 0];
-                            return (
-                              <div key={layer} style={{
-                                position: 'absolute', left: '50%', top: '50%',
-                                width: 86, height: 64, borderRadius: 5,
-                                transform: `translate(calc(-50% + ${txs[layer]}px), calc(-50% + ${tys[layer]}px)) rotate(${rots[layer]}deg)`,
-                                zIndex: layer,
-                                overflow: 'hidden',
-                                border: '2.5px solid #f9f6f1',
-                                boxShadow: '0 2px 8px rgba(26,18,10,0.15)',
-                                background: isTop && thumb ? undefined : pageThumbGradient(p.id),
-                              }}>
-                                {isTop && thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                <div key={`block-${index}`} className="page-gallery-block max-w-7xl mx-auto p-4" data-block-index={index} {...hoverProps}>
+                  <div className="space-y-8">
+                    {linkedPages.map((p, i) => {
+                      const thumb = pageDisplayThumbnail(p);
+                      const href = `${basePath}/${p.slug || p.id}`;
+                      const stackStyle = pgStackVariants[i % pgStackVariants.length];
+                      return (
+                        <a key={p.id} href={href} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <div className="relative md:w-7/12">
+                            <div className="relative">
+                              <div className={stackStyle.first} />
+                              <div className={stackStyle.second} />
+                              <div className="relative overflow-hidden shadow-lg rounded-3xl">
+                                {thumb ? (
+                                  <img src={thumb} alt={p.title} className="w-full h-[400px] md:h-[500px] object-cover relative z-10 rounded-3xl" />
+                                ) : (
+                                  <div className="w-full h-[400px] md:h-[500px] rounded-3xl" style={{ background: pageThumbGradient(p.id) }} />
+                                )}
                               </div>
-                            );
-                          })}
-                        </div>
-                        {/* Title + description */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '1.4rem', fontWeight: 300, color: '#1a1410', lineHeight: 1.15, marginBottom: p.description ? '0.4rem' : 0 }}>
-                            {p.title}
-                          </div>
-                          {p.description && (
-                            <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1rem', color: '#7a6b55', lineHeight: 1.55, fontStyle: 'italic' }}>
-                              {p.description}
                             </div>
-                          )}
-                        </div>
-                      </a>
-                    );
-                  })}
+                          </div>
+                          <div className="md:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-0 md:px-8">
+                            <h2 className="text-4xl font-medium tracking-tight" style={{ color: '#1a1410', fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400 }}>{p.title}</h2>
+                            {p.description && <p style={{ color: '#7a6b55', fontSize: '1.1rem', lineHeight: 1.6 }}>{p.description}</p>}
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             }
