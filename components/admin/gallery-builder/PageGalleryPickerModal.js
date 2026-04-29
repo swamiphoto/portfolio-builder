@@ -773,7 +773,11 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
           onClick={handleDone}
           style={{ padding: '6px 14px', borderRadius: 4, background: C.ink, border: 'none', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, color: '#f5ecd6', cursor: 'pointer' }}
         >
-          Done
+          {mode === 'auto'
+            ? (parentPageId ? 'Apply rule' : 'Apply rule')
+            : selectedIds.length > 0
+              ? `Apply ${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
+              : 'Apply'}
         </button>
       </div>
     </div>

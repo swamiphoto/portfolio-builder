@@ -847,6 +847,39 @@ function BlockCard({
               </button>
             )
 
+            const ghostRows = (
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 2 }}>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '6px 6px',
+                    borderBottom: i < 2 ? '1px solid rgba(26,18,10,0.07)' : 'none',
+                  }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 3, flexShrink: 0, background: '#ede7dc', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)' }} />
+                    <div style={{ flex: 1, height: 8, borderRadius: 2, background: '#ede7dc', opacity: 0.7 - i * 0.18, maxWidth: `${85 - i * 18}%` }} />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => openPicker()}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#3a362f' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#9e9788' }}
+                  style={{
+                    marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer',
+                    padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 6,
+                    fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+                    fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase',
+                    color: '#9e9788', fontWeight: 500, transition: 'color 120ms',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3v10M3 8h10" />
+                  </svg>
+                  Pick pages
+                </button>
+              </div>
+            )
+
             const manualRows = (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 2 }}>
                 {pgSelected.map((p, idx) => {
@@ -914,7 +947,7 @@ function BlockCard({
 
             return (
               <>
-                {source === 'auto' && block.parentPageId ? autoFilled : manualRows}
+                {source === 'auto' && block.parentPageId ? autoFilled : pgSelected.length === 0 ? ghostRows : manualRows}
                 {pickerOpen && (
                   <PageGalleryPickerModal
                     block={block}
