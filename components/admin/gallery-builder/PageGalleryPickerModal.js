@@ -131,13 +131,13 @@ function PickerRow({ page, selected, onToggle, depth, hasChildren, expanded, onT
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         margin: '1px 8px',
-        minHeight: 40,
-        padding: '6px 10px',
+        height: 48,
         paddingLeft: 10 + indent,
+        paddingRight: 10,
         borderRadius: 5,
         cursor: 'pointer',
-        background: selected ? C.card2 : 'transparent',
-        boxShadow: selected ? `0 1px 2px rgba(26,18,10,0.04), inset 0 0 0 1px ${C.accentRing}` : 'none',
+        background: selected ? 'rgba(139,111,71,0.09)' : 'transparent',
+        boxShadow: selected ? `inset 0 0 0 1px ${C.accentRing}` : 'none',
         position: 'relative',
       }}
     >
