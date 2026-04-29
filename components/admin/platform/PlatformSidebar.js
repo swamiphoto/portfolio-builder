@@ -595,7 +595,8 @@ export default function PlatformSidebar({
             }}
             onClick={() => {
               if (didDragRef.current || pageDragRef.current) return
-              if (!isLink) onSelectPage?.(page.id)
+              if (isLink) { if (page.url) window.open(page.url, '_blank', 'noopener,noreferrer') }
+              else onSelectPage?.(page.id)
             }}
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
