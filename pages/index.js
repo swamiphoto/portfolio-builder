@@ -1,11 +1,12 @@
-import { useSession, signIn } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Landing from '../components/landing/Landing'
 
 const SepiaSplash = dynamic(() => import('../components/sepia-splash/SepiaSplash'), { ssr: false })
 
 export default function Home() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   // Always show splash on every visit (dev preview).
   const [showSplash, setShowSplash] = useState(true)
 
@@ -29,20 +30,7 @@ export default function Home() {
   return (
     <>
       {showSplash && <SepiaSplash onDone={handleSplashDone} />}
-      <div className="flex flex-col items-center justify-center h-screen font-sans bg-white">
-        <div className="text-center max-w-sm">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-3">PhotoHub</h1>
-          <p className="text-sm text-gray-500 mb-10">
-            Beautiful photography portfolios in under 2 minutes.
-          </p>
-          <button
-            onClick={() => signIn('google', { callbackUrl: '/auth/post-login' })}
-            className="px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Sign in with Google
-          </button>
-        </div>
-      </div>
+      <Landing />
     </>
   )
 }
