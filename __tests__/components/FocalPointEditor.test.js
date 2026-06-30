@@ -45,6 +45,7 @@ describe('FocalPointEditor', () => {
     render(<FocalPointEditor page={page(null)} anchorEl={document.body} onClose={() => {}} onChange={onChange} />)
     const area = screen.getByTestId('focal-image')
     const event = new MouseEvent('pointerdown', { clientX: 100, clientY: 50, bubbles: true })
+    Object.defineProperty(event, 'pointerId', { value: 1 })
     area.dispatchEvent(event)
     expect(onChange).toHaveBeenLastCalledWith({ x: 0.5, y: 0.5 })
     HTMLElement.prototype.getBoundingClientRect.mockRestore()

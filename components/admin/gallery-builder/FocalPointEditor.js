@@ -48,12 +48,13 @@ export default function FocalPointEditor({ page, anchorEl, onClose, onChange }) 
             onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); setDragging(true); applyFromEvent(e) }}
             onPointerMove={(e) => { if (dragging) applyFromEvent(e) }}
             onPointerUp={() => setDragging(false)}
+            onPointerCancel={() => setDragging(false)}
             style={{ position: 'relative', width: '100%', cursor: 'crosshair', userSelect: 'none', borderRadius: 4, overflow: 'hidden' }}
           >
             <img src={thumb} alt="" draggable={false} style={{ width: '100%', height: 'auto', display: 'block', pointerEvents: 'none' }} />
             <div
               data-testid="focal-marker"
-              aria-hidden
+              aria-hidden="true"
               style={{
                 position: 'absolute',
                 left: `${point.x * 100}%`,
