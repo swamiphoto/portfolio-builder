@@ -9,7 +9,7 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient } from "../../../common/assetRefs";
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -252,7 +252,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                               <div className={stackStyle.second} />
                               <div className="relative overflow-hidden shadow-lg rounded-3xl">
                                 {thumb ? (
-                                  <img src={thumb} alt={p.title} className="w-full h-[400px] md:h-[500px] object-cover relative z-10 rounded-3xl" />
+                                  <img src={thumb} alt={p.title} className="w-full h-[400px] md:h-[500px] object-cover relative z-10 rounded-3xl" style={{ objectPosition: focalPointToObjectPosition(p.thumbnail?.focalPoint) }} />
                                 ) : (
                                   <div className="w-full h-[400px] md:h-[500px] rounded-3xl" style={{ background: pageThumbGradient(p.id) }} />
                                 )}
