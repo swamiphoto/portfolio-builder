@@ -6,7 +6,7 @@ describe('normalizePageEntity — back-compat migration', () => {
       thumbnail: { assetId: 'ast_1', url: 'https://x/t.jpg' },
       blocks: [],
     })
-    expect(p.thumbnail).toEqual({ imageUrl: 'https://x/t.jpg', useCover: false })
+    expect(p.thumbnail).toEqual({ imageUrl: 'https://x/t.jpg', useCover: false, focalPoint: null })
     expect(p.thumbnailUrl).toBe('https://x/t.jpg')
   })
 
@@ -16,7 +16,7 @@ describe('normalizePageEntity — back-compat migration', () => {
       thumbnailUrl: 'https://x/t.jpg',
       blocks: [],
     })
-    expect(p.thumbnail).toEqual({ imageUrl: 'https://x/t.jpg', useCover: false })
+    expect(p.thumbnail).toEqual({ imageUrl: 'https://x/t.jpg', useCover: false, focalPoint: null })
   })
 
   it('preserves the new thumbnail shape', () => {
@@ -24,12 +24,12 @@ describe('normalizePageEntity — back-compat migration', () => {
       thumbnail: { imageUrl: 'https://x/t.jpg', useCover: false },
       blocks: [],
     })
-    expect(p.thumbnail).toEqual({ imageUrl: 'https://x/t.jpg', useCover: false })
+    expect(p.thumbnail).toEqual({ imageUrl: 'https://x/t.jpg', useCover: false, focalPoint: null })
   })
 
   it('defaults useCover=true when nothing is set', () => {
     const p = normalizePageEntity({ blocks: [] })
-    expect(p.thumbnail).toEqual({ imageUrl: '', useCover: true })
+    expect(p.thumbnail).toEqual({ imageUrl: '', useCover: true, focalPoint: null })
   })
 
   it('defaults parentId, showInNav, sortOrder, password on legacy data', () => {

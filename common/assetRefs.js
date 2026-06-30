@@ -36,6 +36,29 @@ export function normalizeImageRefs(values = []) {
     .filter(Boolean);
 }
 
+export function normalizeFocalPoint(value) {
+  if (!value || typeof value !== "object") return null;
+  const x = Number(value.x);
+  const y = Number(value.y);
+  if (Number.isNaN(x) || Number.isNaN(y)) return null;
+  const clamp = (n) => Math.min(1, Math.max(0, n));
+  return { x: clamp(x), y: clamp(y) };
+}
+
+export function focalPointToObjectPosition(value) {
+  const fp = normalizeFocalPoint(value);
+  if (!fp) return "50% 50%";
+  return `${fp.x * 100}% ${fp.y * 100}%`;
+}
+
+export function applyFocalPointToPage(page, focalPoint) {
+  const base = page.thumbnail || { imageUrl: "", useCover: true };
+  return {
+    ...page,
+    thumbnail: { ...base, focalPoint: normalizeFocalPoint(focalPoint) },
+  };
+}
+
 export function getImageRefUrl(value) {
   return normalizeImageRef(value)?.url || "";
 }
@@ -198,11 +221,12 @@ export function normalizePageEntity(page) {
   let thumbnail = page.thumbnail;
   if (!thumbnail || typeof thumbnail !== "object" || "url" in thumbnail) {
     const ref = normalizeImageRef(page.thumbnail || page.thumbnailUrl);
-    thumbnail = { imageUrl: ref?.url || "", useCover: !ref };
+    thumbnail = { imageUrl: ref?.url || "", useCover: !ref, focalPoint: null };
   } else {
     thumbnail = {
       imageUrl: thumbnail.imageUrl || "",
       useCover: thumbnail.useCover ?? true,
+      focalPoint: normalizeFocalPoint(thumbnail.focalPoint),
     };
   }
 
