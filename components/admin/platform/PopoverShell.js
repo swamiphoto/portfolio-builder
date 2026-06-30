@@ -23,16 +23,19 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
       return
     }
 
+    const BOTTOM_MARGIN = 12
     const belowSpace = window.innerHeight - rect.bottom - 8
     const aboveSpace = rect.top - 8
     const shouldOpenUp = belowSpace < 320 && aboveSpace > belowSpace
-    const maxHeight = Math.max(180, Math.min(680, shouldOpenUp ? aboveSpace : belowSpace))
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     if (shouldOpenUp) {
       const bottom = window.innerHeight - rect.top + 6
+      const maxHeight = Math.max(180, Math.min(680, aboveSpace))
       setPos({ left, bottom, maxHeight, openUp: true })
     } else {
       const top = Math.max(8, rect.bottom + 6)
+      // Cap to the space below `top` (minus a margin) so the popover never touches the bottom edge.
+      const maxHeight = Math.max(180, Math.min(680, window.innerHeight - top - BOTTOM_MARGIN))
       setPos({ left, top, maxHeight, openUp: false })
     }
   }, [anchorEl, anchorRectProp, width, placement])

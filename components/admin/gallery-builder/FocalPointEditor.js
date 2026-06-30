@@ -9,11 +9,16 @@ export function focalPointFromPointer(clientX, clientY, rect) {
   return { x: clamp((clientX - rect.left) / w), y: clamp((clientY - rect.top) / h) }
 }
 
+const POPOVER_W = 260
+
 export default function FocalPointEditor({ page, anchorEl, onClose, onChange }) {
   const imgWrapRef = useRef(null)
   const [point, setPoint] = useState(() => page?.thumbnail?.focalPoint || { x: 0.5, y: 0.5 })
   const [dragging, setDragging] = useState(false)
   const thumb = pageDisplayThumbnail(page)
+
+  // Nothing to reset until the marker has moved off center.
+  const isCentered = point.x === 0.5 && point.y === 0.5
 
   const applyFromEvent = (e) => {
     const rect = imgWrapRef.current?.getBoundingClientRect()
@@ -39,9 +44,10 @@ export default function FocalPointEditor({ page, anchorEl, onClose, onChange }) 
   )
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={260} title="Reposition" headerRight={resetBtn}>
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={POPOVER_W} title="Reposition" draggable headerRight={isCentered ? undefined : resetBtn}>
       <div style={{ padding: 10 }}>
         {thumb ? (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div
             ref={imgWrapRef}
             data-testid="focal-image"
@@ -49,9 +55,10 @@ export default function FocalPointEditor({ page, anchorEl, onClose, onChange }) 
             onPointerMove={(e) => { if (dragging) applyFromEvent(e) }}
             onPointerUp={() => setDragging(false)}
             onPointerCancel={() => setDragging(false)}
-            style={{ position: 'relative', width: '100%', cursor: 'crosshair', userSelect: 'none', borderRadius: 4, overflow: 'hidden' }}
+            style={{ position: 'relative', display: 'inline-block', lineHeight: 0, cursor: 'crosshair', userSelect: 'none', borderRadius: 4, overflow: 'hidden' }}
           >
-            <img src={thumb} alt="" draggable={false} style={{ width: '100%', height: 'auto', display: 'block', pointerEvents: 'none' }} />
+            {/* Whole image stays visible (bounded), so the popover can't grow tall enough to clip. */}
+            <img src={thumb} alt="" draggable={false} style={{ display: 'block', width: 'auto', height: 'auto', maxWidth: POPOVER_W - 20, maxHeight: 'min(300px, 46vh)', pointerEvents: 'none' }} />
             <div
               data-testid="focal-marker"
               aria-hidden="true"
@@ -68,6 +75,7 @@ export default function FocalPointEditor({ page, anchorEl, onClose, onChange }) 
                 pointerEvents: 'none',
               }}
             />
+          </div>
           </div>
         ) : (
           <div style={{ fontSize: 12, color: '#9e9788', padding: '12px 4px' }}>

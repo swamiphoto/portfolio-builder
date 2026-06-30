@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import FocalPointEditor, { focalPointFromPointer } from '../../components/admin/gallery-builder/FocalPointEditor'
 
 jest.mock('../../components/admin/platform/PopoverShell', () => ({
@@ -37,6 +37,27 @@ describe('FocalPointEditor', () => {
     render(<FocalPointEditor page={page({ x: 0.25, y: 0.75 })} anchorEl={document.body} onClose={() => {}} onChange={onChange} />)
     fireEvent.click(screen.getByText('Reset'))
     expect(onChange).toHaveBeenCalledWith(null)
+  })
+
+  it('hides Reset when the focal point is centered/unchanged', () => {
+    render(<FocalPointEditor page={page(null)} anchorEl={document.body} onClose={() => {}} onChange={() => {}} />)
+    expect(screen.queryByText('Reset')).toBeNull()
+  })
+
+  it('shows Reset when the page already has a focal point', () => {
+    render(<FocalPointEditor page={page({ x: 0.25, y: 0.75 })} anchorEl={document.body} onClose={() => {}} onChange={() => {}} />)
+    expect(screen.getByText('Reset')).toBeInTheDocument()
+  })
+
+  it('reveals Reset after the marker is dragged off center', () => {
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 200, height: 100, right: 200, bottom: 100, x: 0, y: 0, toJSON: () => {} })
+    render(<FocalPointEditor page={page(null)} anchorEl={document.body} onClose={() => {}} onChange={() => {}} />)
+    expect(screen.queryByText('Reset')).toBeNull()
+    const event = new MouseEvent('pointerdown', { clientX: 20, clientY: 80, bubbles: true })
+    Object.defineProperty(event, 'pointerId', { value: 1 })
+    act(() => { screen.getByTestId('focal-image').dispatchEvent(event) })
+    expect(screen.getByText('Reset')).toBeInTheDocument()
+    HTMLElement.prototype.getBoundingClientRect.mockRestore()
   })
 
   it('dragging fires onChange with the pointer-derived focal point', () => {
