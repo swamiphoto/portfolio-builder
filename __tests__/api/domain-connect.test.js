@@ -19,7 +19,7 @@ import { uploadJSON } from '../../common/gcsClient'
 function mockRes() {
   return { statusCode: 0, body: null, status(c) { this.statusCode = c; return this }, json(b) { this.body = b; return this } }
 }
-const USER = { id: 'u1', email: 'a@b.c' }
+const USER = { id: 'u1', email: 'a@b.c', username: 'jane' }
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -84,9 +84,8 @@ it('idempotent reconnect: addDomain 409 but getDomain resolves → 200', async (
   expect(uploadJSON).toHaveBeenCalledWith('domains/photos.janedoe.com.json', { username: 'jane', userId: 'u1' })
 })
 
-it('400s when the user has no slug yet', async () => {
-  readSiteConfig.mockResolvedValue({ userId: 'u1', slug: '', pages: [] })
+it('400s when the user has no username yet', async () => {
   const res = mockRes()
-  await handler({ method: 'POST', body: { name: 'janedoe.com' } }, res, USER)
+  await handler({ method: 'POST', body: { name: 'janedoe.com' } }, res, { id: 'u1', email: 'a@b.c' })
   expect(res.statusCode).toBe(400)
 })

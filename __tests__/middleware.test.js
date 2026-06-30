@@ -47,3 +47,11 @@ it('passes through the bare root domain', async () => {
   await middleware(req('sepia.photo', '/'))
   expect(NextResponse.next).toHaveBeenCalled()
 })
+
+it('lowercases a mixed-case custom domain before the pointer lookup', async () => {
+  global.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ username: 'jane' }) })
+  await middleware(req('Photos.JaneDoe.com', '/'))
+  expect(global.fetch).toHaveBeenCalledWith('https://pub.r2.dev/domains/photos.janedoe.com.json', expect.any(Object))
+  const rewritten = NextResponse.rewrite.mock.calls[0][0]
+  expect(rewritten.pathname).toBe('/sites/jane')
+})

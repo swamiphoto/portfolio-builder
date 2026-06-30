@@ -12,9 +12,11 @@ function isPassthrough(pathname) {
 }
 
 async function lookupCustomDomain(host) {
+  // Edge runtime only inlines NEXT_PUBLIC_* vars; set NEXT_PUBLIC_R2_PUBLIC_URL in production
+  // (the R2_PUBLIC_URL fallback only works in the Node runtime, not at the edge).
   const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || process.env.R2_PUBLIC_URL
   if (!base) return null
-  const hostname = host.split(':')[0]
+  const hostname = host.split(':')[0].toLowerCase()
   try {
     const res = await fetch(`${base}/domains/${hostname}.json`, { cache: 'no-store' })
     if (!res.ok) return null

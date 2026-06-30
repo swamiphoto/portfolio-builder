@@ -19,7 +19,7 @@ export async function handler(req, res, user) {
 
   const config = await readSiteConfig(user.id)
   if (!config) return res.status(400).json({ error: 'Site not set up yet' })
-  if (!config.slug) return res.status(400).json({ error: 'Set your site URL before adding a custom domain' })
+  if (!user.username) return res.status(400).json({ error: 'Set your site URL before adding a custom domain' })
 
   async function finalize(domainObj) {
     const { misconfigured } = await getDomainConfig(name)
@@ -35,7 +35,7 @@ export async function handler(req, res, user) {
     }
     config.customDomain = customDomain
     await writeSiteConfig(user.id, config)
-    await uploadJSON(getDomainLookupPath(name), { username: config.slug, userId: user.id })
+    await uploadJSON(getDomainLookupPath(name), { username: user.username, userId: user.id })
     return res.status(200).json({ customDomain })
   }
 
