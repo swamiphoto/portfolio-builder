@@ -148,7 +148,8 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     if (photoPickerBlockIndex === 'thumbnail') {
       onPageChange({
         ...page,
-        ...buildSingleImageFields(refs[0], 'thumbnail', 'thumbnailUrl'),
+        thumbnail: { ...(page.thumbnail || {}), imageUrl: refs[0].url, useCover: false, focalPoint: null },
+        thumbnailUrl: refs[0].url,
       })
       setPhotoPickerOpen(false)
       setPhotoPickerBlockIndex(null)
