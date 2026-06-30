@@ -4,6 +4,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
+import { siteUrlFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -56,10 +57,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   const ogTitle = siteConfig.siteName || 'Portfolio'
   const ogDescription = siteConfig.tagline || ''
-  const rootDomainPublic = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
-  const siteUrl = siteConfig.customDomain
-    ? `https://${siteConfig.customDomain}`
-    : `https://${username}.${rootDomainPublic.replace(/:\d+$/, '')}`
+  const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
 
   const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
   const hasCoverPage = siteConfig.hasCoverPage !== false

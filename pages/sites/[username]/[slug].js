@@ -5,6 +5,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
+import { siteUrlFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -61,10 +62,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
   const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   const ogTitle = page.title || siteConfig.siteName || 'Portfolio'
   const ogDescription = page.description || siteConfig.tagline || ''
-  const rootDomainPublic = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
-  const siteUrl = siteConfig.customDomain
-    ? `https://${siteConfig.customDomain}`
-    : `https://${username}.${rootDomainPublic.replace(/:\d+$/, '')}`
+  const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
   const pageUrl = `${siteUrl}/${page.slug || page.id}`
 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
