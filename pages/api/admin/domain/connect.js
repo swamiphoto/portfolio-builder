@@ -1,6 +1,6 @@
 // pages/api/admin/domain/connect.js
 import { withAuth } from '../../../../common/withAuth'
-import { addDomain, getDomainConfig } from '../../../../common/vercel'
+import { addDomain, getDomain, getDomainConfig } from '../../../../common/vercel'
 import { readSiteConfig, writeSiteConfig } from '../../../../common/siteConfig'
 import { uploadJSON } from '../../../../common/gcsClient'
 import { getDomainLookupPath } from '../../../../common/gcsUser'
@@ -21,13 +21,12 @@ export async function handler(req, res, user) {
   if (!config) return res.status(400).json({ error: 'Site not set up yet' })
   if (!config.slug) return res.status(400).json({ error: 'Set your site URL before adding a custom domain' })
 
-  try {
-    const added = await addDomain(name)
+  async function finalize(domainObj) {
     const { misconfigured } = await getDomainConfig(name)
-    const status = deriveStatus({ verified: added.verified, misconfigured })
+    const status = deriveStatus({ verified: domainObj.verified, misconfigured })
     const verification = [
       ...dnsRecordsFor(name),
-      ...((added.verification || []).map((v) => ({ type: v.type, name: v.domain, value: v.value }))),
+      ...((domainObj.verification || []).map((v) => ({ type: v.type, name: v.domain, value: v.value }))),
     ]
     const now = new Date().toISOString()
     const customDomain = {
@@ -38,8 +37,19 @@ export async function handler(req, res, user) {
     await writeSiteConfig(user.id, config)
     await uploadJSON(getDomainLookupPath(name), { username: config.slug, userId: user.id })
     return res.status(200).json({ customDomain })
+  }
+
+  try {
+    const added = await addDomain(name)
+    return await finalize(added)
   } catch (err) {
     if (err.status === 409 || err.code === 'domain_already_in_use') {
+      try {
+        const existing = await getDomain(name)
+        if (existing) return await finalize(existing)
+      } catch (_) {
+        // getDomain threw — domain belongs to another project
+      }
       return res.status(409).json({ error: 'That domain is already connected to another site.' })
     }
     console.error('POST /api/admin/domain/connect error:', err)

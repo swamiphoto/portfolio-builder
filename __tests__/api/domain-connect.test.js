@@ -3,6 +3,7 @@ import { handler } from '../../pages/api/admin/domain/connect'
 
 jest.mock('../../common/vercel', () => ({
   addDomain: jest.fn(),
+  getDomain: jest.fn(),
   getDomainConfig: jest.fn(),
 }))
 jest.mock('../../common/siteConfig', () => ({
@@ -11,7 +12,7 @@ jest.mock('../../common/siteConfig', () => ({
 }))
 jest.mock('../../common/gcsClient', () => ({ uploadJSON: jest.fn() }))
 
-import { addDomain, getDomainConfig } from '../../common/vercel'
+import { addDomain, getDomain, getDomainConfig } from '../../common/vercel'
 import { readSiteConfig, writeSiteConfig } from '../../common/siteConfig'
 import { uploadJSON } from '../../common/gcsClient'
 
@@ -57,12 +58,30 @@ it('marks active when verified and not misconfigured', async () => {
   expect(res.body.customDomain.verifiedAt).toBeTruthy()
 })
 
-it('maps an already-in-use conflict to 409', async () => {
+it('maps an already-in-use conflict to 409 when domain belongs to another project', async () => {
   const err = new Error('taken'); err.status = 409; err.code = 'domain_already_in_use'
   addDomain.mockRejectedValue(err)
+  const notFound = new Error('not found'); notFound.status = 404
+  getDomain.mockRejectedValue(notFound)
   const res = mockRes()
   await handler({ method: 'POST', body: { name: 'taken.com' } }, res, USER)
   expect(res.statusCode).toBe(409)
+})
+
+it('idempotent reconnect: addDomain 409 but getDomain resolves → 200', async () => {
+  const err = new Error('conflict'); err.status = 409; err.code = 'domain_already_in_use'
+  addDomain.mockRejectedValue(err)
+  getDomain.mockResolvedValue({ name: 'photos.janedoe.com', verified: false, verification: [] })
+  getDomainConfig.mockResolvedValue({ misconfigured: true })
+  const res = mockRes()
+  await handler({ method: 'POST', body: { name: 'photos.janedoe.com' } }, res, USER)
+
+  expect(res.statusCode).toBe(200)
+  expect(res.body.customDomain).toMatchObject({ name: 'photos.janedoe.com', status: 'pending' })
+  expect(writeSiteConfig).toHaveBeenCalledWith('u1', expect.objectContaining({
+    customDomain: expect.objectContaining({ name: 'photos.janedoe.com', status: 'pending' }),
+  }))
+  expect(uploadJSON).toHaveBeenCalledWith('domains/photos.janedoe.com.json', { username: 'jane', userId: 'u1' })
 })
 
 it('400s when the user has no slug yet', async () => {
