@@ -12,7 +12,7 @@
 
 - Default focal point is center; absence renders identically to today (`object-position: 50% 50%`). No data migration.
 - Focal point is theme-independent (a point, not a crop). Single source of truth lives on the page's thumbnail, never on the block.
-- The focal point lives **inside** `page.thumbnail`, so any action that reassigns the thumbnail object (pick new thumbnail, remove thumbnail) drops the focal point naturally — that is the reset rule. Known residual edge case (not handled in v1): changing the page's cover image while `useCover` is true leaves the old focal point in place.
+- The focal point lives **inside** `page.thumbnail`. The two real thumbnail-change paths each reset it to `null`: removing the thumbnail (`PageSettingsPopover` sets `thumbnail: null`) and picking a new thumbnail (`PageEditorSidebar.handlePhotoPickerConfirm` writes an explicit thumbnail with `focalPoint: null`). There is no `useCover` toggle in the UI. Known residual edge case (not handled in v1): changing the page's cover image while `useCover` is true leaves the old focal point in place.
 - Editing is initiated from the sidebar only; the preview stays read-only.
 - User-facing copy must read like plain prose (no AI-tell patterns). Strings in this feature: `Reposition`, `Reset`, `Drag to keep the subject in frame.`
 

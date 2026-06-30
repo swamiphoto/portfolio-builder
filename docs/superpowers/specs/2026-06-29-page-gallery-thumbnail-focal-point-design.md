@@ -54,11 +54,16 @@ page.thumbnail = {
 - `normalizePageEntity` (`common/assetRefs.js:194`) preserves the field:
   `focalPoint: thumbnail.focalPoint || null`. No migration needed for existing pages;
   absence defaults to center.
-- **Reset rule:** when the thumbnail's effective image source changes (the user picks
-  a new explicit thumbnail, or toggles `useCover`), reset `focalPoint` to `null`. A
-  saved point must never apply to a different image. This is handled where the
-  thumbnail is changed (`components/admin/platform/PageEditorSidebar.js` thumbnail
-  update path, and `useCover` toggle in `PageSettingsPopover.js`).
+- **Reset rule:** a saved point must never apply to a different image, so changing the
+  thumbnail's image resets `focalPoint` to `null`. There is no `useCover` toggle in the
+  UI; the two real thumbnail-change paths each reset it:
+  - **Clear thumbnail** — `PageSettingsPopover.js` does `update({ thumbnail: null })`,
+    which `normalizePageEntity` rebuilds as `{ imageUrl: '', useCover: true, focalPoint: null }`.
+  - **Pick a new thumbnail** — `PageEditorSidebar.js` `handlePhotoPickerConfirm` writes
+    an explicit `thumbnail: { ...page.thumbnail, imageUrl, useCover: false, focalPoint: null }`.
+  - **Known residual edge case (not handled):** if `useCover` is true (thumbnail derived
+    from the cover) and the user later changes the cover image, the old `focalPoint`
+    persists. Acceptable for v1; the user can re-center.
 
 The focal point applies to whatever image `pageDisplayThumbnail(page)` resolves to —
 explicit thumbnail, cover fallback, or first-photo fallback. It frames "the card,"
