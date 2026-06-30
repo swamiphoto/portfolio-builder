@@ -20,7 +20,7 @@ it('connects a domain and shows the DNS record to set', async () => {
   fireEvent.click(screen.getByRole('button', { name: /connect/i }))
 
   await waitFor(() => expect(screen.getByText('cname.vercel-dns.com')).toBeInTheDocument())
-  expect(screen.getAllByText(/CNAME/i).length).toBeGreaterThan(0)
+  expect(screen.getByText('CNAME', { selector: 'strong' })).toBeInTheDocument()
   expect(global.fetch).toHaveBeenCalledWith('/api/admin/domain/connect', expect.objectContaining({ method: 'POST' }))
   expect(onUpdate).toHaveBeenCalled()
 })

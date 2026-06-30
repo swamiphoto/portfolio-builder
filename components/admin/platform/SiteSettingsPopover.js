@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import PopoverShell from './PopoverShell'
 import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
+import { normalizeCustomDomain } from '../../../common/domainUtils'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
@@ -369,7 +370,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     const largeImage = share.largeImage || config.cover?.imageUrl || ''
     const squareImage = share.squareImage || config.cover?.imageUrl || ''
     const previewSubdomain = username || 'yoursite'
-    const domain = config.customDomain || `${previewSubdomain}.sepia.photo`
+    const domain = normalizeCustomDomain(config.customDomain)?.name || `${previewSubdomain}.sepia.photo`
     const siteName = config.siteName || 'My Portfolio'
     const tagline = config.tagline || ''
     const cardBorder = '1px solid rgba(160,140,110,0.22)'
@@ -587,7 +588,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
       {/* Drill rows */}
       <DrillRow
-        label={config.customDomain || 'Setup custom domain'}
+        label={normalizeCustomDomain(config.customDomain)?.name || 'Setup custom domain'}
         onDrillIn={() => setView('domain')}
       />
       <DrillRow
