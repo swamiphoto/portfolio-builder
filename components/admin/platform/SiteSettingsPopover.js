@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import PopoverShell from './PopoverShell'
+import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
@@ -314,21 +315,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   if (view === 'domain') {
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Custom Domain" onBack={() => setView('main')}>
-        <div style={{ padding: '14px' }} className="space-y-2">
-          <input
-            autoFocus
-            className={inputCls}
-            style={inputStyle}
-            placeholder="photos.yourname.com"
-            value={config.customDomain || ''}
-            onChange={(e) => update({ customDomain: e.target.value || null })}
-          />
-          {config.customDomain && (
-            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Point a CNAME to <span style={{ fontFamily: MONO, color: 'var(--text-secondary)' }}>{config.userId}.{rootDomain}</span> to activate.
-            </p>
-          )}
-        </div>
+        <DomainPanel siteConfig={config} username={username} onUpdate={onUpdate} />
       </PopoverShell>
     )
   }
