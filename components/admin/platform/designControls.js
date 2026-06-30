@@ -49,7 +49,12 @@ export function PillToggle({ value, onChange, options }) {
             onClick={() => onChange(v)}
             className="transition-all"
             style={{
-              padding: '3px 10px',
+              minWidth: 36,
+              height: 24,
+              padding: '0 10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               fontSize: 11.5,
               fontWeight: active ? 500 : 400,
               borderRadius: 5,
@@ -57,6 +62,7 @@ export function PillToggle({ value, onChange, options }) {
               color: active ? '#2c2416' : 'var(--text-secondary)',
               border: 'none',
               cursor: 'pointer',
+              textAlign: 'center',
               boxShadow: active ? '0 1px 2px rgba(60,40,15,0.14), 0 0 0 0.5px rgba(60,40,15,0.08)' : 'none',
             }}
           >

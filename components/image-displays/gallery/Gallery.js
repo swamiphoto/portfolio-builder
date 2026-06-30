@@ -167,11 +167,14 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             case "text": {
               if (!block.content) return showPlaceholders ? <div key={`block-${index}`}><PlaceholderText /><WiggleLine /></div> : null;
               const v = block.variant || 1;
+              const defaultAlign = 'center';
+              const align = block.align || defaultAlign;
+              const alignClass = align === 'left' ? 'text-left' : 'text-center';
               const variantClass =
-                v === 4 ? "text-lg md:text-xl italic font-serif2 text-stone-600 leading-relaxed text-left max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300"
-                : v === 3 ? "text-base md:text-lg text-stone-700 leading-relaxed text-left max-w-2xl mx-auto px-8 py-4"
-                : v === 2 ? "text-xl md:text-2xl font-medium text-stone-700 text-center max-w-2xl mx-auto py-6"
-                : "text-3xl md:text-5xl font-light text-stone-800 text-center max-w-3xl mx-auto py-10";
+                v === 4 ? `text-lg md:text-xl italic font-serif text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300`
+                : v === 3 ? `text-base md:text-lg font-serif text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-4`
+                : v === 2 ? `text-xl md:text-2xl font-medium font-serif text-stone-700 ${alignClass} max-w-2xl mx-auto py-6`
+                : `text-3xl md:text-5xl font-light font-serif text-stone-800 ${alignClass} max-w-3xl mx-auto py-10`;
               return (
                 <div
                   key={`block-${index}`}
@@ -257,8 +260,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                             </div>
                           </div>
                           <div className="md:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-0 md:px-8">
-                            <h2 className="text-4xl font-medium tracking-tight" style={{ color: '#1a1410', fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400 }}>{p.title}</h2>
-                            {p.description && <p style={{ color: '#7a6b55', fontSize: '1.1rem', lineHeight: 1.6 }}>{p.description}</p>}
+                            <h2 className="text-4xl font-medium tracking-tight font-serif" style={{ color: '#1a1410', fontWeight: 400 }}>{p.title}</h2>
+                            {p.description && <p className="font-serif" style={{ color: '#7a6b55', fontSize: '1.1rem', lineHeight: 1.6 }}>{p.description}</p>}
                           </div>
                         </a>
                       );

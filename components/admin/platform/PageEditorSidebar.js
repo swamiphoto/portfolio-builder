@@ -158,10 +158,10 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     const blocks = [...(page.blocks || [])]
     const block = blocks[photoPickerBlockIndex]
     if (!block) return
-    if (block.type === 'photo') {
+    if (block.type === 'photo' || block.type === 'testimonial') {
       blocks[photoPickerBlockIndex] = {
         ...block,
-        ...buildSingleImageFields(refs[0]),
+        ...(block.type === 'testimonial' ? { imageUrl: refs[0].url } : buildSingleImageFields(refs[0])),
       }
     } else {
       const merged = mergeImageRefs(block.images || block.imageUrls || [], refs)

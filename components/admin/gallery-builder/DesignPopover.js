@@ -1,6 +1,26 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 
+const IconAlignLeft = () => (
+  <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
+    <rect x="0" y="0"   width="14" height="2" rx="1" fill="currentColor"/>
+    <rect x="0" y="4"   width="9"  height="2" rx="1" fill="currentColor"/>
+    <rect x="0" y="8"   width="11" height="2" rx="1" fill="currentColor"/>
+  </svg>
+)
+const IconAlignCenter = () => (
+  <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
+    <rect x="0" y="0"   width="14" height="2" rx="1" fill="currentColor"/>
+    <rect x="2.5" y="4" width="9"  height="2" rx="1" fill="currentColor"/>
+    <rect x="1" y="8"   width="12" height="2" rx="1" fill="currentColor"/>
+  </svg>
+)
+
+const ALIGN_OPTIONS = [
+  { value: 'left',   label: <IconAlignLeft /> },
+  { value: 'center', label: <IconAlignCenter /> },
+]
+
 // Only include layout options that are actually rendered
 const LAYOUTS = {
   photo:    [{ value: 'Full Bleed', label: 'Full Bleed' }, { value: 'Centered', label: 'Centered' }],
@@ -12,10 +32,9 @@ const LAYOUTS = {
 
 const VARIANTS = {
   text: [
-    { value: 1, label: 'Heading' },
-    { value: 2, label: 'Subheading' },
-    { value: 3, label: 'Paragraph' },
-    { value: 4, label: 'Quote' },
+    { value: 1, label: 'L' },
+    { value: 2, label: 'M' },
+    { value: 3, label: 'S' },
   ],
   testimonial: [
     { value: 1, label: 'Photo above' },
@@ -41,7 +60,10 @@ export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
     }
   }
 
-  if (layouts.length === 0 && variants.length === 0) return null
+  const showAlignment = blockType === 'text'
+  const defaultAlign = 'center'
+
+  if (layouts.length === 0 && variants.length === 0 && !showAlignment) return null
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={220} title="Design">
@@ -55,11 +77,20 @@ export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
         </DesignSection>
       )}
       {variants.length > 0 && (
-        <DesignSection label="Style">
+        <DesignSection label="Size">
           <PillToggle
             value={block.variant || variants[0].value}
             onChange={(v) => onUpdate({ ...block, variant: v })}
             options={variants}
+          />
+        </DesignSection>
+      )}
+      {showAlignment && (
+        <DesignSection label="Alignment">
+          <PillToggle
+            value={block.align || defaultAlign}
+            onChange={(v) => onUpdate({ ...block, align: v })}
+            options={ALIGN_OPTIONS}
           />
         </DesignSection>
       )}

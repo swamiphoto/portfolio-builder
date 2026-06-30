@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
+import { useSession } from "next-auth/react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
@@ -55,14 +56,19 @@ function PaintbrushIcon() {
   );
 }
 
-function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected }) {
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected, isDragging }) {
   const caption = imageRef.caption || ''
 
   return (
     <div
       {...dragHandleProps}
       className={`relative group/thumb aspect-square overflow-hidden cursor-grab ${selected ? 'ring-2 ring-inset ring-blue-500' : ''}`}
-      style={{ background: 'var(--card)', borderRadius: 2 }}
+      style={{
+        background: 'var(--card)',
+        borderRadius: 2,
+        opacity: isDragging ? 0.5 : 1,
+        transition: 'opacity 0.1s ease',
+      }}
       onClick={onPreview}
     >
       <img
@@ -122,10 +128,20 @@ function BlockCard({
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
+  const draggedUrlRef = useRef(null);
+  const [liveRefs, _setLiveRefs] = useState(null);
+  const liveRefsRef = useRef(null);
+  const setLiveRefs = useCallback((val) => {
+    const next = typeof val === 'function' ? val(liveRefsRef.current) : val;
+    liveRefsRef.current = next;
+    _setLiveRefs(next);
+  }, []);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
   const { startDrag, endDrag } = useDrag()
   const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video" || block.type === "contact" || block.type === "testimonial";
 
+  const { data: session } = useSession();
+  const ownerFirstName = session?.user?.name?.split(' ')[0] || 'you';
   const [expanded, setExpanded] = useState(true);
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride]);
   const [showMenu, setShowMenu] = useState(false);
@@ -651,11 +667,11 @@ function BlockCard({
                 </div>
               ) : (
                 <div
-                  className={`grid grid-cols-3 transition-all ${gridDropHover ? 'opacity-60' : ''}`}
+                  className={`grid grid-cols-3 transition-all ${gridDropHover && liveRefs === null ? 'opacity-60' : ''}`}
                   style={{ gap: 1, background: '#e8dfcd', borderRadius: 2, overflow: 'hidden' }}
                 >
                   {(() => {
-                    const thumbRefs = blockImageRefs.map(r => ({
+                    const thumbRefs = (liveRefs ?? blockImageRefs).map(r => ({
                       ...r,
                       caption: resolveCaption(r, assetsByUrl || {}),
                     }));
@@ -668,6 +684,7 @@ function BlockCard({
                             key={ref.url}
                             imageRef={ref}
                             selected={selectedIndices.has(i)}
+                            isDragging={liveRefs !== null && ref.url === draggedUrlRef.current}
                             onPreview={(e) => {
                               handleThumbClick(e, i);
                               if (!e.metaKey && !e.ctrlKey && !e.shiftKey) setLightboxIndex(i);
@@ -675,7 +692,10 @@ function BlockCard({
                             dragHandleProps={{
                               draggable: true,
                               onDragStart: (e) => {
+                                const initialRefs = normalizeImageRefs(block.images || block.imageUrls || []);
                                 dragPhotoIndex.current = i;
+                                draggedUrlRef.current = ref.url;
+                                setLiveRefs(initialRefs);
                                 e.dataTransfer.effectAllowed = 'move';
                                 e.stopPropagation();
                                 const dragging = selectedIndices.size > 1 && selectedIndices.has(i)
@@ -688,36 +708,53 @@ function BlockCard({
                                   sourceBlockIndex: blockIndex,
                                 };
                                 e.dataTransfer.setData('application/x-photo-drag', JSON.stringify(payload));
-                                e.dataTransfer.setData('text/plain', blockImageRefs[i].url);
+                                e.dataTransfer.setData('text/plain', ref.url);
                                 if (sourcePageId) {
                                   startDrag({ type: 'images', imageRefs: dragging, sourceBlockType: block.type, sourcePageId, sourceBlockIndex: blockIndex })
                                 }
                               },
-                              onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); },
+                              onDragOver: (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (!draggedUrlRef.current) return;
+                                setLiveRefs(prev => {
+                                  if (!prev) return prev;
+                                  const from = prev.findIndex(r => r.url === draggedUrlRef.current);
+                                  if (from === i || from === -1) return prev;
+                                  const next = [...prev];
+                                  const [moved] = next.splice(from, 1);
+                                  next.splice(i, 0, moved);
+                                  return next;
+                                });
+                              },
                               onDrop: (e) => {
                                 e.preventDefault(); e.stopPropagation();
+                                setGridDropHover(false);
                                 const raw = e.dataTransfer.getData('application/x-photo-drag');
                                 if (raw) {
                                   try {
                                     const parsed = JSON.parse(raw);
-                                    if (parsed.sourceBlockKey !== blockKeyRef.current) return;
-                                  } catch { return; }
+                                    if (parsed.sourceBlockKey !== blockKeyRef.current) {
+                                      setLiveRefs(null); draggedUrlRef.current = null; dragPhotoIndex.current = null; return;
+                                    }
+                                  } catch { setLiveRefs(null); draggedUrlRef.current = null; return; }
                                 }
-                                const from = dragPhotoIndex.current;
-                                if (from === null || from === i) return;
-                                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
-                                const [moved] = refs.splice(from, 1);
-                                refs.splice(i, 0, moved);
+                                const finalRefs = liveRefsRef.current;
+                                if (finalRefs) onUpdate({ ...block, ...buildMultiImageFields(finalRefs) });
+                                setLiveRefs(null);
+                                draggedUrlRef.current = null;
                                 dragPhotoIndex.current = null;
-                                onUpdate({ ...block, ...buildMultiImageFields(refs) });
                               },
                               onDragEnd: () => {
-                                dragPhotoIndex.current = null
-                                endDrag()
-                                setSelectedIndices(new Set())
+                                dragPhotoIndex.current = null;
+                                draggedUrlRef.current = null;
+                                setLiveRefs(null);
+                                setGridDropHover(false);
+                                endDrag();
+                                setSelectedIndices(new Set());
                               },
                             }}
-                            onRemove={() => onRemovePhoto(blockImageRefs[i])}
+                            onRemove={() => onRemovePhoto(ref)}
                           />
                         ))}
                         {Array.from({ length: placeholderCount }).map((_, i) => {
@@ -840,7 +877,7 @@ function BlockCard({
                 </div>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Testimonial</div>
-                  <AutoGrowTextarea className={`${INPUT} resize-none scroll-thin`} placeholder={`Working with ${block.name || 'Jane Smith'} was an absolute pleasure…`} maxHeight={120} value={block.text || ''} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+                  <AutoGrowTextarea className={`${INPUT} resize-none scroll-thin`} placeholder={`Working with ${ownerFirstName} was an absolute pleasure…`} maxHeight={120} value={block.text || ''} onChange={e => onUpdate({ ...block, text: e.target.value })} />
                 </div>
               </div>
             )
