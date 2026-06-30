@@ -36,3 +36,8 @@ export function getUsernameLookupPath(username) {
   if (!username) throw new Error('username is required')
   return `usernames/${username}.json`
 }
+
+export function getDomainLookupPath(hostname) {
+  if (!hostname) throw new Error('hostname is required')
+  return `domains/${hostname}.json`
+}

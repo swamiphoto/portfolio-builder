@@ -5,6 +5,7 @@ import {
   getUserGalleriesConfigPath,
   getUserPhotoPath,
   getUserPhotosPrefix,
+  getDomainLookupPath,
 } from '../../common/gcsUser'
 
 describe('getUserPrefix', () => {
@@ -52,5 +53,14 @@ describe('getUserPhotoPath', () => {
 
   it('throws if filename is empty', () => {
     expect(() => getUserPhotoPath('abc123', '')).toThrow('filename is required')
+  })
+})
+
+describe('getDomainLookupPath', () => {
+  it('returns domains/{hostname}.json', () => {
+    expect(getDomainLookupPath('photos.janedoe.com')).toBe('domains/photos.janedoe.com.json')
+  })
+  it('throws when hostname is missing', () => {
+    expect(() => getDomainLookupPath('')).toThrow('hostname is required')
   })
 })
