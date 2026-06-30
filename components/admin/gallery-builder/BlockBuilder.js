@@ -76,6 +76,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   expanded,
   onToggleExpand,
   pages,
+  onUpdatePage,
   getAssetByUrl,
   allSets,
   setsByUrl,
@@ -493,6 +494,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onAddBlockBelow={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index + 1); setShowBlockMenu(true); }}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
                             pages={pages}
+                            onUpdatePage={onUpdatePage}
                             getAssetByUrl={getAssetByUrl}
                             allSets={allSets}
                             setsByUrl={setsByUrl}

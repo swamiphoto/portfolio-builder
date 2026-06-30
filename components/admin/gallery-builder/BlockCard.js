@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
 import { useSession } from "next-auth/react";
 import { getSizedUrl } from "../../../common/imageUtils";
-import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient } from "../../../common/assetRefs";
+import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient, applyFocalPointToPage } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
 import PageGalleryPickerModal from "./PageGalleryPickerModal";
+import FocalPointEditor from "./FocalPointEditor";
 import Tip from "../Tip";
 
 const TYPE_LABELS = {
@@ -107,6 +108,7 @@ function BlockCard({
   onAddPhotos,
   onRemovePhoto,
   pages,
+  onUpdatePage,
   getAssetByUrl,
   allSets,
   setsByUrl,
@@ -155,6 +157,8 @@ function BlockCard({
   const [pickerAnchorRect, setPickerAnchorRect] = useState(null);
   const [pgDragIdx, setPgDragIdx] = useState(null);
   const [pgDropTarget, setPgDropTarget] = useState(null); // { idx, pos: 'before'|'after' }
+  const [pgHoverIdx, setPgHoverIdx] = useState(null)
+  const [focalEditor, setFocalEditor] = useState(null) // { pageId, anchorEl }
   const lastSelectedRef = useRef(null);
   const cardRef = useRef(null);
   const menuRef = useRef(null);
@@ -988,8 +992,8 @@ function BlockCard({
                       onDragOver={e => pgHandleDragOver(e, idx)}
                       onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setPgDropTarget(null) }}
                       onDrop={e => pgHandleDrop(e, idx)}
-                      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'rgba(26,18,10,0.04)'; setPgHoverIdx(idx) }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setPgHoverIdx(prev => prev === idx ? null : prev) }}
                       style={{
                         position: 'relative',
                         display: 'flex', alignItems: 'center', gap: 10,
@@ -1016,6 +1020,26 @@ function BlockCard({
                         <div style={{ fontSize: 12.5, color: '#1d1b17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
                         {p.description && <div style={{ fontSize: 11, color: '#9e9788', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{p.description}</div>}
                       </div>
+                      <button
+                        type="button"
+                        draggable={false}
+                        onMouseDown={e => { e.stopPropagation() }}
+                        onClick={e => { e.stopPropagation(); setFocalEditor({ pageId: p.id, anchorEl: e.currentTarget }) }}
+                        title="Reposition thumbnail"
+                        style={{
+                          flexShrink: 0,
+                          width: 22, height: 22,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer',
+                          color: '#9e9788',
+                          opacity: pgHoverIdx === idx ? 1 : 0,
+                          transition: 'opacity 120ms',
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M8 2v12M2 8h12M8 2L6 4M8 2l2 2M8 14l-2-2M8 14l2-2M2 8l2-2M2 8l2 2M14 8l-2-2M14 8l-2 2" />
+                        </svg>
+                      </button>
                     </div>
                   )
                 })}
@@ -1049,6 +1073,18 @@ function BlockCard({
                     anchorRect={pickerAnchorRect}
                   />
                 )}
+                {focalEditor && (() => {
+                  const fpPage = (pages || []).find(p => p.id === focalEditor.pageId)
+                  if (!fpPage) return null
+                  return (
+                    <FocalPointEditor
+                      page={fpPage}
+                      anchorEl={focalEditor.anchorEl}
+                      onClose={() => setFocalEditor(null)}
+                      onChange={(fp) => onUpdatePage && onUpdatePage(fpPage.id, applyFocalPointToPage(fpPage, fp))}
+                    />
+                  )
+                })()}
               </>
             )
           })()}

@@ -311,6 +311,7 @@ export default function AdminIndex() {
       libraryConfig={libraryConfig}
       saveStatus={saveStatus}
       onPageChange={(updated) => updatePage(selectedPageId, updated)}
+      onUpdatePage={updatePage}
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
       onUpdateLibraryCaption={handleUpdateLibraryCaption}
