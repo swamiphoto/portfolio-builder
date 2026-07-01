@@ -55,12 +55,16 @@ export async function removeDomain(name) {
   return vfetch(`/v9/projects/${projectId}/domains/${name}`, { method: 'DELETE' })
 }
 
+// Domains Registrar API (v1/registrar). The legacy /v4/domains/status and
+// /v4/domains/price endpoints were sunsetted 2025-11-09.
 export async function checkAvailability(name) {
-  const r = await vfetch(`/v4/domains/status?name=${encodeURIComponent(name)}`)
+  const r = await vfetch(`/v1/registrar/domains/${encodeURIComponent(name)}/availability`)
   return !!r.available
 }
 
 export async function getPrice(name) {
-  const r = await vfetch(`/v4/domains/price?name=${encodeURIComponent(name)}`)
-  return { price: r.price, period: r.period }
+  const r = await vfetch(`/v1/registrar/domains/${encodeURIComponent(name)}/price`)
+  // Map the registrar response { years, purchasePrice, ... } onto the
+  // { price, period } shape the search route and UI consume.
+  return { price: r.purchasePrice, period: r.years }
 }

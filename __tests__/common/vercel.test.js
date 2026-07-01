@@ -34,14 +34,15 @@ describe('checkAvailability', () => {
   it('returns the boolean available flag', async () => {
     global.fetch.mockReturnValue(ok({ available: true }))
     await expect(checkAvailability('a.com')).resolves.toBe(true)
-    expect(global.fetch.mock.calls[0][0]).toBe('https://api.vercel.com/v4/domains/status?name=a.com&teamId=team')
+    expect(global.fetch.mock.calls[0][0]).toBe('https://api.vercel.com/v1/registrar/domains/a.com/availability?teamId=team')
   })
 })
 
 describe('getPrice', () => {
-  it('returns price and period', async () => {
-    global.fetch.mockReturnValue(ok({ price: 20, period: 1 }))
+  it('maps the registrar purchasePrice/years onto { price, period }', async () => {
+    global.fetch.mockReturnValue(ok({ years: 1, purchasePrice: 20, renewalPrice: 20, transferPrice: 20 }))
     await expect(getPrice('a.com')).resolves.toEqual({ price: 20, period: 1 })
+    expect(global.fetch.mock.calls[0][0]).toBe('https://api.vercel.com/v1/registrar/domains/a.com/price?teamId=team')
   })
 })
 
