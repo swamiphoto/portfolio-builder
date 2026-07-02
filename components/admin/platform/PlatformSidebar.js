@@ -6,6 +6,7 @@ import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
+import { normalizeCustomDomain } from '../../../common/domainUtils'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
@@ -744,6 +745,19 @@ export default function PlatformSidebar({
             {username}.sepia.photo
           </div>
         )}
+
+        {/* Connected custom domain */}
+        {(() => {
+          const cd = normalizeCustomDomain(siteConfig.customDomain)
+          if (!cd) return null
+          const active = cd.status === 'active'
+          return (
+            <div style={{ fontFamily: MONO, fontSize: 10, color: active ? C.textBody : C.textFaint, letterSpacing: '0.06em', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 8, color: active ? '#2e7d32' : '#9a7b2e' }}>{active ? '🔒' : '●'}</span>
+              {cd.name}{!active && <span style={{ color: C.textFaint }}> · pending</span>}
+            </div>
+          )
+        })()}
 
         {/* Preview / Publish */}
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>

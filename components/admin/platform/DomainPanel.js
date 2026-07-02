@@ -11,12 +11,41 @@ const input = {
 const label = { fontSize: 10, fontFamily: MONO, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--text-muted)' }
 
 function StatusBadge({ status }) {
-  const map = { active: ['Active', '#2e7d32'], pending: ['Pending DNS', '#9a7b2e'], error: ['Error', '#b03030'] }
-  const [text, color] = map[status] || map.pending
+  const map = {
+    active:  ['Connected', '#2e7d32', '🔒'],
+    pending: ['Pending DNS', '#9a7b2e', '●'],
+    error:   ['Error', '#b03030', '⚠'],
+  }
+  const [text, color, glyph] = map[status] || map.pending
   return (
-    <span style={{ fontSize: 11, color, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-      {status === 'active' ? '🔒 ' : ''}{text}
+    <span style={{ fontSize: 11, color, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ fontSize: 9 }}>{glyph}</span>{text}
     </span>
+  )
+}
+
+// One labeled DNS field with a one-click copy.
+function CopyRow({ field, value }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard?.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
+  return (
+    <button type="button" onClick={copy}
+      style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+        background: 'none', border: 'none', padding: '6px 2px', cursor: 'pointer',
+        borderTop: '1px solid rgba(160,140,110,0.14)',
+      }}
+      title="Click to copy">
+      <span style={{ ...label, width: 42, flexShrink: 0 }}>{field}</span>
+      <span style={{ fontFamily: MONO, fontSize: 12, color: '#2c2416', flex: 1, wordBreak: 'break-all' }}>{value}</span>
+      <span style={{ fontSize: 10, color: copied ? '#2e7d32' : 'var(--text-muted)', flexShrink: 0, width: 44, textAlign: 'right' }}>
+        {copied ? 'Copied ✓' : 'Copy ⧉'}
+      </span>
+    </button>
   )
 }
 
@@ -26,6 +55,7 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [provider, setProvider] = useState(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null)
   const [searching, setSearching] = useState(false)
@@ -51,7 +81,7 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
 
   async function remove() {
     setBusy(true)
-    try { await fetch('/api/admin/domain', { method: 'DELETE' }); persist(null) }
+    try { await fetch('/api/admin/domain', { method: 'DELETE' }); persist(null); setProvider(null) }
     finally { setBusy(false) }
   }
 
@@ -66,6 +96,17 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
     } finally { setSearching(false) }
   }
 
+  // While a domain is pending, detect its DNS provider for tailored guidance.
+  useEffect(() => {
+    if (!cd || cd.status === 'active') { setProvider(null); return }
+    let alive = true
+    fetch(`/api/admin/domain/provider?name=${encodeURIComponent(cd.name)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (alive && d?.provider) setProvider(d.provider) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [cd?.name, cd?.status])
+
   // Poll status until active.
   useEffect(() => {
     if (!cd || cd.status === 'active') return
@@ -79,35 +120,19 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cd?.name, cd?.status])
 
+  const removeBtn = (
+    <button type="button" onClick={remove} disabled={busy}
+      style={{ fontSize: 11, color: '#b03030', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+      Remove domain
+    </button>
+  )
+
   return (
     <div style={{ padding: 14 }} className="space-y-5">
       <div className="space-y-2">
-        <div style={label}>Connect a domain you own</div>
-        {cd ? (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span style={{ fontFamily: MONO, fontSize: 12.5, color: '#2c2416' }}>{cd.name}</span>
-              <StatusBadge status={cd.status} />
-            </div>
-            {cd.status !== 'active' && (cd.verification || []).map((r, i) => (
-              <div key={i} style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Add a <strong>{r.type}</strong> record — host{' '}
-                <code style={{ fontFamily: MONO }}>{r.name}</code> → value{' '}
-                <button type="button" onClick={() => navigator.clipboard?.writeText(r.value)}
-                  style={{ fontFamily: MONO, background: 'rgba(160,140,110,0.12)', border: 'none', borderRadius: 3, padding: '1px 5px', cursor: 'pointer' }}>
-                  {r.value}
-                </button>
-              </div>
-            ))}
-            {cd.status !== 'active' && (
-              <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Add this at your DNS provider. It activates automatically once detected.</p>
-            )}
-            <button type="button" onClick={remove} disabled={busy}
-              style={{ fontSize: 11, color: '#b03030', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              Remove domain
-            </button>
-          </div>
-        ) : (
+        <div style={label}>{cd ? 'Custom domain' : 'Connect a domain you own'}</div>
+
+        {!cd && (
           <form onSubmit={connect} className="space-y-2">
             <input autoFocus style={input} placeholder="photos.yourname.com" value={name}
               onChange={(e) => setName(e.target.value)} />
@@ -118,31 +143,83 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
             </button>
           </form>
         )}
+
+        {cd && cd.status === 'active' && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span style={{ fontFamily: MONO, fontSize: 12.5, color: '#2c2416' }}>{cd.name}</span>
+              <StatusBadge status={cd.status} />
+            </div>
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Your site is live at this domain.</p>
+            {removeBtn}
+          </div>
+        )}
+
+        {cd && cd.status !== 'active' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span style={{ fontFamily: MONO, fontSize: 12.5, color: '#2c2416' }}>{cd.name}</span>
+              <StatusBadge status={cd.status} />
+            </div>
+
+            {/* Where to go — provider-specific when we can detect it */}
+            <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              {provider?.name
+                ? <>Looks like <strong>{cd.name}</strong> is on <strong>{provider.name}</strong>. Add this record there:</>
+                : <>Add this record at your domain’s DNS provider:</>}
+            </p>
+            {provider?.dnsUrl && (
+              <a href={provider.dnsUrl} target="_blank" rel="noreferrer"
+                style={{ display: 'inline-block', fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>
+                Open {provider.name} DNS settings →
+              </a>
+            )}
+
+            {/* The record, broken into copyable fields */}
+            <div style={{ borderTop: '1px solid rgba(160,140,110,0.14)' }}>
+              {(cd.verification || []).map((r, i) => (
+                <div key={i}>
+                  <CopyRow field="Type"  value={r.type} />
+                  <CopyRow field="Name"  value={r.name} />
+                  <CopyRow field="Value" value={r.value} />
+                </div>
+              ))}
+            </div>
+
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 9, color: '#9a7b2e' }}>●</span>
+              Checking automatically — activates within minutes once the record is live.
+            </p>
+            {removeBtn}
+          </div>
+        )}
       </div>
 
-      <div className="space-y-2" style={{ borderTop: '1px solid rgba(160,140,110,0.12)', paddingTop: 14 }}>
-        <div style={label}>Find a new domain</div>
-        <form onSubmit={search}>
-          <input style={input} placeholder="Find a new domain (e.g. your name)" value={query}
-            onChange={(e) => setQuery(e.target.value)} />
-        </form>
-        {searching && <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Searching…</p>}
-        {results && results.map((r) => (
-          <div key={r.domain} className="flex items-center justify-between" style={{ fontSize: 12 }}>
-            <span style={{ fontFamily: MONO, color: r.available ? '#2c2416' : 'var(--text-muted)' }}>{r.domain}</span>
-            {r.available ? (
-              <span className="flex items-center gap-2">
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>${r.price}/yr</span>
-                <a href={r.registrarUrl} target="_blank" rel="noreferrer"
-                  style={{ fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>Get it</a>
-              </span>
-            ) : (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Taken</span>
-            )}
-          </div>
-        ))}
-        {results && <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>After you buy it, come back and connect it above.</p>}
-      </div>
+      {!cd && (
+        <div className="space-y-2" style={{ borderTop: '1px solid rgba(160,140,110,0.12)', paddingTop: 14 }}>
+          <div style={label}>Find a new domain</div>
+          <form onSubmit={search}>
+            <input style={input} placeholder="Find a new domain (e.g. your name)" value={query}
+              onChange={(e) => setQuery(e.target.value)} />
+          </form>
+          {searching && <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Searching…</p>}
+          {results && results.map((r) => (
+            <div key={r.domain} className="flex items-center justify-between" style={{ fontSize: 12 }}>
+              <span style={{ fontFamily: MONO, color: r.available ? '#2c2416' : 'var(--text-muted)' }}>{r.domain}</span>
+              {r.available ? (
+                <span className="flex items-center gap-2">
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>${r.price}/yr</span>
+                  <a href={r.registrarUrl} target="_blank" rel="noreferrer"
+                    style={{ fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>Get it</a>
+                </span>
+              ) : (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Taken</span>
+              )}
+            </div>
+          ))}
+          {results && <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>After you buy it, come back and connect it above.</p>}
+        </div>
+      )}
     </div>
   )
 }

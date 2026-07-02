@@ -587,10 +587,13 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       </div>
 
       {/* Drill rows */}
-      <DrillRow
-        label={normalizeCustomDomain(config.customDomain)?.name || 'Setup custom domain'}
-        onDrillIn={() => setView('domain')}
-      />
+      {(() => {
+        const cd = normalizeCustomDomain(config.customDomain)
+        const rowProps = !cd
+          ? { label: 'Set up custom domain' }
+          : { label: cd.name, hint: cd.status === 'active' ? 'Connected' : 'Action needed — add DNS record' }
+        return <DrillRow {...rowProps} onDrillIn={() => setView('domain')} />
+      })()}
       <DrillRow
         label={hasAnalytics ? 'Analytics' : 'Setup analytics'}
         onDrillIn={() => setView('analytics')}
