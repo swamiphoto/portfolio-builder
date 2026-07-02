@@ -62,7 +62,8 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig }) => {
+  const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
   const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
@@ -116,7 +117,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
   return (
     <div className="gallery-container">
-      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} onChildPageClick={onChildPageClick} />
+      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} />
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {
@@ -218,7 +219,6 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 .map(id => (pages || []).find(p => p.id === id))
                 .filter(Boolean);
               if (linkedPages.length === 0) return null;
-              const basePath = username ? `/sites/${username}` : '';
               const pgStackVariants = [
                 {
                   first: "absolute -right-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
@@ -242,7 +242,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div className="space-y-8">
                     {linkedPages.map((p, i) => {
                       const thumb = pageDisplayThumbnail(p);
-                      const href = `${basePath}/${p.slug || p.id}`;
+                      const href = `${linkBase}/${p.slug || p.id}`;
                       const stackStyle = pgStackVariants[i % pgStackVariants.length];
                       return (
                         <a key={p.id} href={href} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>

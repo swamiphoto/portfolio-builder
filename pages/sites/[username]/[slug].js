@@ -5,7 +5,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
-import { siteUrlFor } from '../../../common/domainUtils'
+import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -27,7 +27,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, req }) {
   const { username, slug } = params
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
@@ -42,17 +42,19 @@ export async function getServerSideProps({ params }) {
   for (const a of Object.values(libraryConfig?.assets || {})) {
     if (a?.publicUrl) assetsByUrl[a.publicUrl] = { assetId: a.assetId, caption: a.caption }
   }
+  const basePath = basePathFor(req.headers.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
   return {
     props: {
       siteConfig: JSON.parse(JSON.stringify(siteConfig)),
       page: JSON.parse(JSON.stringify(page)),
       assetsByUrl,
       username,
+      basePath,
     },
   }
 }
 
-export default function PublicPage({ siteConfig, page, assetsByUrl, username }) {
+export default function PublicPage({ siteConfig, page, assetsByUrl, username, basePath }) {
   // Client-side gate only — not a security boundary. Real protection lives in clientFeatures.
   const [unlocked, setUnlocked] = useState(!page.password)
   if (!unlocked) {
@@ -67,7 +69,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   const navVariant = page?.cover?.imageUrl ? undefined : 'header-dropdown'
-  const slideshowHref = page.slideshow?.enabled ? `/sites/${username}/${page.slug || page.id}/slideshow` : null
+  const slideshowHref = page.slideshow?.enabled ? `${basePath}/${page.slug || page.id}/slideshow` : null
   // Sub-nav: if this page has a parent, show siblings. If it has children, show children.
   const allPages = siteConfig.pages || []
   const isChildPage = !!page.parentId
@@ -90,7 +92,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
+      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
       <main>
         <PageCover
           cover={page.cover}
@@ -107,6 +109,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
           childPages={subNavPages}
           activeChildId={activeSubNavId}
           username={username}
+          basePath={basePath}
           enableSlideshow={!!slideshowHref}
           onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
           siteConfig={siteConfig}

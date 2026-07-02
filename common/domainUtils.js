@@ -54,3 +54,16 @@ export function parseHost(host, rootDomain) {
   }
   return { kind: 'custom', subdomain: null }
 }
+
+/**
+ * The URL prefix the public site should use for internal links, given the
+ * request host. On a site host (subdomain or custom domain) links are clean
+ * (`/{slug}`, prefix ''); on the root domain or localhost the site is served
+ * at the literal `/sites/{username}` path, so that prefix is used.
+ */
+export function basePathFor(host, rootDomain, username) {
+  const bare = (host || '').replace(/^https?:\/\//, '').split(':')[0].toLowerCase()
+  const isLocal = !bare || bare === 'localhost' || bare === '127.0.0.1' || /^\d{1,3}(\.\d{1,3}){3}$/.test(bare)
+  if (isLocal || parseHost(host, rootDomain).kind === 'root') return `/sites/${username}`
+  return ''
+}

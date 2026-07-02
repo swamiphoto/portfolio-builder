@@ -1,6 +1,27 @@
 import {
-  isApex, dnsRecordsFor, deriveStatus, normalizeCustomDomain, siteUrlFor, parseHost,
+  isApex, dnsRecordsFor, deriveStatus, normalizeCustomDomain, siteUrlFor, parseHost, basePathFor,
 } from '../../common/domainUtils'
+
+describe('basePathFor', () => {
+  it('is empty (clean URLs) on a subdomain of the root', () => {
+    expect(basePathFor('swamiphoto.sepia.so', 'sepia.so', 'swamiphoto')).toBe('')
+  })
+  it('is empty (clean URLs) on a custom domain', () => {
+    expect(basePathFor('swami108.com', 'sepia.so', 'swamiphoto')).toBe('')
+  })
+  it('is the /sites path on the bare root domain', () => {
+    expect(basePathFor('sepia.so', 'sepia.so', 'swamiphoto')).toBe('/sites/swamiphoto')
+  })
+  it('is the /sites path on www of the root', () => {
+    expect(basePathFor('www.sepia.so', 'sepia.so', 'swamiphoto')).toBe('/sites/swamiphoto')
+  })
+  it('is the /sites path on localhost (dev direct preview)', () => {
+    expect(basePathFor('localhost:3000', 'lvh.me:3000', 'swamiphoto')).toBe('/sites/swamiphoto')
+  })
+  it('is empty (clean URLs) on a dev lvh.me subdomain', () => {
+    expect(basePathFor('swamiphoto.lvh.me:3000', 'lvh.me:3000', 'swamiphoto')).toBe('')
+  })
+})
 
 describe('isApex', () => {
   it('treats a two-label name as apex', () => expect(isApex('janedoe.com')).toBe(true))

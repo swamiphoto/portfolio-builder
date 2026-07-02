@@ -4,7 +4,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
-import { siteUrlFor } from '../../../common/domainUtils'
+import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -26,7 +26,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, req }) {
   const { username } = params
 
   const lookup = await lookupUserByUsername(username)
@@ -44,16 +44,19 @@ export async function getServerSideProps({ params }) {
     if (a?.publicUrl) assetsByUrl[a.publicUrl] = { assetId: a.assetId, caption: a.caption }
   }
 
+  const basePath = basePathFor(req.headers.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
+
   return {
     props: {
       siteConfig: JSON.parse(JSON.stringify(siteConfig)),
       assetsByUrl,
       username,
+      basePath,
     },
   }
 }
 
-export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
+export default function PublicPortfolio({ siteConfig, assetsByUrl, username, basePath }) {
   const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   const ogTitle = siteConfig.siteName || 'Portfolio'
   const ogDescription = siteConfig.tagline || ''
@@ -65,7 +68,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const initialPage = hasCoverPage && siteConfig.homePageId
     ? siteConfig.pages?.find(p => p.id === siteConfig.homePageId)
     : null
-  const initialPageHref = initialPage ? `/sites/${username}/${initialPage.slug || initialPage.id}` : null
+  const initialPageHref = initialPage ? `${basePath}/${initialPage.slug || initialPage.id}` : null
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)
   if (!unlocked) {
@@ -108,7 +111,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
   const navVariant = homePage?.cover?.imageUrl ? undefined : 'header-dropdown'
-  const slideshowHref = homePage?.slideshow?.enabled ? `/sites/${username}/${homePage.slug || homePage.id}/slideshow` : null
+  const slideshowHref = homePage?.slideshow?.enabled ? `${basePath}/${homePage.slug || homePage.id}/slideshow` : null
 
   return (
     <div className="min-h-screen bg-white font-sans relative">
@@ -125,7 +128,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
+      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
       <main>
         <PageCover
           cover={homePage?.cover}
@@ -141,6 +144,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username }) {
             description={homePage.description}
             blocks={resolvedBlocks}
             pages={siteConfig.pages}
+            username={username}
+            basePath={basePath}
             enableSlideshow={!!slideshowHref}
             onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
             siteConfig={siteConfig}
