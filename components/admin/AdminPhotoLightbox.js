@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
+import SellAsPrintPanel from "./print/SellAsPrintPanel";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const SERIF = '"Cormorant Garamond", "Muse", Georgia, serif';
@@ -289,7 +290,7 @@ function FilenameValue({ filename }) {
   );
 }
 
-export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet }) {
+export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet, printStore, onSellChange, onUploadMaster }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
@@ -450,6 +451,16 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             {!saved && (
               <p style={{ fontFamily: MONO, fontSize: 9.5, color: '#b0a490', margin: 0 }}>Enter or click away to save</p>
             )}
+          </Section>
+
+          {/* Sell as print */}
+          <Section title="Sell as print">
+            <SellAsPrintPanel
+              asset={image}
+              printStore={printStore || {}}
+              onSellChange={(next) => onSellChange?.(image.assetId, next)}
+              onUploadMaster={(file) => onUploadMaster?.(image.assetId, file)}
+            />
           </Section>
 
           {/* File */}

@@ -97,6 +97,9 @@ export default function PhotoGrid({
   onAlbumSelect,
   onClose,
   highlightedUrls,
+  printStore,
+  onSellChange,
+  onUploadMaster,
 }) {
   const [sort, setSort] = useState("newest-upload");
   const [search, setSearch] = useState("");
@@ -549,6 +552,8 @@ export default function PhotoGrid({
             createdAt: a.createdAt,
             updatedAt: a.updatedAt,
             sets: setsByUrl?.[a.publicUrl] || [],
+            print: a.print,
+            forSale: a.forSale,
           }))}
           allSets={allSets}
           index={lightboxIndex}
@@ -562,6 +567,9 @@ export default function PhotoGrid({
             const asset = processedAssets[lightboxIndex];
             if (asset && onToggleSet) onToggleSet(asset.publicUrl, slug, type, add);
           }}
+          printStore={printStore}
+          onSellChange={onSellChange}
+          onUploadMaster={onUploadMaster}
         />
       )}
     </div>

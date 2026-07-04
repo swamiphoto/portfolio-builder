@@ -291,3 +291,43 @@ describe('normalizeLibraryConfig — forSale reserved', () => {
     expect(config.assets.ast_1.forSale).toBe(true)
   })
 })
+
+describe('asset.print defaults', () => {
+  it('adds a print object with safe defaults to a bare asset', () => {
+    const config = {
+      assets: {
+        a1: { assetId: 'a1', publicUrl: 'https://x/a.jpg', width: 6000, height: 4000 },
+      },
+      assetOrder: ['a1'],
+    }
+    const out = normalizeLibraryConfig(config, [])
+    const print = out.assets.a1.print
+    expect(print).toEqual({
+      sellable: false,
+      masterStorageKey: null,
+      masterWidth: null,
+      masterHeight: null,
+      minDpi: 240,
+      availableSizes: [],
+      maxSharpSize: null,
+      focalPoint: null,
+    })
+    expect(out.assets.a1.forSale).toBe(false)
+  })
+
+  it('preserves an existing sellable print object and mirrors forSale', () => {
+    const config = {
+      assets: {
+        a1: {
+          assetId: 'a1', publicUrl: 'https://x/a.jpg', width: 6000, height: 4000,
+          print: { sellable: true, availableSizes: ['8x10'], maxSharpSize: '8x10', minDpi: 240 },
+        },
+      },
+      assetOrder: ['a1'],
+    }
+    const out = normalizeLibraryConfig(config, [])
+    expect(out.assets.a1.print.sellable).toBe(true)
+    expect(out.assets.a1.print.availableSizes).toEqual(['8x10'])
+    expect(out.assets.a1.forSale).toBe(true)
+  })
+})
