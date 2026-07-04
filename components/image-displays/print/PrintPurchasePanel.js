@@ -51,6 +51,33 @@ function Segment({ active, onClick, ariaLabel, children }) {
 
 const SWATCH_DOT = { black: '#2b2b2b', white: '#f2efe9', natural: '#c8a87a', walnut: '#5a3d2b', silver: '#c9ccce' }
 
+// Matches the app's ToggleSwitch (site settings).
+function ToggleSwitch({ on, onClick, ariaLabel }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      style={{
+        position: 'relative', flexShrink: 0, width: 32, height: 18, borderRadius: 999,
+        background: on ? '#8b6f47' : 'rgba(120,90,60,0.18)',
+        boxShadow: 'inset 0 1px 1.5px rgba(60,40,15,0.12)', border: 'none', outline: 'none', cursor: 'pointer', padding: 0,
+        transition: 'background 0.15s',
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute', top: 2, left: 2, width: 14, height: 14, borderRadius: 999, background: '#f5ecd6',
+          boxShadow: '0 1px 2px rgba(60,40,15,0.22), 0 0 0 0.5px rgba(60,40,15,0.10)',
+          transform: on ? 'translateX(14px)' : 'translateX(0)', transition: 'transform 0.15s',
+        }}
+      />
+    </button>
+  )
+}
+
 export default function PrintPurchasePanel({ print, printStore, spec, onSpecChange }) {
   const markup = printStore?.markup || 3
   const set = (patch) => onSpecChange({ ...spec, ...patch })
@@ -107,10 +134,10 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
               ))}
             </Track>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 14, color: '#5c4f3a', cursor: 'pointer' }}>
-            <input type="checkbox" checked={!!spec.matte} onChange={(e) => set({ matte: e.target.checked })} style={{ accentColor: '#8b6f47' }} />
-            With mat
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontSize: 14, color: '#5c4f3a' }}>With mat</span>
+            <ToggleSwitch on={!!spec.matte} onClick={() => set({ matte: !spec.matte })} ariaLabel="With mat" />
+          </div>
         </>
       )}
 
