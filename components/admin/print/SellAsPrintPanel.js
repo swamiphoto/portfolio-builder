@@ -41,7 +41,7 @@ export default function SellAsPrintPanel({ asset, onSellChange, onUploadMaster }
         onMouseLeave={(e) => { if (!sellable) e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.02em', color: sellable ? '#2c2416' : '#a8967a' }}>
-          {sellable ? 'For sale' : 'Not for sale'}
+          {sellable ? 'For sale' : 'Enable for sale'}
         </span>
         <span
           aria-hidden="true"

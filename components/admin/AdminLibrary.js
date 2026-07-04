@@ -368,8 +368,22 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     });
   }, [currentConfig]);
 
+  const applyPrint = useCallback((assetId, print) => {
+    setLibraryData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: print.sellable } },
+        images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
+      };
+    });
+  }, []);
+
   const handleSellChange = useCallback(async (assetId, sellable) => {
     if (!assetId) return;
+    const prevPrint = libraryData?.assets?.[assetId]?.print || {};
+    // Optimistic: flip the toggle immediately, reconcile with the server after.
+    applyPrint(assetId, { ...prevPrint, sellable, ...(sellable ? {} : { availableSizes: [], maxSharpSize: null }) });
     try {
       const res = await fetch('/api/admin/print/sell', {
         method: 'POST',
@@ -378,19 +392,16 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       });
       if (!res.ok) {
         console.error('print sell failed', res.status, await res.text().catch(() => ''));
+        applyPrint(assetId, prevPrint);
         return;
       }
       const { print } = await res.json();
-      setLibraryData(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: print.sellable } },
-          images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
-        };
-      });
-    } catch (_) {}
-  }, []);
+      applyPrint(assetId, print);
+    } catch (e) {
+      console.error('print sell error', e);
+      applyPrint(assetId, prevPrint);
+    }
+  }, [libraryData, applyPrint]);
 
   const handleUploadMaster = useCallback(async (assetId, file) => {
     if (!assetId || !file) return;
@@ -404,16 +415,11 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         return;
       }
       const { print } = await res.json();
-      setLibraryData(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: print.sellable } },
-          images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
-        };
-      });
-    } catch (_) {}
-  }, []);
+      applyPrint(assetId, print);
+    } catch (e) {
+      console.error('print master upload error', e);
+    }
+  }, [applyPrint]);
 
   const handleCreateSet = useCallback(async (name, parentKey = null) => {
     const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
