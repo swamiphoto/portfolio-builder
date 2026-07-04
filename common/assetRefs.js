@@ -27,6 +27,7 @@ export function normalizeImageRef(value) {
 
   const ref = { assetId: value.assetId || null, url };
   if (value.caption !== undefined) ref.caption = value.caption;
+  if (value.print !== undefined) ref.print = value.print;
   return ref;
 }
 
