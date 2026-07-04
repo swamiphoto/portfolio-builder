@@ -1,15 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
-import PrintAffordance from "./print/PrintAffordance";
-import { usePrintStore } from "./print/PrintStoreContext";
+import BuyPrintButton from "./print/BuyPrintButton";
 
 export default function PhotoLightbox({ images, index, onClose, onNavigate, printStore }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
-  const printCtx = usePrintStore();
 
   const sellable = !!(printStore?.enabled && image?.print?.sellable);
+  const [hovering, setHovering] = useState(false);
+  const [peek, setPeek] = useState(true);
+
+  // Show the buy button briefly when a new image opens, then let it fade until
+  // the viewer hovers the image.
+  useEffect(() => {
+    setPeek(true);
+    const t = setTimeout(() => setPeek(false), 2600);
+    return () => clearTimeout(t);
+  }, [index, image?.url]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -27,9 +35,6 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
   }, [index, hasPrev, hasNext, onClose, onNavigate]);
 
   if (!image) return null;
-
-  const openConfigurator = () =>
-    printCtx?.openConfigurator?.({ print: image.print, imageUrl: image.url });
 
   return (
     <div
@@ -62,16 +67,27 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
         className="flex flex-col items-center max-w-[90vw] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={getSizedUrl(image.url, 'display')}
-          alt={image.caption || ""}
-          className="max-w-full max-h-[80vh] object-contain"
-        />
+        <div
+          className="relative"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          <img
+            src={getSizedUrl(image.url, 'display')}
+            alt={image.caption || ""}
+            className="max-w-full max-h-[80vh] object-contain"
+          />
+          {sellable && (
+            <div
+              className="absolute top-3 right-3 transition-opacity duration-500"
+              style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
+            >
+              <BuyPrintButton print={image.print} imageUrl={image.url} />
+            </div>
+          )}
+        </div>
         {image.caption && (
           <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
-        )}
-        {sellable && (
-          <PrintAffordance print={image.print} printStore={printStore} onOpen={openConfigurator} />
         )}
       </div>
 
