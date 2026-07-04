@@ -186,10 +186,6 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
               ))}
             </div>
 
-            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-              <span style={{ fontSize: 9, color: '#9a7b2e', marginTop: 2, flexShrink: 0 }}>●</span>
-              <span>Checking automatically — activates within minutes once the record is live.</span>
-            </p>
             {removeBtn}
           </div>
         )}
