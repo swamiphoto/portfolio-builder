@@ -537,6 +537,7 @@ export default function AlbumSidebar({
   onDeleteSet,
   orientationCounts,
   usageCounts,
+  printCounts,
   captureYearCounts,
   uploadedCounts,
   apertureCounts,
@@ -560,6 +561,7 @@ export default function AlbumSidebar({
   const activeFilterCount = [
     filters.orientation !== "all",
     filters.usage !== "all",
+    filters.forPrint !== "all",
     filters.captureYear !== "all",
     filters.uploaded !== "all",
     filters.aperture !== "all",
@@ -571,7 +573,7 @@ export default function AlbumSidebar({
   ].filter(Boolean).length;
 
   const clearAllFilters = useCallback(() => {
-    ["orientation","usage","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso"]
+    ["orientation","usage","forPrint","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso"]
       .forEach(k => onFilterChange(k, "all"));
     onSelect({ type: "all", key: "all" });
   }, [onFilterChange, onSelect]);
@@ -683,6 +685,21 @@ export default function AlbumSidebar({
             label="In Use"
             count={usageCounts.used}
             onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", filters.usage === "used" ? "all" : "used"); }}
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Print" openOverride={sectionsOpen}>
+          <SidebarItem
+            active={filters.forPrint === "on"}
+            label="For sale"
+            count={printCounts?.on ?? 0}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("forPrint", filters.forPrint === "on" ? "all" : "on"); }}
+          />
+          <SidebarItem
+            active={filters.forPrint === "off"}
+            label="Not for sale"
+            count={printCounts?.off ?? 0}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("forPrint", filters.forPrint === "off" ? "all" : "off"); }}
           />
         </SidebarSection>
 

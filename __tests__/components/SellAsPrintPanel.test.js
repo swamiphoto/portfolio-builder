@@ -25,7 +25,7 @@ describe('SellAsPrintPanel', () => {
   it('shows the max sharp size when sellable', () => {
     const asset = makeAsset({ sellable: true, availableSizes: ['8x10', '16x24'], maxSharpSize: '16x24' })
     render(<SellAsPrintPanel asset={asset} printStore={printStore} onSellChange={() => {}} onUploadMaster={() => {}} />)
-    expect(screen.getByText(/16x24/i)).toBeInTheDocument()
+    expect(screen.getByText(/16 × 24/)).toBeInTheDocument()
   })
 
   it('prompts for a higher-res upload and forwards the chosen file', () => {
