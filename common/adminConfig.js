@@ -186,7 +186,17 @@ function createAssetRecord(assetId, imageRecord, existingAsset = {}, portfolios 
     alt: existingAsset.alt || "",
     tags: uniqueStrings(existingAsset.tags),
     setIds: uniqueStrings(existingAsset.setIds || existingAsset.collectionIds),
-    forSale: existingAsset.forSale ?? false,
+    forSale: existingAsset.print?.sellable ?? existingAsset.forSale ?? false,
+    print: {
+      sellable: existingAsset.print?.sellable ?? existingAsset.forSale ?? false,
+      masterStorageKey: existingAsset.print?.masterStorageKey ?? null,
+      masterWidth: existingAsset.print?.masterWidth ?? null,
+      masterHeight: existingAsset.print?.masterHeight ?? null,
+      minDpi: existingAsset.print?.minDpi ?? 240,
+      availableSizes: uniqueStrings(existingAsset.print?.availableSizes),
+      maxSharpSize: existingAsset.print?.maxSharpSize ?? null,
+      focalPoint: existingAsset.print?.focalPoint ?? null,
+    },
     source: {
       type: existingAsset.source?.type || "upload",
       provider: existingAsset.source?.provider || "manual",
