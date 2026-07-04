@@ -11,6 +11,7 @@ import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
+import { PrintStoreProvider } from "../print/PrintStoreContext";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -116,6 +117,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   };
 
   return (
+    <PrintStoreProvider printStore={printStore}>
     <div className="gallery-container">
       <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} />
 
@@ -361,6 +363,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
         />
       )}
     </div>
+    </PrintStoreProvider>
   );
 };
 

@@ -1,28 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
 import PrintAffordance from "./print/PrintAffordance";
-import PrintPurchasePanel from "./print/PrintPurchasePanel";
-import FramedImage from "./print/FramedImage";
-
-function defaultSpec(print) {
-  const size = print?.maxSharpSize || (print?.availableSizes || [])[0] || null;
-  return { size, finish: 'lustre', frame: 'none', frameColor: null, matte: false };
-}
+import { usePrintStore } from "./print/PrintStoreContext";
 
 export default function PhotoLightbox({ images, index, onClose, onNavigate, printStore }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
+  const printCtx = usePrintStore();
 
   const sellable = !!(printStore?.enabled && image?.print?.sellable);
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [spec, setSpec] = useState(defaultSpec(image?.print));
-
-  // Reset the print UI when the viewed image changes.
-  useEffect(() => {
-    setPanelOpen(false);
-    setSpec(defaultSpec(image?.print));
-  }, [index, image?.url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -40,6 +27,9 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
   }, [index, hasPrev, hasNext, onClose, onNavigate]);
 
   if (!image) return null;
+
+  const openConfigurator = () =>
+    printCtx?.openConfigurator?.({ print: image.print, imageUrl: image.url });
 
   return (
     <div
@@ -67,26 +57,21 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
         </button>
       )}
 
+      {/* Image + caption — stop propagation so clicking image doesn't close */}
       <div
-        className="flex flex-col md:flex-row items-center gap-6 max-w-[92vw] max-h-[90vh]"
+        className="flex flex-col items-center max-w-[90vw] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col items-center">
-          {sellable ? (
-            <FramedImage src={getSizedUrl(image.url, 'display')} alt={image.caption || ''} spec={spec} className="max-w-full max-h-[80vh] object-contain" />
-          ) : (
-            <img src={getSizedUrl(image.url, 'display')} alt={image.caption || ''} className="max-w-full max-h-[80vh] object-contain" />
-          )}
-          {image.caption && (
-            <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
-          )}
-          {sellable && !panelOpen && (
-            <PrintAffordance print={image.print} printStore={printStore} onOpen={() => setPanelOpen(true)} />
-          )}
-        </div>
-
-        {sellable && panelOpen && (
-          <PrintPurchasePanel print={image.print} printStore={printStore} spec={spec} onSpecChange={setSpec} onClose={() => setPanelOpen(false)} />
+        <img
+          src={getSizedUrl(image.url, 'display')}
+          alt={image.caption || ""}
+          className="max-w-full max-h-[80vh] object-contain"
+        />
+        {image.caption && (
+          <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
+        )}
+        {sellable && (
+          <PrintAffordance print={image.print} printStore={printStore} onOpen={openConfigurator} />
         )}
       </div>
 
