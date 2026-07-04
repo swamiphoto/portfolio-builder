@@ -35,6 +35,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
+  const [printStore, setPrintStore] = useState(null);
 
   const fetchLibrary = useCallback(async () => {
     try {
@@ -52,6 +53,13 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   }, []);
 
   useEffect(() => { fetchLibrary(); }, [fetchLibrary]);
+
+  useEffect(() => {
+    fetch('/api/admin/print/settings')
+      .then(res => { if (res.ok) return res.json(); })
+      .then(data => { if (data?.printStore) setPrintStore(data.printStore); })
+      .catch(() => {});
+  }, []);
 
   const saveConfig = useCallback(async (newConfig) => {
     const res = await fetch("/api/admin/library", {
@@ -355,6 +363,47 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     });
   }, [currentConfig]);
 
+  const handleSellChange = useCallback(async (assetId, sellable) => {
+    if (!assetId) return;
+    try {
+      const res = await fetch('/api/admin/print/sell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId, sellable }),
+      });
+      if (!res.ok) return;
+      const { print } = await res.json();
+      setLibraryData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: print.sellable } },
+          images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
+        };
+      });
+    } catch (_) {}
+  }, []);
+
+  const handleUploadMaster = useCallback(async (assetId, file) => {
+    if (!assetId || !file) return;
+    try {
+      const res = await fetch(
+        `/api/admin/print/upload-master?assetId=${encodeURIComponent(assetId)}&filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
+        { method: 'POST', body: file }
+      );
+      if (!res.ok) return;
+      const { print } = await res.json();
+      setLibraryData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: print.sellable } },
+          images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
+        };
+      });
+    } catch (_) {}
+  }, []);
+
   const handleCreateSet = useCallback(async (name, parentKey = null) => {
     const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
     if (!slug) return
@@ -589,6 +638,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onCaptionChange={handleCaptionChange}
         onToggleSet={handleToggleSet}
         onUploadClick={() => setUploadOpen(true)}
+        printStore={printStore}
+        onSellChange={handleSellChange}
+        onUploadMaster={handleUploadMaster}
         onAddFromLibraryClick={handleAddFromLibrary}
         activeFilters={activeFilters}
         onRemoveFilter={k => setFilters(prev => ({ ...prev, [k]: 'all' }))}
