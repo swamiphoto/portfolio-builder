@@ -8,7 +8,7 @@ import FramedImage from './FramedImage'
 import PrintPurchasePanel from './PrintPurchasePanel'
 
 const SERIF = '"Cormorant Garamond", Georgia, serif'
-const PANEL_WIDTH = 384
+const PANEL_WIDTH = 460
 
 function defaultSpec(print) {
   const size = print?.maxSharpSize || (print?.availableSizes || [])[0] || null
@@ -84,10 +84,10 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, o
         {/* Wall preview */}
         <div
           style={{
-            margin: '0 20px', borderRadius: 8, padding: '28px 24px',
-            background: 'linear-gradient(160deg, #ece4d8 0%, #ddd2c1 100%)',
+            margin: '0 20px', borderRadius: 8, padding: '40px 32px',
+            background: 'linear-gradient(160deg, #ece4d8 0%, #dccfbc 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            minHeight: 200,
+            minHeight: 300,
           }}
         >
           {imageUrl && (

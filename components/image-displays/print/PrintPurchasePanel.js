@@ -1,6 +1,8 @@
 // components/image-displays/print/PrintPurchasePanel.js
-// Configurator controls, styled to the app's warm/parchment palette. Rendered
-// inside PrintConfigurator (the right-edge drawer).
+// Configurator controls, styled to the app's warm/parchment palette using the
+// same segmented-control idiom as the site-settings toggles (a warm-tinted
+// track with soft-rounded segments and a cream active fill). Rendered inside
+// PrintConfigurator (the right-edge drawer).
 import React from 'react'
 import { SEED_CATALOG } from '../../../common/fulfillment/seedCatalog'
 import { optionPrice } from '../../../common/print/buyerPricing'
@@ -16,49 +18,38 @@ function Label({ children }) {
   )
 }
 
-function Chip({ active, label, onClick }) {
+function Track({ children }) {
+  return (
+    <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 2, padding: 2, background: 'rgba(120,90,60,0.10)', borderRadius: 7, width: 'fit-content', maxWidth: '100%' }}>
+      {children}
+    </div>
+  )
+}
+
+function Segment({ active, onClick, ariaLabel, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={ariaLabel}
       style={{
-        padding: '6px 13px',
-        borderRadius: 999,
-        fontSize: 13,
-        cursor: 'pointer',
-        transition: 'background 0.15s, border-color 0.15s, color 0.15s',
-        background: active ? '#8b6f47' : 'transparent',
-        color: active ? '#faf6ef' : '#6b5d47',
-        border: `1px solid ${active ? '#8b6f47' : 'rgba(160,140,110,0.35)'}`,
+        display: 'inline-flex', alignItems: 'center', gap: 7,
+        padding: '6px 13px', borderRadius: 5, fontSize: 13, whiteSpace: 'nowrap',
+        border: 'none', cursor: 'pointer',
+        background: active ? '#f5ecd6' : 'transparent',
+        color: active ? '#5c4f3a' : '#9c8a6f',
+        boxShadow: active ? '0 1px 2px rgba(80,60,30,0.12)' : 'none',
+        transition: 'background 0.15s, color 0.15s',
       }}
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'rgba(139,111,71,0.6)' }}
-      onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = 'rgba(160,140,110,0.35)' }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = '#6b5d47' }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = '#9c8a6f' }}
     >
-      {label}
+      {children}
     </button>
   )
 }
 
-function Swatch({ active, color, onClick }) {
-  const dot = { black: '#2b2b2b', white: '#f2efe9', natural: '#c8a87a', walnut: '#5a3d2b', silver: '#c9ccce' }[color] || '#c8a87a'
-  return (
-    <button
-      type="button"
-      aria-label={color}
-      onClick={onClick}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 11px 5px 6px',
-        borderRadius: 999, fontSize: 12.5, cursor: 'pointer', textTransform: 'capitalize',
-        background: active ? 'rgba(139,111,71,0.12)' : 'transparent',
-        color: '#6b5d47',
-        border: `1px solid ${active ? 'rgba(139,111,71,0.55)' : 'rgba(160,140,110,0.3)'}`,
-      }}
-    >
-      <span style={{ width: 16, height: 16, borderRadius: '50%', background: dot, border: '1px solid rgba(0,0,0,0.15)' }} />
-      {color}
-    </button>
-  )
-}
+const SWATCH_DOT = { black: '#2b2b2b', white: '#f2efe9', natural: '#c8a87a', walnut: '#5a3d2b', silver: '#c9ccce' }
 
 export default function PrintPurchasePanel({ print, printStore, spec, onSpecChange }) {
   const markup = printStore?.markup || 3
@@ -69,48 +60,52 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
   const price = optionPrice(SEED_CATALOG, { size: spec.size, finish: spec.finish, frame: spec.frame, matte: spec.matte }, markup)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, color: '#2c2416' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#2c2416' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Label>Size</Label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+        <Track>
           {sizes.map((s) => (
-            <Chip key={s} active={spec.size === s} label={`${pretty(s)} in`} onClick={() => set({ size: s })} />
+            <Segment key={s} active={spec.size === s} onClick={() => set({ size: s })}>{`${pretty(s)} in`}</Segment>
           ))}
-        </div>
+        </Track>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Label>Finish</Label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+        <Track>
           {SEED_CATALOG.finishes.map((f) => (
-            <Chip key={f.id} active={spec.finish === f.id} label={f.label} onClick={() => set({ finish: f.id })} />
+            <Segment key={f.id} active={spec.finish === f.id} onClick={() => set({ finish: f.id })}>{f.label}</Segment>
           ))}
-        </div>
+        </Track>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Label>Framing</Label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+        <Track>
           {SEED_CATALOG.frames.map((f) => (
-            <Chip
+            <Segment
               key={f.id}
               active={spec.frame === f.id}
-              label={f.label}
               onClick={() => set({ frame: f.id, frameColor: f.colors[0] || null, matte: f.id === 'none' ? false : spec.matte })}
-            />
+            >
+              {f.label}
+            </Segment>
           ))}
-        </div>
+        </Track>
       </div>
 
       {framed && (
         <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Label>Frame color</Label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+            <Track>
               {frame.colors.map((c) => (
-                <Swatch key={c} active={spec.frameColor === c} color={c} onClick={() => set({ frameColor: c })} />
+                <Segment key={c} active={spec.frameColor === c} ariaLabel={c} onClick={() => set({ frameColor: c })}>
+                  <span style={{ width: 14, height: 14, borderRadius: '50%', background: SWATCH_DOT[c] || '#c8a87a', border: '1px solid rgba(0,0,0,0.15)' }} />
+                  <span style={{ textTransform: 'capitalize' }}>{c}</span>
+                </Segment>
               ))}
-            </div>
+            </Track>
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 14, color: '#5c4f3a', cursor: 'pointer' }}>
             <input type="checkbox" checked={!!spec.matte} onChange={(e) => set({ matte: e.target.checked })} style={{ accentColor: '#8b6f47' }} />
