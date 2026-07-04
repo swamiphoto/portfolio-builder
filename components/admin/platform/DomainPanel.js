@@ -130,7 +130,7 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
   return (
     <div style={{ padding: 14 }} className="space-y-5">
       <div className="space-y-2">
-        <div style={label}>{cd ? 'Custom domain' : 'Connect a domain you own'}</div>
+        {!cd && <div style={label}>Connect a domain you own</div>}
 
         {!cd && (
           <form onSubmit={connect} className="space-y-2">
@@ -150,7 +150,6 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
               <span style={{ fontFamily: MONO, fontSize: 12.5, color: '#2c2416' }}>{cd.name}</span>
               <StatusBadge status={cd.status} />
             </div>
-            <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Your site is live at this domain.</p>
             {removeBtn}
           </div>
         )}
