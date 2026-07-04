@@ -51,8 +51,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
     >
       <button
         aria-label="Close lightbox"
-        autoFocus
-        className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none"
+        className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none focus:outline-none focus-visible:outline-none"
         onClick={(e) => { e.stopPropagation(); onClose(); }}
       >
         ×

@@ -475,7 +475,7 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
         {/* Close button — absolutely positioned so it doesn't push content down */}
         <button
           onClick={onClose}
-          style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a6b55', zIndex: 1 }}
+          style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', color: '#7a6b55', zIndex: 1 }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.08)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
