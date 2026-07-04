@@ -1,7 +1,7 @@
 // pages/api/admin/print/upload-master.js
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
-import { s3, BUCKET, PUBLIC_URL, downloadJSON, uploadJSON } from '../../../../common/gcsClient'
+import { s3, BUCKET, downloadJSON, uploadJSON } from '../../../../common/gcsClient'
 import { getUserPrintMasterPath, getUserLibraryConfigPath } from '../../../../common/gcsUser'
 import { normalizeLibraryConfig } from '../../../../common/adminConfig'
 import {
@@ -39,11 +39,11 @@ async function handler(req, res, user) {
     return res.status(400).json({ error: 'unreadable image file' })
   }
 
-  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }))
-
   const library = normalizeLibraryConfig(await downloadJSON(getUserLibraryConfigPath(user.id)), [])
   const asset = library.assets[assetId]
   if (!asset) return res.status(404).json({ error: 'asset not found' })
+
+  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }))
 
   const site = normalizePrintStore((await readSiteConfig(user.id)) || createDefaultSiteConfig(user.id))
   const withMaster = {
