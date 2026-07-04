@@ -236,6 +236,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     update({ share: { ...(config.share || {}), ...patch } })
   }
 
+  function updatePrintStore(patch) {
+    update({ printStore: { ...(config.printStore || {}), ...patch } })
+  }
+
   const rootDomain = (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ROOT_DOMAIN) || 'localhost:3000'
   const hasAnalytics = !!(config.analytics?.googleId || config.analytics?.plausibleDomain)
   const logoType = config.logoType || 'sitename'
@@ -358,6 +362,40 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
             Connect Stripe to enable purchases across pages.{' '}
             <span style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--text-secondary)' }}>Set up Stripe →</span>
+          </p>
+        </div>
+      </PopoverShell>
+    )
+  }
+
+  // ── Print store drill-in ──────────────────────────────────────────────────
+  if (view === 'print') {
+    const ps = config.printStore || {}
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={() => setView('main')}>
+        <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: 13, color: '#2c2416' }}>Enable print store</span>
+            <ToggleSwitch on={!!ps.enabled} onClick={() => updatePrintStore({ enabled: !ps.enabled })} />
+          </div>
+          <Field label="Markup (× lab cost)">
+            <input
+              className={inputCls}
+              style={inputStyle}
+              type="number"
+              min="1"
+              step="0.1"
+              placeholder="3"
+              value={ps.markup ?? 3}
+              onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
+            />
+          </Field>
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on images</span>
+            <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+          </div>
+          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            Checkout isn&apos;t live yet — buyers can preview and configure prints, but can&apos;t purchase until checkout ships.
           </p>
         </div>
       </PopoverShell>
@@ -605,6 +643,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       <DrillRow
         label="Social sharing"
         onDrillIn={() => setView('sharing')}
+      />
+      <DrillRow
+        label={config.printStore?.enabled ? 'Print store' : 'Setup print store'}
+        onDrillIn={() => setView('print')}
       />
 
       {designOpen && (
