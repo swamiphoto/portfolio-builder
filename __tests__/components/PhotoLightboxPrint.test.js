@@ -26,3 +26,15 @@ it('opens the configurator when the affordance is clicked', () => {
   fireEvent.click(screen.getByRole('button', { name: /available as a print/i }))
   expect(screen.getByRole('button', { name: /buy this print/i })).toBeInTheDocument()
 })
+
+it('closes the configurator when the panel close control is clicked', () => {
+  render(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, markup: 3 }} />)
+  // Open the panel
+  fireEvent.click(screen.getByRole('button', { name: /available as a print/i }))
+  expect(screen.getByRole('button', { name: /buy this print/i })).toBeInTheDocument()
+  // Close the panel via its close control
+  fireEvent.click(screen.getByRole('button', { name: /close print options/i }))
+  // Configurator is gone, affordance is back
+  expect(screen.queryByRole('button', { name: /buy this print/i })).toBeNull()
+  expect(screen.getByRole('button', { name: /available as a print/i })).toBeInTheDocument()
+})

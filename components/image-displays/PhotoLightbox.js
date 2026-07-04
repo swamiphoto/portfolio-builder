@@ -87,7 +87,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
         </div>
 
         {sellable && panelOpen && (
-          <PrintPurchasePanel print={image.print} printStore={printStore} spec={spec} onSpecChange={setSpec} />
+          <PrintPurchasePanel print={image.print} printStore={printStore} spec={spec} onSpecChange={setSpec} onClose={() => setPanelOpen(false)} />
         )}
       </div>
 

@@ -19,3 +19,8 @@ export function publicPrintStore(siteConfig) {
     showPriceOnImage: !!ps.showPriceOnImage,
   }
 }
+
+export function publicSiteConfig(siteConfig) {
+  if (!siteConfig) return siteConfig
+  return { ...siteConfig, printStore: publicPrintStore(siteConfig) }
+}

@@ -5,6 +5,7 @@ import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
 import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
+import { publicSiteConfig } from '../../../common/print/publicPrint'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -48,7 +49,7 @@ export async function getServerSideProps({ params, req }) {
 
   return {
     props: {
-      siteConfig: JSON.parse(JSON.stringify(siteConfig)),
+      siteConfig: JSON.parse(JSON.stringify(publicSiteConfig(siteConfig))),
       assetsByUrl,
       username,
       basePath,

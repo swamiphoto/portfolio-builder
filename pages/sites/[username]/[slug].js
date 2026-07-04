@@ -5,7 +5,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
-import { publicPrintForAsset, publicPrintStore } from '../../../common/print/publicPrint'
+import { publicPrintForAsset, publicPrintStore, publicSiteConfig } from '../../../common/print/publicPrint'
 import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
@@ -59,7 +59,7 @@ export async function getServerSideProps({ params, req }) {
   const basePath = basePathFor(req.headers.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
   return {
     props: {
-      siteConfig: JSON.parse(JSON.stringify(siteConfig)),
+      siteConfig: JSON.parse(JSON.stringify(publicSiteConfig(siteConfig))),
       page: JSON.parse(JSON.stringify(page)),
       assetsByUrl,
       printStore,

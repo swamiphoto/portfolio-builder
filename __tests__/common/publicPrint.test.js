@@ -1,4 +1,4 @@
-import { publicPrintForAsset, publicPrintStore } from '../../common/print/publicPrint'
+import { publicPrintForAsset, publicPrintStore, publicSiteConfig } from '../../common/print/publicPrint'
 
 describe('publicPrintForAsset', () => {
   it('returns null when the asset is not sellable', () => {
@@ -20,5 +20,21 @@ describe('publicPrintStore', () => {
 
   it('applies safe defaults when printStore is missing', () => {
     expect(publicPrintStore({})).toEqual({ enabled: false, markup: 3, currency: 'USD', showPriceOnImage: false })
+  })
+})
+
+describe('publicSiteConfig', () => {
+  it('strips internal printStore fields but keeps other config', () => {
+    const cfg = { siteName: 'X', pages: [], printStore: { enabled: true, markup: 2, currency: 'USD', showPriceOnImage: false, stripeConnectAccountId: 'acct_secret', platformFeePct: 5 } }
+    const out = publicSiteConfig(cfg)
+    expect(out.siteName).toBe('X')
+    expect(out.printStore).toEqual({ enabled: true, markup: 2, currency: 'USD', showPriceOnImage: false })
+    expect('stripeConnectAccountId' in out.printStore).toBe(false)
+    expect('platformFeePct' in out.printStore).toBe(false)
+  })
+
+  it('returns siteConfig unchanged (pass-through) when falsy', () => {
+    expect(publicSiteConfig(null)).toBe(null)
+    expect(publicSiteConfig(undefined)).toBe(undefined)
   })
 })

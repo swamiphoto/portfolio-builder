@@ -19,7 +19,7 @@ function Chip({ active, label, onClick }) {
   )
 }
 
-export default function PrintPurchasePanel({ print, printStore, spec, onSpecChange }) {
+export default function PrintPurchasePanel({ print, printStore, spec, onSpecChange, onClose }) {
   const markup = printStore?.markup || 3
   const set = (patch) => onSpecChange({ ...spec, ...patch })
   const sizes = (print?.availableSizes || [])
@@ -29,6 +29,16 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
 
   return (
     <div className="text-white/90 w-full max-w-sm space-y-5">
+      {onClose && (
+        <button
+          type="button"
+          aria-label="Close print options"
+          onClick={onClose}
+          className="flex items-center gap-1 text-sm text-white/60 hover:text-white/90 transition-colors -mt-1"
+        >
+          ‹ Back to photo
+        </button>
+      )}
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-white/40">Size</p>
         <div className="flex flex-wrap gap-2">
