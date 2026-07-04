@@ -62,7 +62,7 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
@@ -81,7 +81,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
         allImages.push(...refs);
       } else if (block.type === "photo") {
         const url = getImageRefUrl(block.image || block.imageUrl);
-        if (url) allImages.push({ url, caption: block.caption || "" });
+        if (url) allImages.push({ url, caption: block.caption || "", ...(block.print ? { print: block.print } : {}) });
       }
     });
     return { allImages, blockOffsets };
@@ -357,6 +357,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
           index={lightboxIndex}
           onClose={closeLightbox}
           onNavigate={navigateLightbox}
+          printStore={printStore}
         />
       )}
     </div>

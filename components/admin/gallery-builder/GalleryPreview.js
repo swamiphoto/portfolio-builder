@@ -2,23 +2,36 @@ import { useState, useEffect } from "react";
 import Gallery from "../../image-displays/gallery/Gallery";
 import { resolveCaption } from '../../../common/captionResolver'
 
+function printForUrl(assetsByUrl, url) {
+  const p = assetsByUrl?.[url]?.print
+  return p && p.sellable ? p : undefined
+}
+
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
   if (block.type === 'photo') {
     const ref = { url: block.imageUrl, caption: block.caption }
-    return { ...block, caption: resolveCaption(ref, assetsByUrl) }
+    const out = { ...block, caption: resolveCaption(ref, assetsByUrl) }
+    const print = printForUrl(assetsByUrl, block.imageUrl)
+    if (print) out.print = print
+    return out
   }
   if (block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry') {
     const refs = (block.images || []).length
       ? block.images
       : (block.imageUrls || []).map(url => ({ url }))
-    const images = refs.map(r => ({ ...r, caption: resolveCaption(r, assetsByUrl) }))
+    const images = refs.map(r => {
+      const out = { ...r, caption: resolveCaption(r, assetsByUrl) }
+      const print = printForUrl(assetsByUrl, r.url)
+      if (print) out.print = print
+      return out
+    })
     return { ...block, images, imageUrls: images.map(i => i.url) }
   }
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig }) {
+export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig }) {
   const [debouncedGallery, setDebouncedGallery] = useState(gallery);
 
   useEffect(() => {
@@ -47,6 +60,7 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
       onBlockHover={onBlockHover}
       onBlockClick={onBlockClick}
       siteConfig={siteConfig}
+      printStore={printStore}
     />
   );
 

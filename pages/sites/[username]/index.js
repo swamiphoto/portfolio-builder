@@ -5,6 +5,7 @@ import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
 import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
+import { publicSiteConfig, publicPrintForAsset, publicPrintStore } from '../../../common/print/publicPrint'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -14,13 +15,21 @@ function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
   if (block.type === 'photo') {
     const ref = { url: block.imageUrl, caption: block.caption }
-    return { ...block, caption: resolveCaption(ref, assetsByUrl) }
+    const entry = assetsByUrl[block.imageUrl]
+    const resolved = { ...block, caption: resolveCaption(ref, assetsByUrl) }
+    if (entry?.print) resolved.print = entry.print
+    return resolved
   }
   if (block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry') {
     const refs = (block.images || []).length
       ? block.images
       : (block.imageUrls || []).map(url => ({ url }))
-    const images = refs.map(r => ({ ...r, caption: resolveCaption(r, assetsByUrl) }))
+    const images = refs.map(r => {
+      const entry = assetsByUrl[r.url]
+      const out = { ...r, caption: resolveCaption(r, assetsByUrl) }
+      if (entry?.print) out.print = entry.print
+      return out
+    })
     return { ...block, images, imageUrls: images.map(i => i.url) }
   }
   return block
@@ -41,22 +50,28 @@ export async function getServerSideProps({ params, req }) {
 
   const assetsByUrl = {}
   for (const a of Object.values(libraryConfig?.assets || {})) {
-    if (a?.publicUrl) assetsByUrl[a.publicUrl] = { assetId: a.assetId, caption: a.caption }
+    if (!a?.publicUrl) continue
+    const entry = { assetId: a.assetId, caption: a.caption }
+    const print = publicPrintForAsset(a)
+    if (print) entry.print = print
+    assetsByUrl[a.publicUrl] = entry
   }
+  const printStore = publicPrintStore(siteConfig)
 
   const basePath = basePathFor(req.headers.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
 
   return {
     props: {
-      siteConfig: JSON.parse(JSON.stringify(siteConfig)),
+      siteConfig: JSON.parse(JSON.stringify(publicSiteConfig(siteConfig))),
       assetsByUrl,
+      printStore,
       username,
       basePath,
     },
   }
 }
 
-export default function PublicPortfolio({ siteConfig, assetsByUrl, username, basePath }) {
+export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, username, basePath }) {
   const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   const ogTitle = siteConfig.siteName || 'Portfolio'
   const ogDescription = siteConfig.tagline || ''
@@ -149,6 +164,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, username, bas
             enableSlideshow={!!slideshowHref}
             onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
             siteConfig={siteConfig}
+            printStore={printStore}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">

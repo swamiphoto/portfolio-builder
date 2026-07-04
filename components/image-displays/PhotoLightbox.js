@@ -1,10 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
+import PrintAffordance from "./print/PrintAffordance";
+import PrintPurchasePanel from "./print/PrintPurchasePanel";
+import FramedImage from "./print/FramedImage";
 
-export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
+function defaultSpec(print) {
+  const size = print?.maxSharpSize || (print?.availableSizes || [])[0] || null;
+  return { size, finish: 'lustre', frame: 'none', frameColor: null, matte: false };
+}
+
+export default function PhotoLightbox({ images, index, onClose, onNavigate, printStore }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
+
+  const sellable = !!(printStore?.enabled && image?.print?.sellable);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [spec, setSpec] = useState(defaultSpec(image?.print));
+
+  // Reset the print UI when the viewed image changes.
+  useEffect(() => {
+    setPanelOpen(false);
+    setSpec(defaultSpec(image?.print));
+  }, [index, image?.url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -31,7 +49,6 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
       className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center"
       onClick={onClose}
     >
-      {/* Close */}
       <button
         aria-label="Close lightbox"
         autoFocus
@@ -41,7 +58,6 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
         ×
       </button>
 
-      {/* Prev */}
       {hasPrev && (
         <button
           aria-label="Previous image"
@@ -52,22 +68,29 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
         </button>
       )}
 
-      {/* Image + caption — stop propagation so clicking image doesn't close */}
       <div
-        className="flex flex-col items-center max-w-[90vw] max-h-[90vh]"
+        className="flex flex-col md:flex-row items-center gap-6 max-w-[92vw] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={getSizedUrl(image.url, 'display')}
-          alt={image.caption || ""}
-          className="max-w-full max-h-[80vh] object-contain"
-        />
-        {image.caption && (
-          <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
+        <div className="flex flex-col items-center">
+          {sellable ? (
+            <FramedImage src={getSizedUrl(image.url, 'display')} alt={image.caption || ''} spec={spec} className="max-w-full max-h-[80vh] object-contain" />
+          ) : (
+            <img src={getSizedUrl(image.url, 'display')} alt={image.caption || ''} className="max-w-full max-h-[80vh] object-contain" />
+          )}
+          {image.caption && (
+            <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
+          )}
+          {sellable && !panelOpen && (
+            <PrintAffordance print={image.print} printStore={printStore} onOpen={() => setPanelOpen(true)} />
+          )}
+        </div>
+
+        {sellable && panelOpen && (
+          <PrintPurchasePanel print={image.print} printStore={printStore} spec={spec} onSpecChange={setSpec} onClose={() => setPanelOpen(false)} />
         )}
       </div>
 
-      {/* Next */}
       {hasNext && (
         <button
           aria-label="Next image"
@@ -78,7 +101,6 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
         </button>
       )}
 
-      {/* Counter */}
       <div className="absolute bottom-4 text-white/40 text-xs">
         {index + 1} / {images.length}
       </div>

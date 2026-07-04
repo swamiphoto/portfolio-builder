@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
 import SellAsPrintPanel from "./print/SellAsPrintPanel";
+import { resolveSellableAsset } from "../../common/print/sellAsset";
+import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const SERIF = '"Cormorant Garamond", "Muse", Georgia, serif';
@@ -290,7 +292,7 @@ function FilenameValue({ filename }) {
   );
 }
 
-export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet, printStore, onSellChange, onUploadMaster }) {
+export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet, printStore, onSellChange, onUploadMaster, onPrintChange }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
@@ -305,13 +307,22 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
   const [printByAsset, setPrintByAsset] = useState({});
   const effectivePrint = (image && (printByAsset[image.assetId] || image.print)) || null;
 
+  // Apply a resolved print object to local state + notify the host so the
+  // change survives closing/reopening the lightbox (host owns the asset cache).
+  const applyPrint = (assetId, print) => {
+    setPrintByAsset((prev) => ({ ...prev, [assetId]: print }));
+    onPrintChange?.(assetId, print);
+  };
+
   const selfSell = async (assetId, next) => {
     const prevPrint = printByAsset[assetId] || image?.print || {};
-    // Optimistic: flip the toggle immediately, reconcile with the server after.
-    setPrintByAsset((prev) => ({
-      ...prev,
-      [assetId]: { ...prevPrint, sellable: next, ...(next ? {} : { availableSizes: [], maxSharpSize: null }) },
-    }));
+    // Optimistic: compute the real available sizes client-side (same pure
+    // resolver the server uses) so the toggle is instant AND correct — no
+    // "too small" flash while waiting on the round-trip.
+    const { print: optimistic } = resolveSellableAsset(
+      { ...image, print: prevPrint }, SEED_CATALOG, printStore?.markup || 3, next
+    );
+    applyPrint(assetId, optimistic);
     try {
       const res = await fetch('/api/admin/print/sell', {
         method: 'POST',
@@ -320,14 +331,14 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
       });
       if (!res.ok) {
         console.error('print sell failed', res.status, await res.text().catch(() => ''));
-        setPrintByAsset((prev) => ({ ...prev, [assetId]: prevPrint }));
+        applyPrint(assetId, prevPrint);
         return;
       }
       const { print } = await res.json();
-      setPrintByAsset((prev) => ({ ...prev, [assetId]: print }));
+      applyPrint(assetId, print);
     } catch (e) {
       console.error('print sell error', e);
-      setPrintByAsset((prev) => ({ ...prev, [assetId]: prevPrint }));
+      applyPrint(assetId, prevPrint);
     }
   };
 
@@ -339,7 +350,7 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
       );
       if (!res.ok) { console.error('print master upload failed', res.status, await res.text().catch(() => '')); return; }
       const { print } = await res.json();
-      setPrintByAsset((prev) => ({ ...prev, [assetId]: print }));
+      applyPrint(assetId, print);
     } catch (e) { console.error('print master upload error', e); }
   };
 
