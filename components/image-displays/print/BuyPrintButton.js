@@ -1,5 +1,5 @@
 // components/image-displays/print/BuyPrintButton.js
-// A subtle "Buy a Print" outline button overlaid on an image (lightbox or
+// A restrained "Buy a print" label-button overlaid on an image (lightbox or
 // thumbnail). Self-gates on the store being enabled + the image being sellable,
 // and opens the shared configurator drawer via PrintStoreContext.
 import React from 'react'
@@ -18,14 +18,38 @@ export default function BuyPrintButton({ print, imageUrl, className = '', style 
     <button
       type="button"
       onClick={open}
-      className={`inline-flex items-center gap-1.5 rounded-full border border-white/45 bg-black/30 px-3.5 py-[7px] text-[12.5px] tracking-wide text-white backdrop-blur-sm transition-colors hover:bg-black/60 hover:border-white/80 focus:outline-none ${className}`}
-      style={style}
+      className={className}
+      style={{
+        fontFamily: '"Fraunces", "Cormorant Garamond", Georgia, serif',
+        fontSize: 11.5,
+        letterSpacing: '0.16em',
+        textTransform: 'uppercase',
+        fontWeight: 500,
+        color: '#2c2416',
+        background: 'rgba(249,245,238,0.9)',
+        backdropFilter: 'blur(3px)',
+        WebkitBackdropFilter: 'blur(3px)',
+        padding: '8px 15px',
+        borderRadius: 2,
+        border: 'none',
+        boxShadow: '0 2px 14px rgba(20,14,8,0.28)',
+        cursor: 'pointer',
+        outline: 'none',
+        transition: 'background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
+        ...style,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(252,249,244,1)'
+        e.currentTarget.style.boxShadow = '0 4px 18px rgba(20,14,8,0.34)'
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'rgba(249,245,238,0.9)'
+        e.currentTarget.style.boxShadow = '0 2px 14px rgba(20,14,8,0.28)'
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
     >
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-        <rect x="2.25" y="2.25" width="11.5" height="11.5" rx="1" />
-        <rect x="4.75" y="4.75" width="6.5" height="6.5" rx="0.5" />
-      </svg>
-      Buy a Print
+      Buy a print
     </button>
   )
 }
