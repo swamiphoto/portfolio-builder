@@ -71,6 +71,14 @@ export function createDefaultSiteConfig(userId) {
       defaultCurrency: 'USD',
       defaultWatermarkUrl: '',
     },
+    printStore: {
+      enabled: false,
+      markup: 3,
+      showPriceOnImage: false,
+      currency: 'USD',
+      stripeConnectAccountId: null,
+      platformFeePct: 0,
+    },
     publishedAt: null,
     pages: [
       defaultPage({ id: 'home', title: 'Home', showInNav: false }),
@@ -150,6 +158,21 @@ export function defaultLink(overrides = {}) {
   }
 }
 
+export function normalizePrintStore(config = {}) {
+  const ps = (config && config.printStore) || {}
+  return {
+    ...config,
+    printStore: {
+      enabled: ps.enabled ?? false,
+      markup: typeof ps.markup === 'number' && ps.markup > 0 ? ps.markup : 3,
+      showPriceOnImage: ps.showPriceOnImage ?? false,
+      currency: ps.currency || 'USD',
+      stripeConnectAccountId: ps.stripeConnectAccountId ?? null,
+      platformFeePct: typeof ps.platformFeePct === 'number' ? ps.platformFeePct : 0,
+    },
+  }
+}
+
 /**
  * Read the site config for a user from R2.
  * Returns null if the config doesn't exist yet.
@@ -159,10 +182,10 @@ export function defaultLink(overrides = {}) {
 export async function readSiteConfig(userId) {
   try {
     const config = await downloadJSON(getUserSiteConfigPath(userId))
-    return {
+    return normalizePrintStore({
       ...config,
       pages: (config.pages || []).map((page) => normalizePageEntity(page)),
-    }
+    })
   } catch (err) {
     // Only treat "file doesn't exist yet" as a normal case
     if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return null

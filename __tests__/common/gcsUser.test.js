@@ -5,6 +5,7 @@ import {
   getUserGalleriesConfigPath,
   getUserPhotoPath,
   getUserPhotosPrefix,
+  getUserPrintMasterPath,
   getDomainLookupPath,
 } from '../../common/gcsUser'
 
@@ -62,5 +63,14 @@ describe('getDomainLookupPath', () => {
   })
   it('throws when hostname is missing', () => {
     expect(() => getDomainLookupPath('')).toThrow('hostname is required')
+  })
+})
+
+describe('getUserPrintMasterPath', () => {
+  it('returns the print-masters path for a filename', () => {
+    expect(getUserPrintMasterPath('abc123', 'hero.jpg')).toBe('users/abc123/photos/print-masters/hero.jpg')
+  })
+  it('throws if filename is empty', () => {
+    expect(() => getUserPrintMasterPath('abc123', '')).toThrow('filename is required')
   })
 })
