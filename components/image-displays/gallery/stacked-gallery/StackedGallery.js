@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { getSizedUrl } from "../../../../common/imageUtils";
 import styles from "./StackedGallery.module.css";
+import BuyPrintButton from "../../print/BuyPrintButton";
 
 const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick }) => {
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
@@ -10,6 +11,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
     [urlsKey]
   );
   const getCaptionForUrl = (url) => imagesProp.find(i => i.url === url)?.caption || '';
+  const getPrintForUrl = (url) => imagesProp.find(i => i.url === url)?.print;
 
   const [processedImages, setProcessedImages] = useState([]);
 
@@ -79,16 +81,21 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                         className="flex flex-col"
                         style={{ width: "48%" }}
                       >
-                        <img
-                          src={getSizedUrl(image.src, 'display')}
-                          alt=""
-                          className="h-auto w-full object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer"
-                          onClick={() => onImageClick && onImageClick(image.id)}
-                          onError={(e) => {
-                            console.error("Failed to load image in StackedGallery:", image.src);
-                            e.target.style.display = 'none';
-                          }}
-                        />
+                        <div className="relative group">
+                          <img
+                            src={getSizedUrl(image.src, 'display')}
+                            alt=""
+                            className="h-auto w-full object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer"
+                            onClick={() => onImageClick && onImageClick(image.id)}
+                            onError={(e) => {
+                              console.error("Failed to load image in StackedGallery:", image.src);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <BuyPrintButton print={getPrintForUrl(image.src)} imageUrl={image.src} />
+                          </div>
+                        </div>
                         {getCaptionForUrl(image.src) && (
                           <p className="mt-2 text-sm italic text-center text-gray-500">{getCaptionForUrl(image.src)}</p>
                         )}
@@ -99,16 +106,21 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
               </div>
             ) : (
               <div className="w-full flex flex-col items-center">
-                <img
-                  src={getSizedUrl(entry.src, 'display')}
-                  alt=""
-                  className="w-[72%] max-h-[calc(100vw * 0.35)] object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer"
-                  onClick={() => onImageClick && onImageClick(entry.id)}
-                  onError={(e) => {
-                    console.error("Failed to load image in StackedGallery:", entry.src);
-                    e.target.style.display = 'none';
-                  }}
-                />
+                <div className="relative group w-[72%]">
+                  <img
+                    src={getSizedUrl(entry.src, 'display')}
+                    alt=""
+                    className="w-full max-h-[calc(100vw * 0.35)] object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer"
+                    onClick={() => onImageClick && onImageClick(entry.id)}
+                    onError={(e) => {
+                      console.error("Failed to load image in StackedGallery:", entry.src);
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <BuyPrintButton print={getPrintForUrl(entry.src)} imageUrl={entry.src} />
+                  </div>
+                </div>
                 {getCaptionForUrl(entry.src) && (
                   <p className="mt-2 text-sm italic text-center text-gray-500 max-w-[72%]">{getCaptionForUrl(entry.src)}</p>
                 )}

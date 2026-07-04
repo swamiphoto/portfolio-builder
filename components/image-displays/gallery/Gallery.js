@@ -200,6 +200,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     caption={block.caption}
                     variant={photoVariant}
                     onImageClick={makeClickHandler(index)}
+                    print={block.print}
                   />
                   <WiggleLine />
                 </div>
