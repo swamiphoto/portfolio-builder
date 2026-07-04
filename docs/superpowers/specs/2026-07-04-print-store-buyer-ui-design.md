@@ -67,15 +67,27 @@ Selecting an unframed option hides the frame color/mat controls. Changing size/f
 
 ## 3. Live in-situ framed preview
 
-A **CSS/DOM composite**, not a photoreal render:
+The preview is deliberately built as a **swappable renderer** so its fidelity can grow over time without touching the configurator or its state. The configurator owns the frame spec `{ frame, frameColor, matte }` and hands it to whatever renderer is mounted.
 
-- `components/image-displays/print/FramedImage.js` wraps the image element. Given a frame spec `{ frame, frameColor, matte }`, it renders:
+**v1 renderer — CSS/DOM composite:**
+
+- `components/image-displays/print/FramedImage.js` is the v1 renderer. It wraps the image element and, given the frame spec, renders:
   - an outer **frame band** whose thickness scales with the displayed image size and whose color/material is derived from the selection (wood tones for `wood`, metal grays for `metal`, nothing for `none`), with a subtle bevel/inner shadow for depth;
   - an inner **mat** inset (an off-white border) when `matte` is true;
   - the image inside.
 - `common/print/framePreview.js` — a **pure** helper mapping `{ frame, frameColor, matte }` → the concrete style values (frame band thickness ratio, border color, bevel, mat thickness/color). Unit-testable, no DOM. `FramedImage` consumes it.
 
-The preview is an approximation for configuring intent; it does not promise the exact product photo. No canvas, no external image generation, lab-agnostic.
+This v1 preview is an approximation for configuring intent; it does not promise the exact product photo. No canvas, no external image generation, lab-agnostic.
+
+**Eventual direction — photorealistic "see it on your wall" (NOT built in v1):**
+
+The goal is a preview compelling enough to entice the purchase — the print shown realistically framed, ideally staged on a wall at true scale, rather than a flat CSS frame. The renderer boundary above is what makes this a drop-in later. Options to evaluate when we do the Plan 3 lab integration:
+
+- **Lab mockup/preview API** — if the chosen lab (WHCC/Prodigi/etc.) exposes a mockup or product-preview generator, use it to render the real framed product. WHCC has an embeddable Editor API; POD labs commonly offer mockup generation. Confirm capabilities during Plan 3 lab onboarding.
+- **Room/wall visualization** — composite the framed print into a staged room scene (or a wall photo the visitor uploads) at true physical scale, so they see it "on their wall."
+- **Higher-fidelity local composite** — realistic frame textures, shadows, and glass reflection as an interim step short of a full API.
+
+This is a tracked future enhancement, not part of this plan; v1 ships the CSS renderer behind the swappable boundary.
 
 ## 4. Photographer side
 
@@ -87,7 +99,7 @@ The preview is an approximation for configuring intent; it does not promise the 
 - `common/print/framePreview.js` — pure frame/mat style resolver.
 - `common/print/buyerPricing.js` (thin) — buyer-facing helpers over `pricing.js`: `startingPrice(catalog, availableSizes, markup)` (lowest retail for the "from $X" line) and `optionPrice(catalog, spec, markup)`. Keeps price logic in one testable place.
 - `components/image-displays/print/PrintPurchasePanel.js` — the configurator (options, live price, placeholder CTA). Presentational; receives `{ print, printStore }` and a `spec`/`onSpecChange`.
-- `components/image-displays/print/FramedImage.js` — the live framed preview wrapper.
+- `components/image-displays/print/FramedImage.js` — the v1 (CSS) live framed preview renderer, mounted behind a swappable boundary so a photorealistic renderer (lab mockup API / wall visualization) can replace it later without changing the configurator (see §3).
 - `components/image-displays/print/PrintAffordance.js` — the subtle "Available as a print" line that opens the panel.
 - Public render wiring: extend `assetsByUrl` in `pages/sites/[username]/[slug].js` (and `index.js` if it renders galleries), thread `print`/`printStore` through `Gallery` to the lightbox, and mount the affordance + panel + framed preview there (gated by `enabled` + `sellable`).
 - Admin: a Print settings control (enable + markup + showPriceOnImage) in site settings.
@@ -108,7 +120,7 @@ Each unit has one responsibility: `framePreview`/`buyerPricing` are pure and tes
 - **Which public lightbox.** The public render uses a URL-string-based lightbox (`components/image-displays/lightbox/Lightbox.js`) plus the `Gallery` component's own lightbox handling (`?photo={index}`). The implementation plan must confirm the exact component the `Gallery` drives on the public site and attach the affordance/panel/framed-preview there. This may require passing richer per-image objects (with `print` data) into that lightbox rather than bare URLs — a small, contained refactor.
 - **SSR prop size.** Threading `print` data for many images inflates the page props. Only attach `print` for sellable images, and only the three fields needed.
 - **Catalog in the client bundle.** Shipping `SEED_CATALOG` to the browser is intended for v1. When Plan 3 sources a live catalog, revisit whether pricing moves server-side.
-- **Preview fidelity.** A CSS frame is an approximation; acceptable for configuring intent.
+- **Preview fidelity.** A CSS frame is an approximation; acceptable for configuring intent in v1. The eventual goal is a photorealistic "see it on your wall" preview to drive conversion (§3); v1 builds the renderer behind a swappable boundary so that upgrade is a drop-in, and the lab-mockup-API option is evaluated during Plan 3 lab onboarding.
 
 ## 8. Success criteria
 
