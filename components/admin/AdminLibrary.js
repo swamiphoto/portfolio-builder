@@ -21,6 +21,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [filters, setFilters] = useState({
     orientation: "all",
     usage: "all",
+    forPrint: "all",
     captureYear: "all",
     uploaded: "all",
     aperture: "all",
@@ -130,6 +131,10 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       const usageCount = asset.usage?.usageCount || 0;
       if (filters.usage === "unused" && usageCount > 0) return false;
       if (filters.usage === "used" && usageCount === 0) return false;
+
+      const forSale = !!asset.print?.sellable;
+      if (filters.forPrint === "on" && !forSale) return false;
+      if (filters.forPrint === "off" && forSale) return false;
 
       if (filters.aperture !== "all") {
         const raw = asset.capture?.aperture || asset.capture?.fNumber;
@@ -371,7 +376,10 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assetId, sellable }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error('print sell failed', res.status, await res.text().catch(() => ''));
+        return;
+      }
       const { print } = await res.json();
       setLibraryData(prev => {
         if (!prev) return prev;
@@ -391,7 +399,10 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         `/api/admin/print/upload-master?assetId=${encodeURIComponent(assetId)}&filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
         { method: 'POST', body: file }
       );
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error('print master upload failed', res.status, await res.text().catch(() => ''));
+        return;
+      }
       const { print } = await res.json();
       setLibraryData(prev => {
         if (!prev) return prev;
@@ -498,6 +509,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const FILTER_LABELS = {
     orientation: v => v.charAt(0).toUpperCase() + v.slice(1),
     usage: v => v === 'used' ? 'In Use' : 'Unused',
+    forPrint: v => v === 'on' ? 'For sale' : 'Not for sale',
     captureYear: v => v,
     uploaded: v => ({ week: 'This week', month: 'This month', year: 'This year', older: 'Older' }[v] || v),
     aperture: v => ({ wide: 'ƒ < 2', mid: 'ƒ 2–4', narrow: 'ƒ 4–8', closed: 'ƒ 8+' }[v] || v),
@@ -521,6 +533,11 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     else acc.unused += 1;
     return acc;
   }, { used: 0, unused: 0 });
+  const printCounts = allAssets.reduce((acc, asset) => {
+    if (asset.print?.sellable) acc.on += 1;
+    else acc.off += 1;
+    return acc;
+  }, { on: 0, off: 0 });
 
   const cameraCounts = allAssets.reduce((acc, asset) => {
     const cam = asset.capture?.cameraModel;
@@ -613,6 +630,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onDeleteSet={handleDeleteSet}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
+        printCounts={printCounts}
         captureYearCounts={captureYearCounts}
         uploadedCounts={uploadedCounts}
         apertureCounts={apertureCounts}
