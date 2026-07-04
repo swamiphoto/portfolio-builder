@@ -91,6 +91,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onMoveBlockToPage,
   assetsByUrl,
   onUpdateLibraryCaption,
+  onPrintChange,
   className,
   onScrollPreviewToBlock,
   highlightedBlockIndex,
@@ -505,6 +506,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onMoveImagesAcrossBlocks={(srcIdx, refs, tgtIdx, updatedTgt) => moveImagesBetweenBlocks(srcIdx, refs, tgtIdx, updatedTgt)}
                             assetsByUrl={assetsByUrl}
                             onUpdateLibraryCaption={onUpdateLibraryCaption}
+                            onPrintChange={onPrintChange}
                             highlighted={highlightedBlockIndex === index}
                             expandedOverride={expandedOverride}
                             onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}

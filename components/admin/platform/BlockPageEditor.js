@@ -100,6 +100,21 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
     })
   }, [libraryData])
 
+  // Sync a print/sell change from a block lightbox into the library cache so
+  // it survives closing/reopening the image (assetsByUrl is memoized from
+  // libraryData.images). The server already persisted it; this keeps the
+  // in-memory cache in step.
+  const handlePrintChange = useCallback((assetId, print) => {
+    setLibraryData(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
+        assets: prev.assets ? { ...prev.assets, [assetId]: { ...(prev.assets[assetId] || {}), print, forSale: print.sellable } } : prev.assets,
+      }
+    })
+  }, [])
+
   const handleAddPhotosToBlock = useCallback((blockIndex) => {
     setPhotoPickerBlockIndex(blockIndex)
     setPhotoPickerOpen(true)
@@ -153,6 +168,7 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
         allSets={allSets}
         setsByUrl={setsByUrl}
         onToggleSet={handleToggleSet}
+        onPrintChange={handlePrintChange}
       />
 
       <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} />

@@ -4,6 +4,8 @@ import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
 import { getPagePhotos } from "../../common/assetRefs";
+import { resolveSellableAsset } from "../../common/print/sellAsset";
+import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
 export default function AdminLibrary({ onBack, siteConfig }) {
   const [loading, setLoading] = useState(true);
@@ -381,9 +383,15 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
   const handleSellChange = useCallback(async (assetId, sellable) => {
     if (!assetId) return;
-    const prevPrint = libraryData?.assets?.[assetId]?.print || {};
-    // Optimistic: flip the toggle immediately, reconcile with the server after.
-    applyPrint(assetId, { ...prevPrint, sellable, ...(sellable ? {} : { availableSizes: [], maxSharpSize: null }) });
+    const asset = libraryData?.assets?.[assetId] || {};
+    const prevPrint = asset.print || {};
+    // Optimistic: compute the real available sizes client-side (same pure
+    // resolver the server uses) so the toggle is instant AND correct — no
+    // "too small" flash while the round-trip is in flight.
+    const { print: optimistic } = resolveSellableAsset(
+      { ...asset, print: prevPrint }, SEED_CATALOG, printStore?.markup || 3, sellable
+    );
+    applyPrint(assetId, optimistic);
     try {
       const res = await fetch('/api/admin/print/sell', {
         method: 'POST',
@@ -401,7 +409,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       console.error('print sell error', e);
       applyPrint(assetId, prevPrint);
     }
-  }, [libraryData, applyPrint]);
+  }, [libraryData, applyPrint, printStore]);
 
   const handleUploadMaster = useCallback(async (assetId, file) => {
     if (!assetId || !file) return;
