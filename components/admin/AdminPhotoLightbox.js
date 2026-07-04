@@ -298,6 +298,56 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
   const [caption, setCaption] = useState(image?.caption || '');
   const [saved, setSaved] = useState(true);
 
+  // Print/sell state. When a parent wires onSellChange (the library grid), we
+  // defer to it. When it doesn't (opened from a page/gallery block), the
+  // lightbox handles the sell/upload API calls itself and reflects the result
+  // locally via printByAsset so the toggle works from any surface.
+  const [printByAsset, setPrintByAsset] = useState({});
+  const effectivePrint = (image && (printByAsset[image.assetId] || image.print)) || null;
+
+  const selfSell = async (assetId, next) => {
+    const prevPrint = printByAsset[assetId] || image?.print || {};
+    // Optimistic: flip the toggle immediately, reconcile with the server after.
+    setPrintByAsset((prev) => ({
+      ...prev,
+      [assetId]: { ...prevPrint, sellable: next, ...(next ? {} : { availableSizes: [], maxSharpSize: null }) },
+    }));
+    try {
+      const res = await fetch('/api/admin/print/sell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId, sellable: next }),
+      });
+      if (!res.ok) {
+        console.error('print sell failed', res.status, await res.text().catch(() => ''));
+        setPrintByAsset((prev) => ({ ...prev, [assetId]: prevPrint }));
+        return;
+      }
+      const { print } = await res.json();
+      setPrintByAsset((prev) => ({ ...prev, [assetId]: print }));
+    } catch (e) {
+      console.error('print sell error', e);
+      setPrintByAsset((prev) => ({ ...prev, [assetId]: prevPrint }));
+    }
+  };
+
+  const selfUpload = async (assetId, file) => {
+    try {
+      const res = await fetch(
+        `/api/admin/print/upload-master?assetId=${encodeURIComponent(assetId)}&filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
+        { method: 'POST', body: file }
+      );
+      if (!res.ok) { console.error('print master upload failed', res.status, await res.text().catch(() => '')); return; }
+      const { print } = await res.json();
+      setPrintByAsset((prev) => ({ ...prev, [assetId]: print }));
+    } catch (e) { console.error('print master upload error', e); }
+  };
+
+  const handleSell = (next) =>
+    onSellChange ? onSellChange(image.assetId, next) : selfSell(image.assetId, next);
+  const handleUploadMaster = (file) =>
+    onUploadMaster ? onUploadMaster(image.assetId, file) : selfUpload(image.assetId, file);
+
   useEffect(() => {
     setCaption(image?.caption || '');
     setSaved(true);
@@ -456,10 +506,9 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
           {/* Sell as print */}
           <Section title="Sell as print">
             <SellAsPrintPanel
-              asset={image}
-              printStore={printStore || {}}
-              onSellChange={(next) => onSellChange?.(image.assetId, next)}
-              onUploadMaster={(file) => onUploadMaster?.(image.assetId, file)}
+              asset={image ? { ...image, print: effectivePrint } : image}
+              onSellChange={handleSell}
+              onUploadMaster={handleUploadMaster}
             />
           </Section>
 

@@ -1109,6 +1109,8 @@ function BlockCard({
             usage: asset.usage,
             orientation: asset.orientation,
             assetId: asset.assetId,
+            print: asset.print,
+            forSale: asset.forSale,
             createdAt: asset.createdAt,
             updatedAt: asset.updatedAt,
             sets: setsByUrl?.[ref.url] || [],
