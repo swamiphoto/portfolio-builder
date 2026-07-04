@@ -171,7 +171,7 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
         onPrintChange={handlePrintChange}
       />
 
-      <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} />
+      <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} assetsByUrl={assetsByUrl} printStore={siteConfig?.printStore} />
 
       {photoPickerOpen && (
         <PhotoPickerModal
