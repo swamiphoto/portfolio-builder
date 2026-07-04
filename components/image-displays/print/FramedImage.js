@@ -12,7 +12,7 @@ export default function FramedImage({ src, alt = '', spec, className }) {
   return (
     <div
       data-testid="framed-image"
-      style={{ display: 'inline-block', background: s.bandColor, padding: pad, boxShadow: '0 12px 34px rgba(0,0,0,0.55)' }}
+      style={{ display: 'inline-block', background: s.bandColor, padding: pad, boxShadow: '0 0 0 1px rgba(255,255,255,0.16), 0 12px 34px rgba(0,0,0,0.55)' }}
     >
       <div
         data-testid={s.matted ? 'framed-image-mat' : undefined}
