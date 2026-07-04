@@ -90,7 +90,14 @@ describe('readSiteConfig', () => {
 
     const result = await readSiteConfig('user-123')
     expect(result).toMatchObject(mockConfig)
-    expect(result.printStore).toBeDefined()
+    expect(result.printStore).toEqual({
+      enabled: false,
+      markup: 3,
+      showPriceOnImage: false,
+      currency: 'USD',
+      stripeConnectAccountId: null,
+      platformFeePct: 0,
+    })
     expect(downloadJSON).toHaveBeenCalledWith('users/user-123/site-config.json')
   })
 
