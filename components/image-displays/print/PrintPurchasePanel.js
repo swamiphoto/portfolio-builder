@@ -51,7 +51,7 @@ function Segment({ active, onClick, ariaLabel, children }) {
 
 const SWATCH_DOT = { black: '#2b2b2b', white: '#f2efe9', natural: '#c8a87a', walnut: '#5a3d2b', silver: '#c9ccce' }
 
-export default function PrintPurchasePanel({ print, printStore, spec, onSpecChange }) {
+export default function PrintPurchasePanel({ print, printStore, spec, onSpecChange, onBuy }) {
   const markup = printStore?.markup || 3
   const set = (patch) => onSpecChange({ ...spec, ...patch })
   const sizes = print?.availableSizes || []
@@ -129,16 +129,15 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
       <div style={{ paddingTop: 16, borderTop: '1px solid rgba(160,140,110,0.25)', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button
           type="button"
-          disabled
+          onClick={onBuy}
           style={{
             width: '100%', padding: '13px', borderRadius: 6, border: 'none',
             fontFamily: SERIF, fontSize: 18, letterSpacing: '0.01em',
-            background: '#2c2416', color: '#f4efe8', opacity: 0.85, cursor: 'not-allowed',
+            background: '#2c2416', color: '#f4efe8', opacity: 1, cursor: 'pointer',
           }}
         >
           Buy this print — ${price}
         </button>
-        <p style={{ margin: 0, textAlign: 'center', fontSize: 11.5, letterSpacing: '0.04em', color: '#a8967a' }}>Checkout coming soon</p>
       </div>
     </div>
   )
