@@ -29,10 +29,10 @@ export default function BuyPrintButton({ print, imageUrl, className = '', style 
         background: 'rgba(249,245,238,0.9)',
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
-        padding: '8px 15px',
-        borderRadius: 2,
+        padding: '8px 16px',
+        borderRadius: 999,
         border: 'none',
-        boxShadow: '0 2px 14px rgba(20,14,8,0.28)',
+        boxShadow: '0 1px 5px rgba(20,14,8,0.16)',
         cursor: 'pointer',
         outline: 'none',
         transition: 'background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
@@ -40,12 +40,12 @@ export default function BuyPrintButton({ print, imageUrl, className = '', style 
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'rgba(252,249,244,1)'
-        e.currentTarget.style.boxShadow = '0 4px 18px rgba(20,14,8,0.34)'
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(20,14,8,0.2)'
         e.currentTarget.style.transform = 'translateY(-1px)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'rgba(249,245,238,0.9)'
-        e.currentTarget.style.boxShadow = '0 2px 14px rgba(20,14,8,0.28)'
+        e.currentTarget.style.boxShadow = '0 1px 5px rgba(20,14,8,0.16)'
         e.currentTarget.style.transform = 'translateY(0)'
       }}
     >
