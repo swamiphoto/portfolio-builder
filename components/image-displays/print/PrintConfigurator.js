@@ -85,7 +85,7 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, o
         <div
           style={{
             margin: '0 20px', borderRadius: 8, padding: '40px 32px',
-            background: 'linear-gradient(160deg, #ece4d8 0%, #dccfbc 100%)',
+            background: 'linear-gradient(180deg, #eae2d4 0%, #e5ddce 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             minHeight: 300,
           }}
