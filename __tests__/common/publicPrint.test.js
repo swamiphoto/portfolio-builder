@@ -7,8 +7,8 @@ describe('publicPrintForAsset', () => {
   })
 
   it('returns the public subset when sellable', () => {
-    const asset = { print: { sellable: true, availableSizes: ['8x10'], maxSharpSize: '8x10', masterStorageKey: 'secret/x.jpg' } }
-    expect(publicPrintForAsset(asset)).toEqual({ sellable: true, availableSizes: ['8x10'], maxSharpSize: '8x10' })
+    const asset = { orientation: 'portrait', print: { sellable: true, availableSizes: ['8x10'], maxSharpSize: '8x10', masterStorageKey: 'secret/x.jpg' } }
+    expect(publicPrintForAsset(asset)).toEqual({ sellable: true, availableSizes: ['8x10'], maxSharpSize: '8x10', orientation: 'portrait' })
   })
 })
 

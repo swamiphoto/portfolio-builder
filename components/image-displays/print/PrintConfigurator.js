@@ -84,10 +84,10 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, o
         {/* Wall preview */}
         <div
           style={{
-            margin: '0 20px', borderRadius: 8, padding: '40px 32px',
+            margin: '0 20px', borderRadius: 8, padding: '26px 24px',
             background: 'linear-gradient(180deg, #eae2d4 0%, #e5ddce 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            minHeight: 300,
+            minHeight: 180,
           }}
         >
           {imageUrl && (

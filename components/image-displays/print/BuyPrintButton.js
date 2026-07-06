@@ -7,7 +7,8 @@ import { usePrintStore } from './PrintStoreContext'
 
 export default function BuyPrintButton({ print, imageUrl, className = '', style }) {
   const ctx = usePrintStore()
-  if (!ctx?.printStore?.enabled || !print?.sellable) return null
+  // Hide for images with no printable sizes (e.g. too small for any catalog size).
+  if (!ctx?.printStore?.enabled || !print?.sellable || !(print.availableSizes && print.availableSizes.length)) return null
 
   const open = (e) => {
     e.stopPropagation()

@@ -59,13 +59,22 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
   const framed = spec.frame !== 'none'
   const price = optionPrice(SEED_CATALOG, { size: spec.size, finish: spec.finish, frame: spec.frame, matte: spec.matte }, markup)
 
+  // Catalog sizes are stored portrait (wIn < hIn); show them oriented to the image.
+  const landscape = print?.orientation === 'landscape'
+  const sizeLabel = (id) => {
+    const sz = SEED_CATALOG.sizes.find((s) => s.id === id)
+    if (!sz) return `${pretty(id)} in`
+    const [a, b] = landscape ? [sz.hIn, sz.wIn] : [sz.wIn, sz.hIn]
+    return `${a} × ${b} in`
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#2c2416' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Label>Size</Label>
         <Track>
           {sizes.map((s) => (
-            <Segment key={s} active={spec.size === s} onClick={() => set({ size: s })}>{`${pretty(s)} in`}</Segment>
+            <Segment key={s} active={spec.size === s} onClick={() => set({ size: s })}>{sizeLabel(s)}</Segment>
           ))}
         </Track>
       </div>
