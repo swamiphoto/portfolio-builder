@@ -46,3 +46,12 @@ export function getUserPrintMasterPath(userId, filename) {
   if (!filename) throw new Error('filename is required')
   return `${getUserPhotosPrefix(userId)}print-masters/${filename}`
 }
+
+export function getUserOrdersPrefix(userId) {
+  return `${getUserPrefix(userId)}orders/`
+}
+
+export function getUserOrderPath(userId, orderId) {
+  if (!orderId) throw new Error('orderId is required')
+  return `${getUserOrdersPrefix(userId)}${orderId}.json`
+}
