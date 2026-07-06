@@ -2,10 +2,10 @@
 import React from 'react'
 import { frameStyles } from '../../../common/print/framePreview'
 
-export default function FramedImage({ src, alt = '', spec, className }) {
+export default function FramedImage({ src, alt = '', spec, className, maxHeight = '44vh' }) {
   const s = frameStyles(spec || {})
   if (!s.framed) {
-    return <img src={src} alt={alt} className={className} />
+    return <img src={src} alt={alt} className={className} style={{ display: 'block', maxWidth: '100%', maxHeight, objectFit: 'contain' }} />
   }
   const pad = `${(s.bandRatio * 100).toFixed(2)}%`
   const matPad = s.matted ? `${(s.matRatio * 100).toFixed(2)}%` : 0
@@ -18,7 +18,7 @@ export default function FramedImage({ src, alt = '', spec, className }) {
         data-testid={s.matted ? 'framed-image-mat' : undefined}
         style={{ background: s.matted ? s.matColor : s.bandColor, padding: matPad }}
       >
-        <img src={src} alt={alt} className={className} style={{ display: 'block', maxWidth: '100%', maxHeight: '78vh' }} />
+        <img src={src} alt={alt} className={className} style={{ display: 'block', maxWidth: '100%', maxHeight, objectFit: 'contain' }} />
       </div>
     </div>
   )

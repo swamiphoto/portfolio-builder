@@ -7,6 +7,7 @@ export function publicPrintForAsset(asset) {
     sellable: true,
     availableSizes: p.availableSizes || [],
     maxSharpSize: p.maxSharpSize || null,
+    orientation: asset.orientation || null,
   }
 }
 
