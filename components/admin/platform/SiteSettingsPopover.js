@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import PopoverShell from './PopoverShell'
 import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
@@ -203,6 +203,88 @@ function HeaderIconButton({ children, onClick, title, innerRef }) {
   )
 }
 
+function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
+  const [connectStatus, setConnectStatus] = useState(null) // null = loading, true = connected, false = not connected
+  const [connecting, setConnecting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/print/connect/status')
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => setConnectStatus(!!data.chargesEnabled))
+      .catch(() => setConnectStatus(false))
+  }, [])
+
+  async function handleConnect() {
+    setConnecting(true)
+    try {
+      const res = await fetch('/api/admin/print/connect', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) window.location = data.url
+    } catch (_) {
+      setConnecting(false)
+    }
+  }
+
+  return (
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
+      <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: 13, color: '#2c2416' }}>Enable print store</span>
+          <ToggleSwitch on={!!ps.enabled} onClick={() => updatePrintStore({ enabled: !ps.enabled })} />
+        </div>
+        <Field label="Markup (× lab cost)">
+          <input
+            className={inputCls}
+            style={inputStyle}
+            type="number"
+            min="1"
+            step="0.1"
+            placeholder="3"
+            value={ps.markup ?? 3}
+            onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
+          />
+        </Field>
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on images</span>
+          <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+        </div>
+
+        {/* Payouts row */}
+        <div>
+          {connectStatus === true ? (
+            <p style={{ fontSize: 13, color: '#2c2416', margin: 0 }}>Payouts connected ✓</p>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={connecting}
+                onClick={handleConnect}
+                style={{
+                  fontSize: 12,
+                  color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
+                  border: '1px solid rgba(160,140,110,0.32)',
+                  borderRadius: 4,
+                  padding: '5px 12px',
+                  background: 'transparent',
+                  cursor: connecting ? 'default' : 'pointer',
+                  transition: 'color 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
+              >
+                {connecting ? 'Redirecting…' : 'Connect payouts'}
+              </button>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
+                Required before you can sell prints.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    </PopoverShell>
+  )
+}
+
 export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
@@ -371,35 +453,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   // ── Print store drill-in ──────────────────────────────────────────────────
   if (view === 'print') {
     const ps = config.printStore || {}
-    return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={() => setView('main')}>
-        <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize: 13, color: '#2c2416' }}>Enable print store</span>
-            <ToggleSwitch on={!!ps.enabled} onClick={() => updatePrintStore({ enabled: !ps.enabled })} />
-          </div>
-          <Field label="Markup (× lab cost)">
-            <input
-              className={inputCls}
-              style={inputStyle}
-              type="number"
-              min="1"
-              step="0.1"
-              placeholder="3"
-              value={ps.markup ?? 3}
-              onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
-            />
-          </Field>
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on images</span>
-            <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
-          </div>
-          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Checkout isn&apos;t live yet — buyers can preview and configure prints, but can&apos;t purchase until checkout ships.
-          </p>
-        </div>
-      </PopoverShell>
-    )
+    return <PrintView anchorEl={anchorEl} onClose={onClose} ps={ps} updatePrintStore={updatePrintStore} onBack={() => setView('main')} />
   }
 
   // ── Sharing drill-in ──────────────────────────────────────────────────────
