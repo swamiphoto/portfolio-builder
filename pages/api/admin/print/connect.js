@@ -27,7 +27,7 @@ async function handler(req, res, user) {
     return res.status(200).json({ url: link.url })
   } catch (err) {
     console.error('print connect error', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: 'Could not start Stripe onboarding' })
   }
 }
 

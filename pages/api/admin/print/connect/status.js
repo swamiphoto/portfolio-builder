@@ -19,7 +19,7 @@ async function handler(req, res, user) {
     return res.status(200).json({ connected: true, chargesEnabled })
   } catch (err) {
     console.error('print connect status error', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: 'Could not fetch payout status' })
   }
 }
 

@@ -2,6 +2,14 @@
 import { getStripe } from '../../../common/stripe/client'
 import { getOrder, saveOrder } from '../../../common/orders'
 
+// IMPORTANT: print checkouts are DIRECT CHARGES on the photographer's connected
+// account, so `checkout.session.completed` fires on the CONNECTED account — not
+// the platform. This endpoint must be registered as a CONNECT-scoped webhook
+// (Dashboard: "Listen to events on Connected accounts"). Locally, forward Connect
+// events: `stripe listen --forward-connect-to localhost:3000/api/stripe/webhook`.
+// A normal account-only endpoint will never receive these events and every paid
+// order will stay stuck at `pending`.
+
 export const config = { api: { bodyParser: false } }
 
 async function readRawBody(req) {
@@ -41,6 +49,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true })
   } catch (err) {
     console.error('stripe webhook handler error', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: 'Webhook handler error' })
   }
 }
