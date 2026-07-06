@@ -32,6 +32,7 @@ export default async function handler(req, res) {
         const order = await getOrder(userId, orderId)
         if (order && order.status === 'pending') {
           order.status = 'paid'
+          if (!order.stripe) order.stripe = {}
           order.stripe.paymentIntentId = session.payment_intent || null
           await saveOrder(userId, order)
         }
