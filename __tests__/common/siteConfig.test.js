@@ -97,6 +97,7 @@ describe('readSiteConfig', () => {
       currency: 'USD',
       stripeConnectAccountId: null,
       platformFeePct: 0,
+      chargesEnabled: false,
     })
     expect(downloadJSON).toHaveBeenCalledWith('users/user-123/site-config.json')
   })
@@ -207,6 +208,7 @@ describe('printStore', () => {
       currency: 'USD',
       stripeConnectAccountId: null,
       platformFeePct: 0,
+      chargesEnabled: false,
     })
   })
 
