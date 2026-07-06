@@ -23,13 +23,14 @@ export default async function handler(req, res) {
 
     const asset = Object.values(libraryConfig?.assets || {}).find((a) => a.assetId === assetId)
     const print = publicPrintForAsset(asset)
-    if (!print || !print.availableSizes.includes(spec.size)) return res.status(400).json({ error: 'unavailable size' })
+    if (!asset || !print) return res.status(400).json({ error: 'asset not available for purchase' })
+    if (!print.availableSizes.includes(spec.size)) return res.status(400).json({ error: 'size not available' })
 
     const adapter = getAdapterForCountry(address.country)
     const amounts = quoteOrder({ catalog: SEED_CATALOG, spec, markup: store.markup, platformFeePct: 0, currency: store.currency, adapter, address })
     return res.status(200).json({ amounts })
   } catch (err) {
     console.error('quote error', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: err?.message || 'Internal error' })
   }
 }
