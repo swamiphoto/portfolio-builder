@@ -131,6 +131,7 @@ Cart / multi-item, discounts/coupons, automated sales-tax (photographer's respon
 - **Connect onboarding incomplete** (`chargesEnabled=false`) → Buy flow stays gated off; the drawer shows "not available yet."
 - **Sandbox ≠ live parity** — Prodigi sandbox orders don't ship and its pricing may differ; validate live pricing before real margins.
 - **Webhook reliability** — idempotency keys + status reconciliation (poll fallback) so a missed webhook doesn't strand an order.
+- **Connect-scoped webhook (launch gate).** Print checkouts are **direct charges on the connected account**, so `checkout.session.completed` fires on the *connected* account, not the platform. The Stripe webhook endpoint MUST be registered as a **Connect** endpoint ("Listen to events on Connected accounts"); locally forward Connect events with `stripe listen --forward-connect-to localhost:3000/api/stripe/webhook`. A normal account-only endpoint never receives these events and every paid order stays stuck at `pending`. The live smoke MUST verify a test-card payment flips the order to `paid`; this is a hard gate before enabling checkout in any environment.
 
 ## Success criteria
 
