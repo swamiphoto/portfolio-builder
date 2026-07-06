@@ -10,7 +10,7 @@ export function usePrintStore() {
   return useContext(PrintStoreContext)
 }
 
-export function PrintStoreProvider({ printStore, children }) {
+export function PrintStoreProvider({ printStore, username, children }) {
   const [target, setTarget] = useState(null) // { print, imageUrl } | null
 
   const openConfigurator = useCallback((next) => {
@@ -19,13 +19,14 @@ export function PrintStoreProvider({ printStore, children }) {
   const close = useCallback(() => setTarget(null), [])
 
   return (
-    <PrintStoreContext.Provider value={{ openConfigurator, close, printStore, isOpen: !!target }}>
+    <PrintStoreContext.Provider value={{ openConfigurator, close, printStore, username, isOpen: !!target }}>
       {children}
       <PrintConfigurator
         open={!!target}
         print={target?.print}
         imageUrl={target?.imageUrl}
         printStore={printStore}
+        username={username}
         onClose={close}
       />
     </PrintStoreContext.Provider>

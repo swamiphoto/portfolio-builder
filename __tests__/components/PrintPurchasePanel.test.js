@@ -21,9 +21,11 @@ it('reveals frame colors when a wood frame is chosen', () => {
   expect(screen.getByRole('button', { name: /walnut/i })).toBeInTheDocument()
 })
 
-it('renders a disabled placeholder Buy CTA with a coming-soon note', () => {
-  render(<PrintPurchasePanel print={print} printStore={printStore} spec={baseSpec} onSpecChange={() => {}} />)
+it('renders an enabled Buy CTA that calls onBuy when clicked', () => {
+  const onBuy = jest.fn()
+  render(<PrintPurchasePanel print={print} printStore={printStore} spec={baseSpec} onSpecChange={() => {}} onBuy={onBuy} />)
   const cta = screen.getByRole('button', { name: /buy this print/i })
-  expect(cta).toBeDisabled()
-  expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
+  expect(cta).not.toBeDisabled()
+  fireEvent.click(cta)
+  expect(onBuy).toHaveBeenCalled()
 })

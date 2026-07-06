@@ -6,6 +6,8 @@ import React, { useEffect, useState } from 'react'
 import { getSizedUrl } from '../../../common/imageUtils'
 import FramedImage from './FramedImage'
 import PrintPurchasePanel from './PrintPurchasePanel'
+import CheckoutStep from './CheckoutStep'
+import { usePrintStore } from './PrintStoreContext'
 
 const SERIF = '"Cormorant Garamond", Georgia, serif'
 const PANEL_WIDTH = 460
@@ -15,12 +17,24 @@ function defaultSpec(print) {
   return { size, finish: 'lustre', frame: 'none', frameColor: null, matte: false }
 }
 
-export default function PrintConfigurator({ open, print, imageUrl, printStore, onClose }) {
+export default function PrintConfigurator({ open, print, imageUrl, printStore, username: usernameProp, onClose }) {
   const [spec, setSpec] = useState(defaultSpec(print))
+  const [checkout, setCheckout] = useState(false)
+  const [amounts, setAmounts] = useState(null)
+  const [quoting, setQuoting] = useState(false)
+  const [error, setError] = useState('')
+  const ctx = usePrintStore()
+  const username = usernameProp || ctx?.username
 
   // Reset the configuration whenever a new image/print is opened.
   useEffect(() => {
-    if (open) setSpec(defaultSpec(print))
+    if (open) {
+      setSpec(defaultSpec(print))
+      setCheckout(false)
+      setAmounts(null)
+      setQuoting(false)
+      setError('')
+    }
   }, [open, imageUrl]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on Escape while open.
@@ -104,7 +118,30 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, o
         {/* Controls — only mounted when a print is loaded (avoids pricing a null size while closed) */}
         <div style={{ padding: '22px 20px 28px' }}>
           {print && spec.size && (
-            <PrintPurchasePanel print={print} printStore={printStore} spec={spec} onSpecChange={setSpec} />
+            checkout ? (
+              <CheckoutStep
+                onBack={() => setCheckout(false)}
+                onSubmit={async (form) => {
+                  setQuoting(true); setError('')
+                  const address = { line1: form.line1, city: form.city, region: form.region, postalCode: form.postalCode, country: form.country }
+                  try {
+                    if (!amounts) {
+                      const r = await fetch('/api/print/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, assetId: print?.assetId, spec, address }) })
+                      if (!r.ok) throw new Error('Could not get a shipping quote for that address.')
+                      setAmounts((await r.json()).amounts); setQuoting(false); return
+                    }
+                    const c = await fetch('/api/print/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, assetId: print?.assetId, spec, buyer: { email: form.email, name: form.name, address } }) })
+                    if (!c.ok) throw new Error('Checkout could not start. Please try again.')
+                    window.location = (await c.json()).url
+                  } catch (e) { setError(e.message); setQuoting(false) }
+                }}
+                quoting={quoting}
+                amounts={amounts}
+                error={error}
+              />
+            ) : (
+              <PrintPurchasePanel print={print} printStore={printStore} spec={spec} onSpecChange={setSpec} onBuy={() => setCheckout(true)} />
+            )
           )}
         </div>
       </aside>
