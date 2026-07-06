@@ -78,6 +78,7 @@ export function createDefaultSiteConfig(userId) {
       currency: 'USD',
       stripeConnectAccountId: null,
       platformFeePct: 0,
+      chargesEnabled: false,
     },
     publishedAt: null,
     pages: [
@@ -169,6 +170,7 @@ export function normalizePrintStore(config = {}) {
       currency: ps.currency || 'USD',
       stripeConnectAccountId: ps.stripeConnectAccountId ?? null,
       platformFeePct: typeof ps.platformFeePct === 'number' ? ps.platformFeePct : 0,
+      chargesEnabled: ps.chargesEnabled ?? false,
     },
   }
 }
