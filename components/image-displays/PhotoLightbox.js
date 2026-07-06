@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
-import PrintAffordance from "./print/PrintAffordance";
-import PrintPurchasePanel from "./print/PrintPurchasePanel";
-import FramedImage from "./print/FramedImage";
-
-function defaultSpec(print) {
-  const size = print?.maxSharpSize || (print?.availableSizes || [])[0] || null;
-  return { size, finish: 'lustre', frame: 'none', frameColor: null, matte: false };
-}
+import BuyPrintButton from "./print/BuyPrintButton";
 
 export default function PhotoLightbox({ images, index, onClose, onNavigate, printStore }) {
   const image = images[index];
@@ -15,14 +8,16 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
   const hasNext = index < images.length - 1;
 
   const sellable = !!(printStore?.enabled && image?.print?.sellable);
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [spec, setSpec] = useState(defaultSpec(image?.print));
+  const [hovering, setHovering] = useState(false);
+  const [peek, setPeek] = useState(true);
 
-  // Reset the print UI when the viewed image changes.
+  // Show the buy button briefly when a new image opens, then let it fade until
+  // the viewer hovers the image.
   useEffect(() => {
-    setPanelOpen(false);
-    setSpec(defaultSpec(image?.print));
-  }, [index, image?.url]); // eslint-disable-line react-hooks/exhaustive-deps
+    setPeek(true);
+    const t = setTimeout(() => setPeek(false), 2600);
+    return () => clearTimeout(t);
+  }, [index, image?.url]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -51,8 +46,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
     >
       <button
         aria-label="Close lightbox"
-        autoFocus
-        className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none"
+        className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none focus:outline-none focus-visible:outline-none"
         onClick={(e) => { e.stopPropagation(); onClose(); }}
       >
         ×
@@ -68,26 +62,32 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
         </button>
       )}
 
+      {/* Image + caption — stop propagation so clicking image doesn't close */}
       <div
-        className="flex flex-col md:flex-row items-center gap-6 max-w-[92vw] max-h-[90vh]"
+        className="flex flex-col items-center max-w-[90vw] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col items-center">
-          {sellable ? (
-            <FramedImage src={getSizedUrl(image.url, 'display')} alt={image.caption || ''} spec={spec} className="max-w-full max-h-[80vh] object-contain" />
-          ) : (
-            <img src={getSizedUrl(image.url, 'display')} alt={image.caption || ''} className="max-w-full max-h-[80vh] object-contain" />
-          )}
-          {image.caption && (
-            <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
-          )}
-          {sellable && !panelOpen && (
-            <PrintAffordance print={image.print} printStore={printStore} onOpen={() => setPanelOpen(true)} />
+        <div
+          className="relative"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          <img
+            src={getSizedUrl(image.url, 'display')}
+            alt={image.caption || ""}
+            className="max-w-full max-h-[80vh] object-contain"
+          />
+          {sellable && (
+            <div
+              className="absolute top-3 right-3 transition-opacity duration-500"
+              style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
+            >
+              <BuyPrintButton print={image.print} imageUrl={image.url} />
+            </div>
           )}
         </div>
-
-        {sellable && panelOpen && (
-          <PrintPurchasePanel print={image.print} printStore={printStore} spec={spec} onSpecChange={setSpec} onClose={() => setPanelOpen(false)} />
+        {image.caption && (
+          <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
         )}
       </div>
 
