@@ -20,3 +20,9 @@ it('calls onBack', () => {
   fireEvent.click(screen.getByRole('button', { name: /back to options/i }))
   expect(onBack).toHaveBeenCalled()
 })
+
+it('shows shipping and total when amounts are provided', () => {
+  render(<CheckoutStep onBack={() => {}} onSubmit={() => {}} amounts={{ shippingCost: 600, total: 3000 }} />)
+  expect(screen.getByText(/shipping \$6\.00/i)).toBeInTheDocument()
+  expect(screen.getByText(/total \$30\.00/i)).toBeInTheDocument()
+})

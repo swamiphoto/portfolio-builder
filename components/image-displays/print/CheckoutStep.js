@@ -5,7 +5,7 @@ const input = { width: '100%', boxSizing: 'border-box', padding: '9px 11px', bor
 
 export default function CheckoutStep({ onBack, onSubmit, quoting, amounts, error }) {
   const [f, setF] = useState({ email: '', name: '', line1: '', city: '', region: '', postalCode: '', country: 'US' })
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  const set = (k) => (e) => { const v = e.target.value; setF((prev) => ({ ...prev, [k]: v })) }
   const ready = f.email && f.line1 && f.city && f.postalCode && f.country
   return (
     <form

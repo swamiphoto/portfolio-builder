@@ -120,7 +120,7 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
           {print && spec.size && (
             checkout ? (
               <CheckoutStep
-                onBack={() => setCheckout(false)}
+                onBack={() => { setCheckout(false); setAmounts(null); setError('') }}
                 onSubmit={async (form) => {
                   setQuoting(true); setError('')
                   const address = { line1: form.line1, city: form.city, region: form.region, postalCode: form.postalCode, country: form.country }
