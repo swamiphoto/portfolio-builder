@@ -8,6 +8,7 @@ export function publicPrintForAsset(asset) {
     availableSizes: p.availableSizes || [],
     maxSharpSize: p.maxSharpSize || null,
     orientation: asset.orientation || null,
+    assetId: asset.assetId || null,
   }
 }
 

@@ -74,3 +74,15 @@ describe('getUserPrintMasterPath', () => {
     expect(() => getUserPrintMasterPath('abc123', '')).toThrow('filename is required')
   })
 })
+
+describe('order paths', () => {
+  it('builds the orders prefix and a per-order path', () => {
+    const { getUserOrdersPrefix, getUserOrderPath } = require('../../common/gcsUser')
+    expect(getUserOrdersPrefix('u1')).toBe('users/u1/orders/')
+    expect(getUserOrderPath('u1', 'ord_x')).toBe('users/u1/orders/ord_x.json')
+  })
+  it('throws without an orderId', () => {
+    const { getUserOrderPath } = require('../../common/gcsUser')
+    expect(() => getUserOrderPath('u1', '')).toThrow('orderId is required')
+  })
+})

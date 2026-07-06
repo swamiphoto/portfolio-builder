@@ -117,7 +117,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   };
 
   return (
-    <PrintStoreProvider printStore={printStore}>
+    <PrintStoreProvider printStore={printStore} username={username}>
     <div className="gallery-container">
       <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} />
 
