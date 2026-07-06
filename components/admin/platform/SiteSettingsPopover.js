@@ -219,7 +219,11 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
     try {
       const res = await fetch('/api/admin/print/connect', { method: 'POST' })
       const data = await res.json()
-      if (data.url) window.location = data.url
+      if (data.url) {
+        window.location = data.url
+        return
+      }
+      setConnecting(false)
     } catch (_) {
       setConnecting(false)
     }
