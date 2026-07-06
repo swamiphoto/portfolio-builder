@@ -11,7 +11,15 @@ async function handler(req, res, user) {
     let accountId = config.printStore.stripeConnectAccountId
 
     if (!accountId) {
-      const account = await stripe.accounts.create({ type: 'express', metadata: { userId: user.id } })
+      const account = await stripe.accounts.create({
+        type: 'express',
+        metadata: { userId: user.id },
+        // Direct charges on the connected account require these capabilities.
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+      })
       accountId = account.id
       config = { ...config, printStore: { ...config.printStore, stripeConnectAccountId: accountId } }
       await writeSiteConfig(user.id, config)
