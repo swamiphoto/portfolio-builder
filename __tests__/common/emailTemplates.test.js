@@ -1,4 +1,4 @@
-import { photographerSaleEmail, buyerShippedEmail } from '../../common/email/templates'
+import { photographerSaleEmail, buyerShippedEmail, fulfillmentFailedEmail } from '../../common/email/templates'
 
 const order = {
   id: 'ord_1',
@@ -44,5 +44,20 @@ describe('buyerShippedEmail', () => {
     })
     expect(m.html).toContain('&quot;')
     expect(m.html).not.toContain('href="https://track/"><script>"')
+  })
+})
+
+describe('fulfillmentFailedEmail', () => {
+  it('includes the order id, print spec, and action-needed subject', () => {
+    const m = fulfillmentFailedEmail({ order, siteName: 'Ada Photo' })
+    expect(m.subject).toMatch(/action needed/i)
+    expect(m.text).toMatch(/ord_1/)
+    expect(m.text).toMatch(/16x20/)
+    expect(m.text).toMatch(/Ada Photo/)
+  })
+  it('escapes site name in HTML', () => {
+    const m = fulfillmentFailedEmail({ order, siteName: '<Bad Site>' })
+    expect(m.html).toContain('&lt;Bad Site&gt;')
+    expect(m.html).not.toContain('<Bad Site>')
   })
 })
