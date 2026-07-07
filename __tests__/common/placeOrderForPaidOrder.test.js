@@ -48,4 +48,12 @@ describe('placeOrderForPaidOrder', () => {
     expect(out.fulfillment.error).toMatch(/bad sku/)
     expect(saveOrder).toHaveBeenCalledWith('u1', expect.objectContaining({ status: 'fulfillment_failed' }))
   })
+
+  it('keeps status placed when the photographer email throws (email must not break fulfillment)', async () => {
+    placeOrder.mockResolvedValue({ labOrderId: 'p_9', status: 'placed' })
+    sendMail.mockRejectedValueOnce(new Error('smtp exploded'))
+    const out = await placeOrderForPaidOrder(baseOrder(), { photographerEmail: 'me@sepia.so', siteName: 'Ada Photo' })
+    expect(out.status).toBe('placed')
+    expect(out.fulfillment.labOrderId).toBe('p_9')
+  })
 })

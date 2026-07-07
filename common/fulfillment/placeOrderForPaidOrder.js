@@ -16,8 +16,12 @@ export async function placeOrderForPaidOrder(order, { photographerEmail, siteNam
     order.fulfillment = { ...(order.fulfillment || {}), lab: 'prodigi', labOrderId, status: status || 'placed' }
     await saveOrder(order.userId, order)
     if (photographerEmail) {
-      const msg = photographerSaleEmail({ order, siteName: siteName || 'your portfolio' })
-      await sendMail({ to: photographerEmail, ...msg })
+      try {
+        const msg = photographerSaleEmail({ order, siteName: siteName || 'your portfolio' })
+        await sendMail({ to: photographerEmail, ...msg })
+      } catch (mailErr) {
+        console.error('photographer email failed', mailErr.message)
+      }
     }
     return order
   } catch (err) {
