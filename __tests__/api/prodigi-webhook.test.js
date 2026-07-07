@@ -45,3 +45,12 @@ it('rejects a bad token when PRODIGI_WEBHOOK_SECRET is set', async () => {
   expect(r.statusCode).toBe(401)
   expect(getOrder).not.toHaveBeenCalled()
 })
+
+it('still returns 200 if the buyer email throws (email is best-effort)', async () => {
+  getOrder.mockResolvedValue({ id: 'ord_1', userId: 'u1', status: 'placed', spec: { size: '16x20', finish: 'lustre', frame: 'none' }, buyer: { email: 'ada@example.com' }, amounts: { currency: 'USD' }, fulfillment: {} })
+  sendMail.mockRejectedValueOnce(new Error('SMTP down'))
+  const r = res()
+  await handler({ method: 'POST', query: {}, body: shippedBody() }, r)
+  expect(r.statusCode).toBe(200)
+  expect(saveOrder).toHaveBeenCalledWith('u1', expect.objectContaining({ status: 'shipped' }))
+})

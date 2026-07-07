@@ -46,8 +46,12 @@ export default async function handler(req, res) {
 
     const config = await readSiteConfig(userId).catch(() => null)
     if (order.buyer?.email) {
-      const msg = buyerShippedEmail({ order, tracking, siteName: config?.siteName || 'the shop' })
-      await sendMail({ to: order.buyer.email, ...msg })
+      try {
+        const msg = buyerShippedEmail({ order, tracking, siteName: config?.siteName || 'the shop' })
+        await sendMail({ to: order.buyer.email, ...msg })
+      } catch (mailErr) {
+        console.error('buyerShippedEmail failed', mailErr.message)
+      }
     }
     return res.status(200).json({ received: true })
   } catch (err) {
