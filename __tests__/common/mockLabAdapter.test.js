@@ -24,7 +24,11 @@ describe('mockLabAdapter', () => {
 })
 
 describe('getAdapterForCountry', () => {
-  it('returns the mock adapter for any country in v1', () => {
+  const OLD = process.env
+  afterEach(() => { process.env = OLD })
+
+  it('returns the mock adapter when PRODIGI_API_KEY is unset', () => {
+    process.env = { ...OLD }; delete process.env.PRODIGI_API_KEY
     expect(getAdapterForCountry('US')).toBe(mockLabAdapter)
     expect(getAdapterForCountry('FR')).toBe(mockLabAdapter)
   })
