@@ -52,7 +52,9 @@ export default async function handler(req, res) {
       createdAt: new Date().toISOString(),
     }
 
-    const base = siteUrlFor(config, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
+    // Return the buyer to wherever they were shopping — localhost in dev, the
+    // published domain in prod — rather than a hardcoded configured site URL.
+    const base = req.headers.origin || siteUrlFor(config, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
     const stripe = getStripe()
     const session = await stripe.checkout.sessions.create(
       buildCheckoutSessionParams({ order, successUrl: `${base}/print/confirmation`, cancelUrl: `${base}` }),
