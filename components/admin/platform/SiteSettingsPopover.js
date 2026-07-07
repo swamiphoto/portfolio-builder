@@ -284,6 +284,16 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
             </>
           )}
         </div>
+
+        {/* Orders link */}
+        <div style={{ marginTop: 4 }}>
+          <a
+            href="/admin/orders"
+            style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}
+          >
+            View orders →
+          </a>
+        </div>
       </div>
     </PopoverShell>
   )
