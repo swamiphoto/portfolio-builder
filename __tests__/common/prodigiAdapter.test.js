@@ -41,6 +41,11 @@ describe('prodigiAdapter.placeOrder', () => {
     expect(opts.body.items[0].sku).toBe('GLOBAL-FAP-16x20')
     expect(opts.body.items[0].assets[0].url).toBe('https://cdn.example.com/print.jpg')
   })
+
+  it('rejects with "no order id" when Prodigi returns a body without order.id', async () => {
+    prodigiFetch.mockResolvedValue({})
+    await expect(prodigiAdapter.placeOrder(sampleOrder)).rejects.toThrow(/no order id/)
+  })
 })
 
 describe('prodigiAdapter.getTracking', () => {

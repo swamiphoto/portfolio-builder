@@ -17,6 +17,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const secret = process.env.PRODIGI_WEBHOOK_SECRET
+  if (!secret && process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ error: 'PRODIGI_WEBHOOK_SECRET not configured' })
+  }
   if (secret && req.query.token !== secret) return res.status(401).json({ error: 'unauthorized' })
 
   try {

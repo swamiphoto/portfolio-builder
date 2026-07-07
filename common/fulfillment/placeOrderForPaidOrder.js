@@ -4,7 +4,7 @@
 import { getAdapterForCountry } from './router'
 import { saveOrder } from '../orders'
 import { sendMail } from '../email/mailer'
-import { photographerSaleEmail } from '../email/templates'
+import { photographerSaleEmail, fulfillmentFailedEmail } from '../email/templates'
 
 export async function placeOrderForPaidOrder(order, { photographerEmail, siteName } = {}) {
   if (order.fulfillment && order.fulfillment.labOrderId) return order // already placed
@@ -29,6 +29,15 @@ export async function placeOrderForPaidOrder(order, { photographerEmail, siteNam
     order.status = 'fulfillment_failed'
     order.fulfillment = { ...(order.fulfillment || {}), status: 'failed', error: err.message }
     await saveOrder(order.userId, order)
+    if (photographerEmail) {
+      try {
+        const msg = fulfillmentFailedEmail({ order, siteName: siteName || 'your portfolio' })
+        await sendMail({ to: photographerEmail, ...msg })
+        if (process.env.SEPIA_OPS_EMAIL) await sendMail({ to: process.env.SEPIA_OPS_EMAIL, ...msg })
+      } catch (mailErr) {
+        console.error('fulfillment-failed alert email failed', mailErr.message)
+      }
+    }
     return order
   }
 }

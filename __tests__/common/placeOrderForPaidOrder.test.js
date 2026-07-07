@@ -49,6 +49,20 @@ describe('placeOrderForPaidOrder', () => {
     expect(saveOrder).toHaveBeenCalledWith('u1', expect.objectContaining({ status: 'fulfillment_failed' }))
   })
 
+  it('alerts the photographer when placement fails', async () => {
+    placeOrder.mockRejectedValue(new Error('prodigi 422: bad sku'))
+    const out = await placeOrderForPaidOrder(baseOrder(), { photographerEmail: 'me@sepia.so', siteName: 'Ada Photo' })
+    expect(out.status).toBe('fulfillment_failed')
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'me@sepia.so' }))
+  })
+
+  it('still returns the fulfillment_failed order if the alert email itself throws', async () => {
+    placeOrder.mockRejectedValue(new Error('prodigi 422: bad sku'))
+    sendMail.mockRejectedValueOnce(new Error('smtp down'))
+    const out = await placeOrderForPaidOrder(baseOrder(), { photographerEmail: 'me@sepia.so', siteName: 'Ada Photo' })
+    expect(out.status).toBe('fulfillment_failed')
+  })
+
   it('keeps status placed when the photographer email throws (email must not break fulfillment)', async () => {
     placeOrder.mockResolvedValue({ labOrderId: 'p_9', status: 'placed' })
     sendMail.mockRejectedValueOnce(new Error('smtp exploded'))

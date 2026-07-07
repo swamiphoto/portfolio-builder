@@ -52,6 +52,7 @@ export const prodigiAdapter = {
       ],
     }
     const out = await prodigiFetch('/v4.0/Orders', { method: 'POST', body })
+    if (!out?.order?.id) throw new Error(`prodigi: no order id in response: ${JSON.stringify(out)}`)
     return { labOrderId: out.order.id, status: 'placed' }
   },
 

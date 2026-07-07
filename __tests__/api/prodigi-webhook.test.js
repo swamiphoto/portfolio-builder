@@ -46,6 +46,15 @@ it('rejects a bad token when PRODIGI_WEBHOOK_SECRET is set', async () => {
   expect(getOrder).not.toHaveBeenCalled()
 })
 
+it('returns 500 and does not call getOrder when secret is unset in production', async () => {
+  process.env.NODE_ENV = 'production'
+  const r = res()
+  await handler({ method: 'POST', query: {}, body: shippedBody() }, r)
+  expect(r.statusCode).toBe(500)
+  expect(r.body).toMatchObject({ error: expect.stringMatching(/not configured/) })
+  expect(getOrder).not.toHaveBeenCalled()
+})
+
 it('still returns 200 if the buyer email throws (email is best-effort)', async () => {
   getOrder.mockResolvedValue({ id: 'ord_1', userId: 'u1', status: 'placed', spec: { size: '16x20', finish: 'lustre', frame: 'none' }, buyer: { email: 'ada@example.com' }, amounts: { currency: 'USD' }, fulfillment: {} })
   sendMail.mockRejectedValueOnce(new Error('SMTP down'))
