@@ -37,4 +37,12 @@ describe('buyerShippedEmail', () => {
     expect(m.subject).toMatch(/shipped/i)
     expect(m.text).toMatch(/on its way/i)
   })
+  it('escapes quotes in the tracking URL to prevent attribute injection', () => {
+    const m = buyerShippedEmail({
+      order, siteName: 'Ada Photo',
+      tracking: { carrier: 'DHL', number: 'TRK1', url: 'https://track/"><script>' },
+    })
+    expect(m.html).toContain('&quot;')
+    expect(m.html).not.toContain('href="https://track/"><script>"')
+  })
 })
