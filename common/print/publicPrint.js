@@ -1,4 +1,5 @@
 // Pure: derive the minimal, public-safe print data exposed to the site render.
+import { PUBLIC_URL } from '../gcsClient'
 
 export function publicPrintForAsset(asset) {
   const p = asset && asset.print
@@ -25,4 +26,11 @@ export function publicPrintStore(siteConfig) {
 export function publicSiteConfig(siteConfig) {
   if (!siteConfig) return siteConfig
   return { ...siteConfig, printStore: publicPrintStore(siteConfig) }
+}
+
+// Server-safe reference to the high-res print file for fulfillment.
+export function printImageRef(asset) {
+  const key = asset && asset.print && asset.print.masterStorageKey
+  if (!key) return null
+  return { masterStorageKey: key, imageUrl: `${PUBLIC_URL}/${key}` }
 }
