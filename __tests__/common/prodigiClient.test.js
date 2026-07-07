@@ -42,4 +42,13 @@ describe('prodigiClient', () => {
     delete process.env.PRODIGI_API_KEY
     await expect(prodigiFetch('/v4.0/Orders')).rejects.toThrow(/PRODIGI_API_KEY not configured/)
   })
+
+  it('does not set Content-Type on a bodyless GET', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) })
+    global.fetch = fetchMock
+    await prodigiFetch('/v4.0/Orders/ord_1')
+    const opts = fetchMock.mock.calls[0][1]
+    expect(opts.headers['X-API-Key']).toBe('test-key')
+    expect(opts.headers['Content-Type']).toBeUndefined()
+  })
 })

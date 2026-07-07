@@ -16,7 +16,7 @@ export async function prodigiFetch(path, { method = 'GET', body } = {}) {
     method,
     headers: {
       'X-API-Key': key,
-      'Content-Type': 'application/json',
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
