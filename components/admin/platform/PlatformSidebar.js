@@ -6,7 +6,7 @@ import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
-import { normalizeCustomDomain } from '../../../common/domainUtils'
+import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
@@ -742,7 +742,7 @@ export default function PlatformSidebar({
         {/* URL */}
         {username && (
           <div style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', marginTop: 4 }}>
-            {username}.sepia.photo
+            {subdomainHost(username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)}
           </div>
         )}
 
