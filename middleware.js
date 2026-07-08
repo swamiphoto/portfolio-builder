@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { parseHost } from './common/domainUtils'
 
 const PASSTHROUGH = [
-  '/admin', '/api/', '/_next/', '/auth/', '/onboarding', '/sites/', '/fonts/', '/images/',
+  '/admin', '/api/', '/_next/', '/auth/', '/onboarding', '/sites/', '/fonts/', '/images/', '/print/',
 ]
 
 function isPassthrough(pathname) {
