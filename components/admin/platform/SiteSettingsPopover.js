@@ -329,6 +329,13 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                 </>
               )}
             </div>
+
+            {/* Orders */}
+            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 14 }}>
+              <a href="/admin/orders" style={{ fontSize: 12.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                View orders →
+              </a>
+            </div>
           </>
         )}
       </div>

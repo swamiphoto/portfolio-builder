@@ -3,7 +3,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { normalizePrintStore } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
-import { publicPrintForAsset } from '../../../common/print/publicPrint'
+import { publicPrintForAsset, printImageRef } from '../../../common/print/publicPrint'
 import { getAdapterForCountry } from '../../../common/fulfillment/router'
 import { SEED_CATALOG } from '../../../common/fulfillment/seedCatalog'
 import { quoteOrder } from '../../../common/print/quoteOrder'
@@ -45,6 +45,7 @@ export default async function handler(req, res) {
       status: 'pending',
       assetId,
       spec,
+      print: printImageRef(asset),
       buyer,
       amounts,
       stripe: { sessionId: null, paymentIntentId: null, connectedAccountId: ps.stripeConnectAccountId },
