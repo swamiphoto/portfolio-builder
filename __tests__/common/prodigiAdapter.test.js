@@ -84,6 +84,26 @@ describe('prodigiAdapter.getTracking', () => {
   })
 })
 
+describe('prodigiAdapter.getQuote', () => {
+  beforeEach(() => prodigiFetch.mockReset())
+
+  it('returns cost + shipping + currency from a Prodigi quote for the SKU + destination', async () => {
+    prodigiFetch.mockResolvedValue({ quotes: [{ costSummary: { items: { amount: '15.00', currency: 'USD' }, shipping: { amount: '7.10', currency: 'USD' } } }] })
+    const out = await prodigiAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' })
+    expect(out).toEqual({ cost: 15, shipping: 7.1, currency: 'USD' })
+    const [path, opts] = prodigiFetch.mock.calls[0]
+    expect(path).toBe('/v4.0/quotes')
+    expect(opts.body.destinationCountryCode).toBe('US')
+    expect(opts.body.items[0].sku).toBe('GLOBAL-FAP-16X20')
+  })
+
+  it('falls back to seed pricing when the Prodigi quote fails', async () => {
+    prodigiFetch.mockRejectedValue(new Error('prodigi 500'))
+    const out = await prodigiAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' })
+    expect(out).toEqual(mockLabAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' }))
+  })
+})
+
 describe('getAdapterForCountry', () => {
   const OLD = process.env
   afterEach(() => { process.env = OLD })

@@ -3,7 +3,6 @@ import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { publicPrintStore, publicPrintForAsset } from '../../../common/print/publicPrint'
 import { getAdapterForCountry } from '../../../common/fulfillment/router'
-import { SEED_CATALOG } from '../../../common/fulfillment/seedCatalog'
 import { quoteOrder } from '../../../common/print/quoteOrder'
 
 export default async function handler(req, res) {
@@ -27,7 +26,7 @@ export default async function handler(req, res) {
     if (!print.availableSizes.includes(spec.size)) return res.status(400).json({ error: 'size not available' })
 
     const adapter = getAdapterForCountry(address.country)
-    const amounts = quoteOrder({ catalog: SEED_CATALOG, spec, markup: store.markup, platformFeePct: 0, currency: store.currency, adapter, address })
+    const amounts = await quoteOrder({ spec, markup: store.markup, platformFeePct: 0, currency: store.currency, adapter, address })
     return res.status(200).json({ amounts })
   } catch (err) {
     console.error('quote error', err)

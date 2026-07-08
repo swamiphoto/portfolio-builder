@@ -5,7 +5,6 @@ import { normalizePrintStore } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { publicPrintForAsset, printImageRef } from '../../../common/print/publicPrint'
 import { getAdapterForCountry } from '../../../common/fulfillment/router'
-import { SEED_CATALOG } from '../../../common/fulfillment/seedCatalog'
 import { quoteOrder } from '../../../common/print/quoteOrder'
 import { newOrderId, saveOrder } from '../../../common/orders'
 import { getStripe } from '../../../common/stripe/client'
@@ -35,8 +34,10 @@ export default async function handler(req, res) {
     if (!print || !print.availableSizes.includes(spec.size)) return res.status(400).json({ error: 'unavailable size' })
 
     const adapter = getAdapterForCountry(buyer.address.country)
-    const amounts = quoteOrder({
-      catalog: SEED_CATALOG, spec, markup: ps.markup, platformFeePct: ps.platformFeePct, currency: ps.currency, adapter, address: buyer.address,
+    // Sepia's commission is a platform-wide term (env), not per-photographer config.
+    const platformFeePct = Number(process.env.PLATFORM_FEE_PCT ?? ps.platformFeePct ?? 0) || 0
+    const amounts = await quoteOrder({
+      spec, markup: ps.markup, platformFeePct, currency: ps.currency, adapter, address: buyer.address,
     })
 
     const order = {
