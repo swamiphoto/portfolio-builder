@@ -34,8 +34,11 @@ export default async function handler(req, res) {
     if (!print || !print.availableSizes.includes(spec.size)) return res.status(400).json({ error: 'unavailable size' })
 
     const adapter = getAdapterForCountry(buyer.address.country)
-    // Sepia's commission is a platform-wide term (env), not per-photographer config.
-    const platformFeePct = Number(process.env.PLATFORM_FEE_PCT ?? ps.platformFeePct ?? 0) || 0
+    // Sepia's commission is a platform-wide term (single source of truth so the
+    // admin "you keep" example and the actual charge stay in sync).
+    const platformFeePct = Number(
+      process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT ?? process.env.PLATFORM_FEE_PCT ?? ps.platformFeePct ?? 0
+    ) || 0
     const amounts = await quoteOrder({
       spec, markup: ps.markup, platformFeePct, currency: ps.currency, adapter, address: buyer.address,
     })
