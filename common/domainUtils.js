@@ -36,6 +36,16 @@ export function normalizeCustomDomain(value) {
   }
 }
 
+/**
+ * Display host for a tenant subdomain, derived from the configured root domain
+ * (port stripped). Use instead of hardcoding the platform domain so the UI is
+ * correct in every environment (lvh.me in dev, sepia.photo in prod).
+ */
+export function subdomainHost(subdomain, rootDomain) {
+  const root = (rootDomain || 'localhost:3000').replace(/:\d+$/, '')
+  return `${subdomain}.${root}`
+}
+
 export function siteUrlFor(siteConfig, username, rootDomain) {
   const cd = normalizeCustomDomain(siteConfig?.customDomain)
   if (cd && cd.status === 'active') return `https://${cd.name}`

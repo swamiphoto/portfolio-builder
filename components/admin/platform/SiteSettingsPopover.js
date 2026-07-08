@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import PopoverShell from './PopoverShell'
 import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
-import { normalizeCustomDomain } from '../../../common/domainUtils'
+import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
@@ -26,6 +26,15 @@ const inputStyle = {
 }
 
 const inputCls = 'site-input'
+
+// Uppercase mono group label (matches the Field label treatment).
+const sectionLabel = {
+  fontSize: 10,
+  color: 'var(--text-muted)',
+  fontFamily: MONO,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+}
 
 function Field({ label, children }) {
   return (
@@ -229,61 +238,99 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
     }
   }
 
+  const enabled = !!ps.enabled
+  const markup = ps.markup ?? 3
+  const exampleCost = 20
+  const exampleRetail = Math.round(exampleCost * markup)
+  const exampleProfit = exampleRetail - exampleCost
+
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
       <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
+        {/* Intro */}
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+          Sell prints of your photos. We print and ship worldwide — you set the markup and keep the difference.
+        </p>
+
+        {/* Enable */}
         <div className="flex items-center justify-between">
           <span style={{ fontSize: 13, color: '#2c2416' }}>Enable print store</span>
-          <ToggleSwitch on={!!ps.enabled} onClick={() => updatePrintStore({ enabled: !ps.enabled })} />
-        </div>
-        <Field label="Markup (× lab cost)">
-          <input
-            className={inputCls}
-            style={inputStyle}
-            type="number"
-            min="1"
-            step="0.1"
-            placeholder="3"
-            value={ps.markup ?? 3}
-            onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
-          />
-        </Field>
-        <div className="flex items-center justify-between">
-          <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on images</span>
-          <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+          <ToggleSwitch on={enabled} onClick={() => updatePrintStore({ enabled: !enabled })} />
         </div>
 
-        {/* Payouts row */}
-        <div>
-          {connectStatus === true ? (
-            <p style={{ fontSize: 13, color: '#2c2416', margin: 0 }}>Payouts connected ✓</p>
-          ) : (
-            <>
-              <button
-                type="button"
-                disabled={connecting}
-                onClick={handleConnect}
-                style={{
-                  fontSize: 12,
-                  color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
-                  border: '1px solid rgba(160,140,110,0.32)',
-                  borderRadius: 4,
-                  padding: '5px 12px',
-                  background: 'transparent',
-                  cursor: connecting ? 'default' : 'pointer',
-                  transition: 'color 0.15s, border-color 0.15s',
-                }}
-                onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
-              >
-                {connecting ? 'Redirecting…' : 'Connect payouts'}
-              </button>
-              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
-                Required before you can sell prints.
-              </p>
-            </>
-          )}
-        </div>
+        {enabled && (
+          <>
+            {/* Pricing */}
+            <div className="space-y-4">
+              <div style={sectionLabel}>Pricing</div>
+              <Field label="Your markup (× lab cost)">
+                <input
+                  className={inputCls}
+                  style={inputStyle}
+                  type="number"
+                  min="1"
+                  step="0.1"
+                  placeholder="3"
+                  value={markup}
+                  onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
+                />
+                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 7, marginBottom: 0 }}>
+                  You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
+                  <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong> — you keep{' '}
+                  <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>.
+                </p>
+              </Field>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
+                  <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+                </div>
+                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4, marginBottom: 0 }}>
+                  Displays “From $X” on photos that are for sale.
+                </p>
+              </div>
+            </div>
+
+            {/* Payouts */}
+            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }} className="space-y-2.5">
+              <div style={sectionLabel}>Payouts</div>
+              {connectStatus === true ? (
+                <>
+                  <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+                    Earnings go to your Stripe account.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={connecting}
+                    onClick={handleConnect}
+                    style={{
+                      fontSize: 12,
+                      color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
+                      border: '1px solid rgba(160,140,110,0.32)',
+                      borderRadius: 4,
+                      padding: '5px 12px',
+                      background: 'transparent',
+                      cursor: connecting ? 'default' : 'pointer',
+                      transition: 'color 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
+                  >
+                    {connecting ? 'Redirecting…' : 'Connect payouts'}
+                  </button>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+                    Get paid through Stripe. Required before you can sell.
+                  </p>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </PopoverShell>
   )
@@ -291,7 +338,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
 
 export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
   const config = siteConfig || {}
-  const [view, setView] = useState('main') // 'main' | 'domain' | 'analytics' | 'payments'
+  const [view, setView] = useState('main') // 'main' | 'cover' | 'domain' | 'analytics' | 'print' | 'sharing'
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const [coverDesignOpen, setCoverDesignOpen] = useState(false)
@@ -304,10 +351,6 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
   function updateAnalytics(patch) {
     update({ analytics: { ...(config.analytics || {}), ...patch } })
-  }
-
-  function updateClientDefaults(patch) {
-    update({ clientDefaults: { ...(config.clientDefaults || {}), ...patch } })
   }
 
   function updateFooter(patch) {
@@ -427,33 +470,6 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     )
   }
 
-  // ── Payments drill-in ─────────────────────────────────────────────────────
-  if (view === 'payments') {
-    return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Payments" onBack={() => setView('main')}>
-        <div style={{ padding: '14px' }} className="space-y-5">
-          <Field label="Default currency">
-            <select
-              className={inputCls}
-              style={{ ...inputStyle, appearance: 'none', cursor: 'pointer', paddingRight: 16, backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23a8967a' stroke-width='2'><path d='M4 6l4 4 4-4'/></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0 center', backgroundSize: '12px' }}
-              value={config.clientDefaults?.defaultCurrency || 'USD'}
-              onChange={(e) => updateClientDefaults({ defaultCurrency: e.target.value })}
-            >
-              {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Default watermark">
-            <input className={inputCls} style={inputStyle} placeholder="https://…" value={config.clientDefaults?.defaultWatermarkUrl || ''} onChange={(e) => updateClientDefaults({ defaultWatermarkUrl: e.target.value })} />
-          </Field>
-          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Connect Stripe to enable purchases across pages.{' '}
-            <span style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--text-secondary)' }}>Set up Stripe →</span>
-          </p>
-        </div>
-      </PopoverShell>
-    )
-  }
-
   // ── Print store drill-in ──────────────────────────────────────────────────
   if (view === 'print') {
     const ps = config.printStore || {}
@@ -466,7 +482,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     const largeImage = share.largeImage || config.cover?.imageUrl || ''
     const squareImage = share.squareImage || config.cover?.imageUrl || ''
     const previewSubdomain = username || 'yoursite'
-    const domain = normalizeCustomDomain(config.customDomain)?.name || `${previewSubdomain}.sepia.photo`
+    const domain = normalizeCustomDomain(config.customDomain)?.name || subdomainHost(previewSubdomain, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
     const siteName = config.siteName || 'My Portfolio'
     const tagline = config.tagline || ''
     const cardBorder = '1px solid rgba(160,140,110,0.22)'
@@ -687,16 +703,12 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         const cd = normalizeCustomDomain(config.customDomain)
         const rowProps = !cd
           ? { label: 'Set up custom domain' }
-          : { label: cd.name, hint: cd.status === 'active' ? 'Connected' : 'Action needed — add DNS record' }
+          : { label: 'Custom domain', hint: `${cd.name} — ${cd.status === 'active' ? 'Connected' : 'Action needed'}` }
         return <DrillRow {...rowProps} onDrillIn={() => setView('domain')} />
       })()}
       <DrillRow
         label={hasAnalytics ? 'Analytics' : 'Setup analytics'}
         onDrillIn={() => setView('analytics')}
-      />
-      <DrillRow
-        label={config.clientDefaults?.paymentsEnabled ? 'Payments' : 'Setup payments'}
-        onDrillIn={() => setView('payments')}
       />
       <DrillRow
         label="Social sharing"
