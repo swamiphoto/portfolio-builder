@@ -7,15 +7,15 @@
 // Per-ref failures are caught and pushed to `failed`; they never abort the batch.
 // This route does NOT write the library config — the client merges + PUTs.
 
-import fetch from 'node-fetch'
+import { safeFetch } from '@/common/import/safeFetch'
 import { withAuth } from '@/common/withAuth'
 import { downloadJSON } from '@/common/gcsClient'
 import { storeImageBuffer } from '@/common/storeImage'
 import { buildImportedAsset, existingSourceUrls, dedupeRefs } from '@/common/import/importCore'
+import { getUserLibraryConfigPath } from '@/common/gcsUser'
 
-function configKey(userId) {
-  return `users/${userId}/library-config.json`
-}
+const MAX_BATCH = 50
+const MAX_IMPORT_BYTES = 40 * 1024 * 1024
 
 function filenameFromUrl(remoteUrl) {
   try {
@@ -35,11 +35,14 @@ async function handler(req, res, user) {
   if (!Array.isArray(assetRefs) || !provider) {
     return res.status(400).json({ error: 'provider and assetRefs are required' })
   }
+  if (assetRefs.length > MAX_BATCH) {
+    return res.status(400).json({ error: 'batch too large', message: 'Import fewer photos at a time.' })
+  }
 
   // Read existing library config for dedupe; tolerate absence (new user, no config yet).
   let existing = new Set()
   try {
-    existing = existingSourceUrls(await downloadJSON(configKey(user.id)))
+    existing = existingSourceUrls(await downloadJSON(getUserLibraryConfigPath(user.id)))
   } catch {
     // no config yet — nothing to dedupe against
   }
@@ -52,13 +55,16 @@ async function handler(req, res, user) {
 
   for (const ref of fresh) {
     try {
-      const resp = await fetch(ref.remoteUrl, { redirect: 'follow' })
+      const resp = await safeFetch(ref.remoteUrl)
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
 
       const contentType = resp.headers.get('content-type') || 'image/jpeg'
       if (!contentType.startsWith('image/')) {
         throw new Error(`not an image (${contentType})`)
       }
+
+      const len = Number(resp.headers.get('content-length') || 0)
+      if (len > MAX_IMPORT_BYTES) throw new Error('image too large')
 
       const buffer = Buffer.from(await resp.arrayBuffer())
 

@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import { safeFetch } from '../safeFetch'
 import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls } from '../crawlerUtils'
 import { filterJunkImages, groupIntoCollections } from '../junkFilter'
 
@@ -8,7 +8,7 @@ const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 
 async function httpFetchPage(url) {
-  const res = await fetch(url, { headers: { 'User-Agent': UA }, redirect: 'follow' })
+  const res = await safeFetch(url, { headers: { 'User-Agent': UA } })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const type = res.headers.get('content-type') || ''
   if (!type.includes('text/html')) throw new Error(`non-html: ${type}`)

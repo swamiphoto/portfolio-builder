@@ -8,10 +8,8 @@
 //    jest.mock() is hoisted above all imports by SWC, so mocks are in place before import runs.
 // 3. Brief named mock fns `storeMock` and `fetchMock` (outside jest.mock factories). SWC hoist
 //    only permits out-of-scope references whose name starts with "mock" to avoid TDZ errors.
-//    Renamed to `mockStore` and `mockFetch`.
-// 4. node-fetch v2 is CommonJS; mocked as `{ __esModule: true, default: (...a) => mockFetch(...a) }`.
-//
-// All assertions and behaviors from the brief are preserved.
+//    Renamed to `mockStore` and `mockSafeFetch`.
+// 4. Route now calls safeFetch (from @/common/import/safeFetch), not node-fetch directly.
 
 jest.mock('@/common/withAuth', () => ({
   withAuth: (h) => (req, res) => h(req, res, { id: 'u1' }),
@@ -27,8 +25,8 @@ jest.mock('@/common/storeImage', () => ({
   storeImageBuffer: (...a) => mockStore(...a),
 }))
 
-const mockFetch = jest.fn()
-jest.mock('node-fetch', () => ({ __esModule: true, default: (...a) => mockFetch(...a) }))
+const mockSafeFetch = jest.fn()
+jest.mock('@/common/import/safeFetch', () => ({ safeFetch: (...a) => mockSafeFetch(...a) }))
 
 import handler from '@/pages/api/admin/import/fetch-batch'
 
@@ -39,7 +37,7 @@ function mockRes() {
 function okImage() {
   return {
     ok: true,
-    headers: { get: () => 'image/jpeg' },
+    headers: { get: (h) => (h === 'content-type' ? 'image/jpeg' : h === 'content-length' ? '1000' : null) },
     arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
   }
 }
@@ -47,13 +45,13 @@ function okImage() {
 describe('POST /api/admin/import/fetch-batch', () => {
   beforeEach(() => {
     mockStore.mockReset()
-    mockFetch.mockReset()
+    mockSafeFetch.mockReset()
     mockDownload.mockReset()
     mockDownload.mockResolvedValue({ assets: {} })
   })
 
   it('downloads, stores, and returns imported assets; isolates failures', async () => {
-    mockFetch.mockResolvedValueOnce(okImage()).mockRejectedValueOnce(new Error('boom'))
+    mockSafeFetch.mockResolvedValueOnce(okImage()).mockRejectedValueOnce(new Error('boom'))
     mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/a.jpg', width: 100, height: 50 })
 
     const res = mockRes()
@@ -87,7 +85,7 @@ describe('POST /api/admin/import/fetch-batch', () => {
         'asset-1': { source: { sourceUrl: 'https://remote/existing.jpg' } },
       },
     })
-    mockFetch.mockResolvedValue(okImage())
+    mockSafeFetch.mockResolvedValue(okImage())
     mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/new.jpg', width: 200, height: 100 })
 
     const res = mockRes()
@@ -111,7 +109,7 @@ describe('POST /api/admin/import/fetch-batch', () => {
     const payload = res.json.mock.calls[0][0]
     expect(payload.imported).toHaveLength(1)
     expect(payload.skipped).toEqual(['https://remote/existing.jpg'])
-    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockSafeFetch).toHaveBeenCalledTimes(1)
   })
 
   it('400 when assetRefs is missing or not an array', async () => {
@@ -130,5 +128,41 @@ describe('POST /api/admin/import/fetch-batch', () => {
     const res = mockRes()
     await handler({ method: 'GET', body: {} }, res)
     expect(res.status).toHaveBeenCalledWith(405)
+  })
+
+  it('400 when assetRefs exceeds MAX_BATCH (51 refs)', async () => {
+    const assetRefs = Array.from({ length: 51 }, (_, i) => ({ remoteUrl: `https://remote/${i}.jpg` }))
+    const res = mockRes()
+    await handler({ method: 'POST', body: { provider: 'generic', assetRefs } }, res)
+    expect(res.status).toHaveBeenCalledWith(400)
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.error).toBe('batch too large')
+  })
+
+  it('puts oversized image in failed (content-length exceeds MAX_IMPORT_BYTES)', async () => {
+    mockSafeFetch.mockResolvedValue({
+      ok: true,
+      headers: { get: (h) => (h === 'content-type' ? 'image/jpeg' : h === 'content-length' ? '999999999' : null) },
+      arrayBuffer: async () => new Uint8Array([1]).buffer,
+    })
+    mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/big.jpg', width: 100, height: 50 })
+
+    const res = mockRes()
+    await handler(
+      {
+        method: 'POST',
+        body: {
+          provider: 'generic',
+          assetRefs: [{ remoteUrl: 'https://remote/big.jpg' }],
+        },
+      },
+      res
+    )
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.imported).toHaveLength(0)
+    expect(payload.failed).toHaveLength(1)
+    expect(payload.failed[0].reason).toMatch(/image too large/)
   })
 })
