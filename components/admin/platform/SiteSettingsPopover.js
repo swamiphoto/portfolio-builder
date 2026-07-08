@@ -36,6 +36,17 @@ const sectionLabel = {
   textTransform: 'uppercase',
 }
 
+// Prominent group header — darker + bolder than a field label so the two read
+// as distinct levels of hierarchy.
+const sectionHeader = {
+  fontSize: 10.5,
+  fontWeight: 600,
+  color: '#8b6f47',
+  fontFamily: MONO,
+  letterSpacing: '0.13em',
+  textTransform: 'uppercase',
+}
+
 function Field({ label, children }) {
   return (
     <div>
@@ -261,73 +272,77 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         {enabled && (
           <>
             {/* Pricing */}
-            <div className="space-y-4">
-              <div style={sectionLabel}>Pricing</div>
-              <Field label="Your markup (× lab cost)">
-                <input
-                  className={inputCls}
-                  style={inputStyle}
-                  type="number"
-                  min="1"
-                  step="0.1"
-                  placeholder="3"
-                  value={markup}
-                  onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
-                />
-                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 7, marginBottom: 0 }}>
-                  You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
-                  <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong> — you keep{' '}
-                  <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>.
-                </p>
-              </Field>
+            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+              <div style={sectionHeader}>Pricing</div>
+              <div className="space-y-4" style={{ marginTop: 13 }}>
+                <Field label="Your markup (× lab cost)">
+                  <input
+                    className={inputCls}
+                    style={inputStyle}
+                    type="number"
+                    min="1"
+                    step="0.1"
+                    placeholder="3"
+                    value={markup}
+                    onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
+                  />
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
+                    You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
+                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong> — you keep{' '}
+                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>.
+                  </p>
+                </Field>
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
-                  <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
+                    <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+                  </div>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+                    Displays “From $X” on photos that are for sale.
+                  </p>
                 </div>
-                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4, marginBottom: 0 }}>
-                  Displays “From $X” on photos that are for sale.
-                </p>
               </div>
             </div>
 
             {/* Payouts */}
-            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }} className="space-y-2.5">
-              <div style={sectionLabel}>Payouts</div>
-              {connectStatus === true ? (
-                <>
-                  <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
-                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-                    Earnings go to your Stripe account.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    disabled={connecting}
-                    onClick={handleConnect}
-                    style={{
-                      fontSize: 12,
-                      color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
-                      border: '1px solid rgba(160,140,110,0.32)',
-                      borderRadius: 4,
-                      padding: '5px 12px',
-                      background: 'transparent',
-                      cursor: connecting ? 'default' : 'pointer',
-                      transition: 'color 0.15s, border-color 0.15s',
-                    }}
-                    onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
-                  >
-                    {connecting ? 'Redirecting…' : 'Connect payouts'}
-                  </button>
-                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-                    Get paid through Stripe. Required before you can sell.
-                  </p>
-                </>
-              )}
+            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+              <div style={sectionHeader}>Payouts</div>
+              <div style={{ marginTop: 12 }}>
+                {connectStatus === true ? (
+                  <>
+                    <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
+                    <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
+                      Earnings go to your Stripe account.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={connecting}
+                      onClick={handleConnect}
+                      style={{
+                        fontSize: 12,
+                        color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
+                        border: '1px solid rgba(160,140,110,0.32)',
+                        borderRadius: 4,
+                        padding: '5px 12px',
+                        background: 'transparent',
+                        cursor: connecting ? 'default' : 'pointer',
+                        transition: 'color 0.15s, border-color 0.15s',
+                      }}
+                      onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
+                    >
+                      {connecting ? 'Redirecting…' : 'Connect payouts'}
+                    </button>
+                    <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
+                      Get paid through Stripe. Required before you can sell.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Orders */}
@@ -710,7 +725,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         const cd = normalizeCustomDomain(config.customDomain)
         const rowProps = !cd
           ? { label: 'Set up custom domain' }
-          : { label: 'Custom domain', hint: `${cd.name} — ${cd.status === 'active' ? 'Connected' : 'Action needed'}` }
+          : { label: 'Custom domain' }
         return <DrillRow {...rowProps} onDrillIn={() => setView('domain')} />
       })()}
       <DrillRow
