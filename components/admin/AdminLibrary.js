@@ -497,8 +497,20 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-sm" style={{ color: '#a8967a' }}>
-        Loading library…
+      <div className="flex-1 flex flex-col items-center justify-center gap-3" style={{ color: '#a8967a' }}>
+        <div
+          className="animate-spin"
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            border: '2px solid rgba(160,140,110,0.25)',
+            borderTopColor: '#8b6f47',
+          }}
+        />
+        <span style={{ fontSize: 12, fontFamily: '"SF Mono", Menlo, monospace', letterSpacing: '0.06em', color: '#a8967a' }}>
+          Loading library…
+        </span>
       </div>
     );
   }
