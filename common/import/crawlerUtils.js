@@ -1,6 +1,6 @@
-const cheerio = require('cheerio')
+import * as cheerio from 'cheerio'
 
-function normalizeUrl(input) {
+export function normalizeUrl(input) {
   const s = String(input || '').trim()
   if (!s) return null
   const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`
@@ -11,7 +11,7 @@ function normalizeUrl(input) {
   }
 }
 
-function isSameDomain(url, origin) {
+export function isSameDomain(url, origin) {
   try {
     return new URL(url).origin === new URL(origin).origin
   } catch {
@@ -19,7 +19,7 @@ function isSameDomain(url, origin) {
   }
 }
 
-function extractTitle(html) {
+export function extractTitle(html) {
   const m = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(String(html || ''))
   return m ? m[1].trim() : null
 }
@@ -43,7 +43,7 @@ function largestFromSrcset(srcset) {
   return candidates[0].url
 }
 
-function extractImageUrls(html, baseUrl) {
+export function extractImageUrls(html, baseUrl) {
   const $ = cheerio.load(String(html || ''))
   const images = new Set()
   const links = new Set()
@@ -73,9 +73,3 @@ function extractImageUrls(html, baseUrl) {
   return { images: [...images], links: [...links] }
 }
 
-module.exports = {
-  normalizeUrl,
-  isSameDomain,
-  extractTitle,
-  extractImageUrls,
-}
