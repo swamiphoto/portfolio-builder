@@ -25,11 +25,11 @@ async function handler(req, res) {
   try {
     result = await adapter.discover(input)
   } catch (err) {
+    console.error('import discover failed', err)
     return res.status(502).json({
       error: 'discovery_failed',
       message:
         "We couldn't read that link. Double-check the URL and try again, or upload your photos manually.",
-      detail: String(err?.message || err),
     })
   }
 

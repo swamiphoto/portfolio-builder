@@ -21,10 +21,14 @@ jest.mock('@/common/withAuth', () => ({
 }))
 
 const mockDiscover = jest.fn()
+
+let mockDetectAdapter = jest.fn(() => ({ id: 'generic', enabled: true, discover: mockDiscover }))
+let mockGetAdapter = jest.fn(() => ({ id: 'generic', enabled: true, discover: mockDiscover }))
+
 jest.mock('@/common/import/adapters', () => ({
   PROVIDERS: { SMUGMUG: 'smugmug', GENERIC: 'generic' },
-  detectAdapter: () => ({ id: 'generic', enabled: true, discover: mockDiscover }),
-  getAdapter: () => ({ id: 'generic', enabled: true, discover: mockDiscover }),
+  get detectAdapter() { return mockDetectAdapter },
+  get getAdapter() { return mockGetAdapter },
 }))
 
 import handler from '@/pages/api/admin/import/discover'
@@ -34,7 +38,11 @@ function mockRes() {
 }
 
 describe('POST /api/admin/import/discover', () => {
-  beforeEach(() => mockDiscover.mockReset())
+  beforeEach(() => {
+    mockDiscover.mockReset()
+    mockDetectAdapter.mockClear()
+    mockGetAdapter.mockClear()
+  })
 
   it('400 on empty input', async () => {
     const res = mockRes()
@@ -64,5 +72,25 @@ describe('POST /api/admin/import/discover', () => {
     const res = mockRes()
     await handler({ method: 'GET', body: {} }, res)
     expect(res.status).toHaveBeenCalledWith(405)
+  })
+
+  it('502 when discovery throws', async () => {
+    mockDiscover.mockRejectedValue(new Error('network timeout'))
+    const res = mockRes()
+    await handler({ method: 'POST', body: { input: 'joe.com' } }, res)
+    expect(res.status).toHaveBeenCalledWith(502)
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'discovery_failed' })
+    )
+  })
+
+  it('400 when adapter is disabled', async () => {
+    mockDetectAdapter.mockReturnValueOnce({ id: 'generic', enabled: false, discover: mockDiscover })
+    const res = mockRes()
+    await handler({ method: 'POST', body: { input: 'joe.com' } }, res)
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'unsupported_source' })
+    )
   })
 })
