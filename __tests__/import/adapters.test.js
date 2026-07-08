@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { detectAdapter, getAdapter, PROVIDERS } from '@/common/import/adapters'
 
 describe('adapter registry', () => {
