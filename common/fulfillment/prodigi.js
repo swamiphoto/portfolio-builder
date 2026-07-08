@@ -16,17 +16,22 @@ function mapStage(stage) {
 
 function toRecipient(buyer) {
   const a = buyer.address || {}
+  // Prodigi rejects optional address fields sent as empty strings
+  // (MustNotBeEmptyOrWhitespace) — include line2 / stateOrCounty only when set.
+  const address = {
+    line1: a.line1 || '',
+    postalOrZipCode: a.postalCode || '',
+    countryCode: (a.country || 'US').toUpperCase(),
+    townOrCity: a.townOrCity || a.city || '',
+  }
+  const line2 = a.line2
+  const stateOrCounty = a.stateOrCounty || a.region
+  if (line2) address.line2 = line2
+  if (stateOrCounty) address.stateOrCounty = stateOrCounty
   return {
     name: buyer.name || '',
     email: buyer.email || '',
-    address: {
-      line1: a.line1 || '',
-      line2: a.line2 || '',
-      postalOrZipCode: a.postalCode || '',
-      countryCode: (a.country || 'US').toUpperCase(),
-      townOrCity: a.townOrCity || a.city || '',
-      stateOrCounty: a.stateOrCounty || a.region || '',
-    },
+    address,
   }
 }
 

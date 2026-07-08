@@ -38,8 +38,25 @@ describe('prodigiAdapter.placeOrder', () => {
     expect(opts.body.merchantReference).toBe('u1:ord_1')
     expect(opts.body.recipient.email).toBe('ada@example.com')
     expect(opts.body.recipient.address.countryCode).toBe('US')
-    expect(opts.body.items[0].sku).toBe('GLOBAL-FAP-16x20')
+    expect(opts.body.items[0].sku).toBe('GLOBAL-PAP-16X20') // lustre -> photographic
     expect(opts.body.items[0].assets[0].url).toBe('https://cdn.example.com/print.jpg')
+  })
+
+  it('omits empty optional address fields (Prodigi rejects empty line2 / stateOrCounty)', async () => {
+    prodigiFetch.mockResolvedValue({ order: { id: 'ord_x', status: { stage: 'InProgress' } } })
+    const noLine2 = { ...sampleOrder, buyer: { ...sampleOrder.buyer, address: { line1: '1 St', townOrCity: 'NYC', stateOrCounty: 'NY', postalCode: '10001', country: 'US' } } }
+    await prodigiAdapter.placeOrder(noLine2)
+    const addr = prodigiFetch.mock.calls[0][1].body.recipient.address
+    expect(addr).not.toHaveProperty('line2')
+    expect(addr.line1).toBe('1 St')
+    expect(addr.stateOrCounty).toBe('NY')
+  })
+
+  it('includes line2 when present', async () => {
+    prodigiFetch.mockResolvedValue({ order: { id: 'ord_x', status: { stage: 'InProgress' } } })
+    const withLine2 = { ...sampleOrder, buyer: { ...sampleOrder.buyer, address: { ...sampleOrder.buyer.address, line2: 'Apt 4' } } }
+    await prodigiAdapter.placeOrder(withLine2)
+    expect(prodigiFetch.mock.calls[0][1].body.recipient.address.line2).toBe('Apt 4')
   })
 
   it('rejects with "no order id" when Prodigi returns a body without order.id', async () => {
