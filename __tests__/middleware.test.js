@@ -48,6 +48,12 @@ it('passes through the bare root domain', async () => {
   expect(NextResponse.next).toHaveBeenCalled()
 })
 
+it('passes /print/* through on a subdomain (checkout confirmation is an app route)', async () => {
+  await middleware(req('jane.sepia.photo', '/print/confirmation'))
+  expect(NextResponse.next).toHaveBeenCalled()
+  expect(NextResponse.rewrite).not.toHaveBeenCalled()
+})
+
 it('lowercases a mixed-case custom domain before the pointer lookup', async () => {
   global.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ username: 'jane' }) })
   await middleware(req('Photos.JaneDoe.com', '/'))

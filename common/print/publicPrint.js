@@ -28,9 +28,15 @@ export function publicSiteConfig(siteConfig) {
   return { ...siteConfig, printStore: publicPrintStore(siteConfig) }
 }
 
-// Server-safe reference to the high-res print file for fulfillment.
+// Server-safe reference to the print file for fulfillment. Prefers an uploaded
+// high-res master; falls back to the asset's display image, whose dimensions
+// already gated `availableSizes` at the DPI floor — so it's a valid print source
+// at every offered size. Returns null only when there's no usable image at all.
 export function printImageRef(asset) {
-  const key = asset && asset.print && asset.print.masterStorageKey
-  if (!key) return null
-  return { masterStorageKey: key, imageUrl: `${PUBLIC_URL}/${key}` }
+  if (!asset || !asset.print) return null
+  const key = asset.print.masterStorageKey
+  if (key) return { masterStorageKey: key, imageUrl: `${PUBLIC_URL}/${key}` }
+  const fallback = asset.publicUrl || asset.url || null
+  if (fallback) return { masterStorageKey: null, imageUrl: fallback }
+  return null
 }
