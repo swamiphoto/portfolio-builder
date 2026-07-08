@@ -251,9 +251,11 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
 
   const enabled = !!ps.enabled
   const markup = ps.markup ?? 3
+  const feePct = Number(process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT || 0)
   const exampleCost = 20
   const exampleRetail = Math.round(exampleCost * markup)
-  const exampleProfit = exampleRetail - exampleCost
+  const exampleCommission = Math.round(exampleRetail * feePct / 100)
+  const exampleProfit = exampleRetail - exampleCost - exampleCommission
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
@@ -289,7 +291,8 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                   <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
                     You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
                     <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong> — you keep{' '}
-                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>.
+                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>
+                    {feePct > 0 ? ` after Sepia’s ${feePct}% commission` : ''}.
                   </p>
                 </Field>
 
