@@ -40,6 +40,31 @@ export const prodigiAdapter = {
   getCost: (...args) => mockLabAdapter.getCost(...args),
   getShippingQuote: (...args) => mockLabAdapter.getShippingQuote(...args),
 
+  // Live price + shipping for the exact SKU + destination. Falls back to the
+  // seed quote on any failure so the buyer's quote/checkout never breaks.
+  async getQuote(spec, address) {
+    try {
+      const mapped = mapSpecToProdigi(spec)
+      const body = {
+        shippingMethod: 'Standard',
+        destinationCountryCode: (address?.country || 'US').toUpperCase(),
+        items: [{ sku: mapped.sku, copies: mapped.copies, attributes: mapped.attributes, assets: [{ printArea: 'default' }] }],
+      }
+      const out = await prodigiFetch('/v4.0/quotes', { method: 'POST', body })
+      const q = (out.quotes || [])[0]
+      const cost = Number(q?.costSummary?.items?.amount)
+      const shipping = Number(q?.costSummary?.shipping?.amount)
+      const currency = q?.costSummary?.items?.currency
+      if (!Number.isFinite(cost) || !Number.isFinite(shipping) || !currency) {
+        throw new Error('incomplete prodigi quote')
+      }
+      return { cost, shipping, currency }
+    } catch (err) {
+      console.error('prodigi quote failed, using seed pricing:', err.message)
+      return mockLabAdapter.getQuote(spec, address)
+    }
+  },
+
   async placeOrder(order) {
     const mapped = mapSpecToProdigi(order.spec)
     const body = {
