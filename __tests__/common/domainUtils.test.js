@@ -1,6 +1,18 @@
 import {
-  isApex, dnsRecordsFor, deriveStatus, normalizeCustomDomain, siteUrlFor, parseHost, basePathFor,
+  isApex, dnsRecordsFor, deriveStatus, normalizeCustomDomain, siteUrlFor, parseHost, basePathFor, subdomainHost,
 } from '../../common/domainUtils'
+
+describe('subdomainHost', () => {
+  it('joins the subdomain to the configured root domain', () => {
+    expect(subdomainHost('jane', 'sepia.photo')).toBe('jane.sepia.photo')
+  })
+  it('strips a port from the root domain (dev)', () => {
+    expect(subdomainHost('jane', 'lvh.me:3000')).toBe('jane.lvh.me')
+  })
+  it('falls back to localhost when no root domain is set', () => {
+    expect(subdomainHost('jane', undefined)).toBe('jane.localhost')
+  })
+})
 
 describe('basePathFor', () => {
   it('is empty (clean URLs) on a subdomain of the root', () => {
