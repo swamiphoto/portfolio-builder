@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { discoverSource, makeImportBatchId } from '@/common/import/importClient'
+import { discoverSource, importSelected, makeImportBatchId } from '@/common/import/importClient'
 import { MONO, monoLabel, primaryBtn, CloseIcon } from './importFlowStyles'
+import ReviewStep from './ReviewStep'
+import ImportProgress from './ImportProgress'
 
 function hostOf(input) {
   try {
@@ -15,6 +17,8 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   const [input, setInput] = useState(initialInput)
   const [error, setError] = useState(null)
   const [discovery, setDiscovery] = useState(null)
+  const [progress, setProgress] = useState(null)
+  const [summary, setSummary] = useState(null)
 
   async function handleDiscover() {
     const trimmed = input.trim()
@@ -28,6 +32,37 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
     } catch (err) {
       setError(err?.message || 'We could not read that link.')
       setStep('source')
+    }
+  }
+
+  async function handleImport(selectedCollections) {
+    setStep('importing')
+    setProgress({ done: 0, total: selectedCollections.reduce((n, c) => n + (c.assetRefs?.length || 0), 0), importedCount: 0, failedCount: 0 })
+    try {
+      const label = discovery.site?.title || hostOf(input)
+      const batchId = makeImportBatchId(discovery.provider, input, Date.now())
+      const result = await importSelected({
+        provider: discovery.provider,
+        label,
+        importBatchId: batchId,
+        selectedCollections,
+        onProgress: setProgress,
+      })
+      const collectionIds = new Set(result.imported.map((a) => a.source?.externalCollectionId).filter(Boolean))
+      const setsCount = collectionIds.size || selectedCollections.length
+      const s = {
+        importedCount: result.imported.length,
+        failedCount: result.failed.length,
+        setsCount,
+        site: discovery.site,
+        imported: result.imported,
+        collections: discovery.collections,
+      }
+      setSummary(s)
+      setStep('done')
+    } catch (err) {
+      setError(err?.message || 'Something went wrong during import.')
+      setStep('review')
     }
   }
 
@@ -52,7 +87,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
           />
           {error && <p style={{ marginTop: 10, fontSize: 12.5, color: '#a15c4a' }}>{error}</p>}
           <div className="flex items-center justify-between" style={{ marginTop: 22 }}>
-            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+            <span style={{ ...monoLabel, color: 'var(--text-muted)' }}>
               SmugMug · Squarespace · Format · Wix · <span style={{ opacity: 0.6 }}>Instagram (soon)</span>
             </span>
             <button onClick={handleDiscover} disabled={!input.trim()} style={primaryBtn(!input.trim())}>
@@ -70,9 +105,33 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
         </div>
       )}
 
-      {/* review / importing / done — implemented in Task 4 */}
-      {(step === 'review' || step === 'importing' || step === 'done') && (
-        <div data-testid="import-later-steps" style={{ padding: 28 }} />
+      {step === 'review' && (
+        <ReviewStep
+          discovery={discovery}
+          onBack={() => setStep('source')}
+          onImport={handleImport}
+        />
+      )}
+
+      {step === 'importing' && <ImportProgress progress={progress} />}
+
+      {step === 'done' && summary && (
+        <div style={{ padding: '32px 28px 28px' }}>
+          <h2 className="font-fraunces" style={{ fontSize: 20, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.35 }}>
+            Imported {summary.importedCount} {summary.importedCount === 1 ? 'photo' : 'photos'} into {summary.setsCount} {summary.setsCount === 1 ? 'set' : 'sets'} from {hostOf(input)}.
+          </h2>
+          {summary.failedCount > 0 && (
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
+              {summary.failedCount} {summary.failedCount === 1 ? "couldn't" : "couldn't"} be brought in — you can add those manually.
+            </p>
+          )}
+          <button
+            onClick={() => onComplete(summary)}
+            style={{ ...primaryBtn(false), marginTop: 20 }}
+          >
+            See my photos
+          </button>
+        </div>
       )}
     </>
   )

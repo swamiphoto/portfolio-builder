@@ -1,0 +1,59 @@
+// __tests__/components/ImportFlowReview.test.js
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import ImportFlow from '@/components/admin/import/ImportFlow'
+import * as client from '@/common/import/importClient'
+
+jest.mock('@/common/import/importClient', () => ({
+  __esModule: true,
+  discoverSource: jest.fn(),
+  importSelected: jest.fn(),
+  makeImportBatchId: () => 'imp_test',
+}))
+
+const discovery = {
+  provider: 'generic',
+  site: { title: 'Joe', url: 'https://joe.com/' },
+  totalAssets: 3,
+  collections: [
+    { id: 'c1', name: 'Travel', assetRefs: [{ remoteUrl: 'u1' }, { remoteUrl: 'u2' }] },
+    { id: 'c2', name: 'Food', assetRefs: [{ remoteUrl: 'u3' }] },
+  ],
+}
+
+async function toReview() {
+  client.discoverSource.mockResolvedValue(discovery)
+  render(<ImportFlow variant="modal" onClose={() => {}} onComplete={jest.fn()} />)
+  fireEvent.change(screen.getByPlaceholderText(/yourwebsite/i), { target: { value: 'joe.com' } })
+  fireEvent.click(screen.getByRole('button', { name: /find my photos/i }))
+  await screen.findByText(/import all 3 photos/i)
+}
+
+describe('ImportFlow review + import', () => {
+  afterEach(() => jest.resetAllMocks())
+
+  it('shows discovered galleries and imports all by default', async () => {
+    client.importSelected.mockImplementation(async ({ onProgress }) => {
+      onProgress?.({ done: 3, total: 3, importedCount: 3, failedCount: 0 })
+      return { imported: [{ assetId: 'a1', source: { externalCollectionId: 'c1' } }], failed: [], skipped: [], total: 3 }
+    })
+    await toReview()
+    expect(screen.getByText('Travel')).toBeInTheDocument()
+    expect(screen.getByText('Food')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /import all 3 photos/i }))
+    await waitFor(() => expect(client.importSelected).toHaveBeenCalled())
+    const arg = client.importSelected.mock.calls[0][0]
+    expect(arg.selectedCollections).toHaveLength(2)
+    expect(await screen.findByText(/see my photos/i)).toBeInTheDocument()
+  })
+
+  it('excludes an unchecked gallery from the import', async () => {
+    client.importSelected.mockResolvedValue({ imported: [], failed: [], skipped: [], total: 2 })
+    await toReview()
+    // uncheck "Food" (c2)
+    fireEvent.click(screen.getByLabelText(/Food/i))
+    fireEvent.click(screen.getByRole('button', { name: /import all 2 photos/i }))
+    await waitFor(() => expect(client.importSelected).toHaveBeenCalled())
+    const arg = client.importSelected.mock.calls[0][0]
+    expect(arg.selectedCollections.map((c) => c.id)).toEqual(['c1'])
+  })
+})
