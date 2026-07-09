@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import PopoverShell from './PopoverShell'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
+import { customDomainName } from '../../../common/customDomainName'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
@@ -320,10 +321,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             className={inputCls}
             style={inputStyle}
             placeholder="photos.yourname.com"
-            value={config.customDomain || ''}
+            value={customDomainName(config.customDomain)}
             onChange={(e) => update({ customDomain: e.target.value || null })}
           />
-          {config.customDomain && (
+          {customDomainName(config.customDomain) && (
             <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
               Point a CNAME to <span style={{ fontFamily: MONO, color: 'var(--text-secondary)' }}>{config.userId}.{rootDomain}</span> to activate.
             </p>
@@ -382,7 +383,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     const largeImage = share.largeImage || config.cover?.imageUrl || ''
     const squareImage = share.squareImage || config.cover?.imageUrl || ''
     const previewSubdomain = username || 'yoursite'
-    const domain = config.customDomain || `${previewSubdomain}.sepia.photo`
+    const domain = customDomainName(config.customDomain) || `${previewSubdomain}.sepia.photo`
     const siteName = config.siteName || 'My Portfolio'
     const tagline = config.tagline || ''
     const cardBorder = '1px solid rgba(160,140,110,0.22)'
@@ -600,7 +601,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
       {/* Drill rows */}
       <DrillRow
-        label={config.customDomain || 'Setup custom domain'}
+        label={customDomainName(config.customDomain) || 'Setup custom domain'}
         onDrillIn={() => setView('domain')}
       />
       <DrillRow
