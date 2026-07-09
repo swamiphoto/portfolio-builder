@@ -122,7 +122,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
           </h2>
           {summary.failedCount > 0 && (
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
-              {summary.failedCount} {summary.failedCount === 1 ? "couldn't" : "couldn't"} be brought in — you can add those manually.
+              {summary.failedCount} couldn't be brought in — you can add those manually.
             </p>
           )}
           <button
