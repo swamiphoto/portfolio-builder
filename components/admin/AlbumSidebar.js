@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import Tip from "./Tip";
+import { sourceLabel } from '@/common/import/sourceFilter';
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const LINE_COLOR = 'rgba(160,140,110,0.32)';
@@ -545,6 +546,7 @@ export default function AlbumSidebar({
   lensCounts,
   focalLengthCounts,
   isoCounts,
+  sourceCounts,
   filters,
   onFilterChange,
   onBack,
@@ -568,10 +570,11 @@ export default function AlbumSidebar({
     filters.lens !== "all",
     filters.focalLength !== "all",
     filters.iso !== "all",
+    filters.source !== "all",
   ].filter(Boolean).length;
 
   const clearAllFilters = useCallback(() => {
-    ["orientation","usage","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso"]
+    ["orientation","usage","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso","source"]
       .forEach(k => onFilterChange(k, "all"));
     onSelect({ type: "all", key: "all" });
   }, [onFilterChange, onSelect]);
@@ -695,6 +698,20 @@ export default function AlbumSidebar({
                 label={orientation.charAt(0).toUpperCase() + orientation.slice(1)}
                 count={count}
                 onClick={() => onFilterChange("orientation", filters.orientation === orientation ? "all" : orientation)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {Object.keys(sourceCounts || {}).length > 0 && (
+          <SidebarSection title="Source" openOverride={sectionsOpen}>
+            {Object.entries(sourceCounts).map(([provider, count]) => (
+              <SidebarItem
+                key={provider}
+                active={filters.source === provider}
+                label={sourceLabel(provider)}
+                count={count}
+                onClick={() => onFilterChange('source', filters.source === provider ? 'all' : provider)}
               />
             ))}
           </SidebarSection>

@@ -4,6 +4,7 @@ import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
 import { getPagePhotos } from "../../common/assetRefs";
+import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
 
 export default function AdminLibrary({ onBack, siteConfig }) {
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     lens: "all",
     focalLength: "all",
     iso: "all",
+    source: "all",
   });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [highlightedUrls, setHighlightedUrls] = useState(null);
@@ -172,6 +174,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         if (filters.iso === "mid" && (iso <= 400 || iso > 1600)) return false;
         if (filters.iso === "high" && iso <= 1600) return false;
       }
+
+      if (!matchesSource(asset, filters.source)) return false;
 
       return true;
     });
@@ -457,6 +461,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     lens: v => v,
     focalLength: v => ({ wide: '≤ 35mm', normal: '35–85mm', tele: '85–200mm', super: '> 200mm' }[v] || v),
     iso: v => ({ low: 'ISO ≤ 400', mid: 'ISO 400–1600', high: 'ISO > 1600' }[v] || v),
+    source: v => sourceLabel(v),
   };
   const activeFilters = Object.entries(filters)
     .filter(([k, v]) => v !== 'all' && FILTER_LABELS[k])
@@ -553,6 +558,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     return acc;
   }, {});
 
+  const sourceCounts = computeSourceCounts(allAssets);
+
   return (
     <div className="flex h-full w-full overflow-hidden font-sans">
       <AlbumSidebar
@@ -572,6 +579,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         lensCounts={lensCounts}
         focalLengthCounts={focalLengthCounts}
         isoCounts={isoCounts}
+        sourceCounts={sourceCounts}
         filters={filters}
         onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
         pages={pagesData}
