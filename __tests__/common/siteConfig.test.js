@@ -13,6 +13,7 @@ import {
   createDefaultSiteConfig,
   defaultPage,
   generatePageId,
+  normalizePrintStore,
   readSiteConfig,
   seedBlocksForTemplate,
   writeSiteConfig,
@@ -88,7 +89,16 @@ describe('readSiteConfig', () => {
     downloadJSON.mockResolvedValue(mockConfig)
 
     const result = await readSiteConfig('user-123')
-    expect(result).toEqual(mockConfig)
+    expect(result).toMatchObject(mockConfig)
+    expect(result.printStore).toMatchObject({
+      enabled: false,
+      markup: 3,
+      showPriceOnImage: false,
+      currency: 'USD',
+      stripeConnectAccountId: null,
+      platformFeePct: 0,
+      chargesEnabled: false,
+    })
     expect(downloadJSON).toHaveBeenCalledWith('users/user-123/site-config.json')
   })
 
@@ -185,5 +195,43 @@ describe('defaultPage with template', () => {
   it('without a template, blocks defaults to []', () => {
     const page = defaultPage({ id: 'x', title: 'X' })
     expect(page.blocks).toEqual([])
+  })
+})
+
+describe('printStore', () => {
+  it('is present with defaults on a new site config', () => {
+    const cfg = createDefaultSiteConfig('u1')
+    expect(cfg.printStore).toMatchObject({
+      enabled: false,
+      markup: 3,
+      showPriceOnImage: false,
+      currency: 'USD',
+      stripeConnectAccountId: null,
+      platformFeePct: 0,
+      chargesEnabled: false,
+    })
+  })
+
+  it('normalizePrintStore backfills a missing printStore', () => {
+    const cfg = normalizePrintStore({ userId: 'u1', pages: [] })
+    expect(cfg.printStore.enabled).toBe(false)
+    expect(cfg.printStore.markup).toBe(3)
+  })
+
+  it('normalizePrintStore preserves provided values', () => {
+    const cfg = normalizePrintStore({ printStore: { enabled: true, markup: 2.5 } })
+    expect(cfg.printStore.enabled).toBe(true)
+    expect(cfg.printStore.markup).toBe(2.5)
+    expect(cfg.printStore.platformFeePct).toBe(0)
+  })
+})
+
+describe('printStore.chargesEnabled', () => {
+  it('defaults to false on a new config', () => {
+    expect(createDefaultSiteConfig('u1').printStore.chargesEnabled).toBe(false)
+  })
+  it('normalizePrintStore backfills and preserves chargesEnabled', () => {
+    expect(normalizePrintStore({}).printStore.chargesEnabled).toBe(false)
+    expect(normalizePrintStore({ printStore: { chargesEnabled: true } }).printStore.chargesEnabled).toBe(true)
   })
 })

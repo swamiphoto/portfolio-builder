@@ -119,6 +119,7 @@ function BlockCard({
   onMoveImagesAcrossBlocks,
   assetsByUrl,
   onUpdateLibraryCaption,
+  onPrintChange,
   highlighted,
   expandedOverride,
   onTitleClick,
@@ -1109,6 +1110,8 @@ function BlockCard({
             usage: asset.usage,
             orientation: asset.orientation,
             assetId: asset.assetId,
+            print: asset.print,
+            forSale: asset.forSale,
             createdAt: asset.createdAt,
             updatedAt: asset.updatedAt,
             sets: setsByUrl?.[ref.url] || [],
@@ -1121,6 +1124,7 @@ function BlockCard({
             index={lightboxIndex}
             onClose={() => setLightboxIndex(null)}
             onNavigate={setLightboxIndex}
+            onPrintChange={onPrintChange}
             isOverride={(i) => {
               if (isPhotoBlock) {
                 const refs = normalizeImageRefs(block.images || block.imageUrls || []);

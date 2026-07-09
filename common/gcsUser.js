@@ -36,3 +36,22 @@ export function getUsernameLookupPath(username) {
   if (!username) throw new Error('username is required')
   return `usernames/${username}.json`
 }
+
+export function getDomainLookupPath(hostname) {
+  if (!hostname) throw new Error('hostname is required')
+  return `domains/${hostname}.json`
+}
+
+export function getUserPrintMasterPath(userId, filename) {
+  if (!filename) throw new Error('filename is required')
+  return `${getUserPhotosPrefix(userId)}print-masters/${filename}`
+}
+
+export function getUserOrdersPrefix(userId) {
+  return `${getUserPrefix(userId)}orders/`
+}
+
+export function getUserOrderPath(userId, orderId) {
+  if (!orderId) throw new Error('orderId is required')
+  return `${getUserOrdersPrefix(userId)}${orderId}.json`
+}

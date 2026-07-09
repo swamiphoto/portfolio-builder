@@ -409,6 +409,7 @@ export default function AdminIndex() {
                   activeChildId={activeChildId}
                   username={username}
                   assetsByUrl={assetsByUrl}
+                  printStore={siteConfig?.printStore}
                   noWrap
                   enableSlideshow={!!slideshowHref}
                   onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}

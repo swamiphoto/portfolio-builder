@@ -35,14 +35,14 @@ function NavList({ items, basePath, depth = 0, dark = false, currentPath = '', o
   )
 }
 
-export default function SiteNav({ siteConfig, username, variant, onPageClick }) {
+export default function SiteNav({ siteConfig, username, variant, onPageClick, basePath: basePathProp }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
   const adminViewport = useAdminViewport()
   const isMobile = adminViewport === 'mobile'
   const tree = buildNavTree(siteConfig.pages)
   const style = variant || resolveNavStyle(siteConfig.theme)
-  const basePath = `/sites/${username}`
+  const basePath = basePathProp != null ? basePathProp : `/sites/${username}`
   const currentPath = router.asPath.split('?')[0]
 
   if (style === 'header-dropdown') {
@@ -51,7 +51,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick }) 
         {onPageClick ? (
           <button className="font-serif2 text-2xl text-gray-900 tracking-wide">{siteConfig.siteName || username}</button>
         ) : (
-          <a href={basePath} className="font-serif2 text-2xl text-gray-900 tracking-wide">{siteConfig.siteName || username}</a>
+          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide">{siteConfig.siteName || username}</a>
         )}
 
         {/* Desktop nav — hidden in mobile preview */}

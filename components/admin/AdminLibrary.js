@@ -7,6 +7,8 @@ import ImportFlow from "./import/ImportFlow";
 import { getPagePhotos } from "../../common/assetRefs";
 import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
 import { applyImportToConfig } from '@/common/import/importClient';
+import { resolveSellableAsset } from "../../common/print/sellAsset";
+import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
 export default function AdminLibrary({ onBack, siteConfig }) {
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [filters, setFilters] = useState({
     orientation: "all",
     usage: "all",
+    forPrint: "all",
     captureYear: "all",
     uploaded: "all",
     aperture: "all",
@@ -40,6 +43,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
+  const [printStore, setPrintStore] = useState(null);
 
   const fetchLibrary = useCallback(async () => {
     try {
@@ -57,6 +61,13 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   }, []);
 
   useEffect(() => { fetchLibrary(); }, [fetchLibrary]);
+
+  useEffect(() => {
+    fetch('/api/admin/print/settings')
+      .then(res => { if (res.ok) return res.json(); })
+      .then(data => { if (data?.printStore) setPrintStore(data.printStore); })
+      .catch(() => {});
+  }, []);
 
   const saveConfig = useCallback(async (newConfig) => {
     const res = await fetch("/api/admin/library", {
@@ -127,6 +138,10 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       const usageCount = asset.usage?.usageCount || 0;
       if (filters.usage === "unused" && usageCount > 0) return false;
       if (filters.usage === "used" && usageCount === 0) return false;
+
+      const forSale = !!asset.print?.sellable;
+      if (filters.forPrint === "on" && !forSale) return false;
+      if (filters.forPrint === "off" && forSale) return false;
 
       if (filters.aperture !== "all") {
         const raw = asset.capture?.aperture || asset.capture?.fNumber;
@@ -373,6 +388,65 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     });
   }, [currentConfig]);
 
+  const applyPrint = useCallback((assetId, print) => {
+    setLibraryData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: print.sellable } },
+        images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: print.sellable } : img),
+      };
+    });
+  }, []);
+
+  const handleSellChange = useCallback(async (assetId, sellable) => {
+    if (!assetId) return;
+    const asset = libraryData?.assets?.[assetId] || {};
+    const prevPrint = asset.print || {};
+    // Optimistic: compute the real available sizes client-side (same pure
+    // resolver the server uses) so the toggle is instant AND correct — no
+    // "too small" flash while the round-trip is in flight.
+    const { print: optimistic } = resolveSellableAsset(
+      { ...asset, print: prevPrint }, SEED_CATALOG, printStore?.markup || 3, sellable
+    );
+    applyPrint(assetId, optimistic);
+    try {
+      const res = await fetch('/api/admin/print/sell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId, sellable }),
+      });
+      if (!res.ok) {
+        console.error('print sell failed', res.status, await res.text().catch(() => ''));
+        applyPrint(assetId, prevPrint);
+        return;
+      }
+      const { print } = await res.json();
+      applyPrint(assetId, print);
+    } catch (e) {
+      console.error('print sell error', e);
+      applyPrint(assetId, prevPrint);
+    }
+  }, [libraryData, applyPrint, printStore]);
+
+  const handleUploadMaster = useCallback(async (assetId, file) => {
+    if (!assetId || !file) return;
+    try {
+      const res = await fetch(
+        `/api/admin/print/upload-master?assetId=${encodeURIComponent(assetId)}&filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
+        { method: 'POST', body: file }
+      );
+      if (!res.ok) {
+        console.error('print master upload failed', res.status, await res.text().catch(() => ''));
+        return;
+      }
+      const { print } = await res.json();
+      applyPrint(assetId, print);
+    } catch (e) {
+      console.error('print master upload error', e);
+    }
+  }, [applyPrint]);
+
   const handleCreateSet = useCallback(async (name, parentKey = null) => {
     const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
     if (!slug) return
@@ -441,8 +515,20 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-sm" style={{ color: '#a8967a' }}>
-        Loading library…
+      <div className="flex-1 flex flex-col items-center justify-center gap-3" style={{ color: '#a8967a' }}>
+        <div
+          className="animate-spin"
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            border: '2px solid rgba(160,140,110,0.25)',
+            borderTopColor: '#8b6f47',
+          }}
+        />
+        <span style={{ fontSize: 12, fontFamily: '"SF Mono", Menlo, monospace', letterSpacing: '0.06em', color: '#a8967a' }}>
+          Loading library…
+        </span>
       </div>
     );
   }
@@ -467,6 +553,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const FILTER_LABELS = {
     orientation: v => v.charAt(0).toUpperCase() + v.slice(1),
     usage: v => v === 'used' ? 'In Use' : 'Unused',
+    forPrint: v => v === 'on' ? 'For sale' : 'Not for sale',
     captureYear: v => v,
     uploaded: v => ({ week: 'This week', month: 'This month', year: 'This year', older: 'Older' }[v] || v),
     aperture: v => ({ wide: 'ƒ < 2', mid: 'ƒ 2–4', narrow: 'ƒ 4–8', closed: 'ƒ 8+' }[v] || v),
@@ -491,6 +578,11 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     else acc.unused += 1;
     return acc;
   }, { used: 0, unused: 0 });
+  const printCounts = allAssets.reduce((acc, asset) => {
+    if (asset.print?.sellable) acc.on += 1;
+    else acc.off += 1;
+    return acc;
+  }, { on: 0, off: 0 });
 
   const cameraCounts = allAssets.reduce((acc, asset) => {
     const cam = asset.capture?.cameraModel;
@@ -585,6 +677,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onDeleteSet={handleDeleteSet}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
+        printCounts={printCounts}
         captureYearCounts={captureYearCounts}
         uploadedCounts={uploadedCounts}
         apertureCounts={apertureCounts}
@@ -612,6 +705,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onCaptionChange={handleCaptionChange}
         onToggleSet={handleToggleSet}
         onUploadClick={() => setUploadOpen(true)}
+        printStore={printStore}
+        onSellChange={handleSellChange}
+        onUploadMaster={handleUploadMaster}
         onAddFromLibraryClick={handleAddFromLibrary}
         activeFilters={activeFilters}
         onRemoveFilter={k => setFilters(prev => ({ ...prev, [k]: 'all' }))}

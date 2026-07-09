@@ -5,6 +5,8 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
+import { publicPrintForAsset, publicPrintStore, publicSiteConfig } from '../../../common/print/publicPrint'
+import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -14,19 +16,27 @@ function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
   if (block.type === 'photo') {
     const ref = { url: block.imageUrl, caption: block.caption }
-    return { ...block, caption: resolveCaption(ref, assetsByUrl) }
+    const entry = assetsByUrl[block.imageUrl]
+    const resolved = { ...block, caption: resolveCaption(ref, assetsByUrl) }
+    if (entry?.print) resolved.print = entry.print
+    return resolved
   }
   if (block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry') {
     const refs = (block.images || []).length
       ? block.images
       : (block.imageUrls || []).map(url => ({ url }))
-    const images = refs.map(r => ({ ...r, caption: resolveCaption(r, assetsByUrl) }))
+    const images = refs.map(r => {
+      const entry = assetsByUrl[r.url]
+      const out = { ...r, caption: resolveCaption(r, assetsByUrl) }
+      if (entry?.print) out.print = entry.print
+      return out
+    })
     return { ...block, images, imageUrls: images.map(i => i.url) }
   }
   return block
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, req }) {
   const { username, slug } = params
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
@@ -39,19 +49,27 @@ export async function getServerSideProps({ params }) {
   if (!page) return { notFound: true }
   const assetsByUrl = {}
   for (const a of Object.values(libraryConfig?.assets || {})) {
-    if (a?.publicUrl) assetsByUrl[a.publicUrl] = { assetId: a.assetId, caption: a.caption }
+    if (!a?.publicUrl) continue
+    const entry = { assetId: a.assetId, caption: a.caption }
+    const print = publicPrintForAsset(a)
+    if (print) entry.print = print
+    assetsByUrl[a.publicUrl] = entry
   }
+  const printStore = publicPrintStore(siteConfig)
+  const basePath = basePathFor(req.headers.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
   return {
     props: {
-      siteConfig: JSON.parse(JSON.stringify(siteConfig)),
+      siteConfig: JSON.parse(JSON.stringify(publicSiteConfig(siteConfig))),
       page: JSON.parse(JSON.stringify(page)),
       assetsByUrl,
+      printStore,
       username,
+      basePath,
     },
   }
 }
 
-export default function PublicPage({ siteConfig, page, assetsByUrl, username }) {
+export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, username, basePath }) {
   // Client-side gate only — not a security boundary. Real protection lives in clientFeatures.
   const [unlocked, setUnlocked] = useState(!page.password)
   if (!unlocked) {
@@ -61,15 +79,12 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
   const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   const ogTitle = page.title || siteConfig.siteName || 'Portfolio'
   const ogDescription = page.description || siteConfig.tagline || ''
-  const rootDomainPublic = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
-  const siteUrl = siteConfig.customDomain
-    ? `https://${siteConfig.customDomain}`
-    : `https://${username}.${rootDomainPublic.replace(/:\d+$/, '')}`
+  const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
   const pageUrl = `${siteUrl}/${page.slug || page.id}`
 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   const navVariant = page?.cover?.imageUrl ? undefined : 'header-dropdown'
-  const slideshowHref = page.slideshow?.enabled ? `/sites/${username}/${page.slug || page.id}/slideshow` : null
+  const slideshowHref = page.slideshow?.enabled ? `${basePath}/${page.slug || page.id}/slideshow` : null
   // Sub-nav: if this page has a parent, show siblings. If it has children, show children.
   const allPages = siteConfig.pages || []
   const isChildPage = !!page.parentId
@@ -92,7 +107,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} />
+      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
       <main>
         <PageCover
           cover={page.cover}
@@ -109,9 +124,11 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, username }) 
           childPages={subNavPages}
           activeChildId={activeSubNavId}
           username={username}
+          basePath={basePath}
           enableSlideshow={!!slideshowHref}
           onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
           siteConfig={siteConfig}
+          printStore={printStore}
         />
       </main>
     </div>

@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
+import SellAsPrintPanel from "./print/SellAsPrintPanel";
+import { resolveSellableAsset } from "../../common/print/sellAsset";
+import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const SERIF = '"Cormorant Garamond", "Muse", Georgia, serif';
@@ -289,13 +292,72 @@ function FilenameValue({ filename }) {
   );
 }
 
-export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet }) {
+export default function AdminPhotoLightbox({ images, index, onClose, onNavigate, onCaptionChange, onCaptionChangeToLibrary, isOverride, onToggleOverride, onRevertToLibrary, allSets, onToggleSet, printStore, onSellChange, onUploadMaster, onPrintChange }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
 
   const [caption, setCaption] = useState(image?.caption || '');
   const [saved, setSaved] = useState(true);
+
+  // Print/sell state. When a parent wires onSellChange (the library grid), we
+  // defer to it. When it doesn't (opened from a page/gallery block), the
+  // lightbox handles the sell/upload API calls itself and reflects the result
+  // locally via printByAsset so the toggle works from any surface.
+  const [printByAsset, setPrintByAsset] = useState({});
+  const effectivePrint = (image && (printByAsset[image.assetId] || image.print)) || null;
+
+  // Apply a resolved print object to local state + notify the host so the
+  // change survives closing/reopening the lightbox (host owns the asset cache).
+  const applyPrint = (assetId, print) => {
+    setPrintByAsset((prev) => ({ ...prev, [assetId]: print }));
+    onPrintChange?.(assetId, print);
+  };
+
+  const selfSell = async (assetId, next) => {
+    const prevPrint = printByAsset[assetId] || image?.print || {};
+    // Optimistic: compute the real available sizes client-side (same pure
+    // resolver the server uses) so the toggle is instant AND correct — no
+    // "too small" flash while waiting on the round-trip.
+    const { print: optimistic } = resolveSellableAsset(
+      { ...image, print: prevPrint }, SEED_CATALOG, printStore?.markup || 3, next
+    );
+    applyPrint(assetId, optimistic);
+    try {
+      const res = await fetch('/api/admin/print/sell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId, sellable: next }),
+      });
+      if (!res.ok) {
+        console.error('print sell failed', res.status, await res.text().catch(() => ''));
+        applyPrint(assetId, prevPrint);
+        return;
+      }
+      const { print } = await res.json();
+      applyPrint(assetId, print);
+    } catch (e) {
+      console.error('print sell error', e);
+      applyPrint(assetId, prevPrint);
+    }
+  };
+
+  const selfUpload = async (assetId, file) => {
+    try {
+      const res = await fetch(
+        `/api/admin/print/upload-master?assetId=${encodeURIComponent(assetId)}&filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
+        { method: 'POST', body: file }
+      );
+      if (!res.ok) { console.error('print master upload failed', res.status, await res.text().catch(() => '')); return; }
+      const { print } = await res.json();
+      applyPrint(assetId, print);
+    } catch (e) { console.error('print master upload error', e); }
+  };
+
+  const handleSell = (next) =>
+    onSellChange ? onSellChange(image.assetId, next) : selfSell(image.assetId, next);
+  const handleUploadMaster = (file) =>
+    onUploadMaster ? onUploadMaster(image.assetId, file) : selfUpload(image.assetId, file);
 
   useEffect(() => {
     setCaption(image?.caption || '');
@@ -413,7 +475,7 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
         {/* Close button — absolutely positioned so it doesn't push content down */}
         <button
           onClick={onClose}
-          style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a6b55', zIndex: 1 }}
+          style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', color: '#7a6b55', zIndex: 1 }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.08)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
@@ -450,6 +512,15 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             {!saved && (
               <p style={{ fontFamily: MONO, fontSize: 9.5, color: '#b0a490', margin: 0 }}>Enter or click away to save</p>
             )}
+          </Section>
+
+          {/* Sell as print */}
+          <Section title="Sell as print">
+            <SellAsPrintPanel
+              asset={image ? { ...image, print: effectivePrint } : image}
+              onSellChange={handleSell}
+              onUploadMaster={handleUploadMaster}
+            />
           </Section>
 
           {/* File */}

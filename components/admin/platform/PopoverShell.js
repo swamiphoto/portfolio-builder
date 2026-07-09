@@ -30,12 +30,13 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     if (shouldOpenUp) {
       const bottom = window.innerHeight - rect.top + 6
-      const maxHeight = Math.max(180, Math.min(680, aboveSpace))
+      const maxHeight = Math.max(180, aboveSpace)
       setPos({ left, bottom, maxHeight, openUp: true })
     } else {
       const top = Math.max(8, rect.bottom + 6)
-      // Cap to the space below `top` (minus a margin) so the popover never touches the bottom edge.
-      const maxHeight = Math.max(180, Math.min(680, window.innerHeight - top - BOTTOM_MARGIN))
+      // Cap to the space below `top` (minus a margin) so the popover never touches the bottom edge —
+      // fits content up to the viewport, so it only scrolls when genuinely taller than the screen.
+      const maxHeight = Math.max(180, window.innerHeight - top - BOTTOM_MARGIN)
       setPos({ left, top, maxHeight, openUp: false })
     }
   }, [anchorEl, anchorRectProp, width, placement])

@@ -11,6 +11,7 @@ import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
+import { PrintStoreProvider } from "../print/PrintStoreContext";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -62,7 +63,8 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore }) => {
+  const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
   const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
@@ -80,7 +82,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
         allImages.push(...refs);
       } else if (block.type === "photo") {
         const url = getImageRefUrl(block.image || block.imageUrl);
-        if (url) allImages.push({ url, caption: block.caption || "" });
+        if (url) allImages.push({ url, caption: block.caption || "", ...(block.print ? { print: block.print } : {}) });
       }
     });
     return { allImages, blockOffsets };
@@ -115,8 +117,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   };
 
   return (
+    <PrintStoreProvider printStore={printStore} username={username}>
     <div className="gallery-container">
-      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} onChildPageClick={onChildPageClick} />
+      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} />
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {
@@ -197,6 +200,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     caption={block.caption}
                     variant={photoVariant}
                     onImageClick={makeClickHandler(index)}
+                    print={block.print}
                   />
                   <WiggleLine />
                 </div>
@@ -218,7 +222,6 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 .map(id => (pages || []).find(p => p.id === id))
                 .filter(Boolean);
               if (linkedPages.length === 0) return null;
-              const basePath = username ? `/sites/${username}` : '';
               const pgStackVariants = [
                 {
                   first: "absolute -right-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
@@ -242,7 +245,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div className="space-y-8">
                     {linkedPages.map((p, i) => {
                       const thumb = pageDisplayThumbnail(p);
-                      const href = `${basePath}/${p.slug || p.id}`;
+                      const href = `${linkBase}/${p.slug || p.id}`;
                       const stackStyle = pgStackVariants[i % pgStackVariants.length];
                       return (
                         <a key={p.id} href={href} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -357,9 +360,11 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
           index={lightboxIndex}
           onClose={closeLightbox}
           onNavigate={navigateLightbox}
+          printStore={printStore}
         />
       )}
     </div>
+    </PrintStoreProvider>
   );
 };
 

@@ -1,10 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
+import BuyPrintButton from "./print/BuyPrintButton";
 
-export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
+export default function PhotoLightbox({ images, index, onClose, onNavigate, printStore }) {
   const image = images[index];
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
+
+  const sellable = !!(printStore?.enabled && image?.print?.sellable);
+  const [hovering, setHovering] = useState(false);
+  const [peek, setPeek] = useState(true);
+
+  // Show the buy button briefly when a new image opens, then let it fade until
+  // the viewer hovers the image.
+  useEffect(() => {
+    setPeek(true);
+    const t = setTimeout(() => setPeek(false), 2600);
+    return () => clearTimeout(t);
+  }, [index, image?.url]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -31,17 +44,14 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
       className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center"
       onClick={onClose}
     >
-      {/* Close */}
       <button
         aria-label="Close lightbox"
-        autoFocus
-        className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none"
+        className="absolute top-4 right-4 z-10 text-white/70 hover:text-white text-3xl leading-none focus:outline-none focus-visible:outline-none"
         onClick={(e) => { e.stopPropagation(); onClose(); }}
       >
         ×
       </button>
 
-      {/* Prev */}
       {hasPrev && (
         <button
           aria-label="Previous image"
@@ -57,17 +67,30 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
         className="flex flex-col items-center max-w-[90vw] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={getSizedUrl(image.url, 'display')}
-          alt={image.caption || ""}
-          className="max-w-full max-h-[80vh] object-contain"
-        />
+        <div
+          className="relative"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          <img
+            src={getSizedUrl(image.url, 'display')}
+            alt={image.caption || ""}
+            className="max-w-full max-h-[80vh] object-contain"
+          />
+          {sellable && (
+            <div
+              className="absolute top-3 right-3 transition-opacity duration-500"
+              style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
+            >
+              <BuyPrintButton print={image.print} imageUrl={image.url} />
+            </div>
+          )}
+        </div>
         {image.caption && (
           <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>
         )}
       </div>
 
-      {/* Next */}
       {hasNext && (
         <button
           aria-label="Next image"
@@ -78,7 +101,6 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate }) {
         </button>
       )}
 
-      {/* Counter */}
       <div className="absolute bottom-4 text-white/40 text-xs">
         {index + 1} / {images.length}
       </div>

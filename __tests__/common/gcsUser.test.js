@@ -5,6 +5,8 @@ import {
   getUserGalleriesConfigPath,
   getUserPhotoPath,
   getUserPhotosPrefix,
+  getUserPrintMasterPath,
+  getDomainLookupPath,
 } from '../../common/gcsUser'
 
 describe('getUserPrefix', () => {
@@ -52,5 +54,35 @@ describe('getUserPhotoPath', () => {
 
   it('throws if filename is empty', () => {
     expect(() => getUserPhotoPath('abc123', '')).toThrow('filename is required')
+  })
+})
+
+describe('getDomainLookupPath', () => {
+  it('returns domains/{hostname}.json', () => {
+    expect(getDomainLookupPath('photos.janedoe.com')).toBe('domains/photos.janedoe.com.json')
+  })
+  it('throws when hostname is missing', () => {
+    expect(() => getDomainLookupPath('')).toThrow('hostname is required')
+  })
+})
+
+describe('getUserPrintMasterPath', () => {
+  it('returns the print-masters path for a filename', () => {
+    expect(getUserPrintMasterPath('abc123', 'hero.jpg')).toBe('users/abc123/photos/print-masters/hero.jpg')
+  })
+  it('throws if filename is empty', () => {
+    expect(() => getUserPrintMasterPath('abc123', '')).toThrow('filename is required')
+  })
+})
+
+describe('order paths', () => {
+  it('builds the orders prefix and a per-order path', () => {
+    const { getUserOrdersPrefix, getUserOrderPath } = require('../../common/gcsUser')
+    expect(getUserOrdersPrefix('u1')).toBe('users/u1/orders/')
+    expect(getUserOrderPath('u1', 'ord_x')).toBe('users/u1/orders/ord_x.json')
+  })
+  it('throws without an orderId', () => {
+    const { getUserOrderPath } = require('../../common/gcsUser')
+    expect(() => getUserOrderPath('u1', '')).toThrow('orderId is required')
   })
 })
