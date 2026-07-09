@@ -3,8 +3,10 @@ import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
+import ImportFlow from "./import/ImportFlow";
 import { getPagePhotos } from "../../common/assetRefs";
 import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
+import { applyImportToConfig } from '@/common/import/importClient';
 
 export default function AdminLibrary({ onBack, siteConfig }) {
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     source: "all",
   });
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [highlightedUrls, setHighlightedUrls] = useState(null);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
@@ -336,6 +339,17 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     await saveConfig(updated);
   }, [saveConfig, fetchLibrary, currentConfig, libraryData]);
 
+  const handleImportComplete = useCallback(async (summary) => {
+    setImportOpen(false)
+    if (!summary?.imported?.length) return
+    const next = applyImportToConfig(currentConfig(), { imported: summary.imported, collections: summary.collections })
+    const urls = summary.imported.map((a) => a.publicUrl)
+    setHighlightedUrls(new Set(urls))
+    setTimeout(() => setHighlightedUrls(null), 2500)
+    setSelectedAlbum({ type: 'all', key: 'all' })
+    await saveConfig(next)
+  }, [currentConfig, saveConfig])
+
   const handleCaptionChange = useCallback(async (assetId, caption) => {
     if (!assetId) return;
     // Optimistic local update — patch both assets map and images array
@@ -560,8 +574,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
   const sourceCounts = computeSourceCounts(allAssets);
 
-  return (
-    <div className="flex h-full w-full overflow-hidden font-sans">
+  const normalLayout = (
+    <>
       <AlbumSidebar
         onBack={onBack}
         counts={counts}
@@ -585,6 +599,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         pages={pagesData}
         selectedPage={selectedPage}
         onSelectPage={setSelectedPage}
+        onImportFromWeb={() => setImportOpen(true)}
       />
       <PhotoGrid
         assets={assets}
@@ -605,6 +620,31 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onClose={onBack}
         highlightedUrls={highlightedUrls}
       />
+    </>
+  );
+
+  return (
+    <div className="flex h-full w-full overflow-hidden font-sans">
+      {libraryData && (libraryData.images || []).length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ padding: 40 }}>
+          <h2 className="font-fraunces" style={{ fontSize: 24, color: 'var(--text-primary)', marginBottom: 8 }}>
+            Bring in your existing photos
+          </h2>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 360, lineHeight: 1.55, marginBottom: 22 }}>
+            Import from your current website, SmugMug, or Squarespace — or upload photos from your computer.
+          </p>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setImportOpen(true)} style={{ background: '#2c2416', color: '#f5ecd6', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: 'none', cursor: 'pointer' }}>
+              Import from the web
+            </button>
+            <button onClick={() => setUploadOpen(true)} style={{ background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: '1px solid rgba(160,140,110,0.35)', cursor: 'pointer' }}>
+              Upload photos
+            </button>
+          </div>
+        </div>
+      ) : (
+        normalLayout
+      )}
 
       {uploadOpen && (
         <UploadModal
@@ -622,6 +662,10 @@ export default function AdminLibrary({ onBack, siteConfig }) {
           onClose={() => setAddLibraryOpen(false)}
           onAdd={handleAddConfirm}
         />
+      )}
+
+      {importOpen && (
+        <ImportFlow variant="modal" onClose={() => setImportOpen(false)} onComplete={handleImportComplete} />
       )}
     </div>
   );

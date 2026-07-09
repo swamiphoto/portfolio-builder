@@ -553,6 +553,7 @@ export default function AlbumSidebar({
   pages,
   selectedPage,
   onSelectPage,
+  onImportFromWeb,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
@@ -703,9 +704,28 @@ export default function AlbumSidebar({
           </SidebarSection>
         )}
 
-        {Object.keys(sourceCounts || {}).length > 0 && (
-          <SidebarSection title="Source" openOverride={sectionsOpen}>
-            {Object.entries(sourceCounts).map(([provider, count]) => (
+        <SidebarSection
+          title="Source"
+          openOverride={sectionsOpen}
+          action={
+            onImportFromWeb ? (
+              <button
+                onClick={onImportFromWeb}
+                title="Import from the web"
+                className="flex items-center justify-center rounded transition-colors"
+                style={{ width: 18, height: 18, color: '#a8967a' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#8b6f47')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#a8967a')}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            ) : null
+          }
+        >
+          {Object.keys(sourceCounts || {}).length > 0 ? (
+            Object.entries(sourceCounts).map(([provider, count]) => (
               <SidebarItem
                 key={provider}
                 active={filters.source === provider}
@@ -713,9 +733,13 @@ export default function AlbumSidebar({
                 count={count}
                 onClick={() => onFilterChange('source', filters.source === provider ? 'all' : provider)}
               />
-            ))}
-          </SidebarSection>
-        )}
+            ))
+          ) : (
+            <div style={{ padding: '4px 12px', fontSize: 12, color: '#c4b49a', fontStyle: 'italic' }}>
+              No sources yet
+            </div>
+          )}
+        </SidebarSection>
 
         {Object.keys(captureYearCounts).length > 0 && (
           <SidebarSection title="Captured" openOverride={sectionsOpen}>
