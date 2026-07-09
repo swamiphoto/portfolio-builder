@@ -276,7 +276,7 @@ export default function AdminIndex() {
       siteConfig={siteConfig}
       saveStatus={saveStatus}
       onConfigChange={updateConfig}
-      onSignOut={() => signOut({ callbackUrl: '/auth/signin' })}
+      onSignOut={() => signOut({ callbackUrl: '/' })}
       selectedPageId={selectedPageId}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
