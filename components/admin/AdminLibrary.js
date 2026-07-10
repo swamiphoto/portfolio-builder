@@ -7,6 +7,7 @@ import ImportFlow from "./import/ImportFlow";
 import { getPagePhotos } from "../../common/assetRefs";
 import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
 import { applyImportToConfig } from '@/common/import/importClient';
+import { seedUploadedAsset } from '@/common/import/uploadedAsset';
 import { resolveSellableAsset } from "../../common/print/sellAsset";
 import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
@@ -307,7 +308,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   }, [fetchLibrary]);
 
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
-    // uploadedAssets: [{ url, width, height }], selectedSets: string[]
+    // uploadedAssets: [{ url, width, height, hash }], selectedSets: string[]
     setUploadOpen(false);
     const uploadedUrls = uploadedAssets.map(a => a.url);
 
@@ -317,21 +318,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     const { createAssetIdFromUrl } = await import('../../common/adminConfig');
     const now = new Date().toISOString();
     const assetUpdates = {};
-    for (const { url, width, height } of uploadedAssets) {
+    for (const { url, width, height, hash } of uploadedAssets) {
       const assetId = createAssetIdFromUrl(url);
-      const ratio = width && height ? width / height : null;
-      assetUpdates[assetId] = {
-        ...(libraryData?.assets?.[assetId] || {}),
-        assetId,
-        publicUrl: url,
-        createdAt: now,
-        ...(width && height ? {
-          width,
-          height,
-          aspectRatio: Number(ratio.toFixed(4)),
-          orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
-        } : {}),
-      };
+      assetUpdates[assetId] = seedUploadedAsset({ url, width, height, hash, now }, { ...(libraryData?.assets?.[assetId] || {}), assetId });
     }
 
     const updated = { ...config, assets: { ...config.assets, ...assetUpdates } };
