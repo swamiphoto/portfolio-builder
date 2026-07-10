@@ -18,7 +18,7 @@ function buildUsageLine(asset) {
   const pages = asset.usage?.pageIds    || []
   if (!gals.length && !pages.length) return null
   const parts = []
-  if (gals.length)  parts.push(`${gals.length} ${gals.length === 1 ? 'gallery' : 'galleries'}`)
+  if (gals.length)  parts.push(`${gals.length} ${gals.length === 1 ? 'set' : 'sets'}`)
   if (pages.length) parts.push(`${pages.length} ${pages.length === 1 ? 'page' : 'pages'}`)
   return `Used in ${parts.join(' and ')}`
 }
@@ -294,30 +294,11 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
 
           {/* Scanning phase */}
           {phase === PHASE_SCANNING && (
-            <div style={{ padding: '24px 0 28px' }}>
+            <div style={{ padding: '24px 0' }}>
               <ImportProgress progress={progress} />
               <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 8 }}>
                 Checking {Object.keys(assets).length} photos for duplicates…
               </p>
-              <div
-                style={{
-                  marginTop: 20,
-                  padding: '14px 16px',
-                  maxWidth: 380,
-                  marginLeft: 'auto',
-                  marginRight: 'auto',
-                  background: 'rgba(160,140,110,0.08)',
-                  border: '1px solid rgba(160,140,110,0.16)',
-                  borderRadius: 8,
-                }}
-              >
-                <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
-                  A duplicate is the same photo saved more than once. When you merge them, we keep one
-                  copy and point any page or gallery that used another to it, so your site keeps working
-                  and looks exactly the same. You&rsquo;ll just have a tidier library. Nothing changes
-                  until you review what we found and choose what to merge.
-                </p>
-              </div>
             </div>
           )}
 
@@ -337,8 +318,8 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
               <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)', margin: '4px 0 14px' }}>
                 We found {groups.length} {groups.length === 1 ? 'set' : 'sets'} of duplicate photos. Each
                 set is the same image saved more than once. Merging keeps one copy and repoints any page
-                or gallery that used another, so your site keeps working and looks the same. Nothing
-                changes until you click Merge.
+                or set that used another, so your site keeps working and looks the same. Nothing changes
+                until you click Merge.
               </p>
 
               {/* Groups */}
@@ -353,17 +334,6 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
                   onToggleSkip={() => setSkipped(prev => ({ ...prev, [g.hash]: !prev[g.hash] }))}
                 />
               ))}
-
-              {/* Merge-all button (at the bottom) */}
-              <div style={{ paddingTop: 16, marginTop: 4, borderTop: '1px solid rgba(160,140,110,0.18)' }}>
-                <button
-                  onClick={handleMerge}
-                  style={primaryBtn(activeGroupCount === 0)}
-                  disabled={activeGroupCount === 0}
-                >
-                  Merge all ({activeGroupCount} {activeGroupCount === 1 ? 'group' : 'groups'})
-                </button>
-              </div>
             </div>
           )}
 
@@ -405,6 +375,26 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
             </div>
           )}
         </div>
+
+        {/* Fixed footer — Merge always visible during review */}
+        {phase === PHASE_REVIEW && (
+          <div
+            style={{
+              flexShrink: 0,
+              padding: '14px 20px',
+              borderTop: '1px solid rgba(160,140,110,0.18)',
+              background: 'var(--popover, #faf6ef)',
+            }}
+          >
+            <button
+              onClick={handleMerge}
+              style={{ ...primaryBtn(activeGroupCount === 0), width: '100%' }}
+              disabled={activeGroupCount === 0}
+            >
+              Merge all ({activeGroupCount} {activeGroupCount === 1 ? 'group' : 'groups'})
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
