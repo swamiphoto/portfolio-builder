@@ -269,11 +269,30 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
 
           {/* Scanning phase */}
           {phase === PHASE_SCANNING && (
-            <div style={{ padding: '24px 0' }}>
+            <div style={{ padding: '24px 0 28px' }}>
               <ImportProgress progress={progress} />
               <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 8 }}>
                 Checking {Object.keys(assets).length} photos for duplicates…
               </p>
+              <div
+                style={{
+                  marginTop: 20,
+                  padding: '14px 16px',
+                  maxWidth: 380,
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  background: 'rgba(160,140,110,0.08)',
+                  border: '1px solid rgba(160,140,110,0.16)',
+                  borderRadius: 8,
+                }}
+              >
+                <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                  A duplicate is the same photo saved more than once. When you merge them, we keep one
+                  copy and point any page or gallery that used another to it, so your site keeps working
+                  and looks exactly the same. You&rsquo;ll just have a tidier library. Nothing changes
+                  until you review what we found and choose what to merge.
+                </p>
+              </div>
             </div>
           )}
 
