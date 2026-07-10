@@ -57,8 +57,9 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
         {usageLine && (
           <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{usageLine}</div>
         )}
-        {/* Keep picker */}
-        <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {/* Copies — pick the one to keep (the selected row is marked, so identical
+            filenames aren't ambiguous). Keeping any one is equivalent; usage merges either way. */}
+        <div style={{ marginTop: 6 }}>
           {group.assetIds.map(id => {
             const isCanonical = canonicalId === id
             const fileName = (() => {
@@ -69,25 +70,37 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
               <button
                 key={id}
                 onClick={() => onSetCanonical(id)}
-                title={isCanonical ? 'This copy will be kept' : `Keep ${fileName || 'this copy'} instead`}
+                title={isCanonical ? 'This copy will be kept' : 'Keep this copy instead'}
                 style={{
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.06em',
-                  maxWidth: 160,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  padding: '2px 6px',
-                  borderRadius: 3,
-                  border: '1px solid',
-                  borderColor: isCanonical ? '#8b6f47' : 'rgba(160,140,110,0.35)',
-                  background: isCanonical ? 'rgba(139,111,71,0.10)' : 'transparent',
-                  color: isCanonical ? '#6b5231' : '#a8967a',
-                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                  textAlign: 'left', background: 'transparent', border: 'none',
+                  cursor: 'pointer', padding: '3px 0',
                 }}
               >
-                {isCanonical ? `keeping ${fileName || 'this one'}` : (fileName || 'keep this one')}
+                <span
+                  style={{
+                    width: 11, height: 11, borderRadius: '50%', flexShrink: 0,
+                    border: '1.5px solid',
+                    borderColor: isCanonical ? '#8b6f47' : 'rgba(160,140,110,0.5)',
+                    background: isCanonical ? '#8b6f47' : 'transparent',
+                    boxShadow: isCanonical ? 'inset 0 0 0 2px var(--popover, #faf6ef)' : 'none',
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: MONO, fontSize: 11, minWidth: 0,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    color: isCanonical ? '#5c4f3a' : '#a8967a',
+                    fontWeight: isCanonical ? 500 : 400,
+                  }}
+                >
+                  {fileName || 'this copy'}
+                </span>
+                {isCanonical && (
+                  <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#8b6f47', flexShrink: 0 }}>
+                    keep
+                  </span>
+                )}
               </button>
             )
           })}
@@ -320,16 +333,15 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           {/* Review phase */}
           {phase === PHASE_REVIEW && (
             <div style={{ padding: '12px 0' }}>
-              {/* Merge-all button */}
-              <div style={{ padding: '12px 0 8px', borderBottom: '1px solid rgba(160,140,110,0.18)' }}>
-                <button
-                  onClick={handleMerge}
-                  style={primaryBtn(activeGroupCount === 0)}
-                  disabled={activeGroupCount === 0}
-                >
-                  Merge all ({activeGroupCount} {activeGroupCount === 1 ? 'group' : 'groups'})
-                </button>
-              </div>
+              {/* What this does */}
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)', margin: '4px 0 14px' }}>
+                We found {groups.length} {groups.length === 1 ? 'set' : 'sets'} of duplicate photos. Each
+                set is the same image saved more than once. Merging keeps one copy and repoints any page
+                or gallery that used another, so your site keeps working and looks the same. Nothing
+                changes until you click Merge.
+              </p>
+
+              {/* Groups */}
               {groups.map(g => (
                 <GroupRow
                   key={g.hash}
@@ -341,6 +353,17 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
                   onToggleSkip={() => setSkipped(prev => ({ ...prev, [g.hash]: !prev[g.hash] }))}
                 />
               ))}
+
+              {/* Merge-all button (at the bottom) */}
+              <div style={{ paddingTop: 16, marginTop: 4, borderTop: '1px solid rgba(160,140,110,0.18)' }}>
+                <button
+                  onClick={handleMerge}
+                  style={primaryBtn(activeGroupCount === 0)}
+                  disabled={activeGroupCount === 0}
+                >
+                  Merge all ({activeGroupCount} {activeGroupCount === 1 ? 'group' : 'groups'})
+                </button>
+              </div>
             </div>
           )}
 
