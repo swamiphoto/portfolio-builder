@@ -29,25 +29,29 @@ describe('applyHashes', () => {
     expect(cfg.assets.c1.hashes.exact).toBeNull() // input untouched
   })
 })
+
+const baseLibrary = {
+  assets: {
+    a1: { assetId: 'a1', publicUrl: 'https://example.com/a.jpg', hashes: { exact: 'h1' } },
+    a2: { assetId: 'a2', publicUrl: 'https://example.com/b.jpg', hashes: { exact: 'h1' } },
+  },
+  galleries: {},
+  portfolios: {},
+  sets: {},
+  assetOrder: ['a1', 'a2'],
+}
+
 describe('runConsolidation', () => {
-  it('happy path: all fetches succeed, site unchanged, delete-files POSTed only after both PUTs succeed', async () => {
+  it('happy path: delete-files returns deleted:1, summary has deletedFiles:1 failedDeletes:0', async () => {
     global.fetch
       .mockReturnValueOnce(json({})) // library PUT
-      .mockReturnValueOnce(json({})) // delete-files POST
-    const libraryConfig = {
-      assets: {
-        a1: { assetId: 'a1', publicUrl: 'https://example.com/a.jpg', hashes: { exact: 'h1' } },
-        a2: { assetId: 'a2', publicUrl: 'https://example.com/b.jpg', hashes: { exact: 'h1' } },
-      },
-      galleries: {},
-      portfolios: {},
-      sets: {},
-      assetOrder: ['a1', 'a2'],
-    }
-    const siteConfig = { pages: [] }
+      .mockReturnValueOnce({ ok: true, status: 200, json: async () => ({ deleted: 1, failed: [] }) }) // delete-files POST
     const decisions = [{ canonicalId: 'a1', redundantIds: ['a2'] }]
-    const result = await runConsolidation({ libraryConfig, siteConfig, decisions })
-    expect(result).toEqual({ mergedCount: 1, groupCount: 1, deletedFiles: 1 })
+    const result = await runConsolidation({ libraryConfig: baseLibrary, siteConfig: { pages: [] }, decisions })
+    expect(result.deletedFiles).toBe(1)
+    expect(result.failedDeletes).toBe(0)
+    expect(result.mergedCount).toBe(1)
+    expect(result.groupCount).toBe(1)
     expect(global.fetch).toHaveBeenCalledTimes(2)
     const calls = global.fetch.mock.calls
     expect(calls[0][0]).toBe('/api/admin/library')
@@ -55,21 +59,24 @@ describe('runConsolidation', () => {
     expect(calls[1][0]).toBe('/api/admin/dedup/delete-files')
     expect(calls[1][1].method).toBe('POST')
   })
+
+  it('delete-files returns deleted:0 failed:[{url,reason}] → failedDeletes:1, still resolves, library PUT happened', async () => {
+    const url = 'https://example.com/b.jpg'
+    global.fetch
+      .mockReturnValueOnce(json({})) // library PUT
+      .mockReturnValueOnce({ ok: true, status: 200, json: async () => ({ deleted: 0, failed: [{ url, reason: 'x' }] }) }) // delete-files POST
+    const decisions = [{ canonicalId: 'a1', redundantIds: ['a2'] }]
+    const result = await runConsolidation({ libraryConfig: baseLibrary, siteConfig: { pages: [] }, decisions })
+    expect(result.failedDeletes).toBe(1)
+    expect(result.deletedFiles).toBe(0)
+    // library PUT still happened
+    expect(global.fetch.mock.calls[0][0]).toBe('/api/admin/library')
+  })
+
   it('persist-fails-no-delete: library PUT fails with 500, throws error, NO delete-files POST made', async () => {
     global.fetch.mockReturnValueOnce({ ok: false, status: 500, json: () => Promise.resolve({}) })
-    const libraryConfig = {
-      assets: {
-        a1: { assetId: 'a1', publicUrl: 'https://example.com/a.jpg', hashes: { exact: 'h1' } },
-        a2: { assetId: 'a2', publicUrl: 'https://example.com/b.jpg', hashes: { exact: 'h1' } },
-      },
-      galleries: {},
-      portfolios: {},
-      sets: {},
-      assetOrder: ['a1', 'a2'],
-    }
-    const siteConfig = { pages: [] }
     const decisions = [{ canonicalId: 'a1', redundantIds: ['a2'] }]
-    await expect(runConsolidation({ libraryConfig, siteConfig, decisions })).rejects.toThrow('Failed to save the library (HTTP 500)')
+    await expect(runConsolidation({ libraryConfig: baseLibrary, siteConfig: { pages: [] }, decisions })).rejects.toThrow('Failed to save the library (HTTP 500)')
     expect(global.fetch).toHaveBeenCalledTimes(1)
     const calls = global.fetch.mock.calls
     expect(calls[0][0]).toBe('/api/admin/library')

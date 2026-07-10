@@ -308,11 +308,16 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           {/* Done phase */}
           {phase === PHASE_DONE && (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 18, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 20 }}>
+              <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 18, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: summary?.failedDeletes > 0 ? 8 : 20 }}>
                 {summary
                   ? `Merged ${summary.mergedCount} ${summary.mergedCount === 1 ? 'duplicate' : 'duplicates'} into ${summary.groupCount} ${summary.groupCount === 1 ? 'photo' : 'photos'}.`
                   : 'Done.'}
               </p>
+              {summary?.failedDeletes > 0 && (
+                <p style={{ fontFamily: MONO, fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 20 }}>
+                  {summary.failedDeletes} {summary.failedDeletes === 1 ? 'file' : 'file(s)'} couldn&apos;t be removed — run the scan again to retry.
+                </p>
+              )}
               <button
                 onClick={() => onComplete && onComplete(summary)}
                 style={primaryBtn(false)}

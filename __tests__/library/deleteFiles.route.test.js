@@ -32,4 +32,15 @@ describe('POST /api/admin/dedup/delete-files', () => {
     expect(mockDelete).toHaveBeenCalledWith('users/u1/thumbnails/import/a.jpg')
     expect(res.json.mock.calls[0][0].deleted).toBe(1)
   })
+
+  it('rejects a foreign-user url with not permitted, does not call deleteFile', async () => {
+    const res = mockRes()
+    await handler({ method: 'POST', body: { urls: ['https://cdn.test/users/OTHER/photos/x.jpg'] } }, res)
+    expect(res.status).toHaveBeenCalledWith(200)
+    const body = res.json.mock.calls[0][0]
+    expect(body.deleted).toBe(0)
+    expect(body.failed).toHaveLength(1)
+    expect(body.failed[0].reason).toBe('not permitted')
+    expect(mockDelete).not.toHaveBeenCalled()
+  })
 })

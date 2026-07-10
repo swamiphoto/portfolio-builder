@@ -52,12 +52,22 @@ export async function runConsolidation({ libraryConfig, siteConfig, decisions })
       throw new Error('Failed to save the site (HTTP ' + siteRes.status + ')')
     }
   }
+  let deletedFiles = 0
+  let failedDeletes = 0
   if (deleteUrls.length) {
-    await fetch('/api/admin/dedup/delete-files', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: deleteUrls }),
-    })
+    for (const batch of chunk(deleteUrls, 200)) {
+      let data = {}
+      try {
+        const delRes = await fetch('/api/admin/dedup/delete-files', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: batch }),
+        })
+        data = await delRes.json().catch(() => ({}))
+      } catch { /* delete failures are non-fatal */ }
+      deletedFiles += data.deleted || 0
+      failedDeletes += batch.length - (data.deleted || 0)
+    }
   }
-  return { mergedCount: deleteUrls.length, groupCount: decisions.length, deletedFiles: deleteUrls.length }
+  return { mergedCount: deleteUrls.length, groupCount: decisions.length, deletedFiles, failedDeletes }
 }
 
 export { groupDuplicates }
