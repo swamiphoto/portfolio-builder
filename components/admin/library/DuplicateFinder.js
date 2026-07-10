@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { backfillHashes, applyHashes, groupDuplicates, runConsolidation } from '@/common/library/dedupClient'
 import { chooseCanonical } from '@/common/library/dedup'
 import ImportProgress from '@/components/admin/import/ImportProgress'
@@ -114,10 +114,19 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
   const [error, setError]       = useState(null)
 
   const assets = libraryData?.assets || {}
+  const abortRef = useRef(null)
+
+  // Cancel the scan and close the modal.
+  const handleCancel = useCallback(() => {
+    abortRef.current?.abort()
+    if (onClose) onClose()
+  }, [onClose])
 
   // ── scan on mount ──────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
+    abortRef.current = controller
 
     async function scan() {
       try {
@@ -125,6 +134,7 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
         setProgress({ done: 0, total })
 
         const { hashes } = await backfillHashes(assets, {
+          signal: controller.signal,
           onProgress: ({ done, total: t }) => {
             if (!cancelled) setProgress({ done, total: t })
           },
@@ -157,7 +167,7 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
     }
 
     scan()
-    return () => { cancelled = true }
+    return () => { cancelled = true; controller.abort() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── merge ──────────────────────────────────────────────────────────────────
@@ -237,14 +247,21 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--text-secondary)', flex: 1 }}>
             Find duplicates
           </span>
-          {canClose && (
+          {canClose ? (
             <button
               onClick={onClose}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4, display: 'flex' }}
             >
               <CloseIcon />
             </button>
-          )}
+          ) : phase === PHASE_SCANNING ? (
+            <button
+              onClick={handleCancel}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 4px' }}
+            >
+              Cancel
+            </button>
+          ) : null}
         </div>
 
         {/* Body */}

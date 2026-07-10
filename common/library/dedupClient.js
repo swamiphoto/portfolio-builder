@@ -7,16 +7,23 @@ function chunk(arr, n) {
   return out
 }
 
-export async function backfillHashes(assets, { onProgress, batchSize = 20 } = {}) {
+export async function backfillHashes(assets, { onProgress, batchSize = 20, signal } = {}) {
   const todo = assetsMissingHash(assets)
   const total = todo.length
   const hashes = {}
   const failed = []
   let done = 0
   for (const batch of chunk(todo, batchSize)) {
-    const res = await fetch('/api/admin/dedup/hash-batch', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: batch }),
-    })
+    if (signal?.aborted) break
+    let res
+    try {
+      res = await fetch('/api/admin/dedup/hash-batch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: batch }), signal,
+      })
+    } catch (err) {
+      if (signal?.aborted) break // cancelled mid-flight — return what we have
+      throw err
+    }
     const data = await res.json().catch(() => ({}))
     for (const h of data.hashed || []) hashes[h.assetId] = h.hash
     for (const f of data.failed || []) failed.push(f)
