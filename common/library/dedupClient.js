@@ -37,14 +37,20 @@ export function applyHashes(libraryConfig, hashes) {
 
 export async function runConsolidation({ libraryConfig, siteConfig, decisions }) {
   const { libraryConfig: nextLib, siteConfig: nextSite, deleteUrls, siteChanged } = consolidate(libraryConfig, siteConfig, decisions)
-  await fetch('/api/admin/library', {
+  const libRes = await fetch('/api/admin/library', {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ assets: nextLib.assets, galleries: nextLib.galleries, portfolios: nextLib.portfolios, sets: nextLib.sets, assetOrder: nextLib.assetOrder }),
   })
+  if (!libRes.ok) {
+    throw new Error('Failed to save the library (HTTP ' + libRes.status + ')')
+  }
   if (siteChanged) {
-    await fetch('/api/admin/site-config', {
+    const siteRes = await fetch('/api/admin/site-config', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nextSite),
     })
+    if (!siteRes.ok) {
+      throw new Error('Failed to save the site (HTTP ' + siteRes.status + ')')
+    }
   }
   if (deleteUrls.length) {
     await fetch('/api/admin/dedup/delete-files', {
