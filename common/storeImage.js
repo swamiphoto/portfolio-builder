@@ -1,5 +1,5 @@
 // common/storeImage.js
-// Shared helper: upload a raw image buffer to R2 (original + thumbnail),
+// Shared helper: upload a raw image buffer to R2 (original + thumbnail + display),
 // return { gcsUrl, objectPath, width, height }.
 // Used by upload-file.js (manual upload) and fetch-batch (web import).
 
@@ -38,8 +38,8 @@ export function resolveUploadKey(userId, filename, folder) {
 }
 
 /**
- * Store an image buffer in R2: upload original, generate 600px thumbnail, return metadata.
- * Thumbnail failure is non-fatal.
+ * Store an image buffer in R2: upload original, generate 600px thumbnail and
+ * 1800px display variant, return metadata. Thumbnail/display failure is non-fatal.
  *
  * @param {string} userId
  * @param {{ buffer: Buffer, filename: string, contentType: string, folder?: string }} opts
@@ -48,6 +48,7 @@ export function resolveUploadKey(userId, filename, folder) {
 export async function storeImageBuffer(userId, { buffer, filename, contentType, folder }) {
   const key = resolveUploadKey(userId, filename, folder)
   const thumbKey = key.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg')
+  const displayKey = key.replace('/photos/', '/display/').replace(/\.[^.]+$/, '.jpg')
 
   // The PutObject ETag is the object's MD5 (single-part upload) — the same value
   // the object listing returns, so it's our exact-duplicate fingerprint and it's
@@ -64,10 +65,16 @@ export async function storeImageBuffer(userId, { buffer, filename, contentType, 
     width = meta.width
     height = meta.height
 
-    const thumbBuffer = await img.resize(600, null, { withoutEnlargement: true }).jpeg({ quality: 82 }).toBuffer()
+    // clone() per variant so the two resizes don't chain on one sharp pipeline.
+    const thumbBuffer = await img.clone().resize(600, null, { withoutEnlargement: true }).jpeg({ quality: 82 }).toBuffer()
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: thumbKey, Body: thumbBuffer, ContentType: 'image/jpeg' }))
+
+    // 1800px display variant — consumed by page galleries and the library lightbox
+    // via getSizedUrl(url, 'display'). Without it those surfaces 404 and show blank.
+    const displayBuffer = await img.clone().resize(1800, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer()
+    await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: displayKey, Body: displayBuffer, ContentType: 'image/jpeg' }))
   } catch {
-    // thumbnail failure is non-fatal
+    // thumbnail / display failure is non-fatal
   }
 
   return { gcsUrl: `${PUBLIC_URL}/${key}`, objectPath: key, width, height, hash }

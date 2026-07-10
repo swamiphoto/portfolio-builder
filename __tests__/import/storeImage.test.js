@@ -39,7 +39,31 @@ describe('storeImageBuffer', () => {
     expect(out.gcsUrl).toBe('https://cdn.test/users/user123/photos/import/my_photo.jpg')
     expect(out.width).toBe(20)
     expect(out.height).toBe(10)
-    // original + thumbnail = 2 puts
-    expect(getSend()).toHaveBeenCalledTimes(2)
+    // original + thumbnail + display = 3 puts
+    expect(getSend()).toHaveBeenCalledTimes(3)
+  })
+
+  it('uploads a display (1800px) variant alongside the thumbnail so the lightbox and galleries resolve', async () => {
+    const buffer = await sharp({
+      create: { width: 20, height: 10, channels: 3, background: { r: 1, g: 2, b: 3 } },
+    })
+      .jpeg()
+      .toBuffer()
+
+    await storeImageBuffer('user123', {
+      buffer,
+      filename: 'my photo.jpg',
+      contentType: 'image/jpeg',
+      folder: 'photos/import',
+    })
+
+    const keys = getSend().mock.calls.map((c) => c[0].input.Key)
+    expect(keys).toContain('users/user123/photos/import/my_photo.jpg')
+    expect(keys).toContain('users/user123/thumbnails/import/my_photo.jpg')
+    expect(keys).toContain('users/user123/display/import/my_photo.jpg')
+
+    // the display variant is a jpeg
+    const displayPut = getSend().mock.calls.find((c) => c[0].input.Key.includes('/display/'))
+    expect(displayPut[0].input.ContentType).toBe('image/jpeg')
   })
 })
