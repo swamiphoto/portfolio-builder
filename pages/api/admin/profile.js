@@ -42,5 +42,22 @@ export default withAuth(async (req, res, user) => {
     return res.status(200).json(profile)
   }
 
+  if (req.method === 'PATCH') {
+    const existing = await readUserProfile(user.id)
+    if (!existing) return res.status(404).json({ error: 'No profile to patch' })
+
+    const patch = req.body || {}
+    const next = { ...existing }
+    if (patch.onboarding && typeof patch.onboarding === 'object') {
+      next.onboarding = { ...(existing.onboarding || {}), ...patch.onboarding }
+    }
+    if (typeof patch.displayName === 'string') next.displayName = patch.displayName
+    if (typeof patch.bio === 'string') next.bio = patch.bio
+    next.updatedAt = new Date().toISOString()
+
+    await writeUserProfile(user.id, next)
+    return res.status(200).json(next)
+  }
+
   return res.status(405).json({ error: 'Method not allowed' })
 })
