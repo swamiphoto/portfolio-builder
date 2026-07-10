@@ -53,3 +53,33 @@ describe('extractImageUrls', () => {
     expect(links).toContain('https://joe.com/galleries/travel')
   })
 })
+
+// Many modern (JS-rendered) sites — Next.js, Gatsby, CMS-driven — put their real
+// photo URLs in an inline JSON blob (e.g. __NEXT_DATA__) rather than in <img> tags
+// that exist before JavaScript runs. The crawler must recover those.
+const JSON_EMBEDDED = `<html><head><title>Gallery</title></head><body>
+  <img src="/cover.jpg">
+  <script id="__NEXT_DATA__" type="application/json">
+    {"props":{"photos":[
+      {"url":"https://storage.googleapis.com/swamiphoto/photos/japan/DSC00179.jpg"},
+      {"url":"https:\\u002F\\u002Fstorage.googleapis.com\\u002Fswamiphoto\\u002Fphotos\\u002Fjapan\\u002FDSC00324.jpg"},
+      {"url":"https:\\/\\/storage.googleapis.com\\/swamiphoto\\/photos\\/japan\\/DSC00328.png?w=2000"}
+    ]}}
+  </script>
+  <script>window.__x = "https://cdn.example.com/tracking/pixel.gif"</script>
+</body></html>`
+
+describe('extractImageUrls — JSON/script-embedded photos', () => {
+  const { images } = extractImageUrls(JSON_EMBEDDED, 'https://www.swamiphoto.com/galleries/japan')
+
+  it('still gets the DOM <img>', () => {
+    expect(images).toContain('https://www.swamiphoto.com/cover.jpg')
+  })
+  it('recovers plain absolute image URLs from inline JSON', () => {
+    expect(images).toContain('https://storage.googleapis.com/swamiphoto/photos/japan/DSC00179.jpg')
+  })
+  it('recovers image URLs with escaped forward slashes (\\/ and \\u002F)', () => {
+    expect(images).toContain('https://storage.googleapis.com/swamiphoto/photos/japan/DSC00324.jpg')
+    expect(images).toContain('https://storage.googleapis.com/swamiphoto/photos/japan/DSC00328.png?w=2000')
+  })
+})
