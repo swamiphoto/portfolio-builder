@@ -316,10 +316,10 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
             <div style={{ padding: '12px 0' }}>
               {/* What this does */}
               <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)', margin: '4px 0 14px' }}>
-                We found {groups.length} {groups.length === 1 ? 'set' : 'sets'} of duplicate photos. Each
-                set is the same image saved more than once. Merging keeps one copy and repoints any page
-                or set that used another, so your site keeps working and looks the same. Nothing changes
-                until you click Merge.
+                We found {groups.length} {groups.length === 1 ? 'group' : 'groups'} of duplicate photos.
+                Each group is the same image saved more than once. Merging keeps one copy and repoints any
+                page or set that used another, so your site keeps working and looks the same. Nothing
+                changes until you click Merge.
               </p>
 
               {/* Groups */}
