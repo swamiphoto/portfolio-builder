@@ -86,11 +86,12 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
             style={{ borderColor: 'rgba(160,140,110,0.3)' }}
           />
           {error && <p style={{ marginTop: 10, fontSize: 12.5, color: '#a15c4a' }}>{error}</p>}
-          <div className="flex items-center justify-between" style={{ marginTop: 22 }}>
-            <span style={{ ...monoLabel, color: 'var(--text-muted)' }}>
-              SmugMug · Squarespace · Format · Wix · <span style={{ opacity: 0.6 }}>Instagram (soon)</span>
-            </span>
-            <button onClick={handleDiscover} disabled={!input.trim()} style={primaryBtn(!input.trim())}>
+          <div className="flex items-center" style={{ marginTop: 22 }}>
+            <button
+              onClick={handleDiscover}
+              disabled={!input.trim()}
+              style={{ ...primaryBtn(!input.trim()), whiteSpace: 'nowrap' }}
+            >
               Find my photos
             </button>
           </div>
