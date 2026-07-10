@@ -24,7 +24,7 @@ describe('DuplicateFinder', () => {
     client.backfillHashes.mockResolvedValue({ hashes: {}, failed: [] })
     client.groupDuplicates.mockReturnValue([{ hash: 'H', assetIds: ['keep', 'dup'] }])
     client.runConsolidation.mockResolvedValue({ mergedCount: 1, groupCount: 1, deletedFiles: 1 })
-    render(<DuplicateFinder libraryData={libraryData} siteConfig={{ pages: [] }} onClose={() => {}} onComplete={jest.fn()} />)
+    render(<DuplicateFinder libraryData={libraryData} siteConfig={{ pages: [] }} onClose={() => {}} onComplete={jest.fn()} minScanMs={0} />)
     expect(await screen.findByText(/merge all/i)).toBeInTheDocument()
     expect(screen.getByText(/2 copies/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /merge all/i }))
@@ -36,7 +36,7 @@ describe('DuplicateFinder', () => {
   it('shows a clean-library message when there are no duplicates', async () => {
     client.backfillHashes.mockResolvedValue({ hashes: {}, failed: [] })
     client.groupDuplicates.mockReturnValue([])
-    render(<DuplicateFinder libraryData={libraryData} siteConfig={{ pages: [] }} onClose={() => {}} onComplete={jest.fn()} />)
+    render(<DuplicateFinder libraryData={libraryData} siteConfig={{ pages: [] }} onClose={() => {}} onComplete={jest.fn()} minScanMs={0} />)
     expect(await screen.findByText(/no duplicates found/i)).toBeInTheDocument()
   })
 })

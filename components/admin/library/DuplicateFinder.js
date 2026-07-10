@@ -135,7 +135,7 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
 }
 
 // ── DuplicateFinder ───────────────────────────────────────────────────────────
-export default function DuplicateFinder({ libraryData, siteConfig, onClose, onComplete }) {
+export default function DuplicateFinder({ libraryData, siteConfig, onClose, onComplete, minScanMs = 1100 }) {
   const [phase, setPhase]       = useState(PHASE_SCANNING)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
   const [groups, setGroups]     = useState([])
@@ -156,49 +156,64 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
   // ── scan on mount ──────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
+    let tick = null
     const controller = new AbortController()
     abortRef.current = controller
+    const startedAt = Date.now()
+    const total = Math.max(1, Object.keys(assets).length)
+    const rampDenom = Math.max(1, minScanMs)
+
+    // The real fingerprinting (one storage listing) is near-instant, so the bar
+    // would flash. Animate it toward ~92% over minScanMs so the user sees it
+    // working, then snap to 100% once the work is done and the minimum elapsed.
+    setProgress({ done: 0, total })
+    if (minScanMs > 0) {
+      tick = setInterval(() => {
+        if (cancelled) return
+        const frac = Math.min(0.92, (Date.now() - startedAt) / rampDenom)
+        setProgress({ done: Math.round(frac * total), total })
+      }, 60)
+    }
+    const clearTick = () => { if (tick) { clearInterval(tick); tick = null } }
 
     async function scan() {
       try {
-        const total = Object.keys(assets).length
-        setProgress({ done: 0, total })
-
-        const { hashes } = await backfillHashes(assets, {
-          signal: controller.signal,
-          onProgress: ({ done, total: t }) => {
-            if (!cancelled) setProgress({ done, total: t })
-          },
-        })
-
+        const { hashes } = await backfillHashes(assets, { signal: controller.signal })
         if (cancelled) return
 
-        // Apply any newly-returned hashes to a merged view for grouping
         const merged = applyHashes({ assets }, hashes)
         const found  = groupDuplicates(merged.assets || merged)
+
+        // Hold for the remainder of the minimum, then finish the bar.
+        const remaining = minScanMs - (Date.now() - startedAt)
+        if (remaining > 0) await new Promise(r => setTimeout(r, remaining))
+        if (cancelled) return
+        clearTick()
+        setProgress({ done: total, total })
+        if (minScanMs > 0) await new Promise(r => setTimeout(r, 220)) // let 100% register
+        if (cancelled) return
 
         if (!found || found.length === 0) {
           setPhase(PHASE_CLEAN)
           return
         }
 
-        // Compute default canonicals
         const defaultCanonicals = {}
         for (const g of found) {
           defaultCanonicals[g.hash] = chooseCanonical(assets, g.assetIds)
         }
-
         setGroups(found)
         setCanonicals(defaultCanonicals)
         setSkipped({})
         setPhase(PHASE_REVIEW)
       } catch (err) {
+        clearTick()
         if (!cancelled) setError(err.message || 'Scan failed')
       }
     }
 
     scan()
-    return () => { cancelled = true; controller.abort() }
+    return () => { cancelled = true; controller.abort(); clearTick() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── merge ──────────────────────────────────────────────────────────────────
