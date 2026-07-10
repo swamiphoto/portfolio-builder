@@ -71,10 +71,11 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
                 key={id}
                 onClick={() => onSetCanonical(id)}
                 title={isCanonical ? 'This copy will be kept' : 'Keep this copy instead'}
+                className="rounded transition-colors hover:bg-black/5"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7, width: '100%',
                   textAlign: 'left', background: 'transparent', border: 'none',
-                  cursor: 'pointer', padding: '3px 0',
+                  cursor: 'pointer', padding: '3px 6px', marginLeft: -6,
                 }}
               >
                 <span
@@ -110,6 +111,7 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
       {/* Skip toggle */}
       <button
         onClick={onToggleSkip}
+        className="rounded transition-colors hover:bg-black/5"
         style={{
           fontFamily: MONO,
           fontSize: 10.5,
@@ -118,9 +120,11 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          padding: '2px 4px',
+          padding: '3px 6px',
           flexShrink: 0,
         }}
+        onMouseEnter={e => { if (!skipped) e.currentTarget.style.color = '#8b6f47' }}
+        onMouseLeave={e => { if (!skipped) e.currentTarget.style.color = '#c4b49a' }}
       >
         {skipped ? 'un-skip' : 'skip'}
       </button>
@@ -275,14 +279,16 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           {canClose ? (
             <button
               onClick={onClose}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4, display: 'flex' }}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
             >
               <CloseIcon />
             </button>
           ) : phase === PHASE_SCANNING ? (
             <button
               onClick={handleCancel}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 4px' }}
+              className="rounded transition-colors hover:bg-black/5"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 6px' }}
             >
               Cancel
             </button>
