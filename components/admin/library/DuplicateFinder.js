@@ -71,12 +71,14 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
                 key={id}
                 onClick={() => onSetCanonical(id)}
                 title={isCanonical ? 'This copy will be kept' : 'Keep this copy instead'}
-                className="rounded transition-colors hover:bg-black/5"
+                className="rounded transition-colors"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7, width: '100%',
                   textAlign: 'left', background: 'transparent', border: 'none',
                   cursor: 'pointer', padding: '3px 6px', marginLeft: -6,
                 }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 <span
                   style={{
@@ -111,7 +113,7 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
       {/* Skip toggle */}
       <button
         onClick={onToggleSkip}
-        className="rounded transition-colors hover:bg-black/5"
+        className="rounded transition-colors"
         style={{
           fontFamily: MONO,
           fontSize: 10.5,
@@ -123,8 +125,8 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
           padding: '3px 6px',
           flexShrink: 0,
         }}
-        onMouseEnter={e => { if (!skipped) e.currentTarget.style.color = '#8b6f47' }}
-        onMouseLeave={e => { if (!skipped) e.currentTarget.style.color = '#c4b49a' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; if (!skipped) e.currentTarget.style.color = '#8b6f47' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; if (!skipped) e.currentTarget.style.color = '#c4b49a' }}
       >
         {skipped ? 'un-skip' : 'skip'}
       </button>
@@ -279,16 +281,20 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           {canClose ? (
             <button
               onClick={onClose}
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; e.currentTarget.style.color = '#2c2416' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
             >
               <CloseIcon />
             </button>
           ) : phase === PHASE_SCANNING ? (
             <button
               onClick={handleCancel}
-              className="rounded transition-colors hover:bg-black/5"
+              className="rounded transition-colors"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 6px' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; e.currentTarget.style.color = '#2c2416' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
             >
               Cancel
             </button>
@@ -368,6 +374,8 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
               <button
                 onClick={() => onComplete && onComplete(summary)}
                 style={primaryBtn(false)}
+                onMouseEnter={e => e.currentTarget.style.background = '#3d3020'}
+                onMouseLeave={e => e.currentTarget.style.background = '#2c2416'}
               >
                 Done
               </button>
@@ -396,6 +404,8 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
               onClick={handleMerge}
               style={{ ...primaryBtn(activeGroupCount === 0), width: '100%' }}
               disabled={activeGroupCount === 0}
+              onMouseEnter={e => { if (activeGroupCount !== 0) e.currentTarget.style.background = '#3d3020' }}
+              onMouseLeave={e => { if (activeGroupCount !== 0) e.currentTarget.style.background = '#2c2416' }}
             >
               Merge all ({activeGroupCount} {activeGroupCount === 1 ? 'group' : 'groups'})
             </button>
