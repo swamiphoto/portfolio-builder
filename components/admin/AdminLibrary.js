@@ -4,6 +4,7 @@ import PhotoGrid from "./PhotoGrid";
 import UploadModal from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
 import ImportFlow from "./import/ImportFlow";
+import DuplicateFinder from "./library/DuplicateFinder";
 import { getPagePhotos } from "../../common/assetRefs";
 import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
 import { applyImportToConfig } from '@/common/import/importClient';
@@ -40,6 +41,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [dedupeOpen, setDedupeOpen] = useState(false);
   const [highlightedUrls, setHighlightedUrls] = useState(null);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
@@ -682,6 +684,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         selectedPage={selectedPage}
         onSelectPage={setSelectedPage}
         onImportFromWeb={() => setImportOpen(true)}
+        onFindDuplicates={() => setDedupeOpen(true)}
       />
       <PhotoGrid
         assets={assets}
@@ -752,6 +755,15 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
       {importOpen && (
         <ImportFlow variant="modal" onClose={() => setImportOpen(false)} onComplete={handleImportComplete} />
+      )}
+
+      {dedupeOpen && libraryData && (
+        <DuplicateFinder
+          libraryData={libraryData}
+          siteConfig={siteConfig}
+          onClose={() => setDedupeOpen(false)}
+          onComplete={async () => { setDedupeOpen(false); await fetchLibrary(); }}
+        />
       )}
     </div>
   );

@@ -555,6 +555,7 @@ export default function AlbumSidebar({
   selectedPage,
   onSelectPage,
   onImportFromWeb,
+  onFindDuplicates,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
@@ -918,6 +919,29 @@ export default function AlbumSidebar({
           </SidebarSection>
         )}
       </div>
+
+      {/* Maintenance footer */}
+      {onFindDuplicates && (
+        <div style={{ flexShrink: 0, borderTop: '1px solid rgba(160,140,110,0.14)', padding: '8px 12px 10px' }}>
+          <button
+            onClick={onFindDuplicates}
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: '0.09em',
+              color: '#b0a490',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#8b6f47' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#b0a490' }}
+          >
+            find duplicates
+          </button>
+        </div>
+      )}
     </div>
   )
 }
