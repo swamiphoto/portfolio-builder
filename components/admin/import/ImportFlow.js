@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { discoverSource, importSelected, makeImportBatchId } from '@/common/import/importClient'
 import { MONO, monoLabel, primaryBtn, CloseIcon } from './importFlowStyles'
 import ReviewStep from './ReviewStep'
@@ -18,6 +18,14 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   const [error, setError] = useState(null)
   const [discovery, setDiscovery] = useState(null)
   const [progress, setProgress] = useState(null)
+
+  // Escape closes the modal (except mid-import, to avoid losing an in-progress import).
+  useEffect(() => {
+    if (variant !== 'modal') return
+    const onKey = (e) => { if (e.key === 'Escape' && step !== 'importing' && onClose) onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [variant, step, onClose])
   const [summary, setSummary] = useState(null)
 
   async function handleDiscover() {
@@ -147,13 +155,39 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
     )
   }
 
+  const busy = step === 'importing' || step === 'discovering'
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(20,12,4,0.55)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}>
-      <div className="flex flex-col rounded-xl overflow-hidden" style={{ width: 520, maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(20,12,4,0.55)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
+      onClick={step !== 'importing' ? onClose : undefined}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="flex flex-col rounded-xl overflow-hidden"
+        style={{ width: 520, maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}
+      >
         <div className="flex items-center px-4 flex-shrink-0" style={{ height: 44, borderBottom: '1px solid rgba(160,140,110,0.22)' }}>
-          <span style={monoLabel}>Import from the web</span>
-          {step !== 'importing' && step !== 'discovering' && (
-            <button onClick={onClose} className="ml-auto w-6 h-6 flex items-center justify-center rounded hover:bg-black/5" style={{ color: 'var(--text-muted)' }} aria-label="Close">
+          <span style={{ ...monoLabel, flex: 1 }}>Import from the web</span>
+          {busy ? (
+            <button
+              onClick={onClose}
+              className="rounded transition-colors"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 6px' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; e.currentTarget.style.color = '#2c2416' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(44,36,22,0.08)'; e.currentTarget.style.color = '#2c2416' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+              aria-label="Close"
+            >
               <CloseIcon />
             </button>
           )}
