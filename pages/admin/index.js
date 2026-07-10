@@ -23,8 +23,17 @@ const AUTOSAVE_DELAY = 1500
 export default function AdminIndex() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { onboarding, loading: onboardingLoading, markSeen } = useOnboarding()
+  const { onboarding, loading: onboardingLoading, error: onboardingError, markSeen } = useOnboarding()
   const importedJustNow = router.query.imported === '1'
+
+  useEffect(() => {
+    if (router.query.imported) {
+      const { imported, ...rest } = router.query
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const [siteConfig, setSiteConfig] = useState(null)
   const [libraryConfig, setLibraryConfig] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -451,14 +460,16 @@ export default function AdminIndex() {
     content = <CanvasEmptyState onAddPage={handleCreateFirstPage} />
   }
 
-  const showWelcomeTour = !onboardingLoading && !onboarding.tourDone
+  const showWelcomeTour = !onboardingLoading && !onboardingError && !onboarding.tourDone
   const showBlocksTip =
     !onboardingLoading &&
+    !onboardingError &&
     onboarding.tourDone &&
     !onboarding.blocksTipSeen &&
     selectedPage &&
     selectedPage.type !== 'link' &&
     !isCoverPageSelected &&
+    !blockSidebarCollapsed &&
     (selectedPage.blocks?.length || 0) === 0
 
   return (

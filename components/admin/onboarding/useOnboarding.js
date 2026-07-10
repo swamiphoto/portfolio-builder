@@ -3,13 +3,14 @@ import { useEffect, useState, useCallback } from 'react'
 export function useOnboarding() {
   const [onboarding, setOnboarding] = useState({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     let alive = true
     fetch('/api/admin/profile')
-      .then(r => (r.ok ? r.json() : {}))
+      .then(r => { if (!r.ok) throw new Error('profile read failed'); return r.json() })
       .then(profile => { if (alive) setOnboarding(profile?.onboarding || {}) })
-      .catch(() => {})
+      .catch(() => { if (alive) setError(true) })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [])
@@ -23,5 +24,5 @@ export function useOnboarding() {
     }).catch(() => {})
   }, [])
 
-  return { onboarding, loading, markSeen }
+  return { onboarding, loading, error, markSeen }
 }
