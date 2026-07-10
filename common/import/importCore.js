@@ -24,6 +24,7 @@ export function buildImportedAsset({
   externalCollectionId,
   importBatchId,
   caption,
+  hash,
   now,
 }) {
   const ratio = width && height ? width / height : null
@@ -41,6 +42,7 @@ export function buildImportedAsset({
           orientation: ratio === 1 ? 'square' : ratio > 1 ? 'landscape' : 'portrait',
         }
       : {}),
+    hashes: { exact: hash ?? null, perceptual: null },
     source: {
       type: 'import',
       provider,

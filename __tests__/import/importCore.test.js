@@ -38,6 +38,17 @@ describe('buildImportedAsset', () => {
   })
 })
 
+describe('buildImportedAsset hash', () => {
+  it('writes the content hash to hashes.exact', () => {
+    const a = buildImportedAsset({ url: 'https://cdn/x.jpg', width: 2, height: 1, provider: 'generic', hash: 'abc123', now: '2026-07-09T00:00:00Z' })
+    expect(a.hashes).toEqual({ exact: 'abc123', perceptual: null })
+  })
+  it('defaults hashes.exact to null when no hash given', () => {
+    const a = buildImportedAsset({ url: 'https://cdn/y.jpg', provider: 'generic', now: '2026-07-09T00:00:00Z' })
+    expect(a.hashes).toEqual({ exact: null, perceptual: null })
+  })
+})
+
 describe('dedupe', () => {
   it('collects existing source urls and partitions incoming refs', () => {
     const config = {

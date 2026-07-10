@@ -86,6 +86,7 @@ async function handler(req, res, user) {
           externalCollectionId: ref.externalCollectionId ?? null,
           importBatchId: importBatchId ?? null,
           caption: ref.caption ?? '',
+          hash: stored.hash,
           now,
         })
       )
