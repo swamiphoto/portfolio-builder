@@ -43,7 +43,7 @@ describe('ImportFlow review + import', () => {
     await waitFor(() => expect(client.importSelected).toHaveBeenCalled())
     const arg = client.importSelected.mock.calls[0][0]
     expect(arg.selectedCollections).toHaveLength(2)
-    expect(await screen.findByText(/see my photos/i)).toBeInTheDocument()
+    expect(await screen.findByText(/enter my portfolio/i)).toBeInTheDocument()
   })
 
   it('excludes an unchecked gallery from the import', async () => {
