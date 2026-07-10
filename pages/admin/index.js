@@ -11,6 +11,8 @@ import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPicker
 import AdminLibrary from '../../components/admin/AdminLibrary'
 import PageCover from '../../components/image-displays/page/PageCover'
 import SiteNav from '../../components/image-displays/page/SiteNav'
+import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
+import { defaultPage } from '../../common/siteConfig'
 
 const AUTOSAVE_DELAY = 1500
 
@@ -257,6 +259,19 @@ export default function AdminIndex() {
     setShowLibrary(false)
   }, [])
 
+  const handleCreateFirstPage = useCallback(() => {
+    const existingIds = new Set((siteConfig?.pages || []).map(p => p.id))
+    let id = 'gallery'; let n = 2
+    while (existingIds.has(id)) { id = `gallery-${n++}` }
+    const sortOrder = Math.max(0, ...(siteConfig?.pages || []).filter(p => p.showInNav !== false).map(p => p.sortOrder ?? 0)) + 1
+    updateConfig(prev => ({
+      ...prev,
+      pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null, template: 'gallery' })],
+    }))
+    setSelectedPageId(id)
+    setShowLibrary(false)
+  }, [siteConfig, updateConfig])
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center h-screen text-sm text-gray-400">
@@ -426,11 +441,7 @@ export default function AdminIndex() {
       }
     }
   } else {
-    content = (
-      <div className="flex items-center justify-center h-full text-sm text-gray-300">
-        Select a page to edit
-      </div>
-    )
+    content = <CanvasEmptyState onAddPage={handleCreateFirstPage} />
   }
 
   return (
