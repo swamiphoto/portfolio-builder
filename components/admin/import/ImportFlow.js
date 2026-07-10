@@ -3,6 +3,7 @@ import { discoverSource, importSelected, makeImportBatchId } from '@/common/impo
 import { MONO, monoLabel, primaryBtn, CloseIcon } from './importFlowStyles'
 import ReviewStep from './ReviewStep'
 import ImportProgress from './ImportProgress'
+import ImportDoneStep from './ImportDoneStep'
 
 function hostOf(input) {
   try {
@@ -82,7 +83,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
             Bring in your existing photos
           </h2>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
-            Paste a link to your photos — your website, SmugMug, Squarespace, and more.
+            Paste a link to your photos: your website, SmugMug, Squarespace, and more.
           </p>
           <input
             autoFocus
@@ -125,22 +126,17 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
       {step === 'importing' && <ImportProgress progress={progress} />}
 
       {step === 'done' && summary && (
-        <div style={{ padding: '32px 28px 28px' }}>
-          <h2 className="font-fraunces" style={{ fontSize: 20, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.35 }}>
-            Imported {summary.importedCount} {summary.importedCount === 1 ? 'photo' : 'photos'} into {summary.setsCount} {summary.setsCount === 1 ? 'set' : 'sets'} from {hostOf(input)}.
-          </h2>
-          {summary.failedCount > 0 && (
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
-              {summary.failedCount} couldn't be brought in — you can add those manually.
-            </p>
-          )}
-          <button
-            onClick={() => onComplete(summary)}
-            style={{ ...primaryBtn(false), marginTop: 20 }}
-          >
-            See my photos
-          </button>
-        </div>
+        <ImportDoneStep
+          summary={summary}
+          onEnter={() => onComplete(summary)}
+          onImportAnother={() => {
+            setSummary(null)
+            setDiscovery(null)
+            setError(null)
+            setInput('')
+            setStep('source')
+          }}
+        />
       )}
     </>
   )
