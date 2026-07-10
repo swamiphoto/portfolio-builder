@@ -253,6 +253,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
               {/* Add block */}
               <Tip label="Add block" side="bottom">
                 <button
+                  data-tour="add-block"
                   onClick={(e) => { setMenuAnchorRect(e.currentTarget.getBoundingClientRect()); setInsertAtIndex(null); setShowBlockMenu(true); }}
                   style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: '#9e9788', transition: 'background 120ms' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}

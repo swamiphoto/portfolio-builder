@@ -13,11 +13,18 @@ import PageCover from '../../components/image-displays/page/PageCover'
 import SiteNav from '../../components/image-displays/page/SiteNav'
 import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
 import { defaultPage } from '../../common/siteConfig'
+import { useRouter } from 'next/router'
+import GuidedTour from '../../components/admin/onboarding/GuidedTour'
+import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
+import { buildTourSteps, WELCOME, BLOCKS_TIP_STEP } from '../../components/admin/onboarding/tourSteps'
 
 const AUTOSAVE_DELAY = 1500
 
 export default function AdminIndex() {
   const { data: session, status } = useSession()
+  const router = useRouter()
+  const { onboarding, loading: onboardingLoading, markSeen } = useOnboarding()
+  const importedJustNow = router.query.imported === '1'
   const [siteConfig, setSiteConfig] = useState(null)
   const [libraryConfig, setLibraryConfig] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -444,6 +451,16 @@ export default function AdminIndex() {
     content = <CanvasEmptyState onAddPage={handleCreateFirstPage} />
   }
 
+  const showWelcomeTour = !onboardingLoading && !onboarding.tourDone
+  const showBlocksTip =
+    !onboardingLoading &&
+    onboarding.tourDone &&
+    !onboarding.blocksTipSeen &&
+    selectedPage &&
+    selectedPage.type !== 'link' &&
+    !isCoverPageSelected &&
+    (selectedPage.blocks?.length || 0) === 0
+
   return (
     <DragProvider>
       <AdminLayout
@@ -505,6 +522,19 @@ export default function AdminIndex() {
           blockType="photo"
           onConfirm={handleAssetPickerConfirm}
           onClose={() => setAssetPickerTarget(null)}
+        />
+      )}
+      {showWelcomeTour && (
+        <GuidedTour
+          steps={buildTourSteps({ imported: importedJustNow })}
+          welcome={WELCOME}
+          onFinish={() => markSeen('tourDone')}
+        />
+      )}
+      {showBlocksTip && (
+        <GuidedTour
+          steps={[BLOCKS_TIP_STEP]}
+          onFinish={() => markSeen('blocksTipSeen')}
         />
       )}
     </DragProvider>
