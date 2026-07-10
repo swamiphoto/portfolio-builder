@@ -57,5 +57,13 @@ describe('consolidate', () => {
   })
   it('does not mutate the inputs', () => {
     expect(libraryConfig.assets.dup).toBeDefined()
+    expect(libraryConfig.assets.keep.setIds).toEqual(['s1'])
+    expect(libraryConfig.assets.keep.usage.cover).toBe(false)
+  })
+  it('rewrites a block-level cover ref', () => {
+    const site = { pages: [{ id: 'p', blocks: [{ id: 'bc', type: 'photo', cover: { assetId: 'dup', url: 'https://cdn/dup.jpg' } }] }] }
+    const out = consolidate(libraryConfig, site, [{ canonicalId: 'keep', redundantIds: ['dup'] }])
+    expect(out.siteConfig.pages[0].blocks[0].cover).toEqual({ assetId: 'keep', url: 'https://cdn/keep.jpg' })
+    expect(out.siteChanged).toBe(true)
   })
 })

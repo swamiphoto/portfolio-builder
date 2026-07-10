@@ -103,6 +103,7 @@ export function consolidate(libraryConfig, siteConfig, decisions) {
           blocks: (page.blocks || []).map((block) => {
             const b = { ...block }
             if (b.image) b.image = rewriteImageRef(b.image, urlMap, idMap)
+            if (b.cover) b.cover = rewriteImageRef(b.cover, urlMap, idMap)
             if (typeof b.imageUrl === 'string' && urlMap.has(b.imageUrl)) b.imageUrl = urlMap.get(b.imageUrl)
             if (Array.isArray(b.images)) b.images = rewriteMulti(b.images)
             if (Array.isArray(b.imageUrls)) b.imageUrls = uniq(b.imageUrls.map((u) => urlMap.get(u) || u))
