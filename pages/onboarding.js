@@ -143,7 +143,7 @@ export default function Onboarding() {
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)'; e.currentTarget.style.color = '#2c2416' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7a6b55' }}
           >
-            Skip — start with a blank canvas
+            Skip and start with a blank canvas
           </button>
         </div>
 

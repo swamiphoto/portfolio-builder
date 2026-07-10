@@ -720,7 +720,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
             Bring in your existing photos
           </h2>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 360, lineHeight: 1.55, marginBottom: 22 }}>
-            Import from your current website, SmugMug, or Squarespace — or upload photos from your computer.
+            Import from your current website, SmugMug, or Squarespace. Or upload photos from your computer.
           </p>
           <div className="flex items-center gap-3">
             <button onClick={() => setImportOpen(true)} style={{ background: '#2c2416', color: '#f5ecd6', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: 'none', cursor: 'pointer' }}>

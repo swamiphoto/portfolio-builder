@@ -262,7 +262,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
       <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
         {/* Intro */}
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-          Sell prints of your photos. We print and ship worldwide — you set the markup and keep the difference.
+          Sell prints of your photos. We print and ship worldwide. You set the markup and keep the difference.
         </p>
 
         {/* Enable */}
@@ -290,7 +290,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                   />
                   <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
                     You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
-                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong> — you keep{' '}
+                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>, you keep{' '}
                     <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>
                     {feePct > 0 ? ` after Sepia’s ${feePct}% commission` : ''}.
                   </p>
@@ -551,7 +551,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
           {/* Intro */}
           <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-            How your site appears when shared online or in search results. Change an image below if you’d like — individual pages can override with their own settings.
+            How your site appears when shared online or in search results. Change an image below if you’d like. Individual pages can override with their own settings.
           </p>
 
           {/* Large card */}

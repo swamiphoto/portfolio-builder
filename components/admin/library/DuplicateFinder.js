@@ -383,7 +383,7 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
               </p>
               {summary?.failedDeletes > 0 && (
                 <p style={{ fontFamily: MONO, fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 20 }}>
-                  {summary.failedDeletes} {summary.failedDeletes === 1 ? 'file' : 'file(s)'} couldn&apos;t be removed — run the scan again to retry.
+                  {summary.failedDeletes} {summary.failedDeletes === 1 ? 'file' : 'file(s)'} couldn&apos;t be removed. Run the scan again to retry.
                 </p>
               )}
               <button

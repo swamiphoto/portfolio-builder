@@ -529,7 +529,7 @@ const COMPARISON = {
 
 const TESTIMONIAL = {
   quote:
-    "Most platforms — Squarespace, Wix, SmugMug — aren't built with the photographer in mind. Pixieset gets close. Sepia takes it to a whole other level.",
+    "Most platforms (Squarespace, Wix, SmugMug) aren't built with the photographer in mind. Pixieset gets close. Sepia takes it to a whole other level.",
   attrib: 'Marcus Oliveira',
   role: 'Landscape photographer',
 }
@@ -648,7 +648,7 @@ export default function Landing() {
               maxWidth: 600,
             }}
           >
-            A portfolio, client galleries, print sales, and slideshows scored to music — all in one
+            A portfolio, client galleries, print sales, and slideshows scored to music, all in one
             place, all built around how photographers actually work. Swap themes without rebuilding
             your site. Import from your existing platform in under two minutes.
           </p>

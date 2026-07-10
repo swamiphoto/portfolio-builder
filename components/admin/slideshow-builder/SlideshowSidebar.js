@@ -296,7 +296,7 @@ export default function SlideshowSidebar({
               <div className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Credit</div>
               <input
                 className={INPUT}
-                placeholder="e.g. Music: Song — Artist"
+                placeholder="e.g. Music: Song by Artist"
                 value={ss.musicCredit || ""}
                 onChange={e => updateSS("musicCredit", e.target.value)}
               />
