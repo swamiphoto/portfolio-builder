@@ -5,6 +5,7 @@
 
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
+import crypto from 'crypto'
 import { s3, BUCKET, PUBLIC_URL } from './gcsClient'
 import { getUserPhotoPath, getUserPhotosPrefix } from './gcsUser'
 
@@ -43,13 +44,15 @@ export function resolveUploadKey(userId, filename, folder) {
  *
  * @param {string} userId
  * @param {{ buffer: Buffer, filename: string, contentType: string, folder?: string }} opts
- * @returns {Promise<{ gcsUrl: string, objectPath: string, width: number|null, height: number|null }>}
+ * @returns {Promise<{ gcsUrl: string, objectPath: string, width: number|null, height: number|null, hash: string }>}
  */
 export async function storeImageBuffer(userId, { buffer, filename, contentType, folder }) {
   const key = resolveUploadKey(userId, filename, folder)
   const thumbKey = key.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg')
 
   await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }))
+
+  const hash = crypto.createHash('sha256').update(buffer).digest('hex')
 
   let width = null
   let height = null
@@ -65,5 +68,5 @@ export async function storeImageBuffer(userId, { buffer, filename, contentType, 
     // thumbnail failure is non-fatal
   }
 
-  return { gcsUrl: `${PUBLIC_URL}/${key}`, objectPath: key, width, height }
+  return { gcsUrl: `${PUBLIC_URL}/${key}`, objectPath: key, width, height, hash }
 }
