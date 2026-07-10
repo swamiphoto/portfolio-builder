@@ -5,7 +5,6 @@
 
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
-import crypto from 'crypto'
 import { s3, BUCKET, PUBLIC_URL } from './gcsClient'
 import { getUserPhotoPath, getUserPhotosPrefix } from './gcsUser'
 
@@ -50,9 +49,12 @@ export async function storeImageBuffer(userId, { buffer, filename, contentType, 
   const key = resolveUploadKey(userId, filename, folder)
   const thumbKey = key.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg')
 
-  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }))
-
-  const hash = crypto.createHash('sha256').update(buffer).digest('hex')
+  // The PutObject ETag is the object's MD5 (single-part upload) — the same value
+  // the object listing returns, so it's our exact-duplicate fingerprint and it's
+  // free (no re-download to hash). Dequoted; null if the store didn't return one
+  // (the duplicate scan backfills from the listing in that case).
+  const put = await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }))
+  const hash = String(put?.ETag || '').replace(/"/g, '') || null
 
   let width = null
   let height = null

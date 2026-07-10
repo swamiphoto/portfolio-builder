@@ -1,4 +1,4 @@
-import { assetsMissingHash, groupDuplicates } from '@/common/library/dedup'
+import { groupDuplicates } from '@/common/library/dedup'
 import { consolidate } from '@/common/library/consolidate'
 
 function chunk(arr, n) {
@@ -7,29 +7,33 @@ function chunk(arr, n) {
   return out
 }
 
-export async function backfillHashes(assets, { onProgress, batchSize = 20, signal } = {}) {
-  const todo = assetsMissingHash(assets)
-  const total = todo.length
+// Fingerprint the whole library from a single storage listing (R2 ETags = MD5),
+// with NO image downloads. Returns { [assetId]: etag } for every asset whose
+// object is present in storage — used to (re)assign `hashes.exact` consistently
+// so grouping compares like-for-like. Near-instant regardless of library size.
+export async function backfillHashes(assets, { onProgress, signal } = {}) {
+  const total = Object.keys(assets || {}).length
+  if (onProgress) onProgress({ done: 0, total })
+
+  let data = {}
+  try {
+    const res = await fetch('/api/admin/dedup/storage-hashes', { signal })
+    data = await res.json().catch(() => ({}))
+  } catch (err) {
+    if (signal?.aborted) return { hashes: {}, failed: [] }
+    throw err
+  }
+
+  const urlToEtag = data.hashes || {}
   const hashes = {}
   const failed = []
-  let done = 0
-  for (const batch of chunk(todo, batchSize)) {
-    if (signal?.aborted) break
-    let res
-    try {
-      res = await fetch('/api/admin/dedup/hash-batch', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: batch }), signal,
-      })
-    } catch (err) {
-      if (signal?.aborted) break // cancelled mid-flight — return what we have
-      throw err
-    }
-    const data = await res.json().catch(() => ({}))
-    for (const h of data.hashed || []) hashes[h.assetId] = h.hash
-    for (const f of data.failed || []) failed.push(f)
-    done += batch.length
-    if (onProgress) onProgress({ done, total })
+  for (const asset of Object.values(assets || {})) {
+    const etag = urlToEtag[asset.publicUrl]
+    if (etag) hashes[asset.assetId] = etag
+    else failed.push({ assetId: asset.assetId, reason: 'no storage fingerprint' })
   }
+
+  if (onProgress) onProgress({ done: total, total })
   return { hashes, failed }
 }
 
