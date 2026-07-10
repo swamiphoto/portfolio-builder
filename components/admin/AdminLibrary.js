@@ -705,6 +705,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onCaptionChange={handleCaptionChange}
         onToggleSet={handleToggleSet}
         onUploadClick={() => setUploadOpen(true)}
+        onImportFromWeb={() => setImportOpen(true)}
         printStore={printStore}
         onSellChange={handleSellChange}
         onUploadMaster={handleUploadMaster}

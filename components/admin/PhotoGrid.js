@@ -90,6 +90,7 @@ export default function PhotoGrid({
   onCaptionChange,
   onToggleSet,
   onUploadClick,
+  onImportFromWeb,
   onAddFromLibraryClick,
   activeFilters = [],
   onRemoveFilter,
@@ -440,6 +441,28 @@ export default function PhotoGrid({
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               + Add
+            </button>
+          )}
+
+          {/* Import from the web */}
+          {onImportFromWeb && (
+            <button
+              onClick={onImportFromWeb}
+              className="flex items-center gap-1.5 transition-colors"
+              style={{
+                fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em',
+                padding: '0 12px', height: 28,
+                background: 'transparent', color: '#7a6b55',
+                border: '1px solid rgba(160,140,110,0.3)', borderRadius: 4,
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
+              </svg>
+              Import
             </button>
           )}
 

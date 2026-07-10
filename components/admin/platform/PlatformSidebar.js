@@ -752,8 +752,7 @@ export default function PlatformSidebar({
           if (!cd) return null
           const active = cd.status === 'active'
           return (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: active ? C.textBody : C.textFaint, letterSpacing: '0.06em', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 8, color: active ? '#2e7d32' : '#9a7b2e' }}>{active ? '🔒' : '●'}</span>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', marginTop: 2 }}>
               {cd.name}{!active && <span style={{ color: C.textFaint }}> · pending</span>}
             </div>
           )
