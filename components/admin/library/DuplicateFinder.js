@@ -59,26 +59,38 @@ function GroupRow({ group, assets, canonicalId, onSetCanonical, skipped, onToggl
         )}
         {/* Keep picker */}
         <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {group.assetIds.map(id => (
-            <button
-              key={id}
-              onClick={() => onSetCanonical(id)}
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: '0.06em',
-                padding: '2px 6px',
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: canonicalId === id ? '#8b6f47' : 'rgba(160,140,110,0.35)',
-                background: canonicalId === id ? 'rgba(139,111,71,0.10)' : 'transparent',
-                color: canonicalId === id ? '#6b5231' : '#a8967a',
-                cursor: 'pointer',
-              }}
-            >
-              {canonicalId === id ? 'keeping this one' : id}
-            </button>
-          ))}
+          {group.assetIds.map(id => {
+            const isCanonical = canonicalId === id
+            const fileName = (() => {
+              const raw = assets[id]?.publicUrl?.split('/').pop() || ''
+              try { return decodeURIComponent(raw) } catch { return raw }
+            })()
+            return (
+              <button
+                key={id}
+                onClick={() => onSetCanonical(id)}
+                title={isCanonical ? 'This copy will be kept' : `Keep ${fileName || 'this copy'} instead`}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.06em',
+                  maxWidth: 160,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  padding: '2px 6px',
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: isCanonical ? '#8b6f47' : 'rgba(160,140,110,0.35)',
+                  background: isCanonical ? 'rgba(139,111,71,0.10)' : 'transparent',
+                  color: isCanonical ? '#6b5231' : '#a8967a',
+                  cursor: 'pointer',
+                }}
+              >
+                {isCanonical ? `keeping ${fileName || 'this one'}` : (fileName || 'keep this one')}
+              </button>
+            )
+          })}
         </div>
       </div>
 
