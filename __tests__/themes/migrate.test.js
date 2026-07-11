@@ -33,6 +33,12 @@ describe('migrateBlock', () => {
     const c = { type: 'contact', heading: 'Hi' }
     expect(migrateBlock(c).themeState.kyoto.variant).toBe('standard')
   })
+
+  it('leaves blocks whose type has no theme spec untouched', () => {
+    const b = { type: 'masonry', layout: 'masonry' }
+    const out = migrateBlock(b)
+    expect(out.themeState?.kyoto?.variant).toBeUndefined()
+  })
 })
 
 describe('migrateSiteConfigThemes', () => {

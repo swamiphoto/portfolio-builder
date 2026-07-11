@@ -18,6 +18,7 @@ export function migrateBlock(block) {
   const existing = block.themeState?.kyoto?.variant
   if (existing) return block // already migrated for kyoto
   const variant = resolveVariant(block, 'kyoto') // derives from legacy fields or default
+  if (variant == null) return block // block type has no kyoto spec (e.g. legacy 'stacked'/'masonry'); nothing to migrate
   return {
     ...block,
     themeState: {
