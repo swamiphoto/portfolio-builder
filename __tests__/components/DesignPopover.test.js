@@ -37,12 +37,11 @@ describe('DesignPopover theme-driven variants', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('mirrors a photos variant onto legacy type/layout while writing themeState', () => {
+  it('writes a photos variant to themeState without flipping block.type', () => {
     const onUpdate = open({ type: 'photos', images: [{ url: 'a' }] }, 'kyoto')
     fireEvent.click(screen.getByText('Masonry'))
     expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'masonry',
-      layout: 'masonry',
+      type: 'photos',
       themeState: expect.objectContaining({ kyoto: { variant: 'masonry' } }),
     }))
   })

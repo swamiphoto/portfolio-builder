@@ -10,6 +10,8 @@ import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
+import ThemeProvider from '../../../components/image-displays/ThemeProvider'
+import { getTheme } from '../../../common/themes'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -125,10 +127,14 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
-  const navVariant = homePage?.cover?.imageUrl ? undefined : 'header-dropdown'
+  const theme = getTheme(siteConfig?.design?.theme)
+  const navVariant = theme.navStyle === 'left-rail'
+    ? 'left-rail'
+    : (homePage?.cover?.imageUrl ? undefined : 'header-dropdown')
   const slideshowHref = homePage?.slideshow?.enabled ? `${basePath}/${homePage.slug || homePage.id}/slideshow` : null
 
   return (
+    <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative">
       <Head>
         <title>{ogTitle}</title>
@@ -144,7 +150,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
       <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
-      <main>
+      <main className="theme-content">
         <PageCover
           cover={homePage?.cover}
           title={homePage?.title}
@@ -165,6 +171,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
             siteConfig={siteConfig}
             printStore={printStore}
+            themeId={theme.id}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">
@@ -173,5 +180,6 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         )}
       </main>
     </div>
+    </ThemeProvider>
   )
 }

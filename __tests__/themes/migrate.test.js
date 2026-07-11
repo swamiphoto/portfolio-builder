@@ -34,9 +34,15 @@ describe('migrateBlock', () => {
     expect(migrateBlock(c).themeState.kyoto.variant).toBe('standard')
   })
 
-  it('leaves blocks whose type has no theme spec untouched', () => {
-    const b = { type: 'masonry', layout: 'masonry' }
-    const out = migrateBlock(b)
+  it('normalizes legacy masonry/stacked types to photos and migrates them', () => {
+    const out = migrateBlock({ type: 'masonry', layout: 'masonry' })
+    expect(out.type).toBe('photos')
+    expect(out.layout).toBe('masonry')
+    expect(out.themeState.kyoto.variant).toBe('masonry')
+  })
+
+  it('leaves truly spec-less block types untouched', () => {
+    const out = migrateBlock({ type: 'divider' })
     expect(out.themeState?.kyoto?.variant).toBeUndefined()
   })
 })

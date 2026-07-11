@@ -15,15 +15,19 @@ export function migrateThemeId(id) {
 
 export function migrateBlock(block) {
   if (!block || typeof block !== 'object') return block
-  const existing = block.themeState?.kyoto?.variant
-  if (existing) return block // already migrated for kyoto
-  const variant = resolveVariant(block, 'kyoto') // derives from legacy fields or default
-  if (variant == null) return block // block type has no kyoto spec (e.g. legacy 'stacked'/'masonry'); nothing to migrate
+  let b = block
+  if (block.type === 'stacked' || block.type === 'masonry') {
+    b = { ...block, type: 'photos', layout: block.layout || block.type }
+  }
+  const existing = b.themeState?.kyoto?.variant
+  if (existing) return b // already migrated for kyoto
+  const variant = resolveVariant(b, 'kyoto') // derives from legacy fields or default
+  if (variant == null) return b // block type has no kyoto spec; nothing to migrate
   return {
-    ...block,
+    ...b,
     themeState: {
-      ...(block.themeState || {}),
-      kyoto: { ...(block.themeState?.kyoto || {}), variant },
+      ...(b.themeState || {}),
+      kyoto: { ...(b.themeState?.kyoto || {}), variant },
     },
   }
 }

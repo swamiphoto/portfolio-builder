@@ -41,7 +41,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   const adminViewport = useAdminViewport()
   const isMobile = adminViewport === 'mobile'
   const tree = buildNavTree(siteConfig.pages)
-  const style = variant || resolveNavStyle(siteConfig.theme)
+  const style = variant || resolveNavStyle(siteConfig.design?.theme)
   const basePath = basePathProp != null ? basePathProp : `/sites/${username}`
   const currentPath = router.asPath.split('?')[0]
 

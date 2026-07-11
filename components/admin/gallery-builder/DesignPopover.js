@@ -23,24 +23,15 @@ const ALIGN_OPTIONS = [
   { value: 'center', label: <IconAlignCenter /> },
 ]
 
-// Photos-block variant ids that map back to a legacy block.type/layout so the
-// existing Kyoto render path in Gallery.js keeps working unchanged.
-const PHOTOS_LEGACY = { stacked: { type: 'stacked', layout: 'stacked' }, masonry: { type: 'masonry', layout: 'masonry' } }
-
 export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onClose, anchorEl }) {
   const spec = getBlockSpec(themeId, block.type)
   const variants = spec ? spec.variants.map(v => ({ value: v.id, label: v.label })) : []
-  const isPhotos = block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry'
   const showAlignment = block.type === 'text'
 
   const current = resolveVariant(block, themeId)
 
   function handleVariantChange(variantId) {
-    let next = setVariant(block, themeId, variantId)
-    if (isPhotos && PHOTOS_LEGACY[variantId]) {
-      next = { ...next, ...PHOTOS_LEGACY[variantId] }
-    }
-    onUpdate(next)
+    onUpdate(setVariant(block, themeId, variantId))
   }
 
   // Single-variant, non-alignment blocks (contact, page-gallery) have nothing to show.
