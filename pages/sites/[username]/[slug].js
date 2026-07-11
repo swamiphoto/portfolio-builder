@@ -99,7 +99,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   const activeSubNavId = isChildPage ? page.id : null
   return (
     <ThemeProvider themeId={theme.id}>
-    <div className="min-h-screen bg-white font-sans relative">
+    <div className="min-h-screen bg-white font-sans relative theme-shell">
       <Head>
         <title>{ogTitle}</title>
         <meta name="description" content={ogDescription} />

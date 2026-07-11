@@ -86,7 +86,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
       <nav
         data-testid="left-rail"
         aria-label="Site navigation"
-        className="left-rail hidden md:flex flex-col justify-between fixed top-0 left-0 h-screen w-[260px] px-8 py-10 border-r border-black/10"
+        className="left-rail hidden md:flex flex-col justify-between sticky top-0 self-start h-screen w-[260px] shrink-0 px-8 py-10 border-r border-black/10"
         style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
       >
         <div className="flex flex-col gap-10">

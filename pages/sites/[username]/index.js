@@ -135,7 +135,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   return (
     <ThemeProvider themeId={theme.id}>
-    <div className="min-h-screen bg-white font-sans relative">
+    <div className="min-h-screen bg-white font-sans relative theme-shell">
       <Head>
         <title>{ogTitle}</title>
         <meta name="description" content={ogDescription} />

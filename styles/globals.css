@@ -123,10 +123,12 @@ a {
   100% { background: transparent; box-shadow: inset 0 0 0px rgba(220,165,45,0); }
 }
 
-/* Manhattan theme — content region offset by the fixed left rail */
+/* Manhattan theme — left rail + content as a flex row so the sticky rail
+   works both on the live page and inside the admin's scrollable preview. */
 [data-theme="manhattan"] { background: var(--theme-bg, #fafafa); color: var(--theme-text, #141414); }
 @media (min-width: 768px) {
-  [data-theme="manhattan"] .theme-content { margin-left: var(--theme-rail-width, 260px); }
+  [data-theme="manhattan"] .theme-shell { display: flex; align-items: flex-start; }
+  [data-theme="manhattan"] .theme-content { flex: 1 1 auto; min-width: 0; }
 }
 [data-theme="manhattan"] .gallery-container { max-width: 1200px; }
 /* Manhattan full-width photo stays inside the content region (no 100vw bleed) */

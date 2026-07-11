@@ -11,6 +11,8 @@ import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPicker
 import AdminLibrary from '../../components/admin/AdminLibrary'
 import PageCover from '../../components/image-displays/page/PageCover'
 import SiteNav from '../../components/image-displays/page/SiteNav'
+import ThemeProvider from '../../components/image-displays/ThemeProvider'
+import { getTheme } from '../../common/themes'
 import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
 import { defaultPage } from '../../common/siteConfig'
 import { useRouter } from 'next/router'
@@ -378,7 +380,10 @@ export default function AdminIndex() {
       const slideshowHref = (selectedPage.slideshow?.enabled && username)
         ? `/sites/${username}/${selectedPage.slug || selectedPage.id}/slideshow`
         : null
-      const navVariant = selectedPage.cover?.imageUrl ? undefined : 'header-dropdown'
+      const theme = getTheme(siteConfig?.design?.theme)
+      const navVariant = theme.navStyle === 'left-rail'
+        ? 'left-rail'
+        : (selectedPage.cover?.imageUrl ? undefined : 'header-dropdown')
       const isChildPage = !!selectedPage.parentId
       const childPages = isChildPage
         ? siteConfig.pages.filter(p => p.parentId === selectedPage.parentId && p.showInNav !== false)
@@ -420,7 +425,10 @@ export default function AdminIndex() {
                 ref={previewContainerRef}
                 className="overflow-y-auto w-full scroll-quiet"
               >
+                <ThemeProvider themeId={theme.id}>
+                <div className="theme-shell">
                 <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+                <div className="theme-content">
                 <PageCover
                   cover={selectedPage.cover}
                   title={selectedPage.title}
@@ -450,6 +458,9 @@ export default function AdminIndex() {
                   onBlockClick={handleScrollSidebarToBlock}
                   siteConfig={siteConfig}
                 />
+                </div>
+                </div>
+                </ThemeProvider>
               </div>
             </div>
           </div>
