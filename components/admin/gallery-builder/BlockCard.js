@@ -128,7 +128,7 @@ function BlockCard({
   onMoveDown,
   onAddBlockAbove,
   onAddBlockBelow,
-  themeId,
+  themeId = 'kyoto',
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);

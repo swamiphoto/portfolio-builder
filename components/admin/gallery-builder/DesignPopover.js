@@ -1,7 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec } from '../../../common/themes'
-import { setVariant } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign } from '../../../common/themes/variants'
 
 const IconAlignLeft = () => (
   <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
@@ -26,8 +26,6 @@ const ALIGN_OPTIONS = [
 // Photos-block variant ids that map back to a legacy block.type/layout so the
 // existing Kyoto render path in Gallery.js keeps working unchanged.
 const PHOTOS_LEGACY = { stacked: { type: 'stacked', layout: 'stacked' }, masonry: { type: 'masonry', layout: 'masonry' } }
-
-import { resolveVariant, resolveAlign } from '../../../common/themes/variants'
 
 export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onClose, anchorEl }) {
   const spec = getBlockSpec(themeId, block.type)
