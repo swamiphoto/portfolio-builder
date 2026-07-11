@@ -4,6 +4,7 @@ import { normalizePageEntity } from './assetRefs'
 import { getUserSiteConfigPath } from './gcsUser'
 import { slugify } from './pageUtils'
 import { defaultBlock } from './blocks'
+import { migrateSiteConfigThemes } from './themes/migrate'
 
 /**
  * Slugify a title into a URL-safe page ID.
@@ -45,7 +46,7 @@ export function createDefaultSiteConfig(userId) {
       squareImage: '',
     },
     design: {
-      theme: 'minimal-light',
+      theme: 'kyoto',
       navStyle: 'minimal',
       subNavStyle: 'dropdown',
       footerLayout: 'standard',
@@ -184,10 +185,10 @@ export function normalizePrintStore(config = {}) {
 export async function readSiteConfig(userId) {
   try {
     const config = await downloadJSON(getUserSiteConfigPath(userId))
-    return normalizePrintStore({
+    return migrateSiteConfigThemes(normalizePrintStore({
       ...config,
       pages: (config.pages || []).map((page) => normalizePageEntity(page)),
-    })
+    }))
   } catch (err) {
     // Only treat "file doesn't exist yet" as a normal case
     if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return null
