@@ -45,6 +45,51 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   const basePath = basePathProp != null ? basePathProp : `/sites/${username}`
   const currentPath = router.asPath.split('?')[0]
 
+  if (style === 'left-rail') {
+    const socials = siteConfig.contact || {}
+    const socialKeys = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website'].filter(k => socials[k])
+    return (
+      <nav
+        data-testid="left-rail"
+        className="left-rail hidden md:flex flex-col justify-between fixed top-0 left-0 h-screen w-[260px] px-8 py-10 border-r border-black/10"
+        style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
+      >
+        <div className="flex flex-col gap-10">
+          {onPageClick ? (
+            <button className="text-left text-lg font-semibold uppercase tracking-[0.18em] leading-tight">{siteConfig.siteName || username}</button>
+          ) : (
+            <a href={basePath || '/'} className="text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={{ textDecoration: 'none', color: 'inherit' }}>{siteConfig.siteName || username}</a>
+          )}
+          <ul className="flex flex-col gap-2">
+            {tree.map(item => {
+              const isLink = item.type === 'link'
+              const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+              const isActive = !isLink && currentPath === href
+              const cls = `text-sm uppercase tracking-[0.12em] transition-colors ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`
+              return (
+                <li key={item.id}>
+                  {onPageClick && !isLink
+                    ? <button onClick={() => onPageClick(item.id)} className={cls}>{item.title}</button>
+                    : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }}>{item.title}</a>}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+        <div className="flex flex-col gap-4 text-black/40">
+          {socialKeys.length > 0 && (
+            <div className="flex gap-3 text-xs uppercase tracking-[0.12em]">
+              {socialKeys.map(k => <span key={k}>{k[0].toUpperCase()}</span>)}
+            </div>
+          )}
+          {siteConfig.footer?.customText && (
+            <p className="text-[11px] leading-relaxed">{siteConfig.footer.customText}</p>
+          )}
+        </div>
+      </nav>
+    )
+  }
+
   if (style === 'header-dropdown') {
     return (
       <header className="px-8 py-5 flex items-center justify-between">
