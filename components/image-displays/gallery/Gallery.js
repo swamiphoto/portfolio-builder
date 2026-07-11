@@ -12,6 +12,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
+import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -63,7 +64,7 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
@@ -130,7 +131,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
           switch (block.type) {
             case "photos": {
-              const usemasonry = block.layout === "masonry" || isSmallScreen;
+              const variantId = resolveVariant(block, themeId)
+              const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block"><PlaceholderGrid /><WiggleLine /></div> : null;
               return (
@@ -169,9 +171,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "text": {
               if (!block.content) return showPlaceholders ? <div key={`block-${index}`}><PlaceholderText /><WiggleLine /></div> : null;
-              const v = block.variant || 1;
-              const defaultAlign = 'center';
-              const align = block.align || defaultAlign;
+              const variantId = resolveVariant(block, themeId)
+              const v = { heading: 1, subheading: 2, body: 3, quote: 4 }[variantId] || 1
+              const align = resolveAlign(block, themeId)
               const alignClass = align === 'left' ? 'text-left' : 'text-center';
               const variantClass =
                 v === 4 ? `text-lg md:text-xl italic font-serif text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300`
@@ -192,7 +194,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "photo": {
               if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block"><PlaceholderPhoto /><WiggleLine /></div> : null;
-              const photoVariant = block.layout === "Centered" ? 2 : (block.variant || 1);
+              const variantId = resolveVariant(block, themeId)
+              const photoVariant = variantId === 'centered' ? 2 : 1
               return (
                 <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
                   <PhotoBlock
@@ -208,7 +211,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             }
 
             case "video": {
-              const videoVariant = block.layout === "Centered" ? 2 : (block.variant || 1);
+              const variantId = resolveVariant(block, themeId)
+              const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 1
               return (
                 <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}>
                   <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} />
@@ -276,7 +280,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "testimonial": {
               const photoUrl = getImageRefUrl(block.image || block.imageUrl)
-              const v = block.variant || 1
+              const v = resolveVariant(block, themeId) === 'quote-above' ? 2 : 1
               const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
               const FR = '"Fraunces", Georgia, serif'
 
