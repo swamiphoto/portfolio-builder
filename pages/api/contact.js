@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       replyTo: `"${name}" <${email}>`,
       to: toEmail,
       subject: subject
-        ? `${subject} — message from ${name}`
+        ? `${subject}: message from ${name}`
         : `Message from ${name} via your portfolio`,
       text: `Name: ${name}\nEmail: ${email}${subject ? `\nSubject: ${subject}` : ''}\n\n${message}`,
       html: `

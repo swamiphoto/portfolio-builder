@@ -10,6 +10,7 @@ import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtil
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
+import EmptyHint from '../onboarding/EmptyHint'
 
 // Design tokens
 const C = {
@@ -173,10 +174,11 @@ function IconButton({ children, onClick, label }) {
   )
 }
 
-function UtilityButton({ icon, label, active, onClick, btnRef }) {
+function UtilityButton({ icon, label, active, onClick, btnRef, dataTour }) {
   return (
     <button
       ref={btnRef}
+      data-tour={dataTour}
       type="button"
       onClick={onClick}
       style={{
@@ -752,8 +754,7 @@ export default function PlatformSidebar({
           if (!cd) return null
           const active = cd.status === 'active'
           return (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: active ? C.textBody : C.textFaint, letterSpacing: '0.06em', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 8, color: active ? '#2e7d32' : '#9a7b2e' }}>{active ? '🔒' : '●'}</span>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', marginTop: 2 }}>
               {cd.name}{!active && <span style={{ color: C.textFaint }}> · pending</span>}
             </div>
           )
@@ -809,7 +810,7 @@ export default function PlatformSidebar({
       <div className="flex-1 overflow-y-auto">
 
         {/* Pages section header */}
-        <div style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
               Pages
             </span>
@@ -838,6 +839,9 @@ export default function PlatformSidebar({
           renderRow={renderPageRow}
           droppableId="main-nav"
         />
+        {navPages.length === 0 && draftRow?.section !== 'nav' && (
+          <EmptyHint>No pages yet. What you add here becomes your site's navigation.</EmptyHint>
+        )}
         {draftRow?.section === 'nav' && renderDraftRow()}
 
         {/* Hidden section — always rendered so it's a valid drop target and visible default for new pages */}
@@ -852,12 +856,16 @@ export default function PlatformSidebar({
           renderRow={renderPageRow}
           droppableId="other-pages"
         />
+        {hiddenPages.length === 0 && draftRow?.section !== 'hidden' && (
+          <EmptyHint>Nothing hidden. Pages here work by direct link but stay out of your navigation, good for unlisted or private work.</EmptyHint>
+        )}
         {draftRow?.section === 'hidden' && renderDraftRow()}
 
         {/* Add Page button */}
         <div ref={addMenuRef} style={{ margin: '10px 8px 0' }}>
           <button
             ref={addBtnRef}
+            data-tour="add-page"
             type="button"
             onClick={() => setAddMenuOpen(v => !v)}
             style={{
@@ -917,6 +925,7 @@ export default function PlatformSidebar({
           icon={<IconLibrary />}
           label="Library"
           onClick={onShowLibrary}
+          dataTour="library"
         />
 
         <UtilityButton
@@ -924,6 +933,7 @@ export default function PlatformSidebar({
           label="Settings"
           onClick={() => setSiteSettingsOpen(v => !v)}
           btnRef={siteSettingsRef}
+          dataTour="settings"
         />
       </div>
 

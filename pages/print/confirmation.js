@@ -67,7 +67,7 @@ export default function PrintConfirmation() {
             textWrap: 'balance',
           }}
         >
-          Thank you — your print is on its way.
+          Thank you. Your print is on its way.
         </h1>
 
         <p style={{ color: '#5c4f3a', lineHeight: 1.65, fontSize: 15.5, margin: '0 auto', maxWidth: 440 }}>

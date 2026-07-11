@@ -443,6 +443,11 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
         <img
           src={getSizedUrl(image.url, 'display')}
           alt={caption || ''}
+          onError={(e) => {
+            // Older images stored before display variants were generated have no
+            // /display/ object. Fall back to the original so the lightbox never blanks.
+            if (image.url && e.currentTarget.src !== image.url) e.currentTarget.src = image.url
+          }}
           style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
         />
 

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import Tip from "./Tip";
+import { sourceLabel } from '@/common/import/sourceFilter';
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const LINE_COLOR = 'rgba(160,140,110,0.32)';
@@ -546,12 +547,15 @@ export default function AlbumSidebar({
   lensCounts,
   focalLengthCounts,
   isoCounts,
+  sourceCounts,
   filters,
   onFilterChange,
   onBack,
   pages,
   selectedPage,
   onSelectPage,
+  onImportFromWeb,
+  onFindDuplicates,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
@@ -570,10 +574,11 @@ export default function AlbumSidebar({
     filters.lens !== "all",
     filters.focalLength !== "all",
     filters.iso !== "all",
+    filters.source !== "all",
   ].filter(Boolean).length;
 
   const clearAllFilters = useCallback(() => {
-    ["orientation","usage","forPrint","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso"]
+    ["orientation","usage","forPrint","captureYear","uploaded","aperture","shutter","camera","lens","focalLength","iso","source"]
       .forEach(k => onFilterChange(k, "all"));
     onSelect({ type: "all", key: "all" });
   }, [onFilterChange, onSelect]);
@@ -716,6 +721,43 @@ export default function AlbumSidebar({
             ))}
           </SidebarSection>
         )}
+
+        <SidebarSection
+          title="Source"
+          openOverride={sectionsOpen}
+          action={
+            onImportFromWeb ? (
+              <button
+                onClick={onImportFromWeb}
+                title="Import from the web"
+                className="flex items-center justify-center rounded transition-colors"
+                style={{ width: 18, height: 18, color: '#a8967a' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#8b6f47')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#a8967a')}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            ) : null
+          }
+        >
+          {Object.keys(sourceCounts || {}).length > 0 ? (
+            Object.entries(sourceCounts).map(([provider, count]) => (
+              <SidebarItem
+                key={provider}
+                active={filters.source === provider}
+                label={sourceLabel(provider)}
+                count={count}
+                onClick={() => onFilterChange('source', filters.source === provider ? 'all' : provider)}
+              />
+            ))
+          ) : (
+            <div style={{ padding: '4px 12px', fontSize: 12, color: '#c4b49a', fontStyle: 'italic' }}>
+              No sources yet
+            </div>
+          )}
+        </SidebarSection>
 
         {Object.keys(captureYearCounts).length > 0 && (
           <SidebarSection title="Captured" openOverride={sectionsOpen}>
@@ -877,6 +919,29 @@ export default function AlbumSidebar({
           </SidebarSection>
         )}
       </div>
+
+      {/* Maintenance footer */}
+      {onFindDuplicates && (
+        <div style={{ flexShrink: 0, borderTop: '1px solid rgba(160,140,110,0.14)', padding: '8px 12px 10px' }}>
+          <button
+            onClick={onFindDuplicates}
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: '0.09em',
+              color: '#b0a490',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#8b6f47' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#b0a490' }}
+          >
+            find duplicates
+          </button>
+        </div>
+      )}
     </div>
   )
 }

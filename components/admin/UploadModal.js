@@ -58,12 +58,12 @@ export default function UploadModal({ sets = [], defaultSet = null, onClose, onU
     for (const file of files) {
       setProgress((p) => ({ ...p, [file.name]: 0 }));
       try {
-        const { gcsUrl, width, height } = await uploadFile(file, {
+        const { gcsUrl, width, height, hash } = await uploadFile(file, {
           folder,
           onProgress: (pct) => setProgress((p) => ({ ...p, [file.name]: pct })),
         });
         setProgress((p) => ({ ...p, [file.name]: "done" }));
-        uploadedAssets.push({ url: gcsUrl, width, height });
+        uploadedAssets.push({ url: gcsUrl, width, height, hash });
       } catch (err) {
         console.error("Upload error for", file.name, err);
         setProgress((p) => ({ ...p, [file.name]: { error: err.message || "Upload failed" } }));

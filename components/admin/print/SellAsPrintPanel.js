@@ -67,7 +67,7 @@ export default function SellAsPrintPanel({ asset, onSellChange, onUploadMaster }
           }}>
             {print.maxSharpSize
               ? `Prints sharply up to ${prettySize(print.maxSharpSize)} in.`
-              : 'Too small to print sharply — upload a higher-resolution file below.'}
+              : 'Too small to print sharply. Upload a higher-resolution file below.'}
           </p>
 
           {print.availableSizes?.length > 0 && (

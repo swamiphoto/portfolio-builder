@@ -51,6 +51,30 @@ export async function listFiles(prefix) {
   return results
 }
 
+// List objects under a prefix WITH their ETags (the object's MD5 for single-part
+// uploads). Lets us fingerprint the whole library from listings alone — no
+// per-object downloads. ETags are returned dequoted.
+export async function listFilesWithEtags(prefix) {
+  const results = []
+  let continuationToken
+
+  do {
+    const cmd = new ListObjectsV2Command({
+      Bucket: BUCKET,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    })
+    const { Contents = [], NextContinuationToken, IsTruncated } = await s3.send(cmd)
+    for (const obj of Contents) {
+      if (!obj.Key) continue
+      results.push({ key: obj.Key, etag: String(obj.ETag || '').replace(/"/g, ''), size: obj.Size || 0 })
+    }
+    continuationToken = IsTruncated ? NextContinuationToken : undefined
+  } while (continuationToken)
+
+  return results
+}
+
 /**
  * Download and parse a JSON file from R2.
  * @param {string} key - e.g. 'users/{userId}/library-config.json'

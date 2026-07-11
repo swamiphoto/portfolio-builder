@@ -1,22 +1,37 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import ImportFlow from '../components/admin/import/ImportFlow'
+import { applyImportToConfig } from '../common/import/importClient'
+
+function goToAdmin(slug, { imported = false } = {}) {
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
+  const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
+  const query = imported ? '?imported=1' : ''
+  window.location.href = `${protocol}://${slug}.${rootDomain}/admin${query}`
+}
 
 export default function Onboarding() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [step, setStep] = useState('url') // 'url' | 'import-offer'
+  const [isReturning, setIsReturning] = useState(false)
   const [username, setUsername] = useState('')
+  const [claimedSlug, setClaimedSlug] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/auth/signin')
-    if (status === 'authenticated' && session?.user?.username) {
-      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
-      const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
-      window.location.href = `${protocol}://${session.user.username}.${rootDomain}/admin`
+    if (status === 'authenticated' && session?.user?.username && step === 'url') {
+      // They already have a username — post-login sent them here because they
+      // have no photos yet, so go straight to the import offer.
+      setClaimedSlug(session.user.username)
+      setIsReturning(true)
+      setStep('import-offer')
     }
-  }, [status, session, router])
+  }, [status, session, router, step])
 
   const slug = username.toLowerCase().replace(/[^a-z0-9-]/g, '')
 
@@ -37,10 +52,9 @@ export default function Onboarding() {
         return
       }
       if (!res.ok) throw new Error('Save failed')
-
-      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
-      const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
-      window.location.href = `${protocol}://${slug}.${rootDomain}/admin`
+      setClaimedSlug(slug)
+      setStep('import-offer')
+      setSaving(false)
     } catch {
       setError('Something went wrong. Please try again.')
       setSaving(false)
@@ -49,37 +63,236 @@ export default function Onboarding() {
 
   if (status === 'loading' || status === 'unauthenticated') return null
 
+  const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'sepia.photo').replace(/:\d+$/, '')
+  const firstName = session?.user?.name?.split(' ')[0] || null
+
+  // ── Step 2: import offer ──────────────────────────────────────────────────
+  if (step === 'import-offer') {
+    return (
+      <div
+        className="flex flex-col items-center justify-center h-screen font-sans"
+        style={{ background: 'var(--desk, #e8e2d9)' }}
+      >
+        <div style={{ width: '100%', maxWidth: 420, padding: '0 32px' }}>
+          <p style={{
+            fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+            fontSize: 10.5,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: '#a8967a',
+            fontWeight: 500,
+            marginBottom: 20,
+          }}>
+            {claimedSlug}.{rootDomain}
+          </p>
+
+          <h1 style={{
+            fontFamily: '"Fraunces", Georgia, serif',
+            fontSize: 30,
+            fontWeight: 300,
+            fontStyle: 'italic',
+            color: '#2c2416',
+            marginBottom: 10,
+            lineHeight: 1.15,
+          }}>
+            {isReturning
+              ? `Welcome back${firstName ? `, ${firstName}` : ''}.`
+              : `Welcome${firstName ? `, ${firstName}` : ''}.`}
+          </h1>
+          <p style={{ fontSize: 14.5, color: '#7a6b55', marginBottom: 40, lineHeight: 1.6, maxWidth: 340 }}>
+            Your site is almost ready. Do you have photos on another site you want to bring over?
+          </p>
+
+          <button
+            onClick={() => setShowImport(true)}
+            style={{
+              width: '100%',
+              padding: '13px 16px',
+              background: '#2c2416',
+              color: '#f5ecd6',
+              fontSize: 14,
+              fontWeight: 500,
+              borderRadius: 5,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.15s',
+              letterSpacing: '0.01em',
+              marginBottom: 14,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#3d2d18' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#2c2416' }}
+          >
+            Import from an existing site
+          </button>
+
+          <button
+            onClick={() => goToAdmin(claimedSlug)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: 'transparent',
+              color: '#7a6b55',
+              fontSize: 13.5,
+              fontWeight: 400,
+              borderRadius: 5,
+              border: '1px solid rgba(160,140,110,0.35)',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              letterSpacing: '0.01em',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)'; e.currentTarget.style.color = '#2c2416' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7a6b55' }}
+          >
+            Skip and start with a blank canvas
+          </button>
+        </div>
+
+        {showImport && (
+          <ImportFlow
+            variant="modal"
+            onClose={() => goToAdmin(claimedSlug)}
+            onComplete={async (summary) => {
+              // Save the imported assets (with their source metadata) before redirecting,
+              // otherwise the library GET will create them from the GCS listing with no
+              // source info, defaulting to provider:'manual' → shows as "Uploaded".
+              try {
+                const res = await fetch('/api/admin/library')
+                const currentConfig = res.ok ? await res.json() : {}
+                const next = applyImportToConfig(currentConfig, summary)
+                await fetch('/api/admin/library', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(next),
+                })
+              } catch {
+                // Non-fatal — user still lands in admin, source just won't be labelled
+              }
+              goToAdmin(claimedSlug, { imported: true })
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // ── Step 1: choose URL ────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col items-center justify-center h-screen font-sans bg-white">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Choose your URL</h1>
-        <p className="text-sm text-gray-500 mb-8">
-          This becomes your public portfolio address.
+    <div
+      className="flex flex-col items-center justify-center h-screen font-sans"
+      style={{ background: 'var(--desk, #e8e2d9)' }}
+    >
+      <div style={{ width: '100%', maxWidth: 420, padding: '0 32px' }}>
+        <h1 style={{
+          fontFamily: '"Fraunces", Georgia, serif',
+          fontSize: 30,
+          fontWeight: 300,
+          fontStyle: 'italic',
+          color: '#2c2416',
+          marginBottom: 10,
+          lineHeight: 1.15,
+        }}>
+          Welcome to Sepia.
+        </h1>
+        <p style={{ fontSize: 14.5, color: '#7a6b55', marginBottom: 40, lineHeight: 1.6, maxWidth: 320 }}>
+          Your portfolio is almost ready. Choose the address where your work will live.
         </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:border-gray-600">
+
+        <form onSubmit={handleSubmit}>
+          <label style={{
+            display: 'block',
+            fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+            fontSize: 10.5,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: '#a8967a',
+            fontWeight: 500,
+            marginBottom: 8,
+          }}>
+            Your URL
+          </label>
+
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                border: '1px solid rgba(160,140,110,0.45)',
+                borderRadius: 6,
+                overflow: 'hidden',
+                transition: 'border-color 0.15s',
+                background: '#faf7f2',
+                boxShadow: '0 1px 3px rgba(60,40,15,0.06)',
+              }}
+              onFocusCapture={(e) => e.currentTarget.style.borderColor = 'rgba(120,100,70,0.65)'}
+              onBlurCapture={(e) => e.currentTarget.style.borderColor = 'rgba(160,140,110,0.45)'}
+            >
               <input
                 type="text"
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); setError('') }}
                 placeholder="yourname"
-                className="flex-1 px-3 py-2.5 text-sm focus:outline-none"
                 autoFocus
+                style={{
+                  flex: 1,
+                  padding: '12px 14px',
+                  fontSize: 15,
+                  color: '#2c2416',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                }}
               />
-              <span className="px-3 py-2.5 text-sm text-gray-400 bg-gray-50 border-l border-gray-300 whitespace-nowrap">
-                .{(process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'yourdomain.com').replace(/:\d+$/, '')}
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 14px',
+                fontSize: 12.5,
+                fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+                color: '#a8967a',
+                background: 'rgba(160,140,110,0.10)',
+                borderLeft: '1px solid rgba(160,140,110,0.28)',
+                whiteSpace: 'nowrap',
+              }}>
+                .{rootDomain}
               </span>
             </div>
+
             {slug && slug !== username.toLowerCase() && (
-              <p className="text-xs text-gray-400 mt-1">Will be saved as: {slug}</p>
+              <p style={{
+                fontSize: 11.5,
+                color: '#a8967a',
+                marginTop: 6,
+                fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+              }}>
+                → {slug}.{rootDomain}
+              </p>
             )}
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+            {error && (
+              <p style={{ fontSize: 13, color: '#a0451e', marginTop: 7, lineHeight: 1.4 }}>
+                {error}
+              </p>
+            )}
           </div>
+
           <button
             type="submit"
             disabled={!slug || saving}
-            className="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              width: '100%',
+              padding: '13px 16px',
+              background: !slug || saving ? 'rgba(60,40,15,0.18)' : '#2c2416',
+              color: !slug || saving ? 'rgba(245,236,214,0.5)' : '#f5ecd6',
+              fontSize: 14,
+              fontWeight: 500,
+              borderRadius: 5,
+              border: 'none',
+              cursor: !slug || saving ? 'not-allowed' : 'pointer',
+              transition: 'background 0.15s',
+              letterSpacing: '0.01em',
+            }}
+            onMouseEnter={(e) => { if (slug && !saving) e.currentTarget.style.background = '#3d2d18' }}
+            onMouseLeave={(e) => { if (slug && !saving) e.currentTarget.style.background = '#2c2416' }}
           >
             {saving ? 'Saving…' : 'Claim your URL'}
           </button>

@@ -263,7 +263,7 @@ Web service on Vercel. Published sites server-rendered. Admin/editor at /admin. 
 
 1. Auth + multi-tenancy foundation (NextAuth.js, per-user GCS paths, dynamic routing)
 2. Page-level sidebar (site config data model, page list UI, breadcrumb nav)
-3. Import engine (gallery-dl integration, auto-generation scoring)
+3. ✅ Import engine (adapter registry, SmugMug/generic scrapers, auto-generated Sets; requires `SMUGMUG_API_KEY` env var)
 4. Onboarding flow (paste URL, import progress, site reveal)
 5. Theme system (CSS custom properties, theme dropdown)
 6. Refactor existing builders (adapt per-user)

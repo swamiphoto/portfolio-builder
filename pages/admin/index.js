@@ -11,11 +11,29 @@ import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPicker
 import AdminLibrary from '../../components/admin/AdminLibrary'
 import PageCover from '../../components/image-displays/page/PageCover'
 import SiteNav from '../../components/image-displays/page/SiteNav'
+import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
+import { defaultPage } from '../../common/siteConfig'
+import { useRouter } from 'next/router'
+import GuidedTour from '../../components/admin/onboarding/GuidedTour'
+import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
+import { buildTourSteps, WELCOME, BLOCKS_TIP_STEP } from '../../components/admin/onboarding/tourSteps'
 
 const AUTOSAVE_DELAY = 1500
 
 export default function AdminIndex() {
   const { data: session, status } = useSession()
+  const router = useRouter()
+  const { onboarding, loading: onboardingLoading, error: onboardingError, markSeen } = useOnboarding()
+  const importedJustNow = router.query.imported === '1'
+
+  useEffect(() => {
+    if (router.query.imported) {
+      const { imported, ...rest } = router.query
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const [siteConfig, setSiteConfig] = useState(null)
   const [libraryConfig, setLibraryConfig] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -257,6 +275,19 @@ export default function AdminIndex() {
     setShowLibrary(false)
   }, [])
 
+  const handleCreateFirstPage = useCallback(() => {
+    const existingIds = new Set((siteConfig?.pages || []).map(p => p.id))
+    let id = 'gallery'; let n = 2
+    while (existingIds.has(id)) { id = `gallery-${n++}` }
+    const sortOrder = Math.max(0, ...(siteConfig?.pages || []).filter(p => p.showInNav !== false).map(p => p.sortOrder ?? 0)) + 1
+    updateConfig(prev => ({
+      ...prev,
+      pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null, template: 'gallery' })],
+    }))
+    setSelectedPageId(id)
+    setShowLibrary(false)
+  }, [siteConfig, updateConfig])
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center h-screen text-sm text-gray-400">
@@ -276,7 +307,7 @@ export default function AdminIndex() {
       siteConfig={siteConfig}
       saveStatus={saveStatus}
       onConfigChange={updateConfig}
-      onSignOut={() => signOut({ callbackUrl: '/auth/signin' })}
+      onSignOut={() => signOut({ callbackUrl: '/' })}
       selectedPageId={selectedPageId}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
@@ -426,12 +457,20 @@ export default function AdminIndex() {
       }
     }
   } else {
-    content = (
-      <div className="flex items-center justify-center h-full text-sm text-gray-300">
-        Select a page to edit
-      </div>
-    )
+    content = <CanvasEmptyState onAddPage={handleCreateFirstPage} />
   }
+
+  const showWelcomeTour = !onboardingLoading && !onboardingError && !onboarding.tourDone
+  const showBlocksTip =
+    !onboardingLoading &&
+    !onboardingError &&
+    onboarding.tourDone &&
+    !onboarding.blocksTipSeen &&
+    selectedPage &&
+    selectedPage.type !== 'link' &&
+    !isCoverPageSelected &&
+    !blockSidebarCollapsed &&
+    (selectedPage.blocks?.length || 0) === 0
 
   return (
     <DragProvider>
@@ -494,6 +533,19 @@ export default function AdminIndex() {
           blockType="photo"
           onConfirm={handleAssetPickerConfirm}
           onClose={() => setAssetPickerTarget(null)}
+        />
+      )}
+      {showWelcomeTour && (
+        <GuidedTour
+          steps={buildTourSteps({ imported: importedJustNow })}
+          welcome={WELCOME}
+          onFinish={() => markSeen('tourDone')}
+        />
+      )}
+      {showBlocksTip && (
+        <GuidedTour
+          steps={[BLOCKS_TIP_STEP]}
+          onFinish={() => markSeen('blocksTipSeen')}
         />
       )}
     </DragProvider>

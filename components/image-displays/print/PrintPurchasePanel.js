@@ -136,7 +136,7 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
             background: '#2c2416', color: '#f4efe8', opacity: 1, cursor: 'pointer',
           }}
         >
-          Buy this print — ${price}
+          Buy this print for ${price}
         </button>
       </div>
     </div>
