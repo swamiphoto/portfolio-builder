@@ -48,15 +48,50 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   if (style === 'left-rail') {
     const socials = siteConfig.contact || {}
     const socialKeys = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website'].filter(k => socials[k])
+
+    if (isMobile) {
+      return (
+        <>
+          <header
+            className="flex md:hidden items-center justify-between px-6 py-4 border-b border-black/10"
+            style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
+          >
+            {onPageClick ? (
+              <button onClick={() => onPageClick(null)} className="text-base font-semibold uppercase tracking-[0.16em]">{siteConfig.siteName || username}</button>
+            ) : (
+              <a href={basePath || '/'} className="text-base font-semibold uppercase tracking-[0.16em]" style={{ textDecoration: 'none', color: 'inherit' }}>{siteConfig.siteName || username}</a>
+            )}
+            <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
+          </header>
+          {isMenuOpen && (
+            <nav className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6" style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }} aria-label="Site navigation">
+              <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu" className="absolute top-5 right-5 p-2"><TfiClose className="h-5 w-5" /></button>
+              {tree.map(item => {
+                const isLink = item.type === 'link'
+                const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+                const cls = 'text-lg uppercase tracking-[0.14em]'
+                return onPageClick && !isLink ? (
+                  <button key={item.id} onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
+                ) : (
+                  <a key={item.id} href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
+                )
+              })}
+            </nav>
+          )}
+        </>
+      )
+    }
+
     return (
       <nav
         data-testid="left-rail"
+        aria-label="Site navigation"
         className="left-rail hidden md:flex flex-col justify-between fixed top-0 left-0 h-screen w-[260px] px-8 py-10 border-r border-black/10"
         style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
       >
         <div className="flex flex-col gap-10">
           {onPageClick ? (
-            <button className="text-left text-lg font-semibold uppercase tracking-[0.18em] leading-tight">{siteConfig.siteName || username}</button>
+            <button onClick={() => onPageClick(null)} className="text-left text-lg font-semibold uppercase tracking-[0.18em] leading-tight">{siteConfig.siteName || username}</button>
           ) : (
             <a href={basePath || '/'} className="text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={{ textDecoration: 'none', color: 'inherit' }}>{siteConfig.siteName || username}</a>
           )}
@@ -79,7 +114,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
         <div className="flex flex-col gap-4 text-black/40">
           {socialKeys.length > 0 && (
             <div className="flex gap-3 text-xs uppercase tracking-[0.12em]">
-              {socialKeys.map(k => <span key={k}>{k[0].toUpperCase()}</span>)}
+              {socialKeys.map(k => <span key={k} aria-hidden="true">{k[0].toUpperCase()}</span>)}
             </div>
           )}
           {siteConfig.footer?.customText && (
