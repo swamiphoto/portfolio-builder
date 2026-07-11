@@ -11,6 +11,8 @@ import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
+import ThemeProvider from '../../../components/image-displays/ThemeProvider'
+import { getTheme } from '../../../common/themes'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -83,7 +85,10 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   const pageUrl = `${siteUrl}/${page.slug || page.id}`
 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
-  const navVariant = page?.cover?.imageUrl ? undefined : 'header-dropdown'
+  const theme = getTheme(siteConfig?.design?.theme)
+  const navVariant = theme.navStyle === 'left-rail'
+    ? 'left-rail'
+    : (page?.cover?.imageUrl ? undefined : 'header-dropdown')
   const slideshowHref = page.slideshow?.enabled ? `${basePath}/${page.slug || page.id}/slideshow` : null
   // Sub-nav: if this page has a parent, show siblings. If it has children, show children.
   const allPages = siteConfig.pages || []
@@ -93,6 +98,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
     : allPages.filter(p => p.parentId === page.id && p.showInNav !== false)
   const activeSubNavId = isChildPage ? page.id : null
   return (
+    <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative">
       <Head>
         <title>{ogTitle}</title>
@@ -108,7 +114,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
       <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
-      <main>
+      <main className="theme-content">
         <PageCover
           cover={page.cover}
           title={page.title}
@@ -129,8 +135,10 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
           siteConfig={siteConfig}
           printStore={printStore}
+          themeId={theme.id}
         />
       </main>
     </div>
+    </ThemeProvider>
   )
 }
