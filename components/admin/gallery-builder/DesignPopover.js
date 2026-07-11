@@ -1,5 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
+import { getBlockSpec } from '../../../common/themes'
+import { setVariant } from '../../../common/themes/variants'
 
 const IconAlignLeft = () => (
   <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
@@ -21,74 +23,42 @@ const ALIGN_OPTIONS = [
   { value: 'center', label: <IconAlignCenter /> },
 ]
 
-// Only include layout options that are actually rendered
-const LAYOUTS = {
-  photo:    [{ value: 'Full Bleed', label: 'Full Bleed' }, { value: 'Centered', label: 'Centered' }],
-  photos:   [{ value: 'Stacked',      label: 'Stacked'      }, { value: 'Masonry',  label: 'Masonry'  }],
-  stacked:  [{ value: 'Stacked',      label: 'Stacked'      }, { value: 'Masonry',  label: 'Masonry'  }],
-  masonry:  [{ value: 'Stacked',      label: 'Stacked'      }, { value: 'Masonry',  label: 'Masonry'  }],
-  video:    [{ value: 'Edge to edge', label: 'Edge to edge' }, { value: 'Centered', label: 'Centered' }],
-}
+// Photos-block variant ids that map back to a legacy block.type/layout so the
+// existing Kyoto render path in Gallery.js keeps working unchanged.
+const PHOTOS_LEGACY = { stacked: { type: 'stacked', layout: 'stacked' }, masonry: { type: 'masonry', layout: 'masonry' } }
 
-const VARIANTS = {
-  text: [
-    { value: 1, label: 'L' },
-    { value: 2, label: 'M' },
-    { value: 3, label: 'S' },
-  ],
-  testimonial: [
-    { value: 1, label: 'Photo above' },
-    { value: 2, label: 'Quote above' },
-  ],
-}
+import { resolveVariant, resolveAlign } from '../../../common/themes/variants'
 
-export default function DesignPopover({ block, onUpdate, onClose, anchorEl }) {
-  const blockType = block.type
-  const layouts = LAYOUTS[blockType] || []
-  const variants = VARIANTS[blockType] || []
-  const isPhotos = blockType === 'photos' || blockType === 'stacked' || blockType === 'masonry'
+export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onClose, anchorEl }) {
+  const spec = getBlockSpec(themeId, block.type)
+  const variants = spec ? spec.variants.map(v => ({ value: v.id, label: v.label })) : []
+  const isPhotos = block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry'
+  const showAlignment = block.type === 'text'
 
-  const currentLayout = isPhotos
-    ? (blockType === 'masonry' ? 'Masonry' : 'Stacked')
-    : (block.layout || layouts[0]?.value)
+  const current = resolveVariant(block, themeId)
 
-  function handleLayoutChange(layout) {
-    if (isPhotos) {
-      onUpdate({ ...block, type: layout === 'Masonry' ? 'masonry' : 'stacked' })
-    } else {
-      onUpdate({ ...block, layout })
+  function handleVariantChange(variantId) {
+    let next = setVariant(block, themeId, variantId)
+    if (isPhotos && PHOTOS_LEGACY[variantId]) {
+      next = { ...next, ...PHOTOS_LEGACY[variantId] }
     }
+    onUpdate(next)
   }
 
-  const showAlignment = blockType === 'text'
-  const defaultAlign = 'center'
-
-  if (layouts.length === 0 && variants.length === 0 && !showAlignment) return null
+  // Single-variant, non-alignment blocks (contact, page-gallery) have nothing to show.
+  if (variants.length <= 1 && !showAlignment) return null
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={220} title="Design">
-      {layouts.length > 0 && (
-        <DesignSection label="Layout">
-          <PillToggle
-            value={currentLayout}
-            onChange={handleLayoutChange}
-            options={layouts}
-          />
-        </DesignSection>
-      )}
-      {variants.length > 0 && (
-        <DesignSection label="Size">
-          <PillToggle
-            value={block.variant || variants[0].value}
-            onChange={(v) => onUpdate({ ...block, variant: v })}
-            options={variants}
-          />
+      {variants.length > 1 && (
+        <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
+          <PillToggle value={current} onChange={handleVariantChange} options={variants} />
         </DesignSection>
       )}
       {showAlignment && (
         <DesignSection label="Alignment">
           <PillToggle
-            value={block.align || defaultAlign}
+            value={resolveAlign(block, themeId)}
             onChange={(v) => onUpdate({ ...block, align: v })}
             options={ALIGN_OPTIONS}
           />

@@ -128,6 +128,7 @@ function BlockCard({
   onMoveDown,
   onAddBlockAbove,
   onAddBlockBelow,
+  themeId,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -414,6 +415,7 @@ function BlockCard({
                 {showDesign && (
                   <DesignPopover
                     block={block}
+                    themeId={themeId}
                     onUpdate={onUpdate}
                     onClose={() => setShowDesign(false)}
                     anchorEl={designBtnRef.current}

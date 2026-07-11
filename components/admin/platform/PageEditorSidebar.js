@@ -229,6 +229,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         onUpdateLibraryCaption={onUpdateLibraryCaption}
         assetsByUrl={assetsByUrl}
         className="flex flex-col h-full bg-stone-50 text-left font-sans"
+        themeId={siteConfig?.design?.theme || 'kyoto'}
       />
 
       {pageSettingsAnchorEl && (
