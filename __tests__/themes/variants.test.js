@@ -44,6 +44,7 @@ describe('setVariant', () => {
     expect(next.imageUrl).toBe('x')
     expect(next.themeState.kyoto.variant).toBe('centered')
     expect(next.themeState.manhattan.variant).toBe('framed')
+    expect(block.themeState.manhattan).toBeUndefined()
   })
 
   it('creates themeState when missing', () => {
