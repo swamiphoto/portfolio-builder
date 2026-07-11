@@ -13,6 +13,8 @@ import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGrad
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
 import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
+import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
+import FramedPhoto from "./photo-block/FramedPhoto";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -135,6 +137,13 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block"><PlaceholderGrid /><WiggleLine /></div> : null;
+              if (themeId === 'manhattan' && resolveVariant(block, themeId) === 'grid') {
+                return (
+                  <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
+                    <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} />
+                  </div>
+                );
+              }
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
@@ -194,6 +203,13 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "photo": {
               if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block"><PlaceholderPhoto /><WiggleLine /></div> : null;
+              if (themeId === 'manhattan' && resolveVariant(block, themeId) === 'framed') {
+                return (
+                  <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
+                    <FramedPhoto imageUrl={getImageRefUrl(block.image || block.imageUrl)} caption={block.caption} onImageClick={makeClickHandler(index)} />
+                  </div>
+                );
+              }
               const variantId = resolveVariant(block, themeId)
               const photoVariant = variantId === 'centered' ? 2 : 1
               return (
