@@ -768,16 +768,18 @@ export default function PlatformSidebar({
         {username && (() => {
           const host = subdomainHost(username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
           const cd = normalizeCustomDomain(siteConfig.customDomain)
-          const linkStyle = { fontFamily: MONO, fontSize: 10, lineHeight: 1.35, color: C.textFaint, letterSpacing: '0.06em', textDecoration: 'none', width: 'fit-content' }
-          const hover = (on) => (e) => { e.currentTarget.style.color = on ? C.textBody : C.textFaint }
+          const ACCENT = 'var(--sepia-accent, #8b6f47)'
+          const linkStyle = { fontFamily: MONO, fontSize: 10, lineHeight: 1.35, color: ACCENT, letterSpacing: '0.06em', textDecoration: 'none', width: 'fit-content', display: 'inline-flex', alignItems: 'center', gap: 3 }
+          const hover = (on) => (e) => { e.currentTarget.style.textDecoration = on ? 'underline' : 'none'; e.currentTarget.style.color = on ? C.ink : ACCENT }
+          const ext = <span aria-hidden style={{ fontSize: '0.82em', opacity: 0.7 }}>↗</span>
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 9 }}>
               <a href={`https://${host}`} target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hover(true)} onMouseLeave={hover(false)}>
-                {host}
+                {host}{ext}
               </a>
               {cd && (
                 <a href={`https://${cd.name}`} target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hover(true)} onMouseLeave={hover(false)}>
-                  {cd.name}{cd.status !== 'active' && <span style={{ color: C.textFaint }}> · pending</span>}
+                  {cd.name}{ext}{cd.status !== 'active' && <span style={{ color: C.textFaint }}> · pending</span>}
                 </a>
               )}
             </div>
