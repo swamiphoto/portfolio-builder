@@ -115,7 +115,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
+      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />
       <main className="theme-content">
         <PageCover
           cover={page.cover}

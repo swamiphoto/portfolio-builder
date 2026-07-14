@@ -12,12 +12,16 @@ const siteConfig = {
 }
 
 describe('SiteNav left-rail', () => {
-  it('renders a fixed rail with site name, nav, and footer text', () => {
+  it('renders a fixed rail with site name and nav', () => {
     render(<SiteNav siteConfig={siteConfig} username="me" variant="left-rail" basePath="/sites/me" />)
     const rail = screen.getByTestId('left-rail')
     expect(rail).toBeInTheDocument()
     expect(screen.getByText('Ansel A')).toBeInTheDocument()
     expect(screen.getByText('Work')).toBeInTheDocument()
-    expect(screen.getByText('© 2026 Ansel')).toBeInTheDocument()
+  })
+
+  it('marks the current page as active via currentPageId', () => {
+    render(<SiteNav siteConfig={siteConfig} username="me" variant="left-rail" basePath="/sites/me" currentPageId="work" />)
+    expect(screen.getByText('Work').className).toMatch(/underline/)
   })
 })

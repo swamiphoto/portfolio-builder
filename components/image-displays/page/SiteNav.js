@@ -1,5 +1,5 @@
 // components/image-displays/page/SiteNav.js
-import { useState } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { useRouter } from 'next/router'
 import { RxHamburgerMenu } from 'react-icons/rx'
 import { TfiClose } from 'react-icons/tfi'
@@ -7,35 +7,142 @@ import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { useAdminViewport } from '../../../contexts/ViewportContext'
 
-function NavList({ items, basePath, depth = 0, dark = false, currentPath = '', onPageClick, onClose }) {
+// useLayoutEffect warns during SSR; fall back to useEffect on the server.
+const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
+
+// Is this nav item the current page? Prefer an explicit id (preview mode where
+// the route is /admin), else match the URL path (published site).
+function navItemActive(item, { currentPageId, currentPath, basePath }) {
+  if (item.type === 'link') return false
+  if (currentPageId != null) return item.id === currentPageId
+  return currentPath === `${basePath}/${item.slug || item.id}`
+}
+
+function navItemClass(dark, isActive) {
+  return dark
+    ? `font-serif text-base font-medium transition-colors ${isActive ? 'text-white underline' : 'text-white/70 hover:text-white'}`
+    : `font-serif text-base font-medium transition-colors ${isActive ? 'text-gray-900 underline' : 'text-gray-500 hover:text-gray-900'}`
+}
+
+function NavLink({ item, basePath, dark, active, onPageClick, onClose }) {
+  const isLink = item.type === 'link'
+  const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+  const cls = navItemClass(dark, active)
+  if (onPageClick && !isLink) {
+    return <button onClick={() => { onPageClick(item.id); onClose?.() }} className={cls}>{item.title}</button>
+  }
   return (
-    <ul className={depth === 0 ? 'flex gap-8' : 'flex flex-col gap-1'}>
-      {items.map(item => {
-        const isLink = item.type === 'link'
-        const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-        const target = isLink ? '_blank' : undefined
-        const rel = isLink ? 'noopener noreferrer' : undefined
-        const isActive = !isLink && currentPath === href
+    <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} onClick={onClose}>{item.title}</a>
+  )
+}
 
-        const linkClass = dark
-          ? `font-serif text-base font-medium transition-colors ${isActive ? 'text-white underline' : 'text-white/70 hover:text-white'}`
-          : `font-serif text-base font-medium transition-colors ${isActive ? 'text-gray-900 underline' : 'text-gray-500 hover:text-gray-900'}`
-
-        return (
-          <li key={item.id}>
-            {onPageClick && !isLink ? (
-              <button onClick={() => { onPageClick(item.id); onClose?.() }} className={linkClass}>{item.title}</button>
-            ) : (
-              <a href={href} target={target} rel={rel} className={linkClass} onClick={onClose}>{item.title}</a>
-            )}
-          </li>
-        )
-      })}
+function NavList({ items, basePath, dark = false, currentPath = '', currentPageId, onPageClick, onClose }) {
+  return (
+    <ul className="flex gap-8">
+      {items.map(item => (
+        <li key={item.id}>
+          <NavLink item={item} basePath={basePath} dark={dark}
+            active={navItemActive(item, { currentPageId, currentPath, basePath })}
+            onPageClick={onPageClick} onClose={onClose} />
+        </li>
+      ))}
     </ul>
   )
 }
 
-export default function SiteNav({ siteConfig, username, variant, onPageClick, basePath: basePathProp }) {
+// Horizontal nav that collapses trailing items into a "More" dropdown when they
+// would crowd the logo. Measures a hidden copy of the full list against the
+// available width and shows as many as fit.
+function OverflowNav({ items, basePath, dark = false, currentPath = '', currentPageId, onPageClick }) {
+  const wrapRef = useRef(null)
+  const measureRef = useRef(null)
+  const [visibleCount, setVisibleCount] = useState(items.length)
+  const [open, setOpen] = useState(false)
+
+  useIsoLayoutEffect(() => {
+    const wrap = wrapRef.current
+    const measure = measureRef.current
+    if (!wrap || !measure) return
+    const GAP = 32 // matches gap-8
+    const MORE = 60 + GAP // reserve room for the "More" trigger
+    const recompute = () => {
+      const avail = wrap.clientWidth
+      const kids = Array.from(measure.children)
+      const total = kids.reduce((a, el, i) => a + el.offsetWidth + (i > 0 ? GAP : 0), 0)
+      if (total <= avail) { setVisibleCount(items.length); return }
+      let used = 0, count = 0
+      for (let i = 0; i < kids.length; i++) {
+        const w = kids[i].offsetWidth + (i > 0 ? GAP : 0)
+        if (used + w + MORE <= avail) { used += w; count++ } else break
+      }
+      setVisibleCount(Math.max(1, count))
+    }
+    recompute()
+    const ro = new ResizeObserver(recompute)
+    ro.observe(wrap)
+    return () => ro.disconnect()
+  }, [items])
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  const visible = items.slice(0, visibleCount)
+  const overflow = items.slice(visibleCount)
+  const overflowActive = overflow.some(item => navItemActive(item, { currentPageId, currentPath, basePath }))
+  const muted = dark ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+
+  return (
+    <nav ref={wrapRef} className="flex-1 min-w-0 flex justify-end items-center relative">
+      {/* Hidden measurer: the full list at natural size. */}
+      <ul ref={measureRef} aria-hidden className="flex gap-8 absolute invisible pointer-events-none" style={{ left: -99999, top: 0 }}>
+        {items.map(item => (
+          <li key={item.id}><span className="font-serif text-base font-medium whitespace-nowrap">{item.title}</span></li>
+        ))}
+      </ul>
+
+      <ul className="flex gap-8 items-center">
+        {visible.map(item => (
+          <li key={item.id} className="whitespace-nowrap">
+            <NavLink item={item} basePath={basePath} dark={dark}
+              active={navItemActive(item, { currentPageId, currentPath, basePath })}
+              onPageClick={onPageClick} />
+          </li>
+        ))}
+        {overflow.length > 0 && (
+          <li className="relative whitespace-nowrap">
+            <button
+              onClick={() => setOpen(o => !o)}
+              className={navItemClass(dark, overflowActive)}
+              aria-haspopup="true" aria-expanded={open}
+            >
+              More <span aria-hidden style={{ fontSize: '0.7em' }}>▾</span>
+            </button>
+            {open && (
+              <div
+                className="absolute right-0 top-full mt-3 py-2 min-w-[168px] z-40 rounded-sm"
+                style={{ background: '#fffdf9', border: '1px solid rgba(26,18,10,0.12)', boxShadow: '0 8px 28px rgba(26,18,10,0.14)' }}
+              >
+                {overflow.map(item => (
+                  <div key={item.id} className={`px-5 py-1.5 font-serif text-base ${muted} ${navItemActive(item, { currentPageId, currentPath, basePath }) ? (dark ? '' : 'text-gray-900 underline') : ''}`}>
+                    <NavLink item={item} basePath={basePath} dark={dark}
+                      active={navItemActive(item, { currentPageId, currentPath, basePath })}
+                      onPageClick={onPageClick} onClose={() => setOpen(false)} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </li>
+        )}
+      </ul>
+    </nav>
+  )
+}
+
+export default function SiteNav({ siteConfig, username, variant, onPageClick, basePath: basePathProp, currentPageId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
   const adminViewport = useAdminViewport()
@@ -63,9 +170,9 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
             style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
           >
             {onPageClick ? (
-              <button onClick={() => onPageClick(null)} className="text-base font-semibold uppercase tracking-[0.16em]">{brand}</button>
+              <button onClick={() => onPageClick(null)} className="text-base font-semibold uppercase tracking-[0.16em] text-left">{brand}</button>
             ) : (
-              <a href={basePath || '/'} className="text-base font-semibold uppercase tracking-[0.16em]" style={{ textDecoration: 'none', color: 'inherit' }}>{brand}</a>
+              <a href={basePath || '/'} className="text-base font-semibold uppercase tracking-[0.16em] text-left" style={{ textDecoration: 'none', color: 'inherit' }}>{brand}</a>
             )}
             <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
           </header>
@@ -105,8 +212,8 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
             {tree.map(item => {
               const isLink = item.type === 'link'
               const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-              const isActive = !isLink && currentPath === href
-              const cls = `text-sm uppercase tracking-[0.12em] transition-colors ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`
+              const isActive = navItemActive(item, { currentPageId, currentPath, basePath })
+              const cls = `text-sm uppercase tracking-[0.12em] transition-colors ${isActive ? 'text-black underline' : 'text-black/50 hover:text-black'}`
               return (
                 <li key={item.id}>
                   {onPageClick && !isLink
@@ -132,14 +239,14 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
     return (
       <header className="px-8 py-5 flex items-center justify-between">
         {onPageClick ? (
-          <button className="font-serif2 text-2xl text-gray-900 tracking-wide">{brand}</button>
+          <button className="font-serif2 text-2xl text-gray-900 tracking-wide text-left">{brand}</button>
         ) : (
-          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide">{brand}</a>
+          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left">{brand}</a>
         )}
 
         {/* Desktop nav — hidden in mobile preview */}
         {!isMobile && (
-          <NavList items={tree} basePath={basePath} currentPath={currentPath} onPageClick={onPageClick} />
+          <OverflowNav items={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} />
         )}
 
         {/* Mobile hamburger button — shown in mobile preview */}
@@ -199,7 +306,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
 
   return (
     <nav className="absolute top-6 right-8 z-10">
-      <NavList items={tree} basePath={basePath} dark currentPath={currentPath} onPageClick={onPageClick} />
+      <NavList items={tree} basePath={basePath} dark currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} />
     </nav>
   )
 }

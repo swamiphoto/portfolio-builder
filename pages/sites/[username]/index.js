@@ -151,7 +151,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
+      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />
       <main className="theme-content">
         <PageCover
           cover={homePage?.cover}

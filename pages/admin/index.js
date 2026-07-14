@@ -442,7 +442,7 @@ export default function AdminIndex() {
               >
                 <ThemeProvider themeId={theme.id}>
                 <div className="theme-shell">
-                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} currentPageId={selectedPage?.id} />
                 <div className="theme-content">
                 <PageCover
                   cover={selectedPage.cover}
