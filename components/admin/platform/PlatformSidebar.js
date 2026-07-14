@@ -62,7 +62,7 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
   if (hasUnpublishedChanges) return (
     <div style={{ ...base, color: C.textBody, lineHeight: 1.35 }}>
       Changes last saved {lastSavedAt ? relativeTime(lastSavedAt) : 'just now'}
-      <div style={{ color: C.textFaint }}>(Yet to be published)</div>
+      <div style={{ color: C.textFaint, marginTop: 1 }}>(Yet to be published)</div>
     </div>
   )
   if (lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
@@ -771,7 +771,7 @@ export default function PlatformSidebar({
           const linkStyle = { fontFamily: MONO, fontSize: 10, lineHeight: 1.35, color: C.textFaint, letterSpacing: '0.06em', textDecoration: 'none', width: 'fit-content' }
           const hover = (on) => (e) => { e.currentTarget.style.color = on ? C.textBody : C.textFaint }
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 9 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 9 }}>
               <a href={`https://${host}`} target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hover(true)} onMouseLeave={hover(false)}>
                 {host}
               </a>
