@@ -639,11 +639,13 @@ function BlockCard({
                 ) : (
                   <div
                     onClick={onAddPhotos}
-                    className={`group/lib flex flex-col items-center justify-center h-20 cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'bg-blue-50' : ''}`}
+                    className={`flex flex-col items-center justify-center h-20 cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'bg-blue-50' : ''}`}
                     style={photoDropHover ? { border: '1px solid #93c5fd', borderRadius: 2 } : { background: '#ece4d2', borderRadius: 2 }}
+                    onMouseEnter={e => { if (!photoDropHover) e.currentTarget.style.background = '#e3d8bf' }}
+                    onMouseLeave={e => { if (!photoDropHover) e.currentTarget.style.background = '#ece4d2' }}
                   >
                     <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'rgba(58,54,47,0.55)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
-                    {!photoDropHover && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 group-hover/lib:text-[#3a362f]">select from library</span></span>}
+                    {!photoDropHover && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">select from library</span></span>}
                   </div>
                 )}
               </div>
@@ -855,7 +857,6 @@ function BlockCard({
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Photo</div>
                   <div
-                    className="group/lib2"
                     onClick={onAddPhotos}
                     onDragOver={e => e.preventDefault()}
                     onDrop={e => {
@@ -873,8 +874,8 @@ function BlockCard({
                     </div>
                     <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>
                       {photoUrl
-                        ? <span className="transition-colors text-[#3a362f]/70 group-hover/lib2:text-[#3a362f]">Replace photo</span>
-                        : <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 group-hover/lib2:text-[#3a362f]">Select from library</span>
+                        ? <span className="transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Replace photo</span>
+                        : <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Select from library</span>
                       }
                     </span>
                   </div>
