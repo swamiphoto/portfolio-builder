@@ -7,10 +7,10 @@ export default function CanvasEmptyState({ onAddPage }) {
     <div className="flex-1 h-full min-w-0 flex items-center justify-center" style={{ background: '#fff' }}>
       <div style={{ maxWidth: 360, textAlign: 'center', padding: '0 24px' }}>
         <h2 style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 400, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.2 }}>
-          Your portfolio is ready to shape.
+          Create your first page
         </h2>
         <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 22 }}>
-          Every part of your site is a page. Add your first one to get started.
+          A page is simply a mix of photos, videos, text, or other blocks like testimonials.
         </p>
         <button
           type="button"

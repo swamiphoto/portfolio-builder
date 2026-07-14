@@ -9,6 +9,7 @@ import { publicSiteConfig, publicPrintForAsset, publicPrintStore } from '../../.
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
+import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import { getTheme } from '../../../common/themes'
@@ -138,6 +139,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
     <div className="min-h-screen bg-white font-sans relative theme-shell">
       <Head>
         <title>{ogTitle}</title>
+        {siteConfig.favicon && <link rel="icon" href={siteConfig.favicon} />}
         <meta name="description" content={ogDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={siteUrl} />
@@ -178,6 +180,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             No content yet.
           </div>
         )}
+        <SiteFooter siteConfig={siteConfig} />
       </main>
     </div>
     </ThemeProvider>
