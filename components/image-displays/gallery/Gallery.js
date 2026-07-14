@@ -24,8 +24,8 @@ const PLACEHOLDER_ASPECTS = [
 
 function PlaceholderTile({ aspectClass = 'aspect-[4/3]' }) {
   return (
-    <div className={`${aspectClass} w-full rounded-3xl shadow-md bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center select-none mb-5`}>
-      <svg className="w-10 h-10 text-stone-300" viewBox="0 0 48 48" fill="none">
+    <div className={`${aspectClass} w-full rounded-3xl flex items-center justify-center select-none mb-5`} style={{ background: '#ede7dc' }}>
+      <svg className="w-10 h-10" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
         <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" strokeWidth="1.5" />
         <circle cx="33" cy="18" r="3.5" stroke="currentColor" strokeWidth="1.5" />
         <path d="M4 32 l10-10 a2 2 0 0 1 2.8 0l8 8 a2 2 0 0 0 2.8 0l4-4 a2 2 0 0 1 2.8 0L44 34" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
