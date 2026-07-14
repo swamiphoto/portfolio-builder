@@ -772,7 +772,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             />
           </DesignSection>
 
-          <DesignSection label="Sub-navigation">
+          <DesignSection label="Sub-navigation" description="How pages nested under another page appear in that page's menu.">
             <DesignSelect
               value={config.design?.subNavStyle || 'dropdown'}
               onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
