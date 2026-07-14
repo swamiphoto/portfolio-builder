@@ -60,9 +60,9 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
   if (saveStatus === 'saving') return <div style={{ ...base, color: C.textFaint }}>Saving…</div>
   if (saveStatus === 'error') return <div style={{ ...base, color: '#c0392b' }}>Save failed</div>
   if (hasUnpublishedChanges) return (
-    <div style={{ ...base, color: C.textBody, lineHeight: 1.35 }}>
+    <div style={{ ...base, color: '#c2872f', lineHeight: 1.35 }}>
       Changes last saved {lastSavedAt ? relativeTime(lastSavedAt) : 'just now'}
-      <div style={{ color: C.textFaint, marginTop: 1 }}>(Yet to be published)</div>
+      <div style={{ color: '#c2872f', opacity: 0.7, marginTop: 1 }}>(Yet to be published)</div>
     </div>
   )
   if (lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
