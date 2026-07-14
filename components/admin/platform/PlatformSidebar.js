@@ -67,7 +67,7 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
   )
   if (lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
   if (lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Auto-saved {relativeTime(lastSavedAt)}</div>
-  return <div style={{ ...base, color: 'transparent' }}>·</div>
+  return null
 }
 
 // Icons — page type icons match the Sepia spec (Heroicons outline, strokeWidth 1.5, rounded).
