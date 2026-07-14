@@ -55,16 +55,11 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
     return () => clearInterval(id)
   }, [])
 
-  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginBottom: 10 }
+  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginTop: 11, marginBottom: 10 }
 
   if (saveStatus === 'saving') return <div style={{ ...base, color: C.textFaint }}>Saving…</div>
   if (saveStatus === 'error') return <div style={{ ...base, color: '#c0392b' }}>Save failed</div>
-  if (hasUnpublishedChanges) return (
-    <div style={{ ...base, color: C.textBody, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#c99a3b', flexShrink: 0 }} />
-      Unpublished changes{lastSavedAt ? ` · saved ${relativeTime(lastSavedAt)}` : ''}
-    </div>
-  )
+  if (hasUnpublishedChanges) return <div style={{ ...base, color: C.textBody }}>Changes last saved {lastSavedAt ? relativeTime(lastSavedAt) : 'just now'}</div>
   if (lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
   if (lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Auto-saved {relativeTime(lastSavedAt)}</div>
   return <div style={{ ...base, color: 'transparent' }}>·</div>
@@ -768,10 +763,10 @@ export default function PlatformSidebar({
         {username && (() => {
           const host = subdomainHost(username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
           const cd = normalizeCustomDomain(siteConfig.customDomain)
-          const linkStyle = { fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', textDecoration: 'none', width: 'fit-content' }
+          const linkStyle = { fontFamily: MONO, fontSize: 10, lineHeight: 1.35, color: C.textFaint, letterSpacing: '0.06em', textDecoration: 'none', width: 'fit-content' }
           const hover = (on) => (e) => { e.currentTarget.style.color = on ? C.textBody : C.textFaint }
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 4 }}>
               <a href={`https://${host}`} target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hover(true)} onMouseLeave={hover(false)}>
                 {host}
               </a>
