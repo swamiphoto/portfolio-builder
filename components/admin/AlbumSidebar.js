@@ -556,8 +556,10 @@ export default function AlbumSidebar({
   onSelectPage,
   onImportFromWeb,
   onFindDuplicates,
+  onClearLibrary,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
   const isSelected = (type, key) =>
     selectedAlbum.type === type && selectedAlbum.key === key;
@@ -653,6 +655,33 @@ export default function AlbumSidebar({
           <ToggleAllIcon allCollapsed={sectionsOpen === false} />
         </button>
         </Tip>
+        {(onFindDuplicates || onClearLibrary) && (
+          <div className="relative">
+            <Tip label="Library options">
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+              aria-haspopup="true" aria-expanded={menuOpen}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+            </button>
+            </Tip>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0" style={{ zIndex: 40 }} onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 mt-1 rounded-md overflow-hidden" style={{ top: '100%', zIndex: 41, minWidth: 168, background: 'var(--popover, #f0ebe3)', boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 8px 24px rgba(26,18,10,0.16)', padding: '4px 0' }}>
+                  {onFindDuplicates && (
+                    <button type="button" onClick={() => { setMenuOpen(false); onFindDuplicates(); }} className="w-full text-left transition-colors" style={{ padding: '7px 12px', fontSize: 12.5, color: '#2c2416' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(160,140,110,0.10)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Find duplicates</button>
+                  )}
+                  {onClearLibrary && (
+                    <button type="button" onClick={() => { setMenuOpen(false); onClearLibrary(); }} className="w-full text-left transition-colors" style={{ padding: '7px 12px', fontSize: 12.5, color: '#c14a4a' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(193,74,74,0.07)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Clear library</button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <Tip label="Collapse library">
         <button
           onClick={() => setSidebarCollapsed(true)}
@@ -920,28 +949,6 @@ export default function AlbumSidebar({
         )}
       </div>
 
-      {/* Maintenance footer */}
-      {onFindDuplicates && (
-        <div style={{ flexShrink: 0, borderTop: '1px solid rgba(160,140,110,0.14)', padding: '8px 12px 10px' }}>
-          <button
-            onClick={onFindDuplicates}
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              letterSpacing: '0.09em',
-              color: '#b0a490',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#8b6f47' }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#b0a490' }}
-          >
-            find duplicates
-          </button>
-        </div>
-      )}
     </div>
   )
 }

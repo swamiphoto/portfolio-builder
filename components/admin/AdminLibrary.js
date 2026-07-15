@@ -42,6 +42,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [dedupeOpen, setDedupeOpen] = useState(false);
+  const [clearLibOpen, setClearLibOpen] = useState(false);
+  const [clearLibText, setClearLibText] = useState("");
+  const [clearLibBusy, setClearLibBusy] = useState(false);
   const [highlightedUrls, setHighlightedUrls] = useState(null);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
@@ -62,6 +65,26 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       setLoading(false);
     }
   }, []);
+
+  const runClearLibrary = useCallback(async () => {
+    if (clearLibText !== "Delete" || clearLibBusy) return;
+    setClearLibBusy(true);
+    try {
+      const r = await fetch("/api/admin/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "library" }),
+      });
+      if (!r.ok) throw new Error();
+      setClearLibOpen(false);
+      setClearLibText("");
+      await fetchLibrary();
+    } catch {
+      alert("Something went wrong clearing the library. Please try again.");
+    } finally {
+      setClearLibBusy(false);
+    }
+  }, [clearLibText, clearLibBusy, fetchLibrary]);
 
   useEffect(() => { fetchLibrary(); }, [fetchLibrary]);
 
@@ -685,6 +708,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onSelectPage={setSelectedPage}
         onImportFromWeb={() => setImportOpen(true)}
         onFindDuplicates={() => setDedupeOpen(true)}
+        onClearLibrary={() => { setClearLibText(""); setClearLibOpen(true); }}
       />
       <PhotoGrid
         assets={assets}
@@ -764,6 +788,44 @@ export default function AdminLibrary({ onBack, siteConfig }) {
           onClose={() => setDedupeOpen(false)}
           onComplete={async () => { setDedupeOpen(false); await fetchLibrary(); }}
         />
+      )}
+
+      {clearLibOpen && (
+        <div
+          onMouseDown={() => { if (!clearLibBusy) setClearLibOpen(false); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(26,18,10,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{ width: 360, maxWidth: '100%', background: '#faf7f1', borderRadius: 12, boxShadow: '0 20px 60px rgba(26,18,10,0.35)', padding: '20px 20px 16px' }}
+          >
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 18, fontWeight: 500, color: '#2c2416', marginBottom: 8 }}>Clear library</div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
+              This permanently deletes every photo you have uploaded. Any page still using those photos will show blanks. This cannot be undone.
+            </p>
+            <div style={{ marginTop: 14 }}>
+              <label style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Type <b style={{ color: '#2c2416' }}>Delete</b> to confirm</label>
+              <input
+                autoFocus
+                value={clearLibText}
+                onChange={e => setClearLibText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') runClearLibrary(); }}
+                style={{ width: '100%', marginTop: 5, padding: '7px 10px', fontSize: 13, borderRadius: 6, border: '1px solid rgba(160,140,110,0.35)', background: '#fff', outline: 'none' }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+              <button type="button" onClick={() => { if (!clearLibBusy) setClearLibOpen(false); }} disabled={clearLibBusy} style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: clearLibBusy ? 'default' : 'pointer' }}>Cancel</button>
+              <button
+                type="button"
+                onClick={runClearLibrary}
+                disabled={clearLibText !== 'Delete' || clearLibBusy}
+                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: clearLibText === 'Delete' && !clearLibBusy ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: clearLibText === 'Delete' && !clearLibBusy ? 'pointer' : 'default' }}
+              >
+                {clearLibBusy ? 'Working…' : 'Delete all photos'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
