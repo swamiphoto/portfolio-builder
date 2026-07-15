@@ -22,8 +22,14 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [selectedPage, setSelectedPage] = useState(null);
 
   const pagesData = useMemo(() => (siteConfig?.pages || [])
-    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
-    .filter(p => p.imageUrls.length > 0)
+    .filter(p => p.type !== 'link')
+    .map(p => ({
+      id: p.id,
+      title: p.title || 'Untitled',
+      parentId: p.parentId ?? null,
+      sortOrder: p.sortOrder ?? 0,
+      imageUrls: getPagePhotos(p),
+    }))
   , [siteConfig]);
   const [filters, setFilters] = useState({
     orientation: "all",

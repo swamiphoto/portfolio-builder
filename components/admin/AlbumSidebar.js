@@ -207,6 +207,32 @@ function buildSetTree(keys) {
   return nodes
 }
 
+// Flatten pages (parentId hierarchy) into an ordered list with a depth, so the
+// Pages filter shows the real nesting instead of a flat list.
+function flattenPageTree(pages) {
+  const byParent = new Map()
+  for (const p of pages) {
+    const pid = p.parentId || null
+    if (!byParent.has(pid)) byParent.set(pid, [])
+    byParent.get(pid).push(p)
+  }
+  for (const arr of byParent.values()) arr.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+  const ids = new Set(pages.map(p => p.id))
+  const out = []
+  const walk = (parentId, depth) => {
+    for (const p of (byParent.get(parentId) || [])) {
+      out.push({ ...p, depth })
+      walk(p.id, depth + 1)
+    }
+  }
+  walk(null, 0)
+  // Any page whose parent is missing (orphan) — surface it at the root so nothing is lost.
+  for (const p of pages) {
+    if (p.parentId && !ids.has(p.parentId) && !out.some(o => o.id === p.id)) out.push({ ...p, depth: 0 })
+  }
+  return out
+}
+
 function SetRow({
   node, selected, expanded, count,
   onSelect, onToggleExpand, onCreateUnder, onDelete,
@@ -242,26 +268,23 @@ function SetRow({
       onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
       onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
     >
-      {/* Gutters */}
-      <div className="flex items-stretch" style={{ paddingLeft: 24 }}>
-        {node.gutters.map((g, i) => <TreeGutter key={i} type={g} />)}
-      </div>
+      {/* Indentation — one clean step per depth, no connector lines */}
+      <div style={{ width: 12 + node.depth * 16, flexShrink: 0 }} />
 
-      {/* Chevron for nodes with children */}
+      {/* Chevron for nodes with children; leaves get a matching spacer so labels align */}
       {node.hasChildren ? (
         <button
           onClick={(e) => { stop(e); onToggleExpand() }}
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{
-            width: GUTTER_WIDTH, height: ROW_HEIGHT,
-            color: '#a8967a',
-          }}
-          title={expanded ? 'Collapse' : 'Expand'}
+          className="flex-shrink-0 flex items-center justify-center rounded transition-colors"
+          style={{ width: 20, height: ROW_HEIGHT, color: '#a8967a' }}
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+          onMouseEnter={e => { e.currentTarget.style.color = '#6b5d48' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#a8967a' }}
         >
           <Chevron open={expanded} size={9} />
         </button>
       ) : (
-        <div style={{ width: GUTTER_WIDTH, flexShrink: 0 }} />
+        <div style={{ width: 20, flexShrink: 0 }} />
       )}
 
       {/* Label — fills row width */}
@@ -305,9 +328,9 @@ function SetRow({
           className="absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
           style={{ right: RIGHT_PAD, top: 0, height: ROW_HEIGHT }}
         >
+          <Tip label={`New set under "${node.label}"`}>
           <button
             onClick={(e) => { stop(e); onCreateUnder() }}
-            title={`New under ${node.label}`}
             style={{
               width: 18, height: 18,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -319,6 +342,7 @@ function SetRow({
           >
             <PlusIcon size={13} />
           </button>
+          </Tip>
 
           <div
             className="relative"
@@ -441,15 +465,16 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
       action={
         <div className="flex items-center gap-0.5">
           {nodesWithChildren.length > 0 && (
+            <Tip label={allCollapsed ? 'Expand all' : 'Collapse all'}>
             <button
               onClick={toggleAll}
-              title={allCollapsed ? 'Expand all' : 'Collapse all'}
               style={iconBtnStyle}
               onMouseEnter={e => { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.background = 'rgba(44,36,22,0.08)' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#a8967a'; e.currentTarget.style.background = 'transparent' }}
             >
               <ToggleAllIcon allCollapsed={allCollapsed} size={12} />
             </button>
+            </Tip>
           )}
           <Tip label="New set">
           <button
@@ -485,7 +510,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
               onDelete={() => onDeleteSet(node.key)}
             />
             {creatingUnder === node.key && (
-              <div style={{ paddingLeft: 24 + (node.depth + 1) * GUTTER_WIDTH + 4, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
+              <div style={{ paddingLeft: 12 + (node.depth + 1) * 16 + 24, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
                 <input
                   autoFocus
                   type="text"
@@ -756,9 +781,9 @@ export default function AlbumSidebar({
           openOverride={sectionsOpen}
           action={
             onImportFromWeb ? (
+              <Tip label="Import from the web">
               <button
                 onClick={onImportFromWeb}
-                title="Import from the web"
                 className="flex items-center justify-center rounded transition-colors"
                 style={{ width: 18, height: 18, color: '#a8967a' }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#8b6f47')}
@@ -768,6 +793,7 @@ export default function AlbumSidebar({
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </button>
+              </Tip>
             ) : null
           }
         >
@@ -936,12 +962,13 @@ export default function AlbumSidebar({
 
         {pages?.length > 0 && (
           <SidebarSection title="Pages" openOverride={sectionsOpen}>
-            {pages.map(p => (
+            {flattenPageTree(pages).map(p => (
               <SidebarItem
                 key={p.id}
                 active={selectedPage === p.id}
                 label={p.title}
                 count={p.imageUrls.length}
+                indent={12 + p.depth * 16}
                 onClick={() => onSelectPage?.(selectedPage === p.id ? null : p.id)}
               />
             ))}
