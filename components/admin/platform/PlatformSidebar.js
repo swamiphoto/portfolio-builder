@@ -48,6 +48,13 @@ function relativeTime(ts) {
   return `${mins} min ago`
 }
 
+export function describeStatus({ saveStatus, hasUnpublishedChanges, lastSavedAt } = {}) {
+  if (saveStatus === 'saving') return 'Saving…'
+  if (saveStatus === 'error') return 'Save failed'
+  if (hasUnpublishedChanges) return `Changes made ${lastSavedAt ? relativeTime(lastSavedAt) : 'just now'}`
+  return null
+}
+
 function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublishedAt }) {
   const [, tick] = useState(0)
   useEffect(() => {
@@ -55,20 +62,16 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
     return () => clearInterval(id)
   }, [])
 
-  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginTop: 11, marginBottom: 10 }
+  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginTop: 7, marginBottom: 6 }
+  const text = describeStatus({ saveStatus, hasUnpublishedChanges, lastSavedAt })
+  const color = saveStatus === 'error' ? '#c0392b'
+    : hasUnpublishedChanges ? '#c2872f'
+    : C.textFaint
 
-  if (saveStatus === 'saving') return <div style={{ ...base, color: C.textFaint }}>Saving…</div>
-  if (saveStatus === 'error') return <div style={{ ...base, color: '#c0392b' }}>Save failed</div>
-  if (hasUnpublishedChanges) return (
-    <div style={{ ...base, color: '#c2872f', lineHeight: 1.35 }}>
-      Changes last saved {lastSavedAt ? relativeTime(lastSavedAt) : 'just now'}
-      <div style={{ color: '#c2872f', opacity: 0.7, marginTop: 1 }}>(Yet to be published)</div>
-    </div>
-  )
-  if (lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
-  if (lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Auto-saved {relativeTime(lastSavedAt)}</div>
-  // Nothing to say — reserve a single label's height so the gap stays constant.
-  return <div style={{ ...base, visibility: 'hidden' }} aria-hidden>Published just now</div>
+  // Reserve exactly one line's height so the label appearing/disappearing never
+  // shifts the pages list below it.
+  if (!text) return <div style={{ ...base, visibility: 'hidden' }} aria-hidden>Changes made just now</div>
+  return <div style={{ ...base, color }}>{text}</div>
 }
 
 // Icons — page type icons match the Sepia spec (Heroicons outline, strokeWidth 1.5, rounded).
@@ -860,7 +863,7 @@ export default function PlatformSidebar({
       )}
 
       {/* PAGES LIST */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scroll-thin">
 
         {/* Pages section header */}
         <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
