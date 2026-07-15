@@ -74,15 +74,25 @@ function Section({ label, children }) {
   )
 }
 
+const DANGER_REST = '0 1px 2px rgba(26,18,10,0.05)'
+const DANGER_HOVER = '0 2px 8px rgba(26,18,10,0.10)'
+
 function DangerItem({ title, desc, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left flex items-center gap-3 transition-colors"
-      style={{ padding: '8px 8px', borderRadius: 7 }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(160,140,110,0.10)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      className="w-full text-left flex items-center gap-3"
+      style={{
+        padding: '10px 12px',
+        borderRadius: 8,
+        background: 'var(--card, #f9f6f1)',
+        border: '1px solid var(--card-border, rgba(180,160,130,0.25))',
+        boxShadow: DANGER_REST,
+        transition: 'box-shadow 120ms, border-color 120ms, background 120ms',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = DANGER_HOVER; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.40)'; e.currentTarget.style.background = 'var(--card-hover, #f4f0ea)' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = DANGER_REST; e.currentTarget.style.borderColor = 'var(--card-border, rgba(180,160,130,0.25))'; e.currentTarget.style.background = 'var(--card, #f9f6f1)' }}
     >
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontSize: 13, color: '#2c2416' }}>{title}</span>
@@ -453,9 +463,11 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
         </Section>
 
         <Section label={<span style={{ color: '#c14a4a' }}>Danger zone</span>}>
-          <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
-          <DangerItem title="Clear library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
-          <DangerItem title="Delete account" desc="Permanently delete everything, free the username" onClick={() => setDanger('account')} />
+          <div className="flex flex-col" style={{ gap: 7, marginTop: 3 }}>
+            <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
+            <DangerItem title="Clear library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
+            <DangerItem title="Delete account" desc="Permanently delete everything, free the username" onClick={() => setDanger('account')} />
+          </div>
         </Section>
       </>}
 
