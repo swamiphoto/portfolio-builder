@@ -111,7 +111,7 @@ function NavList({ items, basePath, dark = false, currentPath = '', currentPageI
 // Horizontal nav that collapses trailing items into a "More" dropdown when they
 // would crowd the logo. Measures a hidden copy of the full list against the
 // available width and shows as many as fit.
-function OverflowNav({ items, basePath, dark = false, currentPath = '', currentPageId, onPageClick }) {
+function OverflowNav({ items, basePath, dark = false, currentPath = '', currentPageId, onPageClick, subNavMode = 'dropdown' }) {
   const wrapRef = useRef(null)
   const measureRef = useRef(null)
   const [visibleCount, setVisibleCount] = useState(items.length)
@@ -165,9 +165,7 @@ function OverflowNav({ items, basePath, dark = false, currentPath = '', currentP
       <ul className="flex gap-8 items-center">
         {visible.map(item => (
           <li key={item.id} className="whitespace-nowrap">
-            <NavLink item={item} basePath={basePath} dark={dark}
-              active={navItemActive(item, { currentPageId, currentPath, basePath })}
-              onPageClick={onPageClick} />
+            <NavItem item={item} basePath={basePath} dark={dark} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
           </li>
         ))}
         {overflow.length > 0 && (
@@ -343,13 +341,13 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
           <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left" style={logoStyle || undefined}>{brand}</a>
         )}
 
-        {/* Desktop nav — hidden in mobile preview */}
-        {!isMobile && (
-          <OverflowNav items={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} />
+        {/* Desktop nav — hidden in mobile preview or when Menu mode is on */}
+        {!isMobile && navMode !== 'menu' && (
+          <OverflowNav items={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
         )}
 
-        {/* Mobile hamburger button — shown in mobile preview */}
-        {isMobile && (
+        {/* Hamburger button — shown in mobile preview or when Menu mode is on */}
+        {(isMobile || navMode === 'menu') && (
           <button
             onClick={() => setIsMenuOpen(true)}
             className="rounded p-2 text-gray-600"
@@ -359,8 +357,8 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
           </button>
         )}
 
-        {/* Mobile full-screen overlay */}
-        {isMobile && isMenuOpen && (
+        {/* Full-screen overlay — shown in mobile preview or when Menu mode is on */}
+        {(isMobile || navMode === 'menu') && isMenuOpen && (
           <nav className="fixed inset-0 bg-gray-100 z-30 flex flex-col items-center justify-center">
             <button
               onClick={() => setIsMenuOpen(false)}
@@ -373,25 +371,25 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
               {tree.map(item => {
                 const isLink = item.type === 'link'
                 const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+                const kids = item.children || []
                 return (
-                  <li key={item.id}>
+                  <li key={item.id} className="flex flex-col items-center gap-2">
                     {onPageClick && !isLink ? (
-                      <button
-                        onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }}
-                        className="font-serif text-xl font-medium text-gray-700"
-                      >
-                        {item.title}
-                      </button>
+                      <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className="font-serif text-xl font-medium text-gray-700">{item.title}</button>
                     ) : (
-                      <a
-                        href={href}
-                        target={isLink ? '_blank' : undefined}
-                        rel={isLink ? 'noopener noreferrer' : undefined}
-                        onClick={() => setIsMenuOpen(false)}
-                        className="font-serif text-xl font-medium text-gray-700"
-                      >
-                        {item.title}
-                      </a>
+                      <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setIsMenuOpen(false)} className="font-serif text-xl font-medium text-gray-700">{item.title}</a>
+                    )}
+                    {kids.length > 0 && (
+                      <div className="flex flex-col items-center gap-1.5">
+                        {kids.map(child => {
+                          const cHref = `${basePath}/${child.slug || child.id}`
+                          return onPageClick ? (
+                            <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className="font-serif text-base text-gray-500">{child.title}</button>
+                          ) : (
+                            <a key={child.id} href={cHref} onClick={() => setIsMenuOpen(false)} className="font-serif text-base text-gray-500">{child.title}</a>
+                          )
+                        })}
+                      </div>
                     )}
                   </li>
                 )
@@ -426,10 +424,27 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
               const isLink = item.type === 'link'
               const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
               const cls = 'font-serif text-2xl'
-              return onPageClick && !isLink ? (
-                <button key={item.id} onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
-              ) : (
-                <a key={item.id} href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
+              const kids = item.children || []
+              return (
+                <div key={item.id} className="flex flex-col items-center gap-3">
+                  {onPageClick && !isLink ? (
+                    <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
+                  ) : (
+                    <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
+                  )}
+                  {kids.length > 0 && (
+                    <div className="flex flex-col items-center gap-2">
+                      {kids.map(child => {
+                        const cHref = `${basePath}/${child.slug || child.id}`
+                        return onPageClick ? (
+                          <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className="font-serif text-lg opacity-70">{child.title}</button>
+                        ) : (
+                          <a key={child.id} href={cHref} className="font-serif text-lg opacity-70" style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsMenuOpen(false)}>{child.title}</a>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )
             })}
           </nav>

@@ -12,7 +12,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign } from "../../../common/themes/variants"
+import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import FramedPhoto from "./photo-block/FramedPhoto";

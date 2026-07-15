@@ -55,7 +55,7 @@ export function describeStatus({ saveStatus, hasUnpublishedChanges, lastSavedAt 
   return null
 }
 
-function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublishedAt }) {
+function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt }) {
   const [, tick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => tick(n => n + 1), 30000)
@@ -846,7 +846,7 @@ export default function PlatformSidebar({
           </Tip>
         </div>
 
-        <StatusLine saveStatus={saveStatus} hasUnpublishedChanges={hasUnpublishedChanges} lastSavedAt={lastSavedAt} lastPublishedAt={lastPublishedAt} />
+        <StatusLine saveStatus={saveStatus} hasUnpublishedChanges={hasUnpublishedChanges} lastSavedAt={lastSavedAt} />
       </div>
 
       {publishedToast && createPortal(
