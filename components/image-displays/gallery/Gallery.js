@@ -268,7 +268,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                       const href = `${linkBase}/${p.slug || p.id}`;
                       const stackStyle = pgStackVariants[i % pgStackVariants.length];
                       return (
-                        <a key={p.id} href={href} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <a key={p.id} href={href} onClick={onChildPageClick ? (e) => { e.preventDefault(); onChildPageClick(p.id); } : undefined} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div className="relative md:w-7/12">
                             <div className="relative">
                               <div className={stackStyle.first} />
