@@ -18,11 +18,17 @@ describe('SiteNav menu mode (cover-embedded)', () => {
     expect(screen.getByText('Work')).toBeInTheDocument()
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument()
   })
-  it('renders a hamburger that opens an overlay of nav items when navStyle=menu', () => {
+  it('renders a hamburger that opens a menu of nav items when navStyle=menu', () => {
     render(<SiteNav siteConfig={cfg('menu')} username="me" variant="cover-embedded" basePath="/sites/me" />)
     expect(screen.queryByText('Work')).not.toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Open menu'))
     expect(screen.getByText('Work')).toBeInTheDocument()
     expect(screen.getByText('About')).toBeInTheDocument()
+  })
+  it('opens a compact dropdown (not a full-screen takeover) on desktop', () => {
+    const { container } = render(<SiteNav siteConfig={cfg('menu')} username="me" variant="cover-embedded" basePath="/sites/me" />)
+    fireEvent.click(screen.getByLabelText('Open menu'))
+    // Desktop menu is an anchored dropdown, so nothing should cover the viewport.
+    expect(container.querySelector('.fixed.inset-0')).toBeNull()
   })
 })

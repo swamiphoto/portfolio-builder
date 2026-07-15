@@ -675,19 +675,6 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               ]}
             />
           </div>
-          {logoType === 'sitename' && (
-            <div className="mt-2.5">
-              <DesignPillToggle
-                value={config.logoFont || 'theme'}
-                onChange={(v) => update({ logoFont: v })}
-                options={[
-                  { value: 'theme',     label: 'Default'   },
-                  { value: 'modern',    label: 'Modern'    },
-                  { value: 'editorial', label: 'Editorial' },
-                ]}
-              />
-            </div>
-          )}
           {logoType === 'image' && (
             <AssetField
               value={config.logo || ''}
@@ -792,6 +779,20 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSelect>
           </DesignSection>
 
+          {(config.logoType || 'sitename') === 'sitename' && (
+            <DesignSection label="Logo font">
+              <DesignPillToggle
+                value={config.logoFont || 'theme'}
+                onChange={(v) => update({ logoFont: v })}
+                options={[
+                  { value: 'theme',     label: 'Default'   },
+                  { value: 'modern',    label: 'Modern'    },
+                  { value: 'editorial', label: 'Editorial' },
+                ]}
+              />
+            </DesignSection>
+          )}
+
           {resolveNavStyle(config.design?.theme || 'kyoto') !== 'left-rail' && (
             <DesignSection label="Navigation">
               <DesignNumberToggle
@@ -805,15 +806,17 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSection>
           )}
 
-          <DesignSection label="Sub-navigation" description="How pages nested under another page appear in that page's menu.">
-            <DesignSelect
-              value={config.design?.subNavStyle || 'dropdown'}
-              onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
-            >
-              <option value="dropdown">Dropdown</option>
-              <option value="inline">Links below page title</option>
-            </DesignSelect>
-          </DesignSection>
+          {config.design?.navStyle !== 'menu' && (
+            <DesignSection label="Sub-navigation" description="How pages nested under another page appear in that page's menu.">
+              <DesignSelect
+                value={config.design?.subNavStyle || 'dropdown'}
+                onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
+              >
+                <option value="dropdown">Dropdown</option>
+                <option value="inline">Links below page title</option>
+              </DesignSelect>
+            </DesignSection>
+          )}
 
           <DesignSection label="Footer">
             <div className="flex items-center justify-between gap-3">

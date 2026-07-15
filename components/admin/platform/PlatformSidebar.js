@@ -863,8 +863,8 @@ export default function PlatformSidebar({
         document.body
       )}
 
-      {/* PAGES LIST */}
-      <div className="flex-1 overflow-y-auto scroll-thin">
+      {/* PAGES LIST — scrollbar hidden to match the block sidebar (no layout wiggle) */}
+      <div className="flex-1 overflow-y-auto scroll-quiet">
 
         {/* Pages section header */}
         <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

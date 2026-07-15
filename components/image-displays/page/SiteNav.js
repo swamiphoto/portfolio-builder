@@ -12,11 +12,30 @@ import { logoFontStyle, resolveSubNavStyle, resolveNavMode } from '../../../comm
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 // Is this nav item the current page? Prefer an explicit id (preview mode where
-// the route is /admin), else match the URL path (published site).
-function navItemActive(item, { currentPageId, currentPath, basePath }) {
+// the route is /admin), else match the URL path (published site). A parent is
+// also "active" when one of its subpages is the current page, so the top-level
+// item stays highlighted while you're inside its section.
+function navItemActive(item, ctx) {
   if (item.type === 'link') return false
-  if (currentPageId != null) return item.id === currentPageId
-  return currentPath === `${basePath}/${item.slug || item.id}`
+  const { currentPageId, currentPath, basePath } = ctx
+  const selfActive = currentPageId != null
+    ? item.id === currentPageId
+    : currentPath === `${basePath}/${item.slug || item.id}`
+  if (selfActive) return true
+  return (item.children || []).some(child => navItemActive(child, ctx))
+}
+
+// A small chevron caret for parent nav items and the menu trigger. Rotates when
+// its menu is open. Sized to read clearly as a triangle, not a dot.
+function Caret({ open = false, size = 11 }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 12 12" aria-hidden
+      style={{ display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}
+    >
+      <path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 function navItemClass(dark, isActive) {
@@ -67,13 +86,13 @@ function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick
       <NavLink item={item} basePath={basePath} dark={dark} active={active} onPageClick={onPageClick} onClose={onClose} />
       <button
         onClick={() => setOpen(o => !o)}
-        className={`transition-colors ${dark ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+        className={`inline-flex items-center transition-colors ${dark ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`${item.title} submenu`}
-        style={{ fontSize: '0.7em', lineHeight: 1, padding: '0 2px' }}
+        style={{ lineHeight: 1, padding: '0 2px' }}
       >
-        ▾
+        <Caret open={open} />
       </button>
       {open && (
         <div
@@ -195,6 +214,93 @@ function OverflowNav({ items, basePath, dark = false, currentPath = '', currentP
         )}
       </ul>
     </nav>
+  )
+}
+
+// Hamburger menu used by "Menu" navigation mode. On desktop it opens a compact
+// dropdown panel anchored under the trigger (a normal menu, not a takeover); in
+// the admin mobile preview it opens the full-screen overlay.
+function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMobile, triggerClass, overlayStyle }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  const renderLink = (item, cls) => {
+    const isLink = item.type === 'link'
+    const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+    return (onPageClick && !isLink)
+      ? <button onClick={() => { onPageClick(item.id); setOpen(false) }} className={cls}>{item.title}</button>
+      : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setOpen(false)} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
+  }
+
+  // Admin mobile preview → full-screen overlay.
+  if (isMobile) {
+    return (
+      <>
+        <button onClick={() => setOpen(true)} aria-label="Open menu" className={triggerClass}>
+          <RxHamburgerMenu className="h-6 w-6" />
+        </button>
+        {open && (
+          <nav className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-5" style={overlayStyle} aria-label="Site navigation">
+            <button onClick={() => setOpen(false)} aria-label="Close menu" className="absolute top-5 right-5 p-2"><TfiClose className="h-5 w-5" /></button>
+            {tree.map(item => {
+              const kids = item.children || []
+              return (
+                <div key={item.id} className="flex flex-col items-center gap-2">
+                  {renderLink(item, 'font-serif text-2xl')}
+                  {kids.length > 0 && (
+                    <div className="flex flex-col items-center gap-2">
+                      {kids.map(child => <div key={child.id}>{renderLink(child, 'font-serif text-lg opacity-70')}</div>)}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </nav>
+        )}
+      </>
+    )
+  }
+
+  // Desktop → compact dropdown panel anchored under the trigger.
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen(o => !o)} aria-label="Open menu" aria-haspopup="menu" aria-expanded={open} className={triggerClass}>
+        <RxHamburgerMenu className="h-6 w-6" />
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-3 py-2 min-w-[190px] z-40 rounded-sm"
+          style={{ background: '#fffdf9', border: '1px solid rgba(26,18,10,0.12)', boxShadow: '0 8px 28px rgba(26,18,10,0.14)' }}
+        >
+          {tree.map(item => {
+            const kids = item.children || []
+            const active = navItemActive(item, { currentPageId, currentPath, basePath })
+            return (
+              <div key={item.id}>
+                <div className={`px-5 py-1.5 font-serif text-base ${active ? 'text-gray-900 underline' : 'text-gray-600 hover:text-gray-900'}`}>
+                  {renderLink(item, 'block w-full text-left')}
+                </div>
+                {kids.map(child => {
+                  const cActive = navItemActive(child, { currentPageId, currentPath, basePath })
+                  return (
+                    <div key={child.id} className={`pl-9 pr-5 py-1 font-serif text-sm ${cActive ? 'text-gray-900 underline' : 'text-gray-500 hover:text-gray-900'}`}>
+                      {renderLink(child, 'block w-full text-left')}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -342,60 +448,70 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
         )}
 
         {/* Desktop nav — hidden in mobile preview or when Menu mode is on */}
-        {!isMobile && navMode !== 'menu' && (
-          <OverflowNav items={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
-        )}
+        {navMode === 'menu' ? (
+          <NavMenu
+            tree={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId}
+            onPageClick={onPageClick} isMobile={isMobile}
+            triggerClass="rounded p-2 text-gray-600"
+            overlayStyle={{ background: '#f3f4f6', color: '#374151' }}
+          />
+        ) : (
+          <>
+            {/* Desktop links */}
+            {!isMobile && (
+              <OverflowNav items={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
+            )}
 
-        {/* Hamburger button — shown in mobile preview or when Menu mode is on */}
-        {(isMobile || navMode === 'menu') && (
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="rounded p-2 text-gray-600"
-            aria-label="Open menu"
-          >
-            <RxHamburgerMenu className="h-5 w-5" />
-          </button>
-        )}
-
-        {/* Full-screen overlay — shown in mobile preview or when Menu mode is on */}
-        {(isMobile || navMode === 'menu') && isMenuOpen && (
-          <nav className="fixed inset-0 bg-gray-100 z-30 flex flex-col items-center justify-center">
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="absolute top-5 right-5"
-              aria-label="Close menu"
-            >
-              <TfiClose className="h-5 w-5" />
-            </button>
-            <ul className="flex flex-col items-center space-y-6">
-              {tree.map(item => {
-                const isLink = item.type === 'link'
-                const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-                const kids = item.children || []
-                return (
-                  <li key={item.id} className="flex flex-col items-center gap-2">
-                    {onPageClick && !isLink ? (
-                      <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className="font-serif text-xl font-medium text-gray-700">{item.title}</button>
-                    ) : (
-                      <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setIsMenuOpen(false)} className="font-serif text-xl font-medium text-gray-700">{item.title}</a>
-                    )}
-                    {kids.length > 0 && (
-                      <div className="flex flex-col items-center gap-1.5">
-                        {kids.map(child => {
-                          const cHref = `${basePath}/${child.slug || child.id}`
-                          return onPageClick ? (
-                            <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className="font-serif text-base text-gray-500">{child.title}</button>
-                          ) : (
-                            <a key={child.id} href={cHref} onClick={() => setIsMenuOpen(false)} className="font-serif text-base text-gray-500">{child.title}</a>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
+            {/* Mobile-preview hamburger + full-screen overlay (links mode) */}
+            {isMobile && (
+              <button
+                onClick={() => setIsMenuOpen(true)}
+                className="rounded p-2 text-gray-600"
+                aria-label="Open menu"
+              >
+                <RxHamburgerMenu className="h-5 w-5" />
+              </button>
+            )}
+            {isMobile && isMenuOpen && (
+              <nav className="fixed inset-0 bg-gray-100 z-30 flex flex-col items-center justify-center">
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="absolute top-5 right-5"
+                  aria-label="Close menu"
+                >
+                  <TfiClose className="h-5 w-5" />
+                </button>
+                <ul className="flex flex-col items-center space-y-6">
+                  {tree.map(item => {
+                    const isLink = item.type === 'link'
+                    const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+                    const kids = item.children || []
+                    return (
+                      <li key={item.id} className="flex flex-col items-center gap-2">
+                        {onPageClick && !isLink ? (
+                          <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className="font-serif text-xl font-medium text-gray-700">{item.title}</button>
+                        ) : (
+                          <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setIsMenuOpen(false)} className="font-serif text-xl font-medium text-gray-700">{item.title}</a>
+                        )}
+                        {kids.length > 0 && (
+                          <div className="flex flex-col items-center gap-1.5">
+                            {kids.map(child => {
+                              const cHref = `${basePath}/${child.slug || child.id}`
+                              return onPageClick ? (
+                                <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className="font-serif text-base text-gray-500">{child.title}</button>
+                              ) : (
+                                <a key={child.id} href={cHref} onClick={() => setIsMenuOpen(false)} className="font-serif text-base text-gray-500">{child.title}</a>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </nav>
+            )}
+          </>
         )}
       </header>
     )
@@ -403,53 +519,14 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
 
   if (navMode === 'menu') {
     return (
-      <>
-        <button
-          onClick={() => setIsMenuOpen(true)}
-          aria-label="Open menu"
-          className="absolute top-6 right-8 z-20 p-2 text-white"
-        >
-          <RxHamburgerMenu className="h-6 w-6" />
-        </button>
-        {isMenuOpen && (
-          <nav
-            className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6"
-            style={{ background: 'var(--theme-bg, #1a120a)', color: 'var(--theme-text, #f5efe6)' }}
-            aria-label="Site navigation"
-          >
-            <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu" className="absolute top-5 right-5 p-2">
-              <TfiClose className="h-5 w-5" />
-            </button>
-            {tree.map(item => {
-              const isLink = item.type === 'link'
-              const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-              const cls = 'font-serif text-2xl'
-              const kids = item.children || []
-              return (
-                <div key={item.id} className="flex flex-col items-center gap-3">
-                  {onPageClick && !isLink ? (
-                    <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
-                  ) : (
-                    <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
-                  )}
-                  {kids.length > 0 && (
-                    <div className="flex flex-col items-center gap-2">
-                      {kids.map(child => {
-                        const cHref = `${basePath}/${child.slug || child.id}`
-                        return onPageClick ? (
-                          <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className="font-serif text-lg opacity-70">{child.title}</button>
-                        ) : (
-                          <a key={child.id} href={cHref} className="font-serif text-lg opacity-70" style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsMenuOpen(false)}>{child.title}</a>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </nav>
-        )}
-      </>
+      <nav className="absolute top-6 right-8 z-20" aria-label="Site navigation">
+        <NavMenu
+          tree={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId}
+          onPageClick={onPageClick} isMobile={isMobile}
+          triggerClass="p-2 text-white"
+          overlayStyle={{ background: 'var(--theme-bg, #1a120a)', color: 'var(--theme-text, #f5efe6)' }}
+        />
+      </nav>
     )
   }
 

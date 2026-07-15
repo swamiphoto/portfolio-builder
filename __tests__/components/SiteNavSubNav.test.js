@@ -37,4 +37,10 @@ describe('SiteNav sub-nav dropdown (cover-embedded)', () => {
     // No caret button in inline mode
     expect(screen.queryByLabelText('Work submenu')).not.toBeInTheDocument()
   })
+
+  it('marks the parent active when one of its subpages is the current page', () => {
+    // currentPageId is the child; the parent "Work" should still read as active.
+    render(<SiteNav siteConfig={withChildren('dropdown')} username="me" variant="cover-embedded" basePath="/sites/me" currentPageId="portraits" />)
+    expect(screen.getByText('Work').className).toMatch(/underline/)
+  })
 })
