@@ -151,7 +151,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
     site: {
       title: 'Reset site',
       body: 'This deletes all pages and their layouts and leaves you with a blank home page. Your library photos are kept.',
-      confirmWord: null,
+      confirmWord: 'Reset',
       cta: 'Reset site',
     },
     library: {
@@ -566,14 +566,24 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
-              <button type="button" onClick={closeDanger} disabled={busy} style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: busy ? 'default' : 'pointer' }}>
+              <button
+                type="button"
+                onClick={closeDanger}
+                disabled={busy}
+                className="transition-colors"
+                style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: busy ? 'default' : 'pointer' }}
+                onMouseEnter={e => { if (!busy) e.currentTarget.style.color = '#2c2416' }}
+                onMouseLeave={e => { if (!busy) e.currentTarget.style.color = 'var(--text-secondary)' }}
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={runDanger}
                 disabled={!canConfirm}
-                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: canConfirm ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: canConfirm ? 'pointer' : 'default' }}
+                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: canConfirm ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: canConfirm ? 'pointer' : 'default', transition: 'background 120ms' }}
+                onMouseEnter={e => { if (canConfirm) e.currentTarget.style.background = '#a83e3e' }}
+                onMouseLeave={e => { if (canConfirm) e.currentTarget.style.background = '#c14a4a' }}
               >
                 {busy ? 'Working…' : dcfg.cta}
               </button>

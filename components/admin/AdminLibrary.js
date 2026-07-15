@@ -814,12 +814,22 @@ export default function AdminLibrary({ onBack, siteConfig }) {
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
-              <button type="button" onClick={() => { if (!clearLibBusy) setClearLibOpen(false); }} disabled={clearLibBusy} style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: clearLibBusy ? 'default' : 'pointer' }}>Cancel</button>
+              <button
+                type="button"
+                onClick={() => { if (!clearLibBusy) setClearLibOpen(false); }}
+                disabled={clearLibBusy}
+                className="transition-colors"
+                style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: clearLibBusy ? 'default' : 'pointer' }}
+                onMouseEnter={e => { if (!clearLibBusy) e.currentTarget.style.color = '#2c2416'; }}
+                onMouseLeave={e => { if (!clearLibBusy) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >Cancel</button>
               <button
                 type="button"
                 onClick={runClearLibrary}
                 disabled={clearLibText !== 'Delete' || clearLibBusy}
-                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: clearLibText === 'Delete' && !clearLibBusy ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: clearLibText === 'Delete' && !clearLibBusy ? 'pointer' : 'default' }}
+                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: clearLibText === 'Delete' && !clearLibBusy ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: clearLibText === 'Delete' && !clearLibBusy ? 'pointer' : 'default', transition: 'background 120ms' }}
+                onMouseEnter={e => { if (clearLibText === 'Delete' && !clearLibBusy) e.currentTarget.style.background = '#a83e3e'; }}
+                onMouseLeave={e => { if (clearLibText === 'Delete' && !clearLibBusy) e.currentTarget.style.background = '#c14a4a'; }}
               >
                 {clearLibBusy ? 'Working…' : 'Delete all photos'}
               </button>
