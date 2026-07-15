@@ -74,18 +74,23 @@ function Section({ label, children }) {
   )
 }
 
-function DangerItem({ title, desc, red, onClick }) {
+function DangerItem({ title, desc, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left transition-colors"
-      style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(160,140,110,0.20)', marginTop: 6 }}
-      onMouseEnter={e => e.currentTarget.style.background = red ? 'rgba(193,74,74,0.06)' : 'rgba(160,140,110,0.09)'}
+      className="w-full text-left flex items-center gap-3 transition-colors"
+      style={{ padding: '8px 8px', borderRadius: 7 }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(160,140,110,0.10)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
-      <div style={{ fontSize: 13, color: red ? '#c14a4a' : '#2c2416' }}>{title}</div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{desc}</div>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 13, color: '#2c2416' }}>{title}</span>
+        <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{desc}</span>
+      </span>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+        <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </button>
   )
 }
@@ -437,31 +442,12 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
       {/* ── Account tab ── */}
       {tab === 'account' && <>
         <Section label="Connected account">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>
-                <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
-              </svg>
-              <div>
-                <div style={{ fontSize: 13, color: '#2c2416' }}>Google</div>
-                {email && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.02em', marginTop: 1 }}>{email}</div>}
-              </div>
-            </div>
-            <span
-              style={{
-                fontSize: 9.5,
-                fontFamily: MONO,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--text-secondary)',
-                background: 'rgba(160,140,110,0.14)',
-                padding: '3px 8px',
-                borderRadius: 999,
-                fontWeight: 500,
-                flexShrink: 0,
-              }}
-            >
-              Connected
+          <div className="flex items-center gap-2.5" style={{ paddingTop: 2 }}>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>
+              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+            </svg>
+            <span style={{ fontSize: 13, color: '#2c2416', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {email || 'Google account'}
             </span>
           </div>
         </Section>
@@ -469,7 +455,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
         <Section label={<span style={{ color: '#c14a4a' }}>Danger zone</span>}>
           <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
           <DangerItem title="Clear library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
-          <DangerItem title="Delete account" desc="Permanently delete everything, free the username" red onClick={() => setDanger('account')} />
+          <DangerItem title="Delete account" desc="Permanently delete everything, free the username" onClick={() => setDanger('account')} />
         </Section>
       </>}
 
