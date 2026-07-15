@@ -30,6 +30,7 @@ export function createDefaultSiteConfig(userId) {
     customDomain: null,
     tagline: '',
     logoType: 'sitename',
+    logoFont: 'theme',
     logo: '',
     favicon: '',
     cover: {
@@ -47,9 +48,9 @@ export function createDefaultSiteConfig(userId) {
     },
     design: {
       theme: 'kyoto',
-      navStyle: 'minimal',
+      navStyle: 'links',
       subNavStyle: 'dropdown',
-      footerLayout: 'standard',
+      footerLayout: 'simple',
     },
     contact: {
       email: '',
@@ -62,6 +63,7 @@ export function createDefaultSiteConfig(userId) {
     },
     footer: {
       customText: `© ${new Date().getFullYear()} My Portfolio`,
+      hidden: false,
     },
     analytics: {
       googleId: '',
