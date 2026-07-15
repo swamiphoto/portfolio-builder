@@ -531,10 +531,10 @@ export default function PhotoGrid({
             <div className="flex flex-col items-center justify-center text-center h-full" style={{ minHeight: 340, padding: '40px 24px' }}>
               <svg width="88" height="62" viewBox="0 0 88 62" fill="none" style={{ marginBottom: 18 }}>
                 {/* fanned stack — two cards spread behind, one straight in front */}
-                <g transform="rotate(-17 28 35)">
+                <g transform="rotate(8 28 35)">
                   <rect x="8" y="18" width="40" height="32" rx="4" fill="#e7dece" stroke="#d3c6b0" strokeWidth="1.2" />
                 </g>
-                <g transform="rotate(11 60 33)">
+                <g transform="rotate(14 60 33)">
                   <rect x="40" y="18" width="40" height="32" rx="4" fill="#ebe3d4" stroke="#d3c6b0" strokeWidth="1.2" />
                 </g>
                 <g transform="rotate(-4 44 29)">
