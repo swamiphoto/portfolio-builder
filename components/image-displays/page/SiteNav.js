@@ -6,6 +6,7 @@ import { TfiClose } from 'react-icons/tfi'
 import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { useAdminViewport } from '../../../contexts/ViewportContext'
+import { logoFontStyle } from '../../../common/siteDesign'
 
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -158,6 +159,9 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
     ? <img src={siteConfig.logo} alt={siteConfig.siteName || username || 'Logo'} style={{ maxHeight: 40, width: 'auto', display: 'block' }} />
     : (siteConfig.siteName || username)
 
+  // Wordmark font only applies to the site-name logo, never an uploaded image.
+  const logoStyle = logoImage ? null : logoFontStyle(siteConfig?.logoFont)
+
   if (style === 'left-rail') {
     const socials = siteConfig.contact || {}
     const socialKeys = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website'].filter(k => socials[k])
@@ -170,9 +174,9 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
             style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
           >
             {onPageClick ? (
-              <button onClick={() => onPageClick(null)} className="text-base font-semibold uppercase tracking-[0.16em] text-left">{brand}</button>
+              <button onClick={() => onPageClick(null)} className="text-base font-semibold uppercase tracking-[0.16em] text-left" style={logoStyle || undefined}>{brand}</button>
             ) : (
-              <a href={basePath || '/'} className="text-base font-semibold uppercase tracking-[0.16em] text-left" style={{ textDecoration: 'none', color: 'inherit' }}>{brand}</a>
+              <a href={basePath || '/'} className="text-base font-semibold uppercase tracking-[0.16em] text-left" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
             )}
             <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
           </header>
@@ -204,9 +208,9 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
       >
         <div className="flex flex-col gap-10">
           {onPageClick ? (
-            <button onClick={() => onPageClick(null)} className="text-left text-lg font-semibold uppercase tracking-[0.18em] leading-tight">{brand}</button>
+            <button onClick={() => onPageClick(null)} className="text-left text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={logoStyle || undefined}>{brand}</button>
           ) : (
-            <a href={basePath || '/'} className="text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={{ textDecoration: 'none', color: 'inherit' }}>{brand}</a>
+            <a href={basePath || '/'} className="text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
           )}
           <ul className="flex flex-col gap-2">
             {tree.map(item => {
@@ -239,9 +243,9 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
     return (
       <header className="px-8 py-5 flex items-center justify-between">
         {onPageClick ? (
-          <button className="font-serif2 text-2xl text-gray-900 tracking-wide text-left">{brand}</button>
+          <button className="font-serif2 text-2xl text-gray-900 tracking-wide text-left" style={logoStyle || undefined}>{brand}</button>
         ) : (
-          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left">{brand}</a>
+          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left" style={logoStyle || undefined}>{brand}</a>
         )}
 
         {/* Desktop nav — hidden in mobile preview */}
