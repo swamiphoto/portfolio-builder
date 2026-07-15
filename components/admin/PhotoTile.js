@@ -81,7 +81,7 @@ function placeholderColor(assetId) {
   return SEPIA_PLACEHOLDERS[Math.abs(h) % SEPIA_PLACEHOLDERS.length];
 }
 
-export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick, selected = false, selectionActive = false, onToggleSelect, selectedUrls }) {
+export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick, selected = false, selectionActive = false, onToggleSelect, selectedUrls, deleting = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [captionValue, setCaptionValue] = useState(asset.caption || "");
@@ -144,6 +144,14 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {deleting && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 30, background: 'rgba(244,239,232,0.72)', backdropFilter: 'blur(1px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8b6f47', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <span className="animate-spin" style={{ width: 12, height: 12, border: '1.5px solid rgba(139,111,71,0.35)', borderTopColor: '#8b6f47', borderRadius: '50%', display: 'inline-block' }} />
+            Deleting…
+          </div>
+        </div>
+      )}
       <div
         className="relative flex-1 overflow-hidden cursor-pointer"
         style={{ background: placeholderColor(asset.assetId) }}

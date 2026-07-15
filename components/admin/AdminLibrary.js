@@ -325,18 +325,29 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     await saveConfig(updated);
   }, [selectedAlbum, saveConfig, currentConfig]);
 
-  const handleDelete = useCallback(async (imageUrl) => {
-    const res = await fetch("/api/admin/delete", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl }),
+  const [deletingUrls, setDeletingUrls] = useState(() => new Set());
+  const markDeleting = useCallback((urls, on) => {
+    setDeletingUrls(prev => {
+      const next = new Set(prev);
+      for (const u of urls) { if (on) next.add(u); else next.delete(u); }
+      return next;
     });
-    if (!res.ok) {
-      alert("Delete failed");
-      return;
+  }, []);
+
+  const handleDelete = useCallback(async (imageUrl) => {
+    markDeleting([imageUrl], true);
+    try {
+      const res = await fetch("/api/admin/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) { alert("Delete failed"); return; }
+      await fetchLibrary({ quiet: true });
+    } finally {
+      markDeleting([imageUrl], false);
     }
-    await fetchLibrary({ quiet: true });
-  }, [fetchLibrary]);
+  }, [fetchLibrary, markDeleting]);
 
   // ── Multi-select ──────────────────────────────────────────────────────────
   const [selectedUrls, setSelectedUrls] = useState(() => new Set());
@@ -371,14 +382,19 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     const urls = [...selectedUrls];
     if (!urls.length) return;
     if (!confirm(`Permanently delete ${urls.length} photo${urls.length > 1 ? "s" : ""}? This cannot be undone.`)) return;
-    for (const imageUrl of urls) {
-      try {
-        await fetch("/api/admin/delete", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageUrl }) });
-      } catch (e) { console.error("delete failed", imageUrl, e); }
+    markDeleting(urls, true);
+    try {
+      for (const imageUrl of urls) {
+        try {
+          await fetch("/api/admin/delete", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageUrl }) });
+        } catch (e) { console.error("delete failed", imageUrl, e); }
+      }
+      await fetchLibrary({ quiet: true });
+      clearSelection();
+    } finally {
+      markDeleting(urls, false);
     }
-    await fetchLibrary({ quiet: true });
-    clearSelection();
-  }, [selectedUrls, fetchLibrary, clearSelection]);
+  }, [selectedUrls, fetchLibrary, clearSelection, markDeleting]);
 
   const [dropUploading, setDropUploading] = useState(false);
 
@@ -812,6 +828,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         selectionActive={selectionActive}
         onDropFiles={handleDropUpload}
         dropUploading={dropUploading}
+        deletingUrls={deletingUrls}
         onUploadClick={() => setUploadOpen(true)}
         onImportFromWeb={() => setImportOpen(true)}
         printStore={printStore}

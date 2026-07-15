@@ -94,6 +94,7 @@ export default function PhotoGrid({
   selectionActive = false,
   onDropFiles,
   dropUploading = false,
+  deletingUrls,
   onUploadClick,
   onImportFromWeb,
   onAddFromLibraryClick,
@@ -559,6 +560,7 @@ export default function PhotoGrid({
                     selectionActive={selectionActive}
                     onToggleSelect={() => onToggleSelect?.(asset.publicUrl)}
                     selectedUrls={selectedUrls}
+                    deleting={!!deletingUrls?.has(asset.publicUrl)}
                   />
                 </div>
               );
