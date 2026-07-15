@@ -716,12 +716,33 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               setView('cover')
               onViewCover?.()
             }}
-            className="flex-shrink-0 ml-2 transition-colors"
-            style={{ color: 'var(--text-muted)' }}
+            className="flex items-center gap-1 flex-shrink-0 ml-2 transition-colors"
+            style={{ color: 'var(--text-muted)', fontSize: 11 }}
             onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
-            <ChevronRight />
+            Configure <ChevronRight />
+          </button>
+        )}
+      </div>
+
+      {/* Print store toggle */}
+      <div className="flex items-center" style={{ padding: '11px 14px', borderBottom: DIVIDER_SOFT }}>
+        <ToggleSwitch
+          on={!!config.printStore?.enabled}
+          onClick={() => update({ printStore: { ...(config.printStore || {}), enabled: !config.printStore?.enabled } })}
+        />
+        <span style={{ marginLeft: 10, fontSize: 13, color: '#2c2416', flex: 1 }} className="select-none">Enable print store</span>
+        {config.printStore?.enabled && (
+          <button
+            type="button"
+            onClick={() => setView('print')}
+            className="flex items-center gap-1 flex-shrink-0 ml-2 transition-colors"
+            style={{ color: 'var(--text-muted)', fontSize: 11 }}
+            onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            Configure <ChevronRight />
           </button>
         )}
       </div>
@@ -741,10 +762,6 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       <DrillRow
         label="Social sharing"
         onDrillIn={() => setView('sharing')}
-      />
-      <DrillRow
-        label={config.printStore?.enabled ? 'Print store' : 'Setup print store'}
-        onDrillIn={() => setView('print')}
       />
 
       {designOpen && (
