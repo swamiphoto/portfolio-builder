@@ -200,7 +200,7 @@ function flattenPageTree(pages) {
 
 function SetRow({
   node, selected, expanded, count,
-  onSelect, onToggleExpand, onCreateUnder, onDelete, onDropPhotos,
+  onSelect, onToggleExpand, onCreateUnder, onDelete, onDropPhotos, onDropFiles,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -233,16 +233,17 @@ function SetRow({
       }}
       onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
       onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
-      onDragOver={onDropPhotos ? (e) => {
-        if (e.dataTransfer.types.includes('application/x-library-photos')) {
-          e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (!dragOver) setDragOver(true)
-        }
+      onDragOver={(onDropPhotos || onDropFiles) ? (e) => {
+        const t = e.dataTransfer.types
+        const ok = (onDropPhotos && t.includes('application/x-library-photos')) || (onDropFiles && t.includes('Files'))
+        if (ok) { e.preventDefault(); e.dataTransfer.dropEffect = t.includes('Files') ? 'copy' : 'move'; if (!dragOver) setDragOver(true) }
       } : undefined}
-      onDragLeave={onDropPhotos ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false) } : undefined}
-      onDrop={onDropPhotos ? (e) => {
+      onDragLeave={(onDropPhotos || onDropFiles) ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false) } : undefined}
+      onDrop={(onDropPhotos || onDropFiles) ? (e) => {
         e.preventDefault(); setDragOver(false)
+        if (onDropFiles && e.dataTransfer.files && e.dataTransfer.files.length) { onDropFiles(e.dataTransfer.files); return }
         const raw = e.dataTransfer.getData('application/x-library-photos')
-        if (!raw) return
+        if (!raw || !onDropPhotos) return
         try { const urls = JSON.parse(raw); if (Array.isArray(urls) && urls.length) onDropPhotos(urls) } catch {}
       } : undefined}
     >
@@ -400,7 +401,7 @@ function PendingRow({ depth, label }) {
   )
 }
 
-function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride, onDropPhotos }) {
+function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride, onDropPhotos, onDropFiles }) {
   const galleryKeys = Object.keys(counts).filter(k => k !== "all")
   const nodes = useMemo(() => buildSetTree(galleryKeys), [galleryKeys.join('|')])
   const [collapsed, setCollapsed] = useState(new Set())
@@ -510,6 +511,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
               onCreateUnder={() => { setCreatingUnder(node.key); setNewSetName('') }}
               onDelete={() => onDeleteSet(node.key)}
               onDropPhotos={onDropPhotos ? (urls) => onDropPhotos(node.key, urls) : null}
+              onDropFiles={onDropFiles ? (files) => onDropFiles(files, node.key) : null}
             />
             {creatingUnder === node.key && (
               <div style={{ paddingLeft: 12 + (node.depth + 1) * 14 + 18, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
@@ -592,6 +594,7 @@ export default function AlbumSidebar({
   onFindDuplicates,
   onClearLibrary,
   onDropPhotos,
+  onDropFiles,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -969,6 +972,7 @@ export default function AlbumSidebar({
           onDeleteSet={onDeleteSet}
           onFilterChange={onFilterChange}
           onDropPhotos={onDropPhotos}
+          onDropFiles={onDropFiles}
         />
 
         {pages?.length > 0 && (

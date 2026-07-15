@@ -92,6 +92,8 @@ export default function PhotoGrid({
   selectedUrls,
   onToggleSelect,
   selectionActive = false,
+  onDropFiles,
+  dropUploading = false,
   onUploadClick,
   onImportFromWeb,
   onAddFromLibraryClick,
@@ -112,6 +114,7 @@ export default function PhotoGrid({
   const [scrollTop, setScrollTop] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [dropActive, setDropActive] = useState(false);
 
   const scrollRef = useRef(null);
   const rafRef = useRef(null);
@@ -219,7 +222,25 @@ export default function PhotoGrid({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0" style={{ background: 'transparent' }}>
+    <div
+      className="flex-1 flex flex-col min-w-0 relative"
+      style={{ background: 'transparent' }}
+      onDragOver={onDropFiles ? (e) => {
+        if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; if (!dropActive) setDropActive(true) }
+      } : undefined}
+      onDragLeave={onDropFiles ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropActive(false) } : undefined}
+      onDrop={onDropFiles ? (e) => {
+        if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDropActive(false); onDropFiles(e.dataTransfer.files) }
+      } : undefined}
+    >
+      {(dropActive || dropUploading) && (
+        <div style={{ position: 'absolute', inset: 8, zIndex: 40, borderRadius: 10, border: '2px dashed #8b6f47', background: 'rgba(244,239,232,0.86)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ textAlign: 'center', color: '#5c4f3a' }}>
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 20, marginBottom: 4 }}>{dropUploading ? 'Uploading…' : 'Drop photos to upload'}</div>
+            {!dropUploading && <div style={{ fontFamily: MONO, fontSize: 11, color: '#8b6f47', letterSpacing: '0.04em' }}>{inAlbum ? `Into ${slugToTitle(selectedAlbum.key.split('/').pop())}` : 'To your library'}</div>}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div
         className="flex items-center gap-2 px-4"
@@ -427,25 +448,6 @@ export default function PhotoGrid({
           >
             {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-
-          {/* Add from Library */}
-          {inAlbum && (
-            <button
-              onClick={onAddFromLibraryClick}
-              className="transition-colors"
-              style={{
-                ...btnBase,
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.07em', textTransform: 'uppercase',
-                padding: '0 10px', height: 28,
-                border: '1px solid rgba(160,140,110,0.3)',
-                background: 'transparent', color: '#7a6b55',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              + Add
-            </button>
-          )}
 
           {/* Import from the web */}
           {onImportFromWeb && (

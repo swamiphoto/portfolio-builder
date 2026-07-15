@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
-import UploadModal from "./UploadModal";
+import UploadModal, { uploadFile } from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
 import ImportFlow from "./import/ImportFlow";
 import DuplicateFinder from "./library/DuplicateFinder";
@@ -380,6 +380,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     clearSelection();
   }, [selectedUrls, fetchLibrary, clearSelection]);
 
+  const [dropUploading, setDropUploading] = useState(false);
+
   // Drag a photo (or the current selection) onto a set: add to target, and if
   // dragging from another set, remove from the source (a move).
   const handleMovePhotosToSet = useCallback(async (targetKey, urls) => {
@@ -429,6 +431,27 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
     await saveConfig(updated);
   }, [saveConfig, fetchLibrary, currentConfig, libraryData]);
+
+  // ── Drag-drop upload from the computer ────────────────────────────────────
+  const handleDropUpload = useCallback(async (fileList, targetSet) => {
+    const files = [...(fileList || [])].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|gif|webp)$/i.test(f.name));
+    if (!files.length) return;
+    const set = targetSet || (selectedAlbum.type === 'gallery' ? selectedAlbum.key : null);
+    const folder = set ? `photos/${set}` : undefined;
+    setDropUploading(true);
+    try {
+      const uploadedAssets = [];
+      for (const file of files) {
+        try {
+          const { gcsUrl, width, height, hash } = await uploadFile(file, { folder });
+          uploadedAssets.push({ url: gcsUrl, width, height, hash });
+        } catch (e) { console.error('drop upload failed', file.name, e); }
+      }
+      if (uploadedAssets.length) await handleUploaded(uploadedAssets, set ? [set] : []);
+    } finally {
+      setDropUploading(false);
+    }
+  }, [selectedAlbum, handleUploaded]);
 
   const handleImportComplete = useCallback(async (summary) => {
     setImportOpen(false)
@@ -751,6 +774,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onSelect={setSelectedAlbum}
         onCreateSet={handleCreateSet}
         onDropPhotos={handleMovePhotosToSet}
+        onDropFiles={handleDropUpload}
         onDeleteSet={handleDeleteSet}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
@@ -786,6 +810,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         selectedUrls={selectedUrls}
         onToggleSelect={toggleSelect}
         selectionActive={selectionActive}
+        onDropFiles={handleDropUpload}
+        dropUploading={dropUploading}
         onUploadClick={() => setUploadOpen(true)}
         onImportFromWeb={() => setImportOpen(true)}
         printStore={printStore}
