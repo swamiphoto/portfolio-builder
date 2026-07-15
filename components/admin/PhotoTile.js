@@ -81,7 +81,7 @@ function placeholderColor(assetId) {
   return SEPIA_PLACEHOLDERS[Math.abs(h) % SEPIA_PLACEHOLDERS.length];
 }
 
-export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick }) {
+export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick, selected = false, selectionActive = false, onToggleSelect }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [captionValue, setCaptionValue] = useState(asset.caption || "");
@@ -136,7 +136,9 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       className="relative rounded-lg overflow-hidden group w-full h-full flex flex-col"
       style={{
         background: '#f4efe8',
-        boxShadow: hovered ? TILE_SHADOW_HOVER : TILE_SHADOW,
+        boxShadow: selected
+          ? `0 0 0 2.5px #8b6f47, ${TILE_SHADOW}`
+          : (hovered ? TILE_SHADOW_HOVER : TILE_SHADOW),
         transition: 'box-shadow 0.18s ease',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -145,8 +147,24 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       <div
         className="relative flex-1 overflow-hidden cursor-pointer"
         style={{ background: placeholderColor(asset.assetId) }}
-        onClick={() => onImageClick && onImageClick()}
+        onClick={() => { if (selectionActive) { onToggleSelect?.(); } else { onImageClick && onImageClick(); } }}
       >
+        {/* Select checkbox — top-left, shown on hover or while selecting */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+          className={`absolute top-2 left-2 z-10 rounded-full flex items-center justify-center transition-opacity ${selectionActive || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          style={{
+            width: 20, height: 20,
+            background: selected ? '#8b6f47' : 'rgba(26,18,10,0.35)',
+            border: `1.5px solid ${selected ? '#8b6f47' : 'rgba(255,255,255,0.9)'}`,
+            backdropFilter: 'blur(3px)',
+          }}
+          aria-label={selected ? 'Deselect' : 'Select'}
+        >
+          {selected && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+          )}
+        </button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={thumbnailUrl}

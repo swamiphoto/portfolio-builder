@@ -89,6 +89,9 @@ export default function PhotoGrid({
   onAddToAlbum,
   onCaptionChange,
   onToggleSet,
+  selectedUrls,
+  onToggleSelect,
+  selectionActive = false,
   onUploadClick,
   onImportFromWeb,
   onAddFromLibraryClick,
@@ -550,6 +553,9 @@ export default function PhotoGrid({
                     onAddToAlbum={onAddToAlbum}
                     onCaptionChange={onCaptionChange}
                     onImageClick={() => setLightboxIndex(index)}
+                    selected={!!selectedUrls?.has(asset.publicUrl)}
+                    selectionActive={selectionActive}
+                    onToggleSelect={() => onToggleSelect?.(asset.publicUrl)}
                   />
                 </div>
               );

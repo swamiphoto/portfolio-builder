@@ -338,6 +338,48 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     await fetchLibrary({ quiet: true });
   }, [fetchLibrary]);
 
+  // ── Multi-select ──────────────────────────────────────────────────────────
+  const [selectedUrls, setSelectedUrls] = useState(() => new Set());
+  const selectionActive = selectedUrls.size > 0;
+  const toggleSelect = useCallback((url) => {
+    setSelectedUrls(prev => {
+      const next = new Set(prev);
+      if (next.has(url)) next.delete(url); else next.add(url);
+      return next;
+    });
+  }, []);
+  const clearSelection = useCallback(() => setSelectedUrls(new Set()), []);
+  // Drop the selection whenever the viewed album/filter changes.
+  useEffect(() => { setSelectedUrls(new Set()); }, [selectedAlbum]);
+
+  const handleRemoveSelected = useCallback(async () => {
+    if (selectedAlbum.type === "all" || selectedUrls.size === 0) return;
+    const config = currentConfig();
+    const section = selectedAlbum.type === "portfolio" ? "portfolios" : "galleries";
+    const updated = {
+      ...config,
+      [section]: {
+        ...config[section],
+        [selectedAlbum.key]: (config[section][selectedAlbum.key] || []).filter(u => !selectedUrls.has(u)),
+      },
+    };
+    await saveConfig(updated);
+    clearSelection();
+  }, [selectedAlbum, selectedUrls, saveConfig, currentConfig, clearSelection]);
+
+  const handleDeleteSelected = useCallback(async () => {
+    const urls = [...selectedUrls];
+    if (!urls.length) return;
+    if (!confirm(`Permanently delete ${urls.length} photo${urls.length > 1 ? "s" : ""}? This cannot be undone.`)) return;
+    for (const imageUrl of urls) {
+      try {
+        await fetch("/api/admin/delete", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageUrl }) });
+      } catch (e) { console.error("delete failed", imageUrl, e); }
+    }
+    await fetchLibrary({ quiet: true });
+    clearSelection();
+  }, [selectedUrls, fetchLibrary, clearSelection]);
+
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
     // uploadedAssets: [{ url, width, height, hash }], selectedSets: string[]
     setUploadOpen(false);
@@ -726,6 +768,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onAddToAlbum={handleAddToAlbum}
         onCaptionChange={handleCaptionChange}
         onToggleSet={handleToggleSet}
+        selectedUrls={selectedUrls}
+        onToggleSelect={toggleSelect}
+        selectionActive={selectionActive}
         onUploadClick={() => setUploadOpen(true)}
         onImportFromWeb={() => setImportOpen(true)}
         printStore={printStore}
@@ -841,6 +886,52 @@ export default function AdminLibrary({ onBack, siteConfig }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {selectionActive && (
+        <div
+          style={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9998,
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: '#2c2416', color: '#f6f3ec', padding: '8px 10px 8px 16px', borderRadius: 10,
+            boxShadow: '0 10px 30px rgba(26,18,10,0.32)',
+            fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 12, letterSpacing: '0.03em',
+          }}
+        >
+          <span style={{ marginRight: 8 }}>{selectedUrls.size} selected</span>
+          {selectedAlbum.type === 'gallery' && (
+            <button
+              type="button"
+              onClick={handleRemoveSelected}
+              className="transition-colors"
+              style={{ padding: '6px 10px', borderRadius: 6, color: '#f6f3ec' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.10)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              Remove from set
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            className="transition-colors"
+            style={{ padding: '6px 10px', borderRadius: 6, color: '#f0a3a3' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(240,90,90,0.16)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="transition-colors"
+            style={{ padding: '6px 10px', borderRadius: 6, color: 'rgba(246,243,236,0.7)' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#f6f3ec'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(246,243,236,0.7)'}
+          >
+            Clear
+          </button>
         </div>
       )}
     </div>
