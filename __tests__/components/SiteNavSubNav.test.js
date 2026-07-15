@@ -13,17 +13,28 @@ const withChildren = (subNavStyle) => ({
 })
 
 describe('SiteNav sub-nav dropdown (cover-embedded)', () => {
-  it('shows a caret for a parent and reveals children on click when dropdown', () => {
+  it('shows a caret button and reveals children on caret click when dropdown', () => {
     render(<SiteNav siteConfig={withChildren('dropdown')} username="me" variant="cover-embedded" basePath="/sites/me" />)
-    const trigger = screen.getByRole('button', { name: /Work/ })
+    // Caret button is now separate from the parent label
+    const caretBtn = screen.getByLabelText('Work submenu')
     expect(screen.queryByText('Portraits')).not.toBeInTheDocument()
-    fireEvent.click(trigger)
+    fireEvent.click(caretBtn)
     expect(screen.getByText('Portraits')).toBeInTheDocument()
   })
+
+  it('navigates to parent page when parent label is clicked in dropdown mode', () => {
+    const onPageClick = jest.fn()
+    render(<SiteNav siteConfig={withChildren('dropdown')} username="me" variant="cover-embedded" basePath="/sites/me" onPageClick={onPageClick} />)
+    // Parent label renders as a button (NavLink with onPageClick)
+    const parentLabel = screen.getByRole('button', { name: 'Work' })
+    fireEvent.click(parentLabel)
+    expect(onPageClick).toHaveBeenCalledWith('work')
+  })
+
   it('does not render a dropdown when subNavStyle is inline', () => {
     render(<SiteNav siteConfig={withChildren('inline')} username="me" variant="cover-embedded" basePath="/sites/me" />)
     expect(screen.queryByText('Portraits')).not.toBeInTheDocument()
-    // Parent renders as a plain link, no caret trigger button
-    expect(screen.queryByRole('button', { name: /Work/ })).not.toBeInTheDocument()
+    // No caret button in inline mode
+    expect(screen.queryByLabelText('Work submenu')).not.toBeInTheDocument()
   })
 })

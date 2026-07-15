@@ -40,7 +40,7 @@ function NavLink({ item, basePath, dark, active, onPageClick, onClose }) {
 // A single top-level nav item. When it has children and the site uses the
 // "dropdown" sub-nav style, it shows a caret and reveals a themed menu of its
 // subpages; the parent label still navigates to the parent page.
-function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick, subNavMode }) {
+function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick, onClose, subNavMode }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const children = item.children || []
@@ -55,7 +55,7 @@ function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick
   }, [open])
 
   if (!hasDropdown) {
-    return <NavLink item={item} basePath={basePath} dark={dark} active={active} onPageClick={onPageClick} />
+    return <NavLink item={item} basePath={basePath} dark={dark} active={active} onPageClick={onPageClick} onClose={onClose} />
   }
 
   const menuBg = dark ? '#1a120a' : '#fffdf9'
@@ -63,13 +63,17 @@ function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick
   const muted = dark ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-gray-900'
 
   return (
-    <span ref={ref} className="relative inline-flex items-center">
+    <span ref={ref} className="relative inline-flex items-center gap-1">
+      <NavLink item={item} basePath={basePath} dark={dark} active={active} onPageClick={onPageClick} onClose={onClose} />
       <button
         onClick={() => setOpen(o => !o)}
-        className={navItemClass(dark, active)}
-        aria-haspopup="true" aria-expanded={open}
+        className={`transition-colors ${dark ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`${item.title} submenu`}
+        style={{ fontSize: '0.7em', lineHeight: 1, padding: '0 2px' }}
       >
-        {item.title} <span aria-hidden style={{ fontSize: '0.7em' }}>▾</span>
+        ▾
       </button>
       {open && (
         <div
@@ -97,7 +101,7 @@ function NavList({ items, basePath, dark = false, currentPath = '', currentPageI
         <li key={item.id}>
           <NavItem item={item} basePath={basePath} dark={dark}
             currentPath={currentPath} currentPageId={currentPageId}
-            onPageClick={onPageClick} subNavMode={subNavMode} />
+            onPageClick={onPageClick} onClose={onClose} subNavMode={subNavMode} />
         </li>
       ))}
     </ul>
@@ -241,10 +245,29 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
                 const isLink = item.type === 'link'
                 const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
                 const cls = 'text-lg uppercase tracking-[0.14em]'
-                return onPageClick && !isLink ? (
-                  <button key={item.id} onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
-                ) : (
-                  <a key={item.id} href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
+                const kids = item.children || []
+                return (
+                  <div key={item.id} className="flex flex-col items-center gap-2">
+                    {onPageClick && !isLink ? (
+                      <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
+                    ) : (
+                      <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
+                    )}
+                    {kids.length > 0 && (
+                      <div className="flex flex-col items-center gap-1.5">
+                        {kids.map(child => {
+                          const cIsLink = child.type === 'link'
+                          const cHref = cIsLink ? (child.url || '#') : `${basePath}/${child.slug || child.id}`
+                          const cCls = 'text-sm uppercase tracking-[0.12em] opacity-60'
+                          return onPageClick && !cIsLink ? (
+                            <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className={cCls}>{child.title}</button>
+                          ) : (
+                            <a key={child.id} href={cHref} target={cIsLink ? '_blank' : undefined} rel={cIsLink ? 'noopener noreferrer' : undefined} className={cCls} style={{ textDecoration: 'none' }} onClick={() => setIsMenuOpen(false)}>{child.title}</a>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </nav>
