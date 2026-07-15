@@ -466,7 +466,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
           </div>
         </Section>
 
-        <Section label="Start over">
+        <Section label={<><span>Start over</span><span style={{ color: '#c14a4a', marginLeft: 8 }}>Danger zone</span></>}>
           <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
           <DangerItem title="Clear library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
           <DangerItem title="Delete account" desc="Permanently delete everything, free the username" red onClick={() => setDanger('account')} />
