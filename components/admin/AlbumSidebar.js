@@ -228,18 +228,17 @@ function SetRow({
       className="relative flex items-center cursor-pointer transition-colors group"
       style={{
         height: ROW_HEIGHT,
-        background: dragOver ? 'rgba(139,111,71,0.18)' : (selected ? 'rgba(44,36,22,0.07)' : 'transparent'),
-        boxShadow: dragOver ? 'inset 0 0 0 1.5px #8b6f47' : undefined,
+        background: selected ? 'rgba(44,36,22,0.07)' : 'transparent',
         color: selected ? '#2c2416' : '#6b5d48',
       }}
-      onMouseEnter={e => { if (!selected && !dragOver) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
-      onMouseLeave={e => { if (!selected && !dragOver) e.currentTarget.style.background = 'transparent' }}
+      onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
+      onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
       onDragOver={onDropPhotos ? (e) => {
         if (e.dataTransfer.types.includes('application/x-library-photos')) {
           e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (!dragOver) setDragOver(true)
         }
       } : undefined}
-      onDragLeave={onDropPhotos ? () => setDragOver(false) : undefined}
+      onDragLeave={onDropPhotos ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false) } : undefined}
       onDrop={onDropPhotos ? (e) => {
         e.preventDefault(); setDragOver(false)
         const raw = e.dataTransfer.getData('application/x-library-photos')
@@ -247,6 +246,10 @@ function SetRow({
         try { const urls = JSON.parse(raw); if (Array.isArray(urls) && urls.length) onDropPhotos(urls) } catch {}
       } : undefined}
     >
+      {/* Drop highlight — inset + rounded, matching the page-drop style (not edge to edge) */}
+      {dragOver && (
+        <div style={{ position: 'absolute', left: 6, right: 8, top: 1, bottom: 1, borderRadius: 5, outline: '1px solid #8b6f47', background: 'rgba(139,111,71,0.10)', pointerEvents: 'none', zIndex: 3 }} />
+      )}
       {/* Indentation — one clean step per depth, no connector lines */}
       <div style={{ width: 12 + node.depth * 14, flexShrink: 0 }} />
 

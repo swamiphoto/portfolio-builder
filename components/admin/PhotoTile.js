@@ -156,6 +156,22 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
           e.dataTransfer.setData('application/x-photo-drag', JSON.stringify({ imageRefs: urls.map(u => ({ url: u })) }));
           e.dataTransfer.setData('text/plain', imageUrl);
           e.dataTransfer.effectAllowed = 'move';
+          // Small custom drag image so it doesn't cover the drop target.
+          const ghost = document.createElement('div');
+          ghost.style.cssText = 'position:absolute;top:-1000px;left:-1000px;width:52px;height:52px;border-radius:6px;overflow:hidden;box-shadow:0 6px 16px rgba(26,18,10,0.35);background:#d8cfc0';
+          const gimg = document.createElement('img');
+          gimg.src = thumbnailUrl;
+          gimg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+          ghost.appendChild(gimg);
+          if (urls.length > 1) {
+            const badge = document.createElement('div');
+            badge.textContent = String(urls.length);
+            badge.style.cssText = 'position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#2c2416;color:#f6f3ec;font:600 11px ui-monospace,Menlo,monospace;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.3)';
+            ghost.appendChild(badge);
+          }
+          document.body.appendChild(ghost);
+          e.dataTransfer.setDragImage(ghost, 26, 26);
+          setTimeout(() => { try { document.body.removeChild(ghost); } catch {} }, 0);
         }}
       >
         {/* Select checkbox — top-left, shown on hover or while selecting */}
