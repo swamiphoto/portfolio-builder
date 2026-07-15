@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Gallery from "../../image-displays/gallery/Gallery";
 import { resolveCaption } from '../../../common/captionResolver'
 import ThemeProvider from '../../image-displays/ThemeProvider'
@@ -33,17 +33,34 @@ function resolveBlock(block, assetsByUrl) {
 }
 
 export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig }) {
+  // Debounce the preview so a heavy re-render doesn't fire on every keystroke.
+  // This only resets while the `gallery` prop keeps changing (i.e. while typing);
+  // the parent (PagePreview) is memoized so unrelated re-renders, like autosave
+  // status changes, don't reach here and can't starve the timer.
   const [debouncedGallery, setDebouncedGallery] = useState(gallery);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedGallery(gallery), 300);
+    const timer = setTimeout(() => setDebouncedGallery(gallery), 250);
     return () => clearTimeout(timer);
   }, [gallery]);
 
-  const resolvedBlocks = (debouncedGallery.blocks || []).map(b => resolveBlock(b, assetsByUrl))
+  const themeId = siteConfig?.design?.theme || 'kyoto';
 
-  const inner = (
-    <ThemeProvider themeId={siteConfig?.design?.theme}>
+  const resolvedBlocks = useMemo(
+    () => (debouncedGallery.blocks || []).map(b => resolveBlock(b, assetsByUrl)),
+    [debouncedGallery, assetsByUrl]
+  );
+
+  // The heavy part: drawing every block/image. Memoize it on the DEBOUNCED
+  // content so per-keystroke re-renders of the parent (hero title/description,
+  // hover, autosave status) reuse this exact element and React skips re-running
+  // it entirely. Without this, on a photo-dense page the block render re-executes
+  // on every keystroke and blocks the same commit that should paint the edit, so
+  // nothing appears to update. It recomputes 250ms after the last edit, when
+  // debouncedGallery updates. Non-content props (siteConfig/pages/highlight) are
+  // read from the closure and are at most ~250ms stale, which is imperceptible.
+  const inner = useMemo(() => (
+    <ThemeProvider themeId={themeId}>
       <Gallery
         name={debouncedGallery.name}
         description={debouncedGallery.description}
@@ -63,10 +80,11 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
         onBlockClick={onBlockClick}
         siteConfig={siteConfig}
         printStore={printStore}
-        themeId={siteConfig?.design?.theme || 'kyoto'}
+        themeId={themeId}
       />
     </ThemeProvider>
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [debouncedGallery, resolvedBlocks, themeId, printStore]);
 
   if (noWrap) return inner;
 

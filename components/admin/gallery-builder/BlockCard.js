@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback, memo } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useSession } from "next-auth/react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient, applyFocalPointToPage } from "../../../common/assetRefs";
@@ -9,6 +9,7 @@ import AdminPhotoLightbox from "../AdminPhotoLightbox";
 import PageGalleryPickerModal from "./PageGalleryPickerModal";
 import FocalPointEditor from "./FocalPointEditor";
 import Tip from "../Tip";
+import { EditableInput, EditableTextarea } from "../platform/EditableText";
 
 const TYPE_LABELS = {
   page: "Hero",
@@ -25,26 +26,16 @@ const TYPE_LABELS = {
 
 const INPUT = "w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug text-[#2c2416]";
 
-function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
-  const ref = useRef(null);
-  const adjust = useCallback(() => {
-    if (!ref.current) return;
-    ref.current.style.height = '0';
-    const sh = ref.current.scrollHeight;
-    ref.current.style.height = Math.min(sh, maxHeight || sh) + 'px';
-    ref.current.style.overflowY = maxHeight && sh > maxHeight ? 'auto' : 'hidden';
-  }, [maxHeight]);
-  useLayoutEffect(() => { adjust(); }, [value, adjust]);
+// Thin wrapper over the shared EditableTextarea so block textareas hold their
+// value in local state while focused — typing is instant and never dropped by a
+// slow parent re-render / autosave round-trip. Keeps the same auto-grow API.
+function AutoGrowTextarea({ maxHeight, style: styleProp, ...props }) {
   return (
-    <textarea
-      ref={ref}
-      className={className}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
+    <EditableTextarea
+      {...props}
+      maxHeight={maxHeight}
       rows={1}
       style={{ resize: 'none', overflow: 'hidden', ...styleProp }}
-      {...props}
     />
   );
 }
@@ -802,13 +793,13 @@ function BlockCard({
           {/* Video */}
           {block.type === "video" && (
             <>
-              <input
+              <EditableInput
                 className={INPUT}
                 placeholder="YouTube URL"
                 value={block.url || ""}
                 onChange={(e) => onUpdate({ ...block, url: e.target.value })}
               />
-              <input
+              <EditableInput
                 className={INPUT}
                 placeholder="Caption"
                 value={block.caption || ""}
@@ -821,7 +812,7 @@ function BlockCard({
             <div className="space-y-5">
               <div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Heading</div>
-                <input
+                <EditableInput
                   className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                   placeholder="Get in touch"
                   value={block.heading || ""}
@@ -840,7 +831,7 @@ function BlockCard({
               </div>
               <div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Button text</div>
-                <input
+                <EditableInput
                   className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                   placeholder="Send message"
                   value={block.buttonText || ""}
@@ -882,7 +873,7 @@ function BlockCard({
                 </div>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
-                  <input className={INPUT} placeholder="Jane Smith" value={block.name || ''} onChange={e => onUpdate({ ...block, name: e.target.value })} />
+                  <EditableInput className={INPUT} placeholder="Jane Smith" value={block.name || ''} onChange={e => onUpdate({ ...block, name: e.target.value })} />
                 </div>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Testimonial</div>
