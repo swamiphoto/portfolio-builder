@@ -111,6 +111,7 @@ const SOCIAL_LINKS = [
 
 export default function AccountPopover({ siteConfig, username, email, anchorEl, onUpdate, onClose, onSignOut }) {
   const [tab, setTab] = useState('profile')
+  const [showBetaNote, setShowBetaNote] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [usernameDraft, setUsernameDraft] = useState(username || '')
@@ -370,13 +371,16 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
 
       {/* ── Account tab ── */}
       {tab === 'account' && <>
-        <Section label="Login">
+        <Section label="Connected account">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-secondary)' }}>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
               </svg>
-              <span style={{ fontSize: 13, color: '#2c2416' }}>Google</span>
+              <div>
+                <div style={{ fontSize: 13, color: '#2c2416' }}>Google</div>
+                {email && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.02em', marginTop: 1 }}>{email}</div>}
+              </div>
             </div>
             <span
               style={{
@@ -389,17 +393,12 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
                 padding: '3px 8px',
                 borderRadius: 999,
                 fontWeight: 500,
+                flexShrink: 0,
               }}
             >
               Connected
             </span>
           </div>
-        </Section>
-
-        <Section label="Password">
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Password login is not available for Google-connected accounts.
-          </p>
         </Section>
       </>}
 
@@ -409,6 +408,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
           <div className="flex items-center justify-between">
             <span style={{ fontSize: 13, color: '#2c2416' }}>Free</span>
             <button
+              onClick={() => setShowBetaNote(v => !v)}
               style={{ fontSize: 12, color: 'var(--text-secondary)', textDecoration: 'underline', textUnderlineOffset: 2, transition: 'color 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
@@ -416,10 +416,11 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
               Upgrade →
             </button>
           </div>
-        </Section>
-
-        <Section label="Payment">
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>No payment method on file.</p>
+          {showBetaNote && (
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8 }}>
+              Sepia is still in beta, so every feature is free for now. Premium plans are coming later, we will let you know.
+            </p>
+          )}
         </Section>
       </>}
 
