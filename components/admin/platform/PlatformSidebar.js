@@ -64,7 +64,8 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
 
   const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginTop: 7, marginBottom: 6 }
   const text = describeStatus({ saveStatus, hasUnpublishedChanges, lastSavedAt })
-  const color = saveStatus === 'error' ? '#c0392b'
+  const color = saveStatus === 'saving' ? C.textFaint
+    : saveStatus === 'error' ? '#c0392b'
     : hasUnpublishedChanges ? '#c2872f'
     : C.textFaint
 

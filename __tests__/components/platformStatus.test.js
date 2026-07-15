@@ -9,6 +9,9 @@ describe('describeStatus', () => {
     const now = Date.now()
     expect(describeStatus({ hasUnpublishedChanges: true, lastSavedAt: now })).toBe('Changes made just now')
   })
+  it('falls back to "just now" when lastSavedAt is missing', () => {
+    expect(describeStatus({ hasUnpublishedChanges: true })).toBe('Changes made just now')
+  })
   it('returns null when there is nothing to say (published/idle)', () => {
     expect(describeStatus({ hasUnpublishedChanges: false, lastPublishedAt: Date.now() })).toBeNull()
     expect(describeStatus({})).toBeNull()
