@@ -253,7 +253,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
           ref={menuRef}
           className="absolute top-8 right-2 rounded-lg py-1 min-w-[180px] z-20"
           style={{
-            background: '#f9f6f1',
+            background: '#f0ebe3',
             boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.18)',
           }}
         >
@@ -261,19 +261,10 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
             onClick={handleCopy}
             className="w-full text-left px-3 py-2 text-sm transition-colors"
             style={{ color: '#5c4f3a' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.06)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             Copy URL
-          </button>
-          <button
-            onClick={handleAddToAlbum}
-            className="w-full text-left px-3 py-2 text-sm transition-colors"
-            style={{ color: '#5c4f3a' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            Add to another album
           </button>
           {inAlbum && (
             <>
@@ -285,7 +276,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(193,74,74,0.06)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                Remove from album
+                Remove from set
               </button>
             </>
           )}
