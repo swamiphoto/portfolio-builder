@@ -373,12 +373,23 @@ function SetRow({
   )
 }
 
+function PendingRow({ depth, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', height: ROW_HEIGHT, paddingLeft: 12 + depth * 14 + 18, paddingRight: RIGHT_PAD }}>
+      <span className="animate-spin" style={{ width: 10, height: 10, border: '1.5px solid rgba(160,140,110,0.35)', borderTopColor: '#8b6f47', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
+      <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, marginLeft: 8, color: '#9a8b73' }}>{label}</span>
+      <span style={{ fontFamily: MONO, fontSize: 10, marginLeft: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b0a490', flexShrink: 0 }}>Creating…</span>
+    </div>
+  )
+}
+
 function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride }) {
   const galleryKeys = Object.keys(counts).filter(k => k !== "all")
   const nodes = useMemo(() => buildSetTree(galleryKeys), [galleryKeys.join('|')])
   const [collapsed, setCollapsed] = useState(new Set())
   const [creatingUnder, setCreatingUnder] = useState(undefined)
   const [newSetName, setNewSetName] = useState('')
+  const [pendingCreate, setPendingCreate] = useState(null) // { parentKey, label } while saving
 
   const visibleNodes = nodes.filter(node => {
     const parts = node.key.split('/')
@@ -399,14 +410,20 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
     }
   }
 
-  function submitCreate(parentKey) {
-    const slug = newSetName.trim()
-    if (!slug) return
-    onCreateSet(slug, parentKey ?? null)
+  async function submitCreate(parentKey) {
+    const label = newSetName.trim()
+    if (!label) return
     // Keep the new subset in view: make sure its parent is expanded.
     if (parentKey) setCollapsed(prev => { const next = new Set(prev); next.delete(parentKey); return next })
     setCreatingUnder(undefined)
     setNewSetName('')
+    // Show a "Creating…" row where the set will land until the save + refresh land.
+    setPendingCreate({ parentKey: parentKey ?? null, label })
+    try {
+      await onCreateSet(label, parentKey ?? null)
+    } finally {
+      setPendingCreate(null)
+    }
   }
 
   function toggleCollapse(key) {
@@ -494,9 +511,16 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
                 />
               </div>
             )}
+            {pendingCreate?.parentKey === node.key && (
+              <PendingRow depth={node.depth + 1} label={pendingCreate.label} />
+            )}
           </div>
         )
       })}
+
+      {pendingCreate?.parentKey === null && (
+        <PendingRow depth={0} label={pendingCreate.label} />
+      )}
 
       {creatingUnder === null && (
         <div style={{ padding: '4px 12px 0' }}>
