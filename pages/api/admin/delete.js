@@ -1,5 +1,5 @@
 import { downloadJSON, uploadJSON, deleteFile, PUBLIC_URL } from '../../../common/gcsClient'
-import { removeFromAllAlbums } from '../../../common/adminConfig'
+import { removeFromAllAlbums, createAssetIdFromUrl } from '../../../common/adminConfig'
 import { getUserLibraryConfigPath, getUserPhotosPrefix } from '../../../common/gcsUser'
 import { withAuth } from '../../../common/withAuth'
 
@@ -33,8 +33,10 @@ async function handler(req, res, user) {
     await deleteFile(key)
 
     const config = await readConfig(user.id)
-    const updatedConfig = removeFromAllAlbums(config, imageUrl)
-    await uploadJSON(getUserLibraryConfigPath(user.id), updatedConfig)
+    const withoutAlbums = removeFromAllAlbums(config, imageUrl)
+    const assetId = createAssetIdFromUrl(imageUrl)
+    const { [assetId]: _removed, ...remainingAssets } = withoutAlbums.assets || {}
+    await uploadJSON(getUserLibraryConfigPath(user.id), { ...withoutAlbums, assets: remainingAssets })
 
     return res.status(200).json({ ok: true })
   } catch (err) {
