@@ -200,9 +200,10 @@ function flattenPageTree(pages) {
 
 function SetRow({
   node, selected, expanded, count,
-  onSelect, onToggleExpand, onCreateUnder, onDelete,
+  onSelect, onToggleExpand, onCreateUnder, onDelete, onDropPhotos,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
   const closeTimer = useRef(null)
   const rowRef = useRef(null)
 
@@ -227,11 +228,24 @@ function SetRow({
       className="relative flex items-center cursor-pointer transition-colors group"
       style={{
         height: ROW_HEIGHT,
-        background: selected ? 'rgba(44,36,22,0.07)' : 'transparent',
+        background: dragOver ? 'rgba(139,111,71,0.18)' : (selected ? 'rgba(44,36,22,0.07)' : 'transparent'),
+        boxShadow: dragOver ? 'inset 0 0 0 1.5px #8b6f47' : undefined,
         color: selected ? '#2c2416' : '#6b5d48',
       }}
-      onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
-      onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
+      onMouseEnter={e => { if (!selected && !dragOver) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
+      onMouseLeave={e => { if (!selected && !dragOver) e.currentTarget.style.background = 'transparent' }}
+      onDragOver={onDropPhotos ? (e) => {
+        if (e.dataTransfer.types.includes('application/x-library-photos')) {
+          e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (!dragOver) setDragOver(true)
+        }
+      } : undefined}
+      onDragLeave={onDropPhotos ? () => setDragOver(false) : undefined}
+      onDrop={onDropPhotos ? (e) => {
+        e.preventDefault(); setDragOver(false)
+        const raw = e.dataTransfer.getData('application/x-library-photos')
+        if (!raw) return
+        try { const urls = JSON.parse(raw); if (Array.isArray(urls) && urls.length) onDropPhotos(urls) } catch {}
+      } : undefined}
     >
       {/* Indentation — one clean step per depth, no connector lines */}
       <div style={{ width: 12 + node.depth * 14, flexShrink: 0 }} />
@@ -383,7 +397,7 @@ function PendingRow({ depth, label }) {
   )
 }
 
-function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride }) {
+function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride, onDropPhotos }) {
   const galleryKeys = Object.keys(counts).filter(k => k !== "all")
   const nodes = useMemo(() => buildSetTree(galleryKeys), [galleryKeys.join('|')])
   const [collapsed, setCollapsed] = useState(new Set())
@@ -492,6 +506,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
               onToggleExpand={() => toggleCollapse(node.key)}
               onCreateUnder={() => { setCreatingUnder(node.key); setNewSetName('') }}
               onDelete={() => onDeleteSet(node.key)}
+              onDropPhotos={onDropPhotos ? (urls) => onDropPhotos(node.key, urls) : null}
             />
             {creatingUnder === node.key && (
               <div style={{ paddingLeft: 12 + (node.depth + 1) * 14 + 18, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
@@ -573,6 +588,7 @@ export default function AlbumSidebar({
   onImportFromWeb,
   onFindDuplicates,
   onClearLibrary,
+  onDropPhotos,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -949,6 +965,7 @@ export default function AlbumSidebar({
           onCreateSet={onCreateSet}
           onDeleteSet={onDeleteSet}
           onFilterChange={onFilterChange}
+          onDropPhotos={onDropPhotos}
         />
 
         {pages?.length > 0 && (

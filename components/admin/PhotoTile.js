@@ -81,7 +81,7 @@ function placeholderColor(assetId) {
   return SEPIA_PLACEHOLDERS[Math.abs(h) % SEPIA_PLACEHOLDERS.length];
 }
 
-export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick, selected = false, selectionActive = false, onToggleSelect }) {
+export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick, selected = false, selectionActive = false, onToggleSelect, selectedUrls }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [captionValue, setCaptionValue] = useState(asset.caption || "");
@@ -148,6 +148,15 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
         className="relative flex-1 overflow-hidden cursor-pointer"
         style={{ background: placeholderColor(asset.assetId) }}
         onClick={() => { if (selectionActive) { onToggleSelect?.(); } else { onImageClick && onImageClick(); } }}
+        draggable
+        onDragStart={(e) => {
+          // Drag the whole selection when this tile is part of it, else just this one.
+          const urls = (selected && selectedUrls && selectedUrls.size > 0) ? [...selectedUrls] : [imageUrl];
+          e.dataTransfer.setData('application/x-library-photos', JSON.stringify(urls));
+          e.dataTransfer.setData('application/x-photo-drag', JSON.stringify({ imageRefs: urls.map(u => ({ url: u })) }));
+          e.dataTransfer.setData('text/plain', imageUrl);
+          e.dataTransfer.effectAllowed = 'move';
+        }}
       >
         {/* Select checkbox — top-left, shown on hover or while selecting */}
         <button

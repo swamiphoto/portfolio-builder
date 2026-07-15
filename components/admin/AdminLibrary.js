@@ -380,6 +380,20 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     clearSelection();
   }, [selectedUrls, fetchLibrary, clearSelection]);
 
+  // Drag a photo (or the current selection) onto a set: add to target, and if
+  // dragging from another set, remove from the source (a move).
+  const handleMovePhotosToSet = useCallback(async (targetKey, urls) => {
+    if (!targetKey || !urls || urls.length === 0) return;
+    const config = currentConfig();
+    const galleries = { ...config.galleries };
+    galleries[targetKey] = [...new Set([...(galleries[targetKey] || []), ...urls])];
+    if (selectedAlbum.type === 'gallery' && selectedAlbum.key !== targetKey) {
+      galleries[selectedAlbum.key] = (galleries[selectedAlbum.key] || []).filter(u => !urls.includes(u));
+    }
+    await saveConfig({ ...config, galleries });
+    clearSelection();
+  }, [selectedAlbum, currentConfig, saveConfig, clearSelection]);
+
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
     // uploadedAssets: [{ url, width, height, hash }], selectedSets: string[]
     setUploadOpen(false);
@@ -736,6 +750,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
         onCreateSet={handleCreateSet}
+        onDropPhotos={handleMovePhotosToSet}
         onDeleteSet={handleDeleteSet}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}

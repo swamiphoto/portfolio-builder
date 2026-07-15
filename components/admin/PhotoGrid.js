@@ -556,6 +556,7 @@ export default function PhotoGrid({
                     selected={!!selectedUrls?.has(asset.publicUrl)}
                     selectionActive={selectionActive}
                     onToggleSelect={() => onToggleSelect?.(asset.publicUrl)}
+                    selectedUrls={selectedUrls}
                   />
                 </div>
               );
