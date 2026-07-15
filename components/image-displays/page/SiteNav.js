@@ -6,7 +6,7 @@ import { TfiClose } from 'react-icons/tfi'
 import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { useAdminViewport } from '../../../contexts/ViewportContext'
-import { logoFontStyle } from '../../../common/siteDesign'
+import { logoFontStyle, resolveSubNavStyle } from '../../../common/siteDesign'
 
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -37,14 +37,67 @@ function NavLink({ item, basePath, dark, active, onPageClick, onClose }) {
   )
 }
 
-function NavList({ items, basePath, dark = false, currentPath = '', currentPageId, onPageClick, onClose }) {
+// A single top-level nav item. When it has children and the site uses the
+// "dropdown" sub-nav style, it shows a caret and reveals a themed menu of its
+// subpages; the parent label still navigates to the parent page.
+function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick, subNavMode }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const children = item.children || []
+  const hasDropdown = subNavMode === 'dropdown' && children.length > 0
+  const active = navItemActive(item, { currentPageId, currentPath, basePath })
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  if (!hasDropdown) {
+    return <NavLink item={item} basePath={basePath} dark={dark} active={active} onPageClick={onPageClick} />
+  }
+
+  const menuBg = dark ? '#1a120a' : '#fffdf9'
+  const menuBorder = dark ? 'rgba(255,255,255,0.14)' : 'rgba(26,18,10,0.12)'
+  const muted = dark ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+
+  return (
+    <span ref={ref} className="relative inline-flex items-center">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={navItemClass(dark, active)}
+        aria-haspopup="true" aria-expanded={open}
+      >
+        {item.title} <span aria-hidden style={{ fontSize: '0.7em' }}>▾</span>
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-3 py-2 min-w-[168px] z-40 rounded-sm"
+          style={{ background: menuBg, border: `1px solid ${menuBorder}`, boxShadow: '0 8px 28px rgba(26,18,10,0.14)' }}
+        >
+          {children.map(child => {
+            const cActive = navItemActive(child, { currentPageId, currentPath, basePath })
+            return (
+              <div key={child.id} className={`px-5 py-1.5 font-serif text-base ${muted} ${cActive ? (dark ? 'text-white underline' : 'text-gray-900 underline') : ''}`}>
+                <NavLink item={child} basePath={basePath} dark={dark} active={cActive} onPageClick={onPageClick} onClose={() => setOpen(false)} />
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </span>
+  )
+}
+
+function NavList({ items, basePath, dark = false, currentPath = '', currentPageId, onPageClick, onClose, subNavMode = 'dropdown' }) {
   return (
     <ul className="flex gap-8">
       {items.map(item => (
         <li key={item.id}>
-          <NavLink item={item} basePath={basePath} dark={dark}
-            active={navItemActive(item, { currentPageId, currentPath, basePath })}
-            onPageClick={onPageClick} onClose={onClose} />
+          <NavItem item={item} basePath={basePath} dark={dark}
+            currentPath={currentPath} currentPageId={currentPageId}
+            onPageClick={onPageClick} subNavMode={subNavMode} />
         </li>
       ))}
     </ul>
@@ -150,6 +203,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   const isMobile = adminViewport === 'mobile'
   const tree = buildNavTree(siteConfig.pages)
   const style = variant || resolveNavStyle(siteConfig.design?.theme)
+  const subNavMode = resolveSubNavStyle(siteConfig?.design)
   const basePath = basePathProp != null ? basePathProp : `/sites/${username}`
   const currentPath = router.asPath.split('?')[0]
 
@@ -218,11 +272,28 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
               const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
               const isActive = navItemActive(item, { currentPageId, currentPath, basePath })
               const cls = `text-sm uppercase tracking-[0.12em] transition-colors ${isActive ? 'text-black underline' : 'text-black/50 hover:text-black'}`
+              const kids = item.children || []
               return (
                 <li key={item.id}>
                   {onPageClick && !isLink
                     ? <button onClick={() => onPageClick(item.id)} className={cls}>{item.title}</button>
                     : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }}>{item.title}</a>}
+                  {kids.length > 0 && (
+                    <ul className="flex flex-col gap-1.5 mt-1.5 ml-3">
+                      {kids.map(child => {
+                        const cActive = navItemActive(child, { currentPageId, currentPath, basePath })
+                        const cCls = `text-xs uppercase tracking-[0.10em] transition-colors ${cActive ? 'text-black underline' : 'text-black/40 hover:text-black'}`
+                        const cHref = `${basePath}/${child.slug || child.id}`
+                        return (
+                          <li key={child.id}>
+                            {onPageClick
+                              ? <button onClick={() => onPageClick(child.id)} className={cCls}>{child.title}</button>
+                              : <a href={cHref} className={cCls} style={{ textDecoration: 'none' }}>{child.title}</a>}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
                 </li>
               )
             })}
@@ -310,7 +381,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
 
   return (
     <nav className="absolute top-6 right-8 z-10">
-      <NavList items={tree} basePath={basePath} dark currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} />
+      <NavList items={tree} basePath={basePath} dark currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
     </nav>
   )
 }

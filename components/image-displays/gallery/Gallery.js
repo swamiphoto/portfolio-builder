@@ -12,7 +12,8 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign } from "../../../common/themes/variants"
+import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import FramedPhoto from "./photo-block/FramedPhoto";
 
@@ -122,7 +123,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   return (
     <PrintStoreProvider printStore={printStore} username={username}>
     <div className="gallery-container">
-      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} />
+      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} />
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {

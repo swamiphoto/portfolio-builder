@@ -1,8 +1,8 @@
 import React from "react";
 import { HiOutlineArrowLeft } from "react-icons/hi2";
 
-const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick }) => {
-  const hasChildNav = childPages?.length > 0
+const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick, showChildNav = true }) => {
+  const hasChildNav = showChildNav && childPages?.length > 0
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const hasActions = enableSlideshow || enableClientView
   const hasContent = name || description || hasChildNav || hasActions
