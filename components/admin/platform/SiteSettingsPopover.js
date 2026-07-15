@@ -3,6 +3,9 @@ import PopoverShell from './PopoverShell'
 import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
+import { THEME_LIST } from '../../../common/themes'
+
+export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
@@ -748,12 +751,12 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={280} title="Design">
           <DesignSection label="Theme">
             <DesignSelect
-              value={config.design?.theme || 'minimal-light'}
+              value={config.design?.theme || 'kyoto'}
               onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
             >
-              <option value="minimal-light">Minimal Light</option>
-              <option value="minimal-dark">Minimal Dark</option>
-              <option value="editorial">Editorial</option>
+              {themeOptions().map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </DesignSelect>
           </DesignSection>
 
@@ -769,7 +772,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             />
           </DesignSection>
 
-          <DesignSection label="Sub-navigation">
+          <DesignSection label="Sub-navigation" description="How pages nested under another page appear in that page's menu.">
             <DesignSelect
               value={config.design?.subNavStyle || 'dropdown'}
               onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}

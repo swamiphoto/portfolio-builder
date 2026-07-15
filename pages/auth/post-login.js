@@ -2,6 +2,8 @@ import { getServerSideProps as _getServerSideProps } from 'next-auth/next'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../api/auth/[...nextauth]'
 import { readUserProfile } from '../../common/userProfile'
+import { downloadJSON } from '../../common/gcsClient'
+import { getUserLibraryConfigPath } from '../../common/gcsUser'
 
 export async function getServerSideProps(context) {
   try {
@@ -22,11 +24,22 @@ export async function getServerSideProps(context) {
     }
 
     if (profile?.username) {
-      return {
-        redirect: {
-          destination: `${protocol}://${profile.username}.${rootDomain}/admin`,
-          permanent: false,
-        },
+      // Check whether they have any photos yet. If not, show the import offer.
+      let hasPhotos = false
+      try {
+        const library = await downloadJSON(getUserLibraryConfigPath(session.user.id))
+        hasPhotos = library?.assets && Object.keys(library.assets).length > 0
+      } catch {
+        // No library yet — treat as empty
+      }
+
+      if (hasPhotos) {
+        return {
+          redirect: {
+            destination: `${protocol}://${profile.username}.${rootDomain}/admin`,
+            permanent: false,
+          },
+        }
       }
     }
 

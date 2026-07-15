@@ -11,6 +11,9 @@ import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPicker
 import AdminLibrary from '../../components/admin/AdminLibrary'
 import PageCover from '../../components/image-displays/page/PageCover'
 import SiteNav from '../../components/image-displays/page/SiteNav'
+import SiteFooter from '../../components/image-displays/page/SiteFooter'
+import ThemeProvider from '../../components/image-displays/ThemeProvider'
+import { getTheme } from '../../common/themes'
 import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
 import { defaultPage } from '../../common/siteConfig'
 import { useRouter } from 'next/router'
@@ -298,9 +301,23 @@ export default function AdminIndex() {
 
   if (!session || !siteConfig) return null
 
-  const selectedPage = selectedPageId
+  // The page set as the homepage, used as the default view when nothing is
+  // explicitly selected (so the empty state only shows when there are no pages).
+  const resolveHomePage = () => {
+    const pages = siteConfig.pages || []
+    if (!pages.length) return null
+    return pages.find(p => p.id === siteConfig.homePageId)
+      || pages.find(p => p.id === 'home')
+      || pages.find(p => p.showInNav && p.type !== 'link')
+      || pages.find(p => p.type !== 'link')
+      || pages[0]
+      || null
+  }
+
+  const selectedPage = (selectedPageId
     ? siteConfig.pages.find(p => p.id === selectedPageId) || null
-    : null
+    : null)
+    || (showLibrary ? null : resolveHomePage())
 
   const sidebar = (
     <PlatformSidebar
@@ -308,7 +325,7 @@ export default function AdminIndex() {
       saveStatus={saveStatus}
       onConfigChange={updateConfig}
       onSignOut={() => signOut({ callbackUrl: '/' })}
-      selectedPageId={selectedPageId}
+      selectedPageId={showLibrary ? null : (selectedPage?.id ?? null)}
       onSelectPage={handleSelectPage}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
       onPublish={() => { setHasUnpublishedChanges(false); setLastPublishedAt(Date.now()) }}
@@ -378,7 +395,10 @@ export default function AdminIndex() {
       const slideshowHref = (selectedPage.slideshow?.enabled && username)
         ? `/sites/${username}/${selectedPage.slug || selectedPage.id}/slideshow`
         : null
-      const navVariant = selectedPage.cover?.imageUrl ? undefined : 'header-dropdown'
+      const theme = getTheme(siteConfig?.design?.theme)
+      const navVariant = theme.navStyle === 'left-rail'
+        ? 'left-rail'
+        : (selectedPage.cover?.imageUrl ? undefined : 'header-dropdown')
       const isChildPage = !!selectedPage.parentId
       const childPages = isChildPage
         ? siteConfig.pages.filter(p => p.parentId === selectedPage.parentId && p.showInNav !== false)
@@ -420,7 +440,10 @@ export default function AdminIndex() {
                 ref={previewContainerRef}
                 className="overflow-y-auto w-full scroll-quiet"
               >
-                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} />
+                <ThemeProvider themeId={theme.id}>
+                <div className="theme-shell">
+                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} currentPageId={selectedPage?.id} />
+                <div className="theme-content">
                 <PageCover
                   cover={selectedPage.cover}
                   title={selectedPage.title}
@@ -450,6 +473,10 @@ export default function AdminIndex() {
                   onBlockClick={handleScrollSidebarToBlock}
                   siteConfig={siteConfig}
                 />
+                <SiteFooter siteConfig={siteConfig} />
+                </div>
+                </div>
+                </ThemeProvider>
               </div>
             </div>
           </div>

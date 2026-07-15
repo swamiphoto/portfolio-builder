@@ -3,7 +3,7 @@
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
-export function DesignSection({ label, children }) {
+export function DesignSection({ label, description, children }) {
   return (
     <div style={{ padding: '10px 14px' }}>
       {label && (
@@ -15,10 +15,15 @@ export function DesignSection({ label, children }) {
             textTransform: 'uppercase',
             color: 'var(--text-muted)',
             fontWeight: 500,
-            marginBottom: 2,
+            marginBottom: description ? 4 : 2,
           }}
         >
           {label}
+        </div>
+      )}
+      {description && (
+        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>
+          {description}
         </div>
       )}
       {children}

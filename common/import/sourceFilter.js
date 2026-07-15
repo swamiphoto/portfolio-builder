@@ -1,7 +1,11 @@
-const LABELS = { manual: 'Uploaded', smugmug: 'SmugMug', generic: 'Website' }
+const LABELS = { manual: 'Uploaded', smugmug: 'SmugMug' }
 
 export function providerOf(asset) {
-  return asset?.source?.provider || 'manual'
+  const provider = asset?.source?.provider || 'manual'
+  // For generic web imports, use the site label (e.g. 'swamifoto.com') as the
+  // identifier so the sidebar shows the actual source instead of a generic "Website".
+  if (provider === 'generic') return asset?.source?.label || 'Website'
+  return provider
 }
 
 export function sourceCounts(assets) {

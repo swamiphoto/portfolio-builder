@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Gallery from "../../image-displays/gallery/Gallery";
 import { resolveCaption } from '../../../common/captionResolver'
+import ThemeProvider from '../../image-displays/ThemeProvider'
 
 function printForUrl(assetsByUrl, url) {
   const p = assetsByUrl?.[url]?.print
@@ -42,26 +43,29 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
   const resolvedBlocks = (debouncedGallery.blocks || []).map(b => resolveBlock(b, assetsByUrl))
 
   const inner = (
-    <Gallery
-      name={debouncedGallery.name}
-      description={debouncedGallery.description}
-      blocks={resolvedBlocks}
-      enableSlideshow={enableSlideshow}
-      pages={pages}
-      childPages={childPages}
-      activeChildId={activeChildId}
-      username={username}
-      onChildPageClick={onChildPageClick}
-      showPlaceholders
-      onBackClick={() => {}}
-      onSlideshowClick={onSlideshowClick || (() => {})}
-      onClientLoginClick={() => {}}
-      highlightedBlockIndex={highlightedBlockIndex}
-      onBlockHover={onBlockHover}
-      onBlockClick={onBlockClick}
-      siteConfig={siteConfig}
-      printStore={printStore}
-    />
+    <ThemeProvider themeId={siteConfig?.design?.theme}>
+      <Gallery
+        name={debouncedGallery.name}
+        description={debouncedGallery.description}
+        blocks={resolvedBlocks}
+        enableSlideshow={enableSlideshow}
+        pages={pages}
+        childPages={childPages}
+        activeChildId={activeChildId}
+        username={username}
+        onChildPageClick={onChildPageClick}
+        showPlaceholders
+        onBackClick={() => {}}
+        onSlideshowClick={onSlideshowClick || (() => {})}
+        onClientLoginClick={() => {}}
+        highlightedBlockIndex={highlightedBlockIndex}
+        onBlockHover={onBlockHover}
+        onBlockClick={onBlockClick}
+        siteConfig={siteConfig}
+        printStore={printStore}
+        themeId={siteConfig?.design?.theme || 'kyoto'}
+      />
+    </ThemeProvider>
   );
 
   if (noWrap) return inner;

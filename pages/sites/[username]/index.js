@@ -9,7 +9,10 @@ import { publicSiteConfig, publicPrintForAsset, publicPrintStore } from '../../.
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
+import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
+import ThemeProvider from '../../../components/image-displays/ThemeProvider'
+import { getTheme } from '../../../common/themes'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -125,13 +128,18 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
-  const navVariant = homePage?.cover?.imageUrl ? undefined : 'header-dropdown'
+  const theme = getTheme(siteConfig?.design?.theme)
+  const navVariant = theme.navStyle === 'left-rail'
+    ? 'left-rail'
+    : (homePage?.cover?.imageUrl ? undefined : 'header-dropdown')
   const slideshowHref = homePage?.slideshow?.enabled ? `${basePath}/${homePage.slug || homePage.id}/slideshow` : null
 
   return (
-    <div className="min-h-screen bg-white font-sans relative">
+    <ThemeProvider themeId={theme.id}>
+    <div className="min-h-screen bg-white font-sans relative theme-shell">
       <Head>
         <title>{ogTitle}</title>
+        {siteConfig.favicon && <link rel="icon" href={siteConfig.favicon} />}
         <meta name="description" content={ogDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={siteUrl} />
@@ -143,8 +151,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} />
-      <main>
+      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />
+      <main className="theme-content">
         <PageCover
           cover={homePage?.cover}
           title={homePage?.title}
@@ -165,13 +173,16 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
             siteConfig={siteConfig}
             printStore={printStore}
+            themeId={theme.id}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">
             No content yet.
           </div>
         )}
+        <SiteFooter siteConfig={siteConfig} />
       </main>
     </div>
+    </ThemeProvider>
   )
 }

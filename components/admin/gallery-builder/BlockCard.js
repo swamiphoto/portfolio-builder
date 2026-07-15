@@ -128,6 +128,7 @@ function BlockCard({
   onMoveDown,
   onAddBlockAbove,
   onAddBlockBelow,
+  themeId = 'kyoto',
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -414,6 +415,7 @@ function BlockCard({
                 {showDesign && (
                   <DesignPopover
                     block={block}
+                    themeId={themeId}
                     onUpdate={onUpdate}
                     onClose={() => setShowDesign(false)}
                     anchorEl={designBtnRef.current}
@@ -639,9 +641,11 @@ function BlockCard({
                     onClick={onAddPhotos}
                     className={`flex flex-col items-center justify-center h-20 cursor-pointer transition-colors gap-0.5 ${photoDropHover ? 'bg-blue-50' : ''}`}
                     style={photoDropHover ? { border: '1px solid #93c5fd', borderRadius: 2 } : { background: '#ece4d2', borderRadius: 2 }}
+                    onMouseEnter={e => { if (!photoDropHover) e.currentTarget.style.background = '#e3d8bf' }}
+                    onMouseLeave={e => { if (!photoDropHover) e.currentTarget.style.background = '#ece4d2' }}
                   >
                     <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'rgba(58,54,47,0.55)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
-                    {!photoDropHover && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors" style={{ color: 'rgba(58,54,47,0.7)' }}>select from library</span></span>}
+                    {!photoDropHover && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">select from library</span></span>}
                   </div>
                 )}
               </div>
@@ -870,8 +874,8 @@ function BlockCard({
                     </div>
                     <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>
                       {photoUrl
-                        ? <span style={{ color: 'rgba(58,54,47,0.7)' }}>Replace photo</span>
-                        : <span className="underline underline-offset-2" style={{ color: 'rgba(58,54,47,0.7)' }}>Select from library</span>
+                        ? <span className="transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Replace photo</span>
+                        : <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Select from library</span>
                       }
                     </span>
                   </div>

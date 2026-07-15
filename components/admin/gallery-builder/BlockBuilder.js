@@ -96,6 +96,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onScrollPreviewToBlock,
   highlightedBlockIndex,
   onBlockHover,
+  themeId = 'kyoto',
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -512,6 +513,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             expandedOverride={expandedOverride}
                             onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
                             glowing={glowingBlockIndex === index}
+                            themeId={themeId}
                           />
                         </div>
                       )}

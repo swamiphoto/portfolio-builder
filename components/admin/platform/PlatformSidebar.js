@@ -55,15 +55,20 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt, lastPublis
     return () => clearInterval(id)
   }, [])
 
-  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginBottom: 10 }
+  const base = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.04em', textAlign: 'center', marginTop: 11, marginBottom: 10 }
 
   if (saveStatus === 'saving') return <div style={{ ...base, color: C.textFaint }}>Saving…</div>
   if (saveStatus === 'error') return <div style={{ ...base, color: '#c0392b' }}>Save failed</div>
-  if (saveStatus === 'saved') return <div style={{ ...base, color: '#7a9e7e' }}>Saved</div>
-  if (hasUnpublishedChanges && lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Saved {relativeTime(lastSavedAt)}</div>
-  if (!hasUnpublishedChanges && lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
+  if (hasUnpublishedChanges) return (
+    <div style={{ ...base, color: '#c2872f', lineHeight: 1.35 }}>
+      Changes last saved {lastSavedAt ? relativeTime(lastSavedAt) : 'just now'}
+      <div style={{ color: '#c2872f', opacity: 0.7, marginTop: 1 }}>(Yet to be published)</div>
+    </div>
+  )
+  if (lastPublishedAt) return <div style={{ ...base, color: '#7a9e7e' }}>Published {relativeTime(lastPublishedAt)}</div>
   if (lastSavedAt) return <div style={{ ...base, color: C.textFaint }}>Auto-saved {relativeTime(lastSavedAt)}</div>
-  return <div style={{ ...base, color: 'transparent' }}>·</div>
+  // Nothing to say — reserve a single label's height so the gap stays constant.
+  return <div style={{ ...base, visibility: 'hidden' }} aria-hidden>Published just now</div>
 }
 
 // Icons — page type icons match the Sepia spec (Heroicons outline, strokeWidth 1.5, rounded).
@@ -231,6 +236,25 @@ export default function PlatformSidebar({
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [dotsAnchorEl, setDotsAnchorEl] = useState(null)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [publishFill, setPublishFill] = useState(0)
+  const [publishedToast, setPublishedToast] = useState(false)
+
+  // Publish with an in-button progress fill (a beat, even if the save is instant)
+  // so the action reads as "something happened", then a confirmation toast.
+  const handlePublishClick = () => {
+    if (!hasUnpublishedChanges || publishing) return
+    setPublishing(true)
+    setPublishFill(0)
+    requestAnimationFrame(() => requestAnimationFrame(() => setPublishFill(100)))
+    setTimeout(() => {
+      onPublish?.()
+      setPublishing(false)
+      setPublishFill(0)
+      setPublishedToast(true)
+      setTimeout(() => setPublishedToast(false), 2400)
+    }, 900)
+  }
   const [navAddMenuOpen, setNavAddMenuOpen] = useState(false)
   const navAddMenuRef = useRef(null)
   const [linkEditId, setLinkEditId] = useState(null)
@@ -714,8 +738,8 @@ export default function PlatformSidebar({
       <div style={{ padding: '18px 16px 14px', borderBottom: `1px solid ${C.borderSoft}` }}>
         {/* Top utility row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.textFaint }}>
-            ◐ Sepia
+          <span style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: C.text }}>
+            sepia
           </span>
           <div style={{ display: 'flex', gap: 2 }}>
             <IconButton label="Notifications">
@@ -741,21 +765,24 @@ export default function PlatformSidebar({
           {displayName || username || 'My Portfolio'}
         </div>
 
-        {/* URL */}
-        {username && (
-          <div style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', marginTop: 4 }}>
-            {subdomainHost(username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)}
-          </div>
-        )}
-
-        {/* Connected custom domain */}
-        {(() => {
+        {/* Site URLs — subdomain + optional custom domain, both open in a new tab */}
+        {username && (() => {
+          const host = subdomainHost(username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
           const cd = normalizeCustomDomain(siteConfig.customDomain)
-          if (!cd) return null
-          const active = cd.status === 'active'
+          const ACCENT = 'var(--sepia-accent, #8b6f47)'
+          const linkStyle = { fontFamily: MONO, fontSize: 10, lineHeight: 1.35, color: ACCENT, letterSpacing: '0.06em', textDecoration: 'none', width: 'fit-content', display: 'inline-flex', alignItems: 'center', gap: 3 }
+          const hover = (on) => (e) => { e.currentTarget.style.textDecoration = on ? 'underline' : 'none'; e.currentTarget.style.color = on ? C.ink : ACCENT }
+          const ext = <span aria-hidden style={{ fontSize: '0.82em', opacity: 0.7 }}>↗</span>
           return (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint, letterSpacing: '0.06em', marginTop: 2 }}>
-              {cd.name}{!active && <span style={{ color: C.textFaint }}> · pending</span>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 9 }}>
+              <a href={`https://${host}`} target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hover(true)} onMouseLeave={hover(false)}>
+                {host}{ext}
+              </a>
+              {cd && (
+                <a href={`https://${cd.name}`} target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hover(true)} onMouseLeave={hover(false)}>
+                  {cd.name}{ext}{cd.status !== 'active' && <span style={{ color: C.textFaint }}> · pending</span>}
+                </a>
+              )}
             </div>
           )
         })()}
@@ -782,29 +809,55 @@ export default function PlatformSidebar({
             </button>
           </Tip>
 
-          <Tip label={hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes'} side="bottom">
+          <Tip label={publishing ? 'Publishing…' : (hasUnpublishedChanges ? 'Publish changes' : 'No unpublished changes')} side="bottom">
             <button
               type="button"
-              onClick={hasUnpublishedChanges ? onPublish : undefined}
-              disabled={!hasUnpublishedChanges}
+              onClick={handlePublishClick}
+              disabled={!hasUnpublishedChanges || publishing}
               style={{
+                position: 'relative', overflow: 'hidden',
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 height: 28, padding: '0 10px', borderRadius: 5, border: 'none',
-                background: hasUnpublishedChanges ? C.ink : 'rgba(44,36,22,0.12)',
-                color: hasUnpublishedChanges ? C.inkText : C.textMuted,
-                cursor: hasUnpublishedChanges ? 'pointer' : 'default',
+                background: (hasUnpublishedChanges || publishing) ? C.ink : 'rgba(44,36,22,0.12)',
+                color: (hasUnpublishedChanges || publishing) ? C.inkText : C.textMuted,
+                cursor: publishing ? 'default' : (hasUnpublishedChanges ? 'pointer' : 'default'),
                 fontFamily: MONO, fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
                 transition: 'background 120ms',
               }}
-              onMouseEnter={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = '#3d3020' }}
-              onMouseLeave={e => { if (hasUnpublishedChanges) e.currentTarget.style.background = C.ink }}
+              onMouseEnter={e => { if (hasUnpublishedChanges && !publishing) e.currentTarget.style.background = '#3d3020' }}
+              onMouseLeave={e => { if (hasUnpublishedChanges && !publishing) e.currentTarget.style.background = C.ink }}
             >
-              <IconPublish style={{ color: hasUnpublishedChanges ? undefined : C.textMuted }} />
-              Publish
+              {publishing && (
+                <span aria-hidden style={{
+                  position: 'absolute', left: 0, top: 0, bottom: 0,
+                  width: `${publishFill}%`, background: '#5aa76b',
+                  transition: 'width 820ms linear', zIndex: 0,
+                }} />
+              )}
+              <span style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <IconPublish style={{ color: (hasUnpublishedChanges || publishing) ? undefined : C.textMuted }} />
+                {publishing ? 'Publishing…' : 'Publish'}
+              </span>
             </button>
           </Tip>
         </div>
+
+        <StatusLine saveStatus={saveStatus} hasUnpublishedChanges={hasUnpublishedChanges} lastSavedAt={lastSavedAt} lastPublishedAt={lastPublishedAt} />
       </div>
+
+      {publishedToast && createPortal(
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: C.ink, color: C.inkText, padding: '10px 16px', borderRadius: 8,
+          fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em',
+          boxShadow: '0 8px 28px rgba(26,18,10,0.28)',
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#5aa76b' }} />
+          Changes published
+        </div>,
+        document.body
+      )}
 
       {/* PAGES LIST */}
       <div className="flex-1 overflow-y-auto">
