@@ -4,6 +4,7 @@ import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { THEME_LIST } from '../../../common/themes'
+import { resolveNavStyle } from '../../../common/navStyles'
 import { EditableInput } from './EditableText'
 
 export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
@@ -674,6 +675,19 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               ]}
             />
           </div>
+          {logoType === 'sitename' && (
+            <div className="mt-2.5">
+              <DesignPillToggle
+                value={config.logoFont || 'theme'}
+                onChange={(v) => update({ logoFont: v })}
+                options={[
+                  { value: 'theme',     label: 'Default'   },
+                  { value: 'modern',    label: 'Modern'    },
+                  { value: 'editorial', label: 'Editorial' },
+                ]}
+              />
+            </div>
+          )}
           {logoType === 'image' && (
             <AssetField
               value={config.logo || ''}
@@ -778,17 +792,18 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSelect>
           </DesignSection>
 
-          <DesignSection label="Navigation">
-            <DesignNumberToggle
-              value={config.design?.navStyle || 'minimal'}
-              onChange={(v) => update({ design: { ...(config.design || {}), navStyle: v } })}
-              options={[
-                { value: 'minimal',  label: '1', title: 'Minimal'  },
-                { value: 'centered', label: '2', title: 'Centered' },
-                { value: 'fixed',    label: '3', title: 'Fixed'    },
-              ]}
-            />
-          </DesignSection>
+          {resolveNavStyle(config.design?.theme || 'kyoto') !== 'left-rail' && (
+            <DesignSection label="Navigation">
+              <DesignNumberToggle
+                value={config.design?.navStyle === 'menu' ? 'menu' : 'links'}
+                onChange={(v) => update({ design: { ...(config.design || {}), navStyle: v } })}
+                options={[
+                  { value: 'links', label: '1', title: 'Links' },
+                  { value: 'menu',  label: '2', title: 'Menu'  },
+                ]}
+              />
+            </DesignSection>
+          )}
 
           <DesignSection label="Sub-navigation" description="How pages nested under another page appear in that page's menu.">
             <DesignSelect
@@ -800,17 +815,21 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSelect>
           </DesignSection>
 
-          <DesignSection label="Footer Layout">
-            <DesignNumberToggle
-              value={config.design?.footerLayout || 'standard'}
-              onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
-              options={[
-                { value: 'none',     label: '0', title: 'None'     },
-                { value: 'compact',  label: '1', title: 'Compact'  },
-                { value: 'standard', label: '2', title: 'Standard' },
-                { value: 'full',     label: '3', title: 'Full'     },
-              ]}
-            />
+          <DesignSection label="Footer">
+            <div className="flex items-center justify-between gap-3">
+              <ToggleSwitch
+                on={config.footer?.hidden !== true}
+                onClick={() => updateFooter({ hidden: !(config.footer?.hidden === true) })}
+              />
+              <DesignNumberToggle
+                value={config.design?.footerLayout === 'expanded' ? 'expanded' : 'simple'}
+                onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
+                options={[
+                  { value: 'simple',   label: '1', title: 'Simple'   },
+                  { value: 'expanded', label: '2', title: 'Expanded' },
+                ]}
+              />
+            </div>
           </DesignSection>
         </PopoverShell>
       )}
