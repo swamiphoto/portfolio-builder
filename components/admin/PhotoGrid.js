@@ -450,7 +450,7 @@ export default function PhotoGrid({
             {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Import from the web */}
+          {/* Import from a website */}
           {onImportFromWeb && (
             <button
               onClick={onImportFromWeb}
@@ -573,7 +573,7 @@ export default function PhotoGrid({
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    Import from web
+                    Import from a website
                   </button>
                 )}
               </div>

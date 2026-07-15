@@ -164,7 +164,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
         style={{ width: 520, maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}
       >
         <div className="flex items-center px-4 flex-shrink-0" style={{ height: 44, borderBottom: '1px solid rgba(160,140,110,0.22)' }}>
-          <span style={{ ...monoLabel, flex: 1 }}>Import from the web</span>
+          <span style={{ ...monoLabel, flex: 1 }}>Import from a website</span>
           {busy ? (
             <button
               onClick={onClose}
