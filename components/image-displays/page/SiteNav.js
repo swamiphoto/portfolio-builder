@@ -6,7 +6,7 @@ import { TfiClose } from 'react-icons/tfi'
 import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { useAdminViewport } from '../../../contexts/ViewportContext'
-import { logoFontStyle, resolveSubNavStyle } from '../../../common/siteDesign'
+import { logoFontStyle, resolveSubNavStyle, resolveNavMode } from '../../../common/siteDesign'
 
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -208,6 +208,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   const tree = buildNavTree(siteConfig.pages)
   const style = variant || resolveNavStyle(siteConfig.design?.theme)
   const subNavMode = resolveSubNavStyle(siteConfig?.design)
+  const navMode = resolveNavMode(siteConfig?.design)
   const basePath = basePathProp != null ? basePathProp : `/sites/${username}`
   const currentPath = router.asPath.split('?')[0]
 
@@ -399,6 +400,41 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
           </nav>
         )}
       </header>
+    )
+  }
+
+  if (navMode === 'menu') {
+    return (
+      <>
+        <button
+          onClick={() => setIsMenuOpen(true)}
+          aria-label="Open menu"
+          className="absolute top-6 right-8 z-20 p-2 text-white"
+        >
+          <RxHamburgerMenu className="h-6 w-6" />
+        </button>
+        {isMenuOpen && (
+          <nav
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6"
+            style={{ background: 'var(--theme-bg, #1a120a)', color: 'var(--theme-text, #f5efe6)' }}
+            aria-label="Site navigation"
+          >
+            <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu" className="absolute top-5 right-5 p-2">
+              <TfiClose className="h-5 w-5" />
+            </button>
+            {tree.map(item => {
+              const isLink = item.type === 'link'
+              const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+              const cls = 'font-serif text-2xl'
+              return onPageClick && !isLink ? (
+                <button key={item.id} onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
+              ) : (
+                <a key={item.id} href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
+              )
+            })}
+          </nav>
+        )}
+      </>
     )
   }
 
