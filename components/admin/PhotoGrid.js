@@ -529,24 +529,24 @@ export default function PhotoGrid({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center h-full" style={{ minHeight: 340, padding: '40px 24px' }}>
-              <svg width="76" height="62" viewBox="0 0 76 62" fill="none" style={{ marginBottom: 18 }}>
-                {/* fanned stack — two cards behind, one in front */}
-                <g transform="rotate(-10 38 35)">
-                  <rect x="18" y="17" width="40" height="32" rx="4" fill="#e7dece" stroke="#d3c6b0" strokeWidth="1.2" />
+              <svg width="88" height="62" viewBox="0 0 88 62" fill="none" style={{ marginBottom: 18 }}>
+                {/* fanned stack — two cards spread behind, one straight in front */}
+                <g transform="rotate(-13 28 34)">
+                  <rect x="8" y="18" width="40" height="32" rx="4" fill="#e7dece" stroke="#d3c6b0" strokeWidth="1.2" />
                 </g>
-                <g transform="rotate(10 38 35)">
-                  <rect x="18" y="17" width="40" height="32" rx="4" fill="#ebe3d4" stroke="#d3c6b0" strokeWidth="1.2" />
+                <g transform="rotate(13 60 34)">
+                  <rect x="40" y="18" width="40" height="32" rx="4" fill="#ebe3d4" stroke="#d3c6b0" strokeWidth="1.2" />
                 </g>
-                <rect x="18" y="17" width="40" height="32" rx="4" fill="#f5f0e7" stroke="#cbbda4" strokeWidth="1.4" />
-                <circle cx="29" cy="28" r="2.7" fill="#c9b48f" />
-                <path d="M20 45 l8-8 a2 2 0 0 1 2.8 0 l5 5 a2 2 0 0 0 2.8 0 l4-4 a2 2 0 0 1 2.8 0 L56 45" stroke="#c9b48f" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                <rect x="24" y="13" width="40" height="32" rx="4" fill="#f5f0e7" stroke="#cbbda4" strokeWidth="1.4" />
+                <circle cx="35" cy="24" r="2.7" fill="#c9b48f" />
+                <path d="M26 41 l8-8 a2 2 0 0 1 2.8 0 l5 5 a2 2 0 0 0 2.8 0 l4-4 a2 2 0 0 1 2.8 0 L62 41" stroke="#c9b48f" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
               </svg>
               <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 22, color: '#3f372c', marginBottom: 7 }}>
                 {inAlbum ? 'No photos in this set yet' : 'No photos yet'}
               </div>
               <div style={{ fontSize: 13.5, color: '#8b7d68', maxWidth: 320, lineHeight: 1.55, marginBottom: 20, textWrap: 'balance' }}>
                 {inAlbum
-                  ? 'Drag photos in from your computer, or bring them over from All Photos.'
+                  ? 'Drag photos in from your computer, or from elsewhere in your library.'
                   : 'Drag photos in from your computer to get started.'}
               </div>
               <div className="flex items-center gap-2.5">
