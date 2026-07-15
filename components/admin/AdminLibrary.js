@@ -857,7 +857,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
           </p>
           <div className="flex items-center gap-3">
             <button onClick={() => setImportOpen(true)} style={{ background: '#2c2416', color: '#f5ecd6', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: 'none', cursor: 'pointer' }}>
-              Import from a website
+              Import from your other sites
             </button>
             <button onClick={() => setUploadOpen(true)} style={{ background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: '1px solid rgba(160,140,110,0.35)', cursor: 'pointer' }}>
               Upload photos

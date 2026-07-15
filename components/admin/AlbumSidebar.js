@@ -794,7 +794,7 @@ export default function AlbumSidebar({
           openOverride={sectionsOpen}
           action={
             onImportFromWeb ? (
-              <Tip label="Import from a website">
+              <Tip label="Import from your other sites">
               <button
                 onClick={onImportFromWeb}
                 className="flex items-center justify-center rounded transition-colors"
