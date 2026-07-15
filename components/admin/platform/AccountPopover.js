@@ -140,7 +140,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
       cta: 'Reset site',
     },
     library: {
-      title: 'Empty library',
+      title: 'Clear library',
       body: 'This permanently deletes every photo you have uploaded. Any page still using those photos will show blanks.',
       confirmWord: 'Delete',
       cta: 'Delete all photos',
@@ -468,7 +468,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
 
         <Section label="Start over">
           <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
-          <DangerItem title="Empty library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
+          <DangerItem title="Clear library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
           <DangerItem title="Delete account" desc="Permanently delete everything, free the username" red onClick={() => setDanger('account')} />
         </Section>
       </>}
