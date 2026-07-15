@@ -18,7 +18,7 @@ function Chevron({ open, size = 10 }) {
         flexShrink: 0,
       }}
     >
-      <path d="M3.5 2L7 5L3.5 8" stroke="currentColor" strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 2.2L7.4 5L3 7.8Z" fill="currentColor" />
     </svg>
   )
 }
@@ -287,14 +287,13 @@ function SetRow({
         <div style={{ width: 16, flexShrink: 0 }} />
       )}
 
-      {/* Label — parents read heavier + darker so the hierarchy is legible at a glance */}
+      {/* Label */}
       <span
         className="flex-1 min-w-0 truncate"
         style={{
           paddingLeft: 2, paddingRight: 8,
           fontSize: 13,
-          fontWeight: selected || node.hasChildren ? 500 : 400,
-          color: selected ? undefined : (node.hasChildren ? '#453b2d' : undefined),
+          fontWeight: selected ? 500 : 400,
         }}
       >
         {node.label}
