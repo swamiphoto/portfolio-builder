@@ -4,7 +4,7 @@ import SetPillsPicker from "./gallery-builder/SetPillsPicker";
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
 
-function uploadFile(file, { folder, onProgress } = {}) {
+export function uploadFile(file, { folder, onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const params = new URLSearchParams({ filename: file.name, contentType: file.type })
     if (folder) params.set('folder', folder)

@@ -74,6 +74,37 @@ function Section({ label, children }) {
   )
 }
 
+const DANGER_REST = '0 1px 2px rgba(26,18,10,0.05)'
+const DANGER_HOVER = '0 2px 8px rgba(26,18,10,0.10)'
+
+function DangerItem({ title, desc, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left flex items-center gap-3"
+      style={{
+        padding: '10px 12px',
+        borderRadius: 8,
+        background: 'var(--card, #f9f6f1)',
+        border: '1px solid var(--card-border, rgba(180,160,130,0.25))',
+        boxShadow: DANGER_REST,
+        transition: 'box-shadow 120ms, border-color 120ms, background 120ms',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = DANGER_HOVER; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.40)'; e.currentTarget.style.background = 'var(--card-hover, #f4f0ea)' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = DANGER_REST; e.currentTarget.style.borderColor = 'var(--card-border, rgba(180,160,130,0.25))'; e.currentTarget.style.background = 'var(--card, #f9f6f1)' }}
+    >
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 13, color: '#2c2416' }}>{title}</span>
+        <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{desc}</span>
+      </span>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+        <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
 function Field({ label, children }) {
   return (
     <div>
@@ -111,6 +142,56 @@ const SOCIAL_LINKS = [
 
 export default function AccountPopover({ siteConfig, username, email, anchorEl, onUpdate, onClose, onSignOut }) {
   const [tab, setTab] = useState('profile')
+  const [showBetaNote, setShowBetaNote] = useState(false)
+  const [danger, setDanger] = useState(null) // 'site' | 'library' | 'account'
+  const [confirmText, setConfirmText] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const DANGER = {
+    site: {
+      title: 'Reset site',
+      body: 'This deletes all pages and their layouts and leaves you with a blank home page. Your library photos are kept.',
+      confirmWord: 'Reset',
+      cta: 'Reset site',
+    },
+    library: {
+      title: 'Clear library',
+      body: 'This permanently deletes every photo you have uploaded. Any page still using those photos will show blanks.',
+      confirmWord: 'Delete',
+      cta: 'Delete all photos',
+    },
+    account: {
+      title: 'Delete account',
+      body: 'This permanently deletes your entire site, every uploaded photo, and your account. Your username is freed and you will be signed out. This cannot be undone.',
+      confirmWord: 'Delete',
+      cta: 'Delete account',
+    },
+  }
+  const dcfg = danger ? DANGER[danger] : null
+  const canConfirm = !!dcfg && (!dcfg.confirmWord || confirmText === dcfg.confirmWord) && !busy
+  const closeDanger = () => { if (!busy) { setDanger(null); setConfirmText('') } }
+
+  async function runDanger() {
+    if (!danger || !canConfirm) return
+    setBusy(true)
+    try {
+      if (danger === 'account') {
+        const r = await fetch('/api/admin/delete-account', { method: 'POST' })
+        if (!r.ok) throw new Error()
+        if (onSignOut) onSignOut(); else window.location.href = '/'
+        return
+      }
+      const r = await fetch('/api/admin/reset', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: danger }),
+      })
+      if (!r.ok) throw new Error()
+      window.location.reload()
+    } catch {
+      setBusy(false)
+      alert('Something went wrong. Please try again.')
+    }
+  }
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [usernameDraft, setUsernameDraft] = useState(username || '')
@@ -370,36 +451,23 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
 
       {/* ── Account tab ── */}
       {tab === 'account' && <>
-        <Section label="Login">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-secondary)' }}>
-                <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
-              </svg>
-              <span style={{ fontSize: 13, color: '#2c2416' }}>Google</span>
-            </div>
-            <span
-              style={{
-                fontSize: 9.5,
-                fontFamily: MONO,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--text-secondary)',
-                background: 'rgba(160,140,110,0.14)',
-                padding: '3px 8px',
-                borderRadius: 999,
-                fontWeight: 500,
-              }}
-            >
-              Connected
+        <Section label="Connected account">
+          <div className="flex items-center gap-2.5" style={{ paddingTop: 2 }}>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>
+              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+            </svg>
+            <span style={{ fontSize: 13, color: '#2c2416', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {email || 'Google account'}
             </span>
           </div>
         </Section>
 
-        <Section label="Password">
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Password login is not available for Google-connected accounts.
-          </p>
+        <Section label={<span style={{ color: '#c14a4a' }}>Danger zone</span>}>
+          <div className="flex flex-col" style={{ gap: 7, marginTop: 3 }}>
+            <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
+            <DangerItem title="Clear library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
+            <DangerItem title="Delete account" desc="Permanently delete everything, free the username" onClick={() => setDanger('account')} />
+          </div>
         </Section>
       </>}
 
@@ -409,6 +477,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
           <div className="flex items-center justify-between">
             <span style={{ fontSize: 13, color: '#2c2416' }}>Free</span>
             <button
+              onClick={() => setShowBetaNote(v => !v)}
               style={{ fontSize: 12, color: 'var(--text-secondary)', textDecoration: 'underline', textUnderlineOffset: 2, transition: 'color 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
@@ -416,10 +485,11 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
               Upgrade →
             </button>
           </div>
-        </Section>
-
-        <Section label="Payment">
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>No payment method on file.</p>
+          {showBetaNote && (
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8 }}>
+              Sepia is still in beta, so every feature is free for now. Premium plans are coming later, we will let you know.
+            </p>
+          )}
         </Section>
       </>}
 
@@ -464,6 +534,61 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
                 {label}
               </button>
             ))}
+        </div>,
+        document.body
+      )}
+
+      {danger && typeof window !== 'undefined' && createPortal(
+        <div
+          onMouseDown={closeDanger}
+          style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(26,18,10,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{ width: 360, maxWidth: '100%', background: '#faf7f1', borderRadius: 12, boxShadow: '0 20px 60px rgba(26,18,10,0.35)', padding: '20px 20px 16px' }}
+          >
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 18, fontWeight: 500, color: danger === 'account' ? '#c14a4a' : '#2c2416', marginBottom: 8 }}>
+              {dcfg.title}
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>{dcfg.body}</p>
+            {dcfg.confirmWord && (
+              <div style={{ marginTop: 14 }}>
+                <label style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                  Type <b style={{ color: '#2c2416' }}>{dcfg.confirmWord}</b> to confirm
+                </label>
+                <input
+                  autoFocus
+                  value={confirmText}
+                  onChange={e => setConfirmText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && canConfirm) runDanger() }}
+                  style={{ width: '100%', marginTop: 5, padding: '7px 10px', fontSize: 13, borderRadius: 6, border: '1px solid rgba(160,140,110,0.35)', background: '#fff', outline: 'none' }}
+                />
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+              <button
+                type="button"
+                onClick={closeDanger}
+                disabled={busy}
+                className="transition-colors"
+                style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: busy ? 'default' : 'pointer' }}
+                onMouseEnter={e => { if (!busy) e.currentTarget.style.color = '#2c2416' }}
+                onMouseLeave={e => { if (!busy) e.currentTarget.style.color = 'var(--text-secondary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={runDanger}
+                disabled={!canConfirm}
+                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: canConfirm ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: canConfirm ? 'pointer' : 'default', transition: 'background 120ms' }}
+                onMouseEnter={e => { if (canConfirm) e.currentTarget.style.background = '#a83e3e' }}
+                onMouseLeave={e => { if (canConfirm) e.currentTarget.style.background = '#c14a4a' }}
+              >
+                {busy ? 'Working…' : dcfg.cta}
+              </button>
+            </div>
+          </div>
         </div>,
         document.body
       )}

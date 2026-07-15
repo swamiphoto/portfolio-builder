@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
-import UploadModal from "./UploadModal";
+import UploadModal, { uploadFile } from "./UploadModal";
 import AddFromLibraryModal from "./AddFromLibraryModal";
 import ImportFlow from "./import/ImportFlow";
 import DuplicateFinder from "./library/DuplicateFinder";
@@ -22,8 +22,14 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [selectedPage, setSelectedPage] = useState(null);
 
   const pagesData = useMemo(() => (siteConfig?.pages || [])
-    .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
-    .filter(p => p.imageUrls.length > 0)
+    .filter(p => p.type !== 'link')
+    .map(p => ({
+      id: p.id,
+      title: p.title || 'Untitled',
+      parentId: p.parentId ?? null,
+      sortOrder: p.sortOrder ?? 0,
+      imageUrls: getPagePhotos(p),
+    }))
   , [siteConfig]);
   const [filters, setFilters] = useState({
     orientation: "all",
@@ -42,15 +48,18 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [dedupeOpen, setDedupeOpen] = useState(false);
+  const [clearLibOpen, setClearLibOpen] = useState(false);
+  const [clearLibText, setClearLibText] = useState("");
+  const [clearLibBusy, setClearLibBusy] = useState(false);
   const [highlightedUrls, setHighlightedUrls] = useState(null);
   const [addLibraryOpen, setAddLibraryOpen] = useState(false);
   const [addLibraryTarget, setAddLibraryTarget] = useState(null);
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
   const [printStore, setPrintStore] = useState(null);
 
-  const fetchLibrary = useCallback(async () => {
+  const fetchLibrary = useCallback(async ({ quiet = false } = {}) => {
     try {
-      setLoading(true);
+      if (!quiet) setLoading(true);
       const res = await fetch("/api/admin/library");
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
@@ -59,9 +68,29 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
+
+  const runClearLibrary = useCallback(async () => {
+    if (clearLibText !== "Delete" || clearLibBusy) return;
+    setClearLibBusy(true);
+    try {
+      const r = await fetch("/api/admin/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "library" }),
+      });
+      if (!r.ok) throw new Error();
+      setClearLibOpen(false);
+      setClearLibText("");
+      await fetchLibrary();
+    } catch {
+      alert("Something went wrong clearing the library. Please try again.");
+    } finally {
+      setClearLibBusy(false);
+    }
+  }, [clearLibText, clearLibBusy, fetchLibrary]);
 
   useEffect(() => { fetchLibrary(); }, [fetchLibrary]);
 
@@ -79,8 +108,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       body: JSON.stringify(newConfig),
     });
     if (!res.ok) throw new Error(`Save failed ${res.status}`);
-    // Refresh local state: update counts
-    await fetchLibrary();
+    // Refresh counts without blanking the whole library (keeps sidebar context).
+    await fetchLibrary({ quiet: true });
   }, [fetchLibrary]);
 
   const getFallbackAsset = useCallback((imageUrl) => {
@@ -296,18 +325,92 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     await saveConfig(updated);
   }, [selectedAlbum, saveConfig, currentConfig]);
 
-  const handleDelete = useCallback(async (imageUrl) => {
-    const res = await fetch("/api/admin/delete", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl }),
+  const [deletingUrls, setDeletingUrls] = useState(() => new Set());
+  const markDeleting = useCallback((urls, on) => {
+    setDeletingUrls(prev => {
+      const next = new Set(prev);
+      for (const u of urls) { if (on) next.add(u); else next.delete(u); }
+      return next;
     });
-    if (!res.ok) {
-      alert("Delete failed");
-      return;
+  }, []);
+
+  const handleDelete = useCallback(async (imageUrl) => {
+    markDeleting([imageUrl], true);
+    try {
+      const res = await fetch("/api/admin/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) { alert("Delete failed"); return; }
+      await fetchLibrary({ quiet: true });
+    } finally {
+      markDeleting([imageUrl], false);
     }
-    await fetchLibrary();
-  }, [fetchLibrary]);
+  }, [fetchLibrary, markDeleting]);
+
+  // ── Multi-select ──────────────────────────────────────────────────────────
+  const [selectedUrls, setSelectedUrls] = useState(() => new Set());
+  const selectionActive = selectedUrls.size > 0;
+  const toggleSelect = useCallback((url) => {
+    setSelectedUrls(prev => {
+      const next = new Set(prev);
+      if (next.has(url)) next.delete(url); else next.add(url);
+      return next;
+    });
+  }, []);
+  const clearSelection = useCallback(() => setSelectedUrls(new Set()), []);
+  // Drop the selection whenever the viewed album/filter changes.
+  useEffect(() => { setSelectedUrls(new Set()); }, [selectedAlbum]);
+
+  const handleRemoveSelected = useCallback(async () => {
+    if (selectedAlbum.type === "all" || selectedUrls.size === 0) return;
+    const config = currentConfig();
+    const section = selectedAlbum.type === "portfolio" ? "portfolios" : "galleries";
+    const updated = {
+      ...config,
+      [section]: {
+        ...config[section],
+        [selectedAlbum.key]: (config[section][selectedAlbum.key] || []).filter(u => !selectedUrls.has(u)),
+      },
+    };
+    await saveConfig(updated);
+    clearSelection();
+  }, [selectedAlbum, selectedUrls, saveConfig, currentConfig, clearSelection]);
+
+  const handleDeleteSelected = useCallback(async () => {
+    const urls = [...selectedUrls];
+    if (!urls.length) return;
+    if (!confirm(`Permanently delete ${urls.length} photo${urls.length > 1 ? "s" : ""}? This cannot be undone.`)) return;
+    markDeleting(urls, true);
+    try {
+      for (const imageUrl of urls) {
+        try {
+          await fetch("/api/admin/delete", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageUrl }) });
+        } catch (e) { console.error("delete failed", imageUrl, e); }
+      }
+      await fetchLibrary({ quiet: true });
+      clearSelection();
+    } finally {
+      markDeleting(urls, false);
+    }
+  }, [selectedUrls, fetchLibrary, clearSelection, markDeleting]);
+
+  const [dropUploading, setDropUploading] = useState(false);
+
+  // Drag a photo (or the current selection) onto a set: add to target, and if
+  // dragging from another set, remove from the source (a move).
+  const handleMovePhotosToSet = useCallback(async (targetKey, urls) => {
+    if (!targetKey || !urls || urls.length === 0) return;
+    const config = currentConfig();
+    const galleries = { ...config.galleries };
+    galleries[targetKey] = [...new Set([...(galleries[targetKey] || []), ...urls])];
+    if (selectedAlbum.type === 'gallery' && selectedAlbum.key !== targetKey) {
+      galleries[selectedAlbum.key] = (galleries[selectedAlbum.key] || []).filter(u => !urls.includes(u));
+    }
+    await saveConfig({ ...config, galleries });
+    clearSelection();
+  }, [selectedAlbum, currentConfig, saveConfig, clearSelection]);
 
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
     // uploadedAssets: [{ url, width, height, hash }], selectedSets: string[]
@@ -344,6 +447,27 @@ export default function AdminLibrary({ onBack, siteConfig }) {
 
     await saveConfig(updated);
   }, [saveConfig, fetchLibrary, currentConfig, libraryData]);
+
+  // ── Drag-drop upload from the computer ────────────────────────────────────
+  const handleDropUpload = useCallback(async (fileList, targetSet) => {
+    const files = [...(fileList || [])].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|gif|webp)$/i.test(f.name));
+    if (!files.length) return;
+    const set = targetSet || (selectedAlbum.type === 'gallery' ? selectedAlbum.key : null);
+    const folder = set ? `photos/${set}` : undefined;
+    setDropUploading(true);
+    try {
+      const uploadedAssets = [];
+      for (const file of files) {
+        try {
+          const { gcsUrl, width, height, hash } = await uploadFile(file, { folder });
+          uploadedAssets.push({ url: gcsUrl, width, height, hash });
+        } catch (e) { console.error('drop upload failed', file.name, e); }
+      }
+      if (uploadedAssets.length) await handleUploaded(uploadedAssets, set ? [set] : []);
+    } finally {
+      setDropUploading(false);
+    }
+  }, [selectedAlbum, handleUploaded]);
 
   const handleImportComplete = useCallback(async (summary) => {
     setImportOpen(false)
@@ -656,6 +780,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   }, {});
 
   const sourceCounts = computeSourceCounts(allAssets);
+  // "Has imported before" — any photo whose source isn't a manual upload.
+  const hasImported = Object.keys(sourceCounts).some(p => p !== 'manual');
 
   const normalLayout = (
     <>
@@ -665,6 +791,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         selectedAlbum={selectedAlbum}
         onSelect={setSelectedAlbum}
         onCreateSet={handleCreateSet}
+        onDropPhotos={handleMovePhotosToSet}
+        onDropFiles={handleDropUpload}
         onDeleteSet={handleDeleteSet}
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
@@ -685,6 +813,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onSelectPage={setSelectedPage}
         onImportFromWeb={() => setImportOpen(true)}
         onFindDuplicates={() => setDedupeOpen(true)}
+        onClearLibrary={() => { setClearLibText(""); setClearLibOpen(true); }}
       />
       <PhotoGrid
         assets={assets}
@@ -696,6 +825,13 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onAddToAlbum={handleAddToAlbum}
         onCaptionChange={handleCaptionChange}
         onToggleSet={handleToggleSet}
+        selectedUrls={selectedUrls}
+        onToggleSelect={toggleSelect}
+        selectionActive={selectionActive}
+        onDropFiles={handleDropUpload}
+        dropUploading={dropUploading}
+        deletingUrls={deletingUrls}
+        hasImported={hasImported}
         onUploadClick={() => setUploadOpen(true)}
         onImportFromWeb={() => setImportOpen(true)}
         printStore={printStore}
@@ -724,7 +860,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
           </p>
           <div className="flex items-center gap-3">
             <button onClick={() => setImportOpen(true)} style={{ background: '#2c2416', color: '#f5ecd6', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: 'none', cursor: 'pointer' }}>
-              Import from the web
+              Import from your other sites
             </button>
             <button onClick={() => setUploadOpen(true)} style={{ background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 4, border: '1px solid rgba(160,140,110,0.35)', cursor: 'pointer' }}>
               Upload photos
@@ -764,6 +900,100 @@ export default function AdminLibrary({ onBack, siteConfig }) {
           onClose={() => setDedupeOpen(false)}
           onComplete={async () => { setDedupeOpen(false); await fetchLibrary(); }}
         />
+      )}
+
+      {clearLibOpen && (
+        <div
+          onMouseDown={() => { if (!clearLibBusy) setClearLibOpen(false); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(26,18,10,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{ width: 360, maxWidth: '100%', background: '#faf7f1', borderRadius: 12, boxShadow: '0 20px 60px rgba(26,18,10,0.35)', padding: '20px 20px 16px' }}
+          >
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 18, fontWeight: 500, color: '#2c2416', marginBottom: 8 }}>Clear library</div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
+              This permanently deletes every photo you have uploaded. Any page still using those photos will show blanks. This cannot be undone.
+            </p>
+            <div style={{ marginTop: 14 }}>
+              <label style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Type <b style={{ color: '#2c2416' }}>Delete</b> to confirm</label>
+              <input
+                autoFocus
+                value={clearLibText}
+                onChange={e => setClearLibText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') runClearLibrary(); }}
+                style={{ width: '100%', marginTop: 5, padding: '7px 10px', fontSize: 13, borderRadius: 6, border: '1px solid rgba(160,140,110,0.35)', background: '#fff', outline: 'none' }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+              <button
+                type="button"
+                onClick={() => { if (!clearLibBusy) setClearLibOpen(false); }}
+                disabled={clearLibBusy}
+                className="transition-colors"
+                style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: clearLibBusy ? 'default' : 'pointer' }}
+                onMouseEnter={e => { if (!clearLibBusy) e.currentTarget.style.color = '#2c2416'; }}
+                onMouseLeave={e => { if (!clearLibBusy) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >Cancel</button>
+              <button
+                type="button"
+                onClick={runClearLibrary}
+                disabled={clearLibText !== 'Delete' || clearLibBusy}
+                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: clearLibText === 'Delete' && !clearLibBusy ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: clearLibText === 'Delete' && !clearLibBusy ? 'pointer' : 'default', transition: 'background 120ms' }}
+                onMouseEnter={e => { if (clearLibText === 'Delete' && !clearLibBusy) e.currentTarget.style.background = '#a83e3e'; }}
+                onMouseLeave={e => { if (clearLibText === 'Delete' && !clearLibBusy) e.currentTarget.style.background = '#c14a4a'; }}
+              >
+                {clearLibBusy ? 'Working…' : 'Delete all photos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectionActive && (
+        <div
+          style={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9998,
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: '#2c2416', color: '#f6f3ec', padding: '8px 10px 8px 16px', borderRadius: 10,
+            boxShadow: '0 10px 30px rgba(26,18,10,0.32)',
+            fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 12, letterSpacing: '0.03em',
+          }}
+        >
+          <span style={{ marginRight: 8 }}>{selectedUrls.size} selected</span>
+          {selectedAlbum.type === 'gallery' && (
+            <button
+              type="button"
+              onClick={handleRemoveSelected}
+              className="transition-colors"
+              style={{ padding: '6px 10px', borderRadius: 6, color: '#f6f3ec' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.10)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              Remove from set
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            className="transition-colors"
+            style={{ padding: '6px 10px', borderRadius: 6, color: '#f0a3a3' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(240,90,90,0.16)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="transition-colors"
+            style={{ padding: '6px 10px', borderRadius: 6, color: 'rgba(246,243,236,0.7)' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#f6f3ec'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(246,243,236,0.7)'}
+          >
+            Clear
+          </button>
+        </div>
       )}
     </div>
   );

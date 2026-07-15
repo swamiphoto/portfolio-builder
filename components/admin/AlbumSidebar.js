@@ -3,9 +3,7 @@ import Tip from "./Tip";
 import { sourceLabel } from '@/common/import/sourceFilter';
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
-const LINE_COLOR = 'rgba(160,140,110,0.32)';
 const ROW_HEIGHT = 26;
-const GUTTER_WIDTH = 16;
 const RIGHT_PAD = 16; // matches section content paddingLeft for visual balance
 
 function Chevron({ open, size = 10 }) {
@@ -18,7 +16,7 @@ function Chevron({ open, size = 10 }) {
         flexShrink: 0,
       }}
     >
-      <path d="M3.5 2L7 5L3.5 8" stroke="currentColor" strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 2.2L7.4 5L3 7.8Z" fill="currentColor" />
     </svg>
   )
 }
@@ -150,27 +148,17 @@ function SidebarItem({ active, label, count, onClick, capsLabel = false, indent 
   )
 }
 
-function TreeGutter({ type }) {
-  if (type === 'space') return <div style={{ width: GUTTER_WIDTH, flexShrink: 0 }} />
-  if (type === 'line') return (
-    <div style={{ width: GUTTER_WIDTH, flexShrink: 0, position: 'relative' }}>
-      <div style={{ position: 'absolute', left: 7, top: 0, bottom: 0, width: 1, background: LINE_COLOR }} />
-    </div>
-  )
-  const mid = Math.floor(ROW_HEIGHT / 2)
-  return (
-    <div style={{ width: GUTTER_WIDTH, flexShrink: 0, position: 'relative' }}>
-      <div style={{ position: 'absolute', left: 7, top: 0, height: mid, width: 1, background: LINE_COLOR }} />
-      {type === 'branch' && (
-        <div style={{ position: 'absolute', left: 7, top: mid, bottom: 0, width: 1, background: LINE_COLOR }} />
-      )}
-      <div style={{ position: 'absolute', left: 7, top: mid, width: 8, height: 1, background: LINE_COLOR }} />
-    </div>
-  )
-}
-
 function buildSetTree(keys) {
-  const sorted = [...keys].sort()
+  // Synthesize every ancestor prefix so intermediate folders always appear, even
+  // when they hold no assets of their own. Without this, a set like
+  // "landscapes/arizona/grand-canyon" whose parent "landscapes/arizona" isn't in
+  // the counts would render orphaned and over-indented.
+  const keySet = new Set(keys)
+  for (const key of keys) {
+    const parts = key.split('/')
+    for (let i = 1; i < parts.length; i++) keySet.add(parts.slice(0, i).join('/'))
+  }
+  const sorted = [...keySet].sort()
   const nodes = sorted.map((key) => {
     const parts = key.split('/')
     const depth = parts.length - 1
@@ -181,37 +169,41 @@ function buildSetTree(keys) {
   for (const node of nodes) {
     node.hasChildren = nodes.some(n => n.parent === node.key)
   }
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i]
-    let isLast = true
-    for (let j = i + 1; j < nodes.length; j++) {
-      const other = nodes[j]
-      if (other.depth < node.depth) break
-      if (other.parent === node.parent) { isLast = false; break }
-    }
-    node.isLast = isLast
-  }
-  for (const node of nodes) {
-    const gutters = []
-    for (let i = 0; i < node.depth; i++) {
-      if (i === node.depth - 1) {
-        gutters.push(node.isLast ? 'corner' : 'branch')
-      } else {
-        const ancestorKey = node.parts.slice(0, i + 1).join('/')
-        const anc = nodes.find(n => n.key === ancestorKey)
-        gutters.push(anc && !anc.isLast ? 'line' : 'space')
-      }
-    }
-    node.gutters = gutters
-  }
   return nodes
+}
+
+// Flatten pages (parentId hierarchy) into an ordered list with a depth, so the
+// Pages filter shows the real nesting instead of a flat list.
+function flattenPageTree(pages) {
+  const byParent = new Map()
+  for (const p of pages) {
+    const pid = p.parentId || null
+    if (!byParent.has(pid)) byParent.set(pid, [])
+    byParent.get(pid).push(p)
+  }
+  for (const arr of byParent.values()) arr.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+  const ids = new Set(pages.map(p => p.id))
+  const out = []
+  const walk = (parentId, depth) => {
+    for (const p of (byParent.get(parentId) || [])) {
+      out.push({ ...p, depth })
+      walk(p.id, depth + 1)
+    }
+  }
+  walk(null, 0)
+  // Any page whose parent is missing (orphan) — surface it at the root so nothing is lost.
+  for (const p of pages) {
+    if (p.parentId && !ids.has(p.parentId) && !out.some(o => o.id === p.id)) out.push({ ...p, depth: 0 })
+  }
+  return out
 }
 
 function SetRow({
   node, selected, expanded, count,
-  onSelect, onToggleExpand, onCreateUnder, onDelete,
+  onSelect, onToggleExpand, onCreateUnder, onDelete, onDropPhotos, onDropFiles,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
   const closeTimer = useRef(null)
   const rowRef = useRef(null)
 
@@ -241,34 +233,48 @@ function SetRow({
       }}
       onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(44,36,22,0.05)' }}
       onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
+      onDragOver={(onDropPhotos || onDropFiles) ? (e) => {
+        const t = e.dataTransfer.types
+        const ok = (onDropPhotos && t.includes('application/x-library-photos')) || (onDropFiles && t.includes('Files'))
+        if (ok) { e.preventDefault(); e.dataTransfer.dropEffect = t.includes('Files') ? 'copy' : 'move'; if (!dragOver) setDragOver(true) }
+      } : undefined}
+      onDragLeave={(onDropPhotos || onDropFiles) ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false) } : undefined}
+      onDrop={(onDropPhotos || onDropFiles) ? (e) => {
+        e.preventDefault(); setDragOver(false)
+        if (onDropFiles && e.dataTransfer.files && e.dataTransfer.files.length) { onDropFiles(e.dataTransfer.files); return }
+        const raw = e.dataTransfer.getData('application/x-library-photos')
+        if (!raw || !onDropPhotos) return
+        try { const urls = JSON.parse(raw); if (Array.isArray(urls) && urls.length) onDropPhotos(urls) } catch {}
+      } : undefined}
     >
-      {/* Gutters */}
-      <div className="flex items-stretch" style={{ paddingLeft: 24 }}>
-        {node.gutters.map((g, i) => <TreeGutter key={i} type={g} />)}
-      </div>
+      {/* Drop highlight — inset + rounded, matching the page-drop style (not edge to edge) */}
+      {dragOver && (
+        <div style={{ position: 'absolute', left: 6, right: 8, top: 1, bottom: 1, borderRadius: 5, outline: '1px solid #8b6f47', background: 'rgba(139,111,71,0.10)', pointerEvents: 'none', zIndex: 3 }} />
+      )}
+      {/* Indentation — one clean step per depth, no connector lines */}
+      <div style={{ width: 12 + node.depth * 14, flexShrink: 0 }} />
 
-      {/* Chevron for nodes with children */}
+      {/* Chevron for nodes with children; leaves get a matching spacer so labels align */}
       {node.hasChildren ? (
         <button
           onClick={(e) => { stop(e); onToggleExpand() }}
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{
-            width: GUTTER_WIDTH, height: ROW_HEIGHT,
-            color: '#a8967a',
-          }}
-          title={expanded ? 'Collapse' : 'Expand'}
+          className="flex-shrink-0 flex items-center justify-center rounded transition-colors"
+          style={{ width: 16, height: ROW_HEIGHT, color: '#a8967a' }}
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+          onMouseEnter={e => { e.currentTarget.style.color = '#6b5d48' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#a8967a' }}
         >
           <Chevron open={expanded} size={9} />
         </button>
       ) : (
-        <div style={{ width: GUTTER_WIDTH, flexShrink: 0 }} />
+        <div style={{ width: 16, flexShrink: 0 }} />
       )}
 
-      {/* Label — fills row width */}
+      {/* Label */}
       <span
         className="flex-1 min-w-0 truncate"
         style={{
-          paddingLeft: 4, paddingRight: 8,
+          paddingLeft: 2, paddingRight: 8,
           fontSize: 13,
           fontWeight: selected ? 500 : 400,
         }}
@@ -305,9 +311,9 @@ function SetRow({
           className="absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
           style={{ right: RIGHT_PAD, top: 0, height: ROW_HEIGHT }}
         >
+          <Tip label={`New set under "${node.label}"`}>
           <button
             onClick={(e) => { stop(e); onCreateUnder() }}
-            title={`New under ${node.label}`}
             style={{
               width: 18, height: 18,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -319,6 +325,7 @@ function SetRow({
           >
             <PlusIcon size={13} />
           </button>
+          </Tip>
 
           <div
             className="relative"
@@ -384,12 +391,23 @@ function SetRow({
   )
 }
 
-function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride }) {
+function PendingRow({ depth, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', height: ROW_HEIGHT, paddingLeft: 12 + depth * 14 + 18, paddingRight: RIGHT_PAD }}>
+      <span className="animate-spin" style={{ width: 10, height: 10, border: '1.5px solid rgba(160,140,110,0.35)', borderTopColor: '#8b6f47', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
+      <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, marginLeft: 8, color: '#9a8b73' }}>{label}</span>
+      <span style={{ fontFamily: MONO, fontSize: 10, marginLeft: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b0a490', flexShrink: 0 }}>Creating…</span>
+    </div>
+  )
+}
+
+function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, onFilterChange, openOverride, onDropPhotos, onDropFiles }) {
   const galleryKeys = Object.keys(counts).filter(k => k !== "all")
   const nodes = useMemo(() => buildSetTree(galleryKeys), [galleryKeys.join('|')])
   const [collapsed, setCollapsed] = useState(new Set())
   const [creatingUnder, setCreatingUnder] = useState(undefined)
   const [newSetName, setNewSetName] = useState('')
+  const [pendingCreate, setPendingCreate] = useState(null) // { parentKey, label } while saving
 
   const visibleNodes = nodes.filter(node => {
     const parts = node.key.split('/')
@@ -410,12 +428,20 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
     }
   }
 
-  function submitCreate(parentKey) {
-    const slug = newSetName.trim()
-    if (!slug) return
-    onCreateSet(slug, parentKey ?? null)
+  async function submitCreate(parentKey) {
+    const label = newSetName.trim()
+    if (!label) return
+    // Keep the new subset in view: make sure its parent is expanded.
+    if (parentKey) setCollapsed(prev => { const next = new Set(prev); next.delete(parentKey); return next })
     setCreatingUnder(undefined)
     setNewSetName('')
+    // Show a "Creating…" row where the set will land until the save + refresh land.
+    setPendingCreate({ parentKey: parentKey ?? null, label })
+    try {
+      await onCreateSet(label, parentKey ?? null)
+    } finally {
+      setPendingCreate(null)
+    }
   }
 
   function toggleCollapse(key) {
@@ -441,15 +467,16 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
       action={
         <div className="flex items-center gap-0.5">
           {nodesWithChildren.length > 0 && (
+            <Tip label={allCollapsed ? 'Expand all' : 'Collapse all'}>
             <button
               onClick={toggleAll}
-              title={allCollapsed ? 'Expand all' : 'Collapse all'}
               style={iconBtnStyle}
               onMouseEnter={e => { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.background = 'rgba(44,36,22,0.08)' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#a8967a'; e.currentTarget.style.background = 'transparent' }}
             >
               <ToggleAllIcon allCollapsed={allCollapsed} size={12} />
             </button>
+            </Tip>
           )}
           <Tip label="New set">
           <button
@@ -483,9 +510,11 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
               onToggleExpand={() => toggleCollapse(node.key)}
               onCreateUnder={() => { setCreatingUnder(node.key); setNewSetName('') }}
               onDelete={() => onDeleteSet(node.key)}
+              onDropPhotos={onDropPhotos ? (urls) => onDropPhotos(node.key, urls) : null}
+              onDropFiles={onDropFiles ? (files) => onDropFiles(files, node.key) : null}
             />
             {creatingUnder === node.key && (
-              <div style={{ paddingLeft: 24 + (node.depth + 1) * GUTTER_WIDTH + 4, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
+              <div style={{ paddingLeft: 12 + (node.depth + 1) * 14 + 18, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
                 <input
                   autoFocus
                   type="text"
@@ -497,14 +526,21 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
                   }}
                   onBlur={() => setCreatingUnder(undefined)}
                   placeholder="name…"
-                  className="w-full text-sm px-2 py-1 rounded focus:outline-none"
+                  className="w-full text-sm px-2 py-1 rounded focus:outline-none placeholder:text-[#b0a490]"
                   style={{ border: '1px solid rgba(160,140,110,0.4)', background: '#f9f6f1', color: '#2c2416' }}
                 />
               </div>
             )}
+            {pendingCreate?.parentKey === node.key && (
+              <PendingRow depth={node.depth + 1} label={pendingCreate.label} />
+            )}
           </div>
         )
       })}
+
+      {pendingCreate?.parentKey === null && (
+        <PendingRow depth={0} label={pendingCreate.label} />
+      )}
 
       {creatingUnder === null && (
         <div style={{ padding: '4px 12px 0' }}>
@@ -519,7 +555,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
             }}
             onBlur={() => setCreatingUnder(undefined)}
             placeholder="name…"
-            className="w-full text-sm px-2 py-1 rounded focus:outline-none"
+            className="w-full text-sm px-2 py-1 rounded focus:outline-none placeholder:text-[#b0a490]"
             style={{ border: '1px solid rgba(160,140,110,0.4)', background: '#f9f6f1', color: '#2c2416' }}
           />
         </div>
@@ -556,8 +592,12 @@ export default function AlbumSidebar({
   onSelectPage,
   onImportFromWeb,
   onFindDuplicates,
+  onClearLibrary,
+  onDropPhotos,
+  onDropFiles,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(undefined) // undefined = natural, true/false = override
   const isSelected = (type, key) =>
     selectedAlbum.type === type && selectedAlbum.key === key;
@@ -653,6 +693,33 @@ export default function AlbumSidebar({
           <ToggleAllIcon allCollapsed={sectionsOpen === false} />
         </button>
         </Tip>
+        {(onFindDuplicates || onClearLibrary) && (
+          <div className="relative">
+            <Tip label="Library options">
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+              aria-haspopup="true" aria-expanded={menuOpen}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+            </button>
+            </Tip>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0" style={{ zIndex: 40 }} onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 mt-1 rounded-md overflow-hidden" style={{ top: '100%', zIndex: 41, minWidth: 168, background: 'var(--popover, #f0ebe3)', boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 8px 24px rgba(26,18,10,0.16)', padding: '4px 0' }}>
+                  {onFindDuplicates && (
+                    <button type="button" onClick={() => { setMenuOpen(false); onFindDuplicates(); }} className="w-full text-left transition-colors" style={{ padding: '7px 12px', fontSize: 12.5, color: '#2c2416' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(160,140,110,0.10)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Find duplicates</button>
+                  )}
+                  {onClearLibrary && (
+                    <button type="button" onClick={() => { setMenuOpen(false); onClearLibrary(); }} className="w-full text-left transition-colors" style={{ padding: '7px 12px', fontSize: 12.5, color: '#c14a4a' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(193,74,74,0.07)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Clear library</button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <Tip label="Collapse library">
         <button
           onClick={() => setSidebarCollapsed(true)}
@@ -727,9 +794,9 @@ export default function AlbumSidebar({
           openOverride={sectionsOpen}
           action={
             onImportFromWeb ? (
+              <Tip label="Import from your other sites">
               <button
                 onClick={onImportFromWeb}
-                title="Import from the web"
                 className="flex items-center justify-center rounded transition-colors"
                 style={{ width: 18, height: 18, color: '#a8967a' }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#8b6f47')}
@@ -739,6 +806,7 @@ export default function AlbumSidebar({
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </button>
+              </Tip>
             ) : null
           }
         >
@@ -903,16 +971,19 @@ export default function AlbumSidebar({
           onCreateSet={onCreateSet}
           onDeleteSet={onDeleteSet}
           onFilterChange={onFilterChange}
+          onDropPhotos={onDropPhotos}
+          onDropFiles={onDropFiles}
         />
 
         {pages?.length > 0 && (
           <SidebarSection title="Pages" openOverride={sectionsOpen}>
-            {pages.map(p => (
+            {flattenPageTree(pages).map(p => (
               <SidebarItem
                 key={p.id}
                 active={selectedPage === p.id}
                 label={p.title}
                 count={p.imageUrls.length}
+                indent={28 + p.depth * 14}
                 onClick={() => onSelectPage?.(selectedPage === p.id ? null : p.id)}
               />
             ))}
@@ -920,28 +991,6 @@ export default function AlbumSidebar({
         )}
       </div>
 
-      {/* Maintenance footer */}
-      {onFindDuplicates && (
-        <div style={{ flexShrink: 0, borderTop: '1px solid rgba(160,140,110,0.14)', padding: '8px 12px 10px' }}>
-          <button
-            onClick={onFindDuplicates}
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              letterSpacing: '0.09em',
-              color: '#b0a490',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#8b6f47' }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#b0a490' }}
-          >
-            find duplicates
-          </button>
-        </div>
-      )}
     </div>
   )
 }

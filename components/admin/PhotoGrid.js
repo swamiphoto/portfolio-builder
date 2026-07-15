@@ -89,6 +89,13 @@ export default function PhotoGrid({
   onAddToAlbum,
   onCaptionChange,
   onToggleSet,
+  selectedUrls,
+  onToggleSelect,
+  selectionActive = false,
+  onDropFiles,
+  dropUploading = false,
+  deletingUrls,
+  hasImported = false,
   onUploadClick,
   onImportFromWeb,
   onAddFromLibraryClick,
@@ -109,6 +116,7 @@ export default function PhotoGrid({
   const [scrollTop, setScrollTop] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [dropActive, setDropActive] = useState(false);
 
   const scrollRef = useRef(null);
   const rafRef = useRef(null);
@@ -216,7 +224,25 @@ export default function PhotoGrid({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0" style={{ background: 'transparent' }}>
+    <div
+      className="flex-1 flex flex-col min-w-0 relative"
+      style={{ background: 'transparent' }}
+      onDragOver={onDropFiles ? (e) => {
+        if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; if (!dropActive) setDropActive(true) }
+      } : undefined}
+      onDragLeave={onDropFiles ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropActive(false) } : undefined}
+      onDrop={onDropFiles ? (e) => {
+        if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDropActive(false); onDropFiles(e.dataTransfer.files) }
+      } : undefined}
+    >
+      {(dropActive || dropUploading) && (
+        <div style={{ position: 'absolute', inset: 8, zIndex: 40, borderRadius: 10, border: '2px dashed #8b6f47', background: 'rgba(244,239,232,0.86)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ textAlign: 'center', color: '#5c4f3a' }}>
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 20, marginBottom: 4 }}>{dropUploading ? 'Uploading…' : 'Drop photos to upload'}</div>
+            {!dropUploading && <div style={{ fontFamily: MONO, fontSize: 11, color: '#8b6f47', letterSpacing: '0.04em' }}>{inAlbum ? `Into ${slugToTitle(selectedAlbum.key.split('/').pop())}` : 'To your library'}</div>}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div
         className="flex items-center gap-2 px-4"
@@ -425,26 +451,7 @@ export default function PhotoGrid({
             {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Add from Library */}
-          {inAlbum && (
-            <button
-              onClick={onAddFromLibraryClick}
-              className="transition-colors"
-              style={{
-                ...btnBase,
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.07em', textTransform: 'uppercase',
-                padding: '0 10px', height: 28,
-                border: '1px solid rgba(160,140,110,0.3)',
-                background: 'transparent', color: '#7a6b55',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              + Add
-            </button>
-          )}
-
-          {/* Import from the web */}
+          {/* Import from your other sites */}
           {onImportFromWeb && (
             <button
               onClick={onImportFromWeb}
@@ -517,9 +524,62 @@ export default function PhotoGrid({
         onScroll={handleScroll}
       >
         {processedAssets.length === 0 ? (
-          <div className="flex items-center justify-center h-40 text-sm" style={{ color: '#a8967a', fontFamily: MONO, fontSize: 11 }}>
-            {search ? "No photos match your search" : "No photos in this album"}
-          </div>
+          search ? (
+            <div className="flex items-center justify-center h-40 text-sm" style={{ color: '#a8967a', fontFamily: MONO, fontSize: 11 }}>
+              No photos match your search
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center h-full" style={{ minHeight: 340, padding: '40px 24px' }}>
+              <svg width="88" height="62" viewBox="0 0 88 62" fill="none" style={{ marginBottom: 18 }}>
+                {/* fanned stack — two cards spread behind, one straight in front */}
+                <g transform="rotate(8 28 35)">
+                  <rect x="8" y="18" width="40" height="32" rx="4" fill="#e7dece" stroke="#d3c6b0" strokeWidth="1.2" />
+                </g>
+                <g transform="rotate(14 60 33)">
+                  <rect x="40" y="18" width="40" height="32" rx="4" fill="#ebe3d4" stroke="#d3c6b0" strokeWidth="1.2" />
+                </g>
+                <g transform="rotate(-4 44 29)">
+                  <rect x="24" y="13" width="40" height="32" rx="4" fill="#f5f0e7" stroke="#cbbda4" strokeWidth="1.4" />
+                  <circle cx="35" cy="24" r="2.7" fill="#c9b48f" />
+                  <path d="M26 41 l8-8 a2 2 0 0 1 2.8 0 l5 5 a2 2 0 0 0 2.8 0 l4-4 a2 2 0 0 1 2.8 0 L62 41" stroke="#c9b48f" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                </g>
+              </svg>
+              <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 22, color: '#3f372c', marginBottom: 7 }}>
+                {inAlbum ? 'No photos in this set yet' : 'No photos yet'}
+              </div>
+              <div style={{ fontSize: 13.5, color: '#8b7d68', maxWidth: 320, lineHeight: 1.55, marginBottom: 20, textWrap: 'balance' }}>
+                {inAlbum
+                  ? 'Drag photos in from your computer, or from elsewhere in your library.'
+                  : 'Drag photos in from your computer to get started.'}
+              </div>
+              <div className="flex items-center gap-2.5">
+                {onUploadClick && (
+                  <button
+                    type="button"
+                    onClick={onUploadClick}
+                    className="transition-colors"
+                    style={{ height: 34, padding: '0 16px', borderRadius: 6, border: 'none', background: '#2c2416', color: '#f6f3ec', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#3d3020'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#2c2416'}
+                  >
+                    Upload photos
+                  </button>
+                )}
+                {onImportFromWeb && (!inAlbum || !hasImported) && (
+                  <button
+                    type="button"
+                    onClick={onImportFromWeb}
+                    className="transition-colors"
+                    style={{ height: 34, padding: '0 16px', borderRadius: 6, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: '#7a6b55', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Import from your other sites
+                  </button>
+                )}
+              </div>
+            </div>
+          )
         ) : (
           <div
             style={{
@@ -550,6 +610,11 @@ export default function PhotoGrid({
                     onAddToAlbum={onAddToAlbum}
                     onCaptionChange={onCaptionChange}
                     onImageClick={() => setLightboxIndex(index)}
+                    selected={!!selectedUrls?.has(asset.publicUrl)}
+                    selectionActive={selectionActive}
+                    onToggleSelect={() => onToggleSelect?.(asset.publicUrl)}
+                    selectedUrls={selectedUrls}
+                    deleting={!!deletingUrls?.has(asset.publicUrl)}
                   />
                 </div>
               );

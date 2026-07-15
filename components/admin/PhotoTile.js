@@ -81,7 +81,7 @@ function placeholderColor(assetId) {
   return SEPIA_PLACEHOLDERS[Math.abs(h) % SEPIA_PLACEHOLDERS.length];
 }
 
-export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick }) {
+export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddToAlbum, onCaptionChange, onImageClick, selected = false, selectionActive = false, onToggleSelect, selectedUrls, deleting = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [captionValue, setCaptionValue] = useState(asset.caption || "");
@@ -136,17 +136,68 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       className="relative rounded-lg overflow-hidden group w-full h-full flex flex-col"
       style={{
         background: '#f4efe8',
-        boxShadow: hovered ? TILE_SHADOW_HOVER : TILE_SHADOW,
+        boxShadow: selected
+          ? `0 0 0 2.5px #8b6f47, ${TILE_SHADOW}`
+          : (hovered ? TILE_SHADOW_HOVER : TILE_SHADOW),
         transition: 'box-shadow 0.18s ease',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {deleting && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 30, background: 'rgba(244,239,232,0.72)', backdropFilter: 'blur(1px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8b6f47', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <span className="animate-spin" style={{ width: 12, height: 12, border: '1.5px solid rgba(139,111,71,0.35)', borderTopColor: '#8b6f47', borderRadius: '50%', display: 'inline-block' }} />
+            Deleting…
+          </div>
+        </div>
+      )}
       <div
         className="relative flex-1 overflow-hidden cursor-pointer"
         style={{ background: placeholderColor(asset.assetId) }}
-        onClick={() => onImageClick && onImageClick()}
+        onClick={() => { if (selectionActive) { onToggleSelect?.(); } else { onImageClick && onImageClick(); } }}
+        draggable
+        onDragStart={(e) => {
+          // Drag the whole selection when this tile is part of it, else just this one.
+          const urls = (selected && selectedUrls && selectedUrls.size > 0) ? [...selectedUrls] : [imageUrl];
+          e.dataTransfer.setData('application/x-library-photos', JSON.stringify(urls));
+          e.dataTransfer.setData('application/x-photo-drag', JSON.stringify({ imageRefs: urls.map(u => ({ url: u })) }));
+          e.dataTransfer.setData('text/plain', imageUrl);
+          e.dataTransfer.effectAllowed = 'move';
+          // Small custom drag image so it doesn't cover the drop target.
+          const ghost = document.createElement('div');
+          ghost.style.cssText = 'position:absolute;top:-1000px;left:-1000px;width:52px;height:52px;border-radius:6px;overflow:hidden;box-shadow:0 6px 16px rgba(26,18,10,0.35);background:#d8cfc0';
+          const gimg = document.createElement('img');
+          gimg.src = thumbnailUrl;
+          gimg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+          ghost.appendChild(gimg);
+          if (urls.length > 1) {
+            const badge = document.createElement('div');
+            badge.textContent = String(urls.length);
+            badge.style.cssText = 'position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#2c2416;color:#f6f3ec;font:600 11px ui-monospace,Menlo,monospace;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.3)';
+            ghost.appendChild(badge);
+          }
+          document.body.appendChild(ghost);
+          e.dataTransfer.setDragImage(ghost, 26, 26);
+          setTimeout(() => { try { document.body.removeChild(ghost); } catch {} }, 0);
+        }}
       >
+        {/* Select checkbox — top-left, shown on hover or while selecting */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+          className={`absolute top-2 left-2 z-10 rounded-full flex items-center justify-center transition-opacity ${selectionActive || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          style={{
+            width: 20, height: 20,
+            background: selected ? '#8b6f47' : 'rgba(26,18,10,0.35)',
+            border: `1.5px solid ${selected ? '#8b6f47' : 'rgba(255,255,255,0.9)'}`,
+            backdropFilter: 'blur(3px)',
+          }}
+          aria-label={selected ? 'Deselect' : 'Select'}
+        >
+          {selected && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+          )}
+        </button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={thumbnailUrl}
@@ -253,7 +304,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
           ref={menuRef}
           className="absolute top-8 right-2 rounded-lg py-1 min-w-[180px] z-20"
           style={{
-            background: '#f9f6f1',
+            background: '#f0ebe3',
             boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.18)',
           }}
         >
@@ -261,19 +312,10 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
             onClick={handleCopy}
             className="w-full text-left px-3 py-2 text-sm transition-colors"
             style={{ color: '#5c4f3a' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.06)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             Copy URL
-          </button>
-          <button
-            onClick={handleAddToAlbum}
-            className="w-full text-left px-3 py-2 text-sm transition-colors"
-            style={{ color: '#5c4f3a' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            Add to another album
           </button>
           {inAlbum && (
             <>
@@ -285,7 +327,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(193,74,74,0.06)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                Remove from album
+                Remove from set
               </button>
             </>
           )}

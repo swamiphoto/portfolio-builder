@@ -71,7 +71,7 @@ export default function AddFromLibraryModal({ allAssets, currentAlbumAssets, onC
         <div className="flex-1 overflow-y-auto p-4">
           {filtered.length === 0 ? (
             <div className="text-center text-sm text-gray-400 py-8">
-              {search ? "No images match your search" : "All library images are already in this album"}
+              {search ? "No images match your search" : "All library photos are already in this set"}
             </div>
           ) : (
             <div className="columns-3 sm:columns-4 gap-2">

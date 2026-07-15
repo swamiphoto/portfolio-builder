@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react
 import { generatePageId } from '../../../common/siteConfig'
 import PageDesignPopover from './PageDesignPopover'
 import Tip from '../Tip'
+import { EditableInput, EditableTextarea } from './EditableText'
 
 function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
   const ref = useRef(null);
@@ -76,7 +77,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
           <div className="px-3 pb-3 pt-0 space-y-4">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Label</div>
-              <input
+              <EditableInput
                 className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                 placeholder="Link label"
                 value={page.title || ''}
@@ -85,7 +86,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
             </div>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-0.5" style={{ color: 'var(--text-muted)' }}>URL</div>
-              <input
+              <EditableInput
                 type="url"
                 autoFocus={!page.url}
                 className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
@@ -235,7 +236,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
           {/* Title */}
           <div>
             <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Title</div>
-            <input
+            <EditableInput
               className="bg-transparent outline-none w-full transition-colors placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
               placeholder="Untitled"
@@ -249,7 +250,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
           {/* Description */}
           <div>
             <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Description</div>
-            <AutoGrowTextarea
+            <EditableTextarea
               className="bg-transparent outline-none w-full transition-colors resize-none placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)', lineHeight: 1.4 }}
               placeholder="A few words about this page…"
