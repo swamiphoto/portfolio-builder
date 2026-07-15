@@ -780,6 +780,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   }, {});
 
   const sourceCounts = computeSourceCounts(allAssets);
+  // "Has imported before" — any photo whose source isn't a manual upload.
+  const hasImported = Object.keys(sourceCounts).some(p => p !== 'manual');
 
   const normalLayout = (
     <>
@@ -829,6 +831,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
         onDropFiles={handleDropUpload}
         dropUploading={dropUploading}
         deletingUrls={deletingUrls}
+        hasImported={hasImported}
         onUploadClick={() => setUploadOpen(true)}
         onImportFromWeb={() => setImportOpen(true)}
         printStore={printStore}

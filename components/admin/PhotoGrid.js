@@ -95,6 +95,7 @@ export default function PhotoGrid({
   onDropFiles,
   dropUploading = false,
   deletingUrls,
+  hasImported = false,
   onUploadClick,
   onImportFromWeb,
   onAddFromLibraryClick,
@@ -564,7 +565,7 @@ export default function PhotoGrid({
                     Upload photos
                   </button>
                 )}
-                {onImportFromWeb && (
+                {onImportFromWeb && (!inAlbum || !hasImported) && (
                   <button
                     type="button"
                     onClick={onImportFromWeb}
