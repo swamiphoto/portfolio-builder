@@ -523,9 +523,53 @@ export default function PhotoGrid({
         onScroll={handleScroll}
       >
         {processedAssets.length === 0 ? (
-          <div className="flex items-center justify-center h-40 text-sm" style={{ color: '#a8967a', fontFamily: MONO, fontSize: 11 }}>
-            {search ? "No photos match your search" : "No photos in this album"}
-          </div>
+          search ? (
+            <div className="flex items-center justify-center h-40 text-sm" style={{ color: '#a8967a', fontFamily: MONO, fontSize: 11 }}>
+              No photos match your search
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center h-full" style={{ minHeight: 340, padding: '40px 24px' }}>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: '#ede7dc', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#b3a488" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="14" rx="2.5" />
+                  <circle cx="8.5" cy="9" r="1.6" />
+                  <path d="M3 15l4.5-4a2 2 0 0 1 2.7 0l3.3 3a2 2 0 0 0 2.7 0l1.3-1.2a2 2 0 0 1 2.6 0L21 14" />
+                </svg>
+              </div>
+              <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 22, color: '#3f372c', marginBottom: 7 }}>
+                {inAlbum ? 'No photos in this set yet' : 'No photos yet'}
+              </div>
+              <div style={{ fontSize: 13.5, color: '#8b7d68', maxWidth: 360, lineHeight: 1.55, marginBottom: 20 }}>
+                Drag photos here from your computer{inAlbum ? ', or drag them in from All Photos' : ''}.
+              </div>
+              <div className="flex items-center gap-2.5">
+                {onUploadClick && (
+                  <button
+                    type="button"
+                    onClick={onUploadClick}
+                    className="transition-colors"
+                    style={{ height: 34, padding: '0 16px', borderRadius: 6, border: 'none', background: '#2c2416', color: '#f6f3ec', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#3d3020'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#2c2416'}
+                  >
+                    Upload photos
+                  </button>
+                )}
+                {onImportFromWeb && (
+                  <button
+                    type="button"
+                    onClick={onImportFromWeb}
+                    className="transition-colors"
+                    style={{ height: 34, padding: '0 16px', borderRadius: 6, border: '1px solid rgba(160,140,110,0.35)', background: 'transparent', color: '#7a6b55', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(44,36,22,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Import from web
+                  </button>
+                )}
+              </div>
+            </div>
+          )
         ) : (
           <div
             style={{
