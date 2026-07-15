@@ -3,9 +3,7 @@ import Tip from "./Tip";
 import { sourceLabel } from '@/common/import/sourceFilter';
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
-const LINE_COLOR = 'rgba(160,140,110,0.32)';
 const ROW_HEIGHT = 26;
-const GUTTER_WIDTH = 16;
 const RIGHT_PAD = 16; // matches section content paddingLeft for visual balance
 
 function Chevron({ open, size = 10 }) {
@@ -150,27 +148,17 @@ function SidebarItem({ active, label, count, onClick, capsLabel = false, indent 
   )
 }
 
-function TreeGutter({ type }) {
-  if (type === 'space') return <div style={{ width: GUTTER_WIDTH, flexShrink: 0 }} />
-  if (type === 'line') return (
-    <div style={{ width: GUTTER_WIDTH, flexShrink: 0, position: 'relative' }}>
-      <div style={{ position: 'absolute', left: 7, top: 0, bottom: 0, width: 1, background: LINE_COLOR }} />
-    </div>
-  )
-  const mid = Math.floor(ROW_HEIGHT / 2)
-  return (
-    <div style={{ width: GUTTER_WIDTH, flexShrink: 0, position: 'relative' }}>
-      <div style={{ position: 'absolute', left: 7, top: 0, height: mid, width: 1, background: LINE_COLOR }} />
-      {type === 'branch' && (
-        <div style={{ position: 'absolute', left: 7, top: mid, bottom: 0, width: 1, background: LINE_COLOR }} />
-      )}
-      <div style={{ position: 'absolute', left: 7, top: mid, width: 8, height: 1, background: LINE_COLOR }} />
-    </div>
-  )
-}
-
 function buildSetTree(keys) {
-  const sorted = [...keys].sort()
+  // Synthesize every ancestor prefix so intermediate folders always appear, even
+  // when they hold no assets of their own. Without this, a set like
+  // "landscapes/arizona/grand-canyon" whose parent "landscapes/arizona" isn't in
+  // the counts would render orphaned and over-indented.
+  const keySet = new Set(keys)
+  for (const key of keys) {
+    const parts = key.split('/')
+    for (let i = 1; i < parts.length; i++) keySet.add(parts.slice(0, i).join('/'))
+  }
+  const sorted = [...keySet].sort()
   const nodes = sorted.map((key) => {
     const parts = key.split('/')
     const depth = parts.length - 1
@@ -180,29 +168,6 @@ function buildSetTree(keys) {
   })
   for (const node of nodes) {
     node.hasChildren = nodes.some(n => n.parent === node.key)
-  }
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i]
-    let isLast = true
-    for (let j = i + 1; j < nodes.length; j++) {
-      const other = nodes[j]
-      if (other.depth < node.depth) break
-      if (other.parent === node.parent) { isLast = false; break }
-    }
-    node.isLast = isLast
-  }
-  for (const node of nodes) {
-    const gutters = []
-    for (let i = 0; i < node.depth; i++) {
-      if (i === node.depth - 1) {
-        gutters.push(node.isLast ? 'corner' : 'branch')
-      } else {
-        const ancestorKey = node.parts.slice(0, i + 1).join('/')
-        const anc = nodes.find(n => n.key === ancestorKey)
-        gutters.push(anc && !anc.isLast ? 'line' : 'space')
-      }
-    }
-    node.gutters = gutters
   }
   return nodes
 }
