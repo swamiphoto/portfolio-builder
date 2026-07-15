@@ -968,7 +968,7 @@ export default function AlbumSidebar({
                 active={selectedPage === p.id}
                 label={p.title}
                 count={p.imageUrls.length}
-                indent={12 + p.depth * 16}
+                indent={28 + p.depth * 16}
                 onClick={() => onSelectPage?.(selectedPage === p.id ? null : p.id)}
               />
             ))}
