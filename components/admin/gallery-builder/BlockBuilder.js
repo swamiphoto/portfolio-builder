@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect, forwardRef, 
 import { getSizedUrl } from "../../../common/imageUtils";
 import { useDrag } from '../../../common/dragContext';
 import Tip from "../Tip";
+import { EditableInput, EditableTextarea } from '../platform/EditableText';
 import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
@@ -355,7 +356,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
               <div className="px-3 pb-3 pt-3 space-y-5">
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Name</div>
-                  <input
+                  <EditableInput
                     className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder={namePlaceholder}
                     value={gallery.name || ""}
@@ -364,7 +365,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                 </div>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Slug</div>
-                  <input
+                  <EditableInput
                     className="border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] font-mono outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full"
                     placeholder="slug"
                     value={gallery.slug || ""}
@@ -373,7 +374,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                 </div>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Description</div>
-                  <AutoGrowTextarea
+                  <EditableTextarea
                     className="border-b border-[rgba(160,140,110,0.3)] pt-1.5 pb-1 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug w-full resize-none"
                     placeholder="A brief description…"
                     maxHeight={120}

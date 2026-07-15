@@ -4,6 +4,7 @@ import DomainPanel from './DomainPanel'
 import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { THEME_LIST } from '../../../common/themes'
+import { EditableInput } from './EditableText'
 
 export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
 
@@ -427,7 +428,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             onPickFromLibrary={onPickCoverImage}
           />
           <Field label="Heading">
-            <input
+            <EditableInput
               className={inputCls}
               style={inputStyle}
               placeholder={config.siteName || 'My Portfolio'}
@@ -436,7 +437,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             />
           </Field>
           <Field label="Subheading">
-            <input
+            <EditableInput
               className={inputCls}
               style={inputStyle}
               placeholder={config.tagline || 'Short description'}
@@ -445,7 +446,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             />
           </Field>
           <Field label="Button text">
-            <input
+            <EditableInput
               className={inputCls}
               style={inputStyle}
               placeholder="View my portfolio"
@@ -634,10 +635,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       {/* Identity */}
       <div style={{ padding: '14px 14px 16px', borderBottom: DIVIDER_STRONG }} className="space-y-5">
         <Field label="Site name">
-          <input className={inputCls} style={inputStyle} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
+          <EditableInput className={inputCls} style={inputStyle} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
         <Field label="Tagline">
-          <input className={inputCls} style={inputStyle} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
+          <EditableInput className={inputCls} style={inputStyle} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
         </Field>
 
         <Field label="Footer text">
