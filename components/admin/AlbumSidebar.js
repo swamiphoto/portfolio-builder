@@ -403,6 +403,8 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
     const slug = newSetName.trim()
     if (!slug) return
     onCreateSet(slug, parentKey ?? null)
+    // Keep the new subset in view: make sure its parent is expanded.
+    if (parentKey) setCollapsed(prev => { const next = new Set(prev); next.delete(parentKey); return next })
     setCreatingUnder(undefined)
     setNewSetName('')
   }
@@ -487,7 +489,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
                   }}
                   onBlur={() => setCreatingUnder(undefined)}
                   placeholder="name…"
-                  className="w-full text-sm px-2 py-1 rounded focus:outline-none"
+                  className="w-full text-sm px-2 py-1 rounded focus:outline-none placeholder:text-[#b0a490]"
                   style={{ border: '1px solid rgba(160,140,110,0.4)', background: '#f9f6f1', color: '#2c2416' }}
                 />
               </div>
@@ -509,7 +511,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
             }}
             onBlur={() => setCreatingUnder(undefined)}
             placeholder="name…"
-            className="w-full text-sm px-2 py-1 rounded focus:outline-none"
+            className="w-full text-sm px-2 py-1 rounded focus:outline-none placeholder:text-[#b0a490]"
             style={{ border: '1px solid rgba(160,140,110,0.4)', background: '#f9f6f1', color: '#2c2416' }}
           />
         </div>

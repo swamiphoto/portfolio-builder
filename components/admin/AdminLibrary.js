@@ -57,9 +57,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
   const [printStore, setPrintStore] = useState(null);
 
-  const fetchLibrary = useCallback(async () => {
+  const fetchLibrary = useCallback(async ({ quiet = false } = {}) => {
     try {
-      setLoading(true);
+      if (!quiet) setLoading(true);
       const res = await fetch("/api/admin/library");
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
@@ -68,7 +68,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -108,8 +108,8 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       body: JSON.stringify(newConfig),
     });
     if (!res.ok) throw new Error(`Save failed ${res.status}`);
-    // Refresh local state: update counts
-    await fetchLibrary();
+    // Refresh counts without blanking the whole library (keeps sidebar context).
+    await fetchLibrary({ quiet: true });
   }, [fetchLibrary]);
 
   const getFallbackAsset = useCallback((imageUrl) => {
@@ -335,7 +335,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
       alert("Delete failed");
       return;
     }
-    await fetchLibrary();
+    await fetchLibrary({ quiet: true });
   }, [fetchLibrary]);
 
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
