@@ -6,14 +6,9 @@ import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getP
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
-import GalleryPreview from '../../components/admin/gallery-builder/GalleryPreview'
 import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPickerModal'
 import AdminLibrary from '../../components/admin/AdminLibrary'
-import PageCover from '../../components/image-displays/page/PageCover'
-import SiteNav from '../../components/image-displays/page/SiteNav'
-import SiteFooter from '../../components/image-displays/page/SiteFooter'
-import ThemeProvider from '../../components/image-displays/ThemeProvider'
-import { getTheme } from '../../common/themes'
+import PagePreview from '../../components/admin/platform/PagePreview'
 import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
 import { defaultPage } from '../../common/siteConfig'
 import { useRouter } from 'next/router'
@@ -358,7 +353,7 @@ export default function AdminIndex() {
       siteConfig={siteConfig}
       libraryConfig={libraryConfig}
       saveStatus={saveStatus}
-      onPageChange={(updated) => updatePage(selectedPageId, updated)}
+      onPageChange={(updated) => updatePage(selectedPage.id, updated)}
       onUpdatePage={updatePage}
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
@@ -392,18 +387,6 @@ export default function AdminIndex() {
         </div>
       )
     } else {
-      const slideshowHref = (selectedPage.slideshow?.enabled && username)
-        ? `/sites/${username}/${selectedPage.slug || selectedPage.id}/slideshow`
-        : null
-      const theme = getTheme(siteConfig?.design?.theme)
-      const navVariant = theme.navStyle === 'left-rail'
-        ? 'left-rail'
-        : (selectedPage.cover?.imageUrl ? undefined : 'header-dropdown')
-      const isChildPage = !!selectedPage.parentId
-      const childPages = isChildPage
-        ? siteConfig.pages.filter(p => p.parentId === selectedPage.parentId && p.showInNav !== false)
-        : siteConfig.pages.filter(p => p.parentId === selectedPage.id && p.showInNav !== false)
-      const activeChildId = isChildPage ? selectedPage.id : null
       const isCoverPage = isCoverPageSelected
       if (isCoverPage) {
         const cover = siteConfig.cover || {}
@@ -434,49 +417,22 @@ export default function AdminIndex() {
       } else {
         content = (
           <div className="h-full flex flex-col">
-            {/* Preview frame */}
+            {/* Preview frame — driven by the deferred config so it never blocks input */}
             <div className="flex-1 min-h-0 flex justify-center">
               <div
                 ref={previewContainerRef}
                 className="overflow-y-auto w-full scroll-quiet"
               >
-                <ThemeProvider themeId={theme.id}>
-                <div className="theme-shell">
-                <SiteNav siteConfig={siteConfig} username={username} variant={navVariant} onPageClick={handleSelectPage} currentPageId={selectedPage?.id} />
-                <div className="theme-content">
-                <PageCover
-                  cover={selectedPage.cover}
-                  title={selectedPage.title}
-                  description={selectedPage.description}
-                  slideshowHref={slideshowHref}
-                  clientFeaturesEnabled={!!selectedPage.clientFeatures?.enabled}
-                  primaryButton={null}
-                />
-                <GalleryPreview
-                  gallery={{
-                    name: selectedPage.title,
-                    description: selectedPage.description || '',
-                    blocks: selectedPage.blocks || [],
-                  }}
-                  pages={siteConfig.pages}
-                  childPages={childPages}
-                  activeChildId={activeChildId}
+                <PagePreview
+                  config={siteConfig}
+                  pageId={selectedPage.id}
                   username={username}
                   assetsByUrl={assetsByUrl}
-                  printStore={siteConfig?.printStore}
-                  noWrap
-                  enableSlideshow={!!slideshowHref}
-                  onSlideshowClick={() => { if (slideshowHref) window.open(slideshowHref, '_blank', 'noopener,noreferrer') }}
-                  onChildPageClick={handleSelectPage}
-                  highlightedBlockIndex={hoveredBlockIndex}
+                  onPageClick={handleSelectPage}
                   onBlockHover={setHoveredBlockIndex}
+                  highlightedBlockIndex={hoveredBlockIndex}
                   onBlockClick={handleScrollSidebarToBlock}
-                  siteConfig={siteConfig}
                 />
-                <SiteFooter siteConfig={siteConfig} />
-                </div>
-                </div>
-                </ThemeProvider>
               </div>
             </div>
           </div>

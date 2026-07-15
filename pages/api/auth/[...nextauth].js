@@ -8,6 +8,9 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Always show Google's account chooser so signing out and back in doesn't
+      // silently reuse the last account (needed to switch between test accounts).
+      authorization: { params: { prompt: 'select_account' } },
     }),
   ],
   callbacks: {
