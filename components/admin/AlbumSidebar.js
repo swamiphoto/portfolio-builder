@@ -269,14 +269,14 @@ function SetRow({
       onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
     >
       {/* Indentation — one clean step per depth, no connector lines */}
-      <div style={{ width: 12 + node.depth * 16, flexShrink: 0 }} />
+      <div style={{ width: 12 + node.depth * 14, flexShrink: 0 }} />
 
       {/* Chevron for nodes with children; leaves get a matching spacer so labels align */}
       {node.hasChildren ? (
         <button
           onClick={(e) => { stop(e); onToggleExpand() }}
           className="flex-shrink-0 flex items-center justify-center rounded transition-colors"
-          style={{ width: 20, height: ROW_HEIGHT, color: '#a8967a' }}
+          style={{ width: 16, height: ROW_HEIGHT, color: '#a8967a' }}
           aria-label={expanded ? 'Collapse' : 'Expand'}
           onMouseEnter={e => { e.currentTarget.style.color = '#6b5d48' }}
           onMouseLeave={e => { e.currentTarget.style.color = '#a8967a' }}
@@ -284,16 +284,17 @@ function SetRow({
           <Chevron open={expanded} size={9} />
         </button>
       ) : (
-        <div style={{ width: 20, flexShrink: 0 }} />
+        <div style={{ width: 16, flexShrink: 0 }} />
       )}
 
-      {/* Label — fills row width */}
+      {/* Label — parents read heavier + darker so the hierarchy is legible at a glance */}
       <span
         className="flex-1 min-w-0 truncate"
         style={{
-          paddingLeft: 4, paddingRight: 8,
+          paddingLeft: 2, paddingRight: 8,
           fontSize: 13,
-          fontWeight: selected ? 500 : 400,
+          fontWeight: selected || node.hasChildren ? 500 : 400,
+          color: selected ? undefined : (node.hasChildren ? '#453b2d' : undefined),
         }}
       >
         {node.label}
@@ -510,7 +511,7 @@ function SetsSection({ counts, isSelected, onSelect, onCreateSet, onDeleteSet, o
               onDelete={() => onDeleteSet(node.key)}
             />
             {creatingUnder === node.key && (
-              <div style={{ paddingLeft: 12 + (node.depth + 1) * 16 + 24, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
+              <div style={{ paddingLeft: 12 + (node.depth + 1) * 14 + 18, paddingRight: RIGHT_PAD, paddingTop: 3, paddingBottom: 3 }}>
                 <input
                   autoFocus
                   type="text"
@@ -968,7 +969,7 @@ export default function AlbumSidebar({
                 active={selectedPage === p.id}
                 label={p.title}
                 count={p.imageUrls.length}
-                indent={28 + p.depth * 16}
+                indent={28 + p.depth * 14}
                 onClick={() => onSelectPage?.(selectedPage === p.id ? null : p.id)}
               />
             ))}
