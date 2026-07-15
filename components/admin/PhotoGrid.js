@@ -529,18 +529,25 @@ export default function PhotoGrid({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center h-full" style={{ minHeight: 340, padding: '40px 24px' }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: '#ede7dc', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#b3a488" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="14" rx="2.5" />
-                  <circle cx="8.5" cy="9" r="1.6" />
-                  <path d="M3 15l4.5-4a2 2 0 0 1 2.7 0l3.3 3a2 2 0 0 0 2.7 0l1.3-1.2a2 2 0 0 1 2.6 0L21 14" />
-                </svg>
-              </div>
+              <svg width="76" height="62" viewBox="0 0 76 62" fill="none" style={{ marginBottom: 18 }}>
+                {/* fanned stack — two cards behind, one in front */}
+                <g transform="rotate(-10 38 35)">
+                  <rect x="18" y="17" width="40" height="32" rx="4" fill="#e7dece" stroke="#d3c6b0" strokeWidth="1.2" />
+                </g>
+                <g transform="rotate(10 38 35)">
+                  <rect x="18" y="17" width="40" height="32" rx="4" fill="#ebe3d4" stroke="#d3c6b0" strokeWidth="1.2" />
+                </g>
+                <rect x="18" y="17" width="40" height="32" rx="4" fill="#f5f0e7" stroke="#cbbda4" strokeWidth="1.4" />
+                <circle cx="29" cy="28" r="2.7" fill="#c9b48f" />
+                <path d="M20 45 l8-8 a2 2 0 0 1 2.8 0 l5 5 a2 2 0 0 0 2.8 0 l4-4 a2 2 0 0 1 2.8 0 L56 45" stroke="#c9b48f" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
               <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 22, color: '#3f372c', marginBottom: 7 }}>
                 {inAlbum ? 'No photos in this set yet' : 'No photos yet'}
               </div>
-              <div style={{ fontSize: 13.5, color: '#8b7d68', maxWidth: 360, lineHeight: 1.55, marginBottom: 20 }}>
-                Drag photos here from your computer{inAlbum ? ', or drag them in from All Photos' : ''}.
+              <div style={{ fontSize: 13.5, color: '#8b7d68', maxWidth: 320, lineHeight: 1.55, marginBottom: 20, textWrap: 'balance' }}>
+                {inAlbum
+                  ? 'Drag photos in from your computer, or bring them over from All Photos.'
+                  : 'Drag photos in from your computer to get started.'}
               </div>
               <div className="flex items-center gap-2.5">
                 {onUploadClick && (
