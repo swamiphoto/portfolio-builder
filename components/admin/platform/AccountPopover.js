@@ -74,6 +74,22 @@ function Section({ label, children }) {
   )
 }
 
+function DangerItem({ title, desc, red, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left transition-colors"
+      style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(160,140,110,0.20)', marginTop: 6 }}
+      onMouseEnter={e => e.currentTarget.style.background = red ? 'rgba(193,74,74,0.06)' : 'rgba(160,140,110,0.09)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <div style={{ fontSize: 13, color: red ? '#c14a4a' : '#2c2416' }}>{title}</div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{desc}</div>
+    </button>
+  )
+}
+
 function Field({ label, children }) {
   return (
     <div>
@@ -112,6 +128,55 @@ const SOCIAL_LINKS = [
 export default function AccountPopover({ siteConfig, username, email, anchorEl, onUpdate, onClose, onSignOut }) {
   const [tab, setTab] = useState('profile')
   const [showBetaNote, setShowBetaNote] = useState(false)
+  const [danger, setDanger] = useState(null) // 'site' | 'library' | 'account'
+  const [confirmText, setConfirmText] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const DANGER = {
+    site: {
+      title: 'Reset site',
+      body: 'This deletes all pages and their layouts and leaves you with a blank home page. Your library photos are kept.',
+      confirmWord: null,
+      cta: 'Reset site',
+    },
+    library: {
+      title: 'Empty library',
+      body: 'This permanently deletes every photo you have uploaded. Any page still using those photos will show blanks.',
+      confirmWord: 'Delete',
+      cta: 'Delete all photos',
+    },
+    account: {
+      title: 'Delete account',
+      body: 'This permanently deletes your entire site, every uploaded photo, and your account. Your username is freed and you will be signed out. This cannot be undone.',
+      confirmWord: 'Delete',
+      cta: 'Delete account',
+    },
+  }
+  const dcfg = danger ? DANGER[danger] : null
+  const canConfirm = !!dcfg && (!dcfg.confirmWord || confirmText === dcfg.confirmWord) && !busy
+  const closeDanger = () => { if (!busy) { setDanger(null); setConfirmText('') } }
+
+  async function runDanger() {
+    if (!danger || !canConfirm) return
+    setBusy(true)
+    try {
+      if (danger === 'account') {
+        const r = await fetch('/api/admin/delete-account', { method: 'POST' })
+        if (!r.ok) throw new Error()
+        if (onSignOut) onSignOut(); else window.location.href = '/'
+        return
+      }
+      const r = await fetch('/api/admin/reset', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: danger }),
+      })
+      if (!r.ok) throw new Error()
+      window.location.reload()
+    } catch {
+      setBusy(false)
+      alert('Something went wrong. Please try again.')
+    }
+  }
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [usernameDraft, setUsernameDraft] = useState(username || '')
@@ -400,6 +465,12 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
             </span>
           </div>
         </Section>
+
+        <Section label="Start over">
+          <DangerItem title="Reset site" desc="Delete all pages, keep your photos" onClick={() => setDanger('site')} />
+          <DangerItem title="Empty library" desc="Permanently delete all uploaded photos" onClick={() => setDanger('library')} />
+          <DangerItem title="Delete account" desc="Permanently delete everything, free the username" red onClick={() => setDanger('account')} />
+        </Section>
       </>}
 
       {/* ── Billing tab ── */}
@@ -465,6 +536,51 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
                 {label}
               </button>
             ))}
+        </div>,
+        document.body
+      )}
+
+      {danger && typeof window !== 'undefined' && createPortal(
+        <div
+          onMouseDown={closeDanger}
+          style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(26,18,10,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{ width: 360, maxWidth: '100%', background: '#faf7f1', borderRadius: 12, boxShadow: '0 20px 60px rgba(26,18,10,0.35)', padding: '20px 20px 16px' }}
+          >
+            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 18, fontWeight: 500, color: danger === 'account' ? '#c14a4a' : '#2c2416', marginBottom: 8 }}>
+              {dcfg.title}
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>{dcfg.body}</p>
+            {dcfg.confirmWord && (
+              <div style={{ marginTop: 14 }}>
+                <label style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                  Type <b style={{ color: '#2c2416' }}>{dcfg.confirmWord}</b> to confirm
+                </label>
+                <input
+                  autoFocus
+                  value={confirmText}
+                  onChange={e => setConfirmText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && canConfirm) runDanger() }}
+                  style={{ width: '100%', marginTop: 5, padding: '7px 10px', fontSize: 13, borderRadius: 6, border: '1px solid rgba(160,140,110,0.35)', background: '#fff', outline: 'none' }}
+                />
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+              <button type="button" onClick={closeDanger} disabled={busy} style={{ fontSize: 12.5, color: 'var(--text-secondary)', padding: '7px 12px', cursor: busy ? 'default' : 'pointer' }}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={runDanger}
+                disabled={!canConfirm}
+                style={{ fontSize: 12.5, fontWeight: 500, padding: '7px 14px', borderRadius: 6, border: 'none', color: '#fff', background: canConfirm ? '#c14a4a' : 'rgba(193,74,74,0.4)', cursor: canConfirm ? 'pointer' : 'default' }}
+              >
+                {busy ? 'Working…' : dcfg.cta}
+              </button>
+            </div>
+          </div>
         </div>,
         document.body
       )}
