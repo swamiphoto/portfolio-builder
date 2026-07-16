@@ -1,4 +1,4 @@
-import { getBlockSpec } from './index'
+import { getBlockSpec, getTheme } from './index'
 
 // Legacy → theme-local variant id mapping, used only when a block has no
 // themeState entry (older configs). Keyed by block type.
@@ -10,6 +10,12 @@ const LEGACY = {
   testimonial: (b) => (b.variant === 2 ? 'quote-above' : 'photo-above'),
 }
 
+// Old theme-local ids (Manhattan) → shared base ids, for saved themeState values.
+const ALIASES = {
+  photo: { 'full-width': 'full-bleed', framed: 'centered' },
+  video: { 'full-width': 'full-bleed', framed: 'centered' },
+}
+
 export function resolveVariant(block, themeId) {
   const spec = getBlockSpec(themeId, block.type)
   if (!spec) return undefined
@@ -17,6 +23,9 @@ export function resolveVariant(block, themeId) {
 
   const saved = block.themeState?.[themeId]?.variant
   if (saved && validIds.includes(saved)) return saved
+
+  const aliased = saved && ALIASES[block.type]?.[saved]
+  if (aliased && validIds.includes(aliased)) return aliased
 
   // Legacy fallback: map old fields into a theme-local id, but only accept it
   // if it's valid for this theme (cross-theme legacy values fall through).
@@ -40,4 +49,18 @@ export function resolveAlign(block, themeId) {
   if (block.align) return block.align
   const spec = getBlockSpec(themeId, block.type)
   return spec?.defaultAlign || 'center'
+}
+
+export function resolveFont(block, themeId) {
+  const fonts = getTheme(themeId).tokens?.fonts || {}
+  const spec = getBlockSpec(themeId, block.type)
+  const slot = block.font || spec?.defaultFont || 'serif'
+  return fonts[slot] || fonts.serif || '"Cormorant Garamond", Georgia, serif'
+}
+
+export function resolveButtonStyle(block, themeId) {
+  const spec = getBlockSpec(themeId, block.type)
+  const valid = (spec?.buttonStyles || []).map((b) => b.id)
+  if (block.buttonStyle && valid.includes(block.buttonStyle)) return block.buttonStyle
+  return spec?.defaultButtonStyle || 'solid'
 }
