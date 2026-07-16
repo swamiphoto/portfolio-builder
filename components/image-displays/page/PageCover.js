@@ -22,9 +22,10 @@ function CtaButton({ label, href, style }) {
 
 export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [] }) {
   if (!cover || !cover.imageUrl) return null
-  // "full" fills the viewport; "partial" is a shorter band. Height is driven by
-  // cover.height regardless of variant so the toggle always changes the hero.
-  const isFull = cover.height !== 'partial'
+  // "full" fills the viewport; "partial" (the default) is a shorter band. Height
+  // is driven by cover.height regardless of variant so the toggle always changes
+  // the hero. Only an explicit "full" is full; anything else defaults to partial.
+  const isFull = cover.height === 'full'
   const heightClass = isFull ? 'h-screen' : 'h-[60vh]'
   const buttonStyle = cover.buttonStyle === 'outline' ? 'outline' : 'solid'
 
