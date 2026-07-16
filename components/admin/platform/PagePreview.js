@@ -53,6 +53,12 @@ function PagePreview({
     ? `/sites/${username}/${page.slug || page.id}/slideshow`
     : null
 
+  const hasCover = !!page.cover?.imageUrl
+  const linkBase = username ? `/sites/${username}` : ''
+  const coverNavLinks = hasCover
+    ? childPages.map(p => ({ label: p.title, href: `${linkBase}/${p.slug || p.id}` }))
+    : []
+
   // Stable identity: only changes when the actual content changes, so a hover
   // highlight (or any other re-render) doesn't reset the preview's debounce.
   const gallery = useMemo(() => ({
@@ -73,6 +79,7 @@ function PagePreview({
             slideshowHref={slideshowHref}
             clientFeaturesEnabled={!!page.clientFeatures?.enabled}
             primaryButton={null}
+            navLinks={coverNavLinks}
           />
           <GalleryPreview
             gallery={gallery}
@@ -90,6 +97,7 @@ function PagePreview({
             onBlockHover={onBlockHover}
             onBlockClick={onBlockClick}
             siteConfig={config}
+            hasCover={hasCover}
           />
           <SiteFooter siteConfig={config} />
         </div>

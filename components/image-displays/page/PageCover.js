@@ -4,7 +4,6 @@ import { getSizedUrl } from '../../../common/imageUtils'
 const BUTTON_STYLE_MAP = {
   solid: 'bg-white text-stone-900 hover:bg-stone-100',
   outline: 'border border-white text-white hover:bg-white/10',
-  ghost: 'text-white hover:bg-white/10',
 }
 
 function CtaButton({ label, href, style }) {
@@ -21,20 +20,18 @@ function CtaButton({ label, href, style }) {
   )
 }
 
-export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton }) {
+export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [] }) {
   if (!cover || !cover.imageUrl) return null
-  const heightClass = cover.height === 'partial' ? 'h-[60vh]' : 'h-[100vh]'
-  const isCover = cover.variant === 'cover'
-  const buttonStyle = cover.buttonStyle || 'solid'
+  // "full" fills the viewport; "partial" is a shorter band. Height is driven by
+  // cover.height regardless of variant so the toggle always changes the hero.
+  const isFull = cover.height !== 'partial'
+  const heightClass = isFull ? 'h-screen' : 'h-[60vh]'
+  const buttonStyle = cover.buttonStyle === 'outline' ? 'outline' : 'solid'
 
   const buttons = []
   if (primaryButton?.label) buttons.push(primaryButton)
-  if (slideshowHref) {
-    buttons.push({ label: 'Start Slideshow', href: slideshowHref })
-  }
-  if (clientFeaturesEnabled) {
-    buttons.push({ label: 'Client Login', href: '#client-login' })
-  }
+  if (slideshowHref) buttons.push({ label: 'View Music Show', href: slideshowHref })
+  if (clientFeaturesEnabled) buttons.push({ label: 'Client Login', href: '#client-login' })
 
   return (
     <section className={`relative w-full ${heightClass} overflow-hidden`}>
@@ -43,22 +40,23 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
         alt={cover.overlayText || title || ''}
         className="absolute inset-0 w-full h-full object-cover"
       />
-      {isCover && (
-        <div className="absolute inset-0 bg-black/30" />
-      )}
-      {isCover && (
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-6">
-          {title && <h2 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{title}</h2>}
-          {description && <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{description}</p>}
-          {buttons.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {buttons.map((btn, i) => (
-                <CtaButton key={i} label={btn.label} href={btn.href} style={buttonStyle} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-6">
+        {title && <h2 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{title}</h2>}
+        {description && <p className="text-base md:text-lg text-white/80 max-w-xl mb-6">{description}</p>}
+        {navLinks.length > 0 && (
+          <nav className="flex flex-wrap items-center justify-center gap-6 mb-8">
+            {navLinks.map((l, i) => (
+              <a key={i} href={l.href} className="text-sm text-white/90 hover:text-white transition-colors">{l.label}</a>
+            ))}
+          </nav>
+        )}
+        {buttons.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {buttons.map((btn, i) => <CtaButton key={i} label={btn.label} href={btn.href} style={buttonStyle} />)}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

@@ -1,7 +1,12 @@
 import React from "react";
 import { HiOutlineArrowLeft } from "react-icons/hi2";
 
-const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick, showChildNav = true }) => {
+const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick, showChildNav = true, suppressCover = false }) => {
+  // When the page has a cover image, PageCover renders the hero (title,
+  // description, sub-nav links, and music-show/client buttons) over the image,
+  // so this below-the-fold cover would duplicate all of it. Suppress it entirely.
+  if (suppressCover) return null
+
   const hasChildNav = showChildNav && childPages?.length > 0
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const hasActions = enableSlideshow || enableClientView

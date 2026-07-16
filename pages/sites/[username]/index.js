@@ -174,6 +174,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             siteConfig={siteConfig}
             printStore={printStore}
             themeId={theme.id}
+            hasCover={!!homePage?.cover?.imageUrl}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">

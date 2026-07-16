@@ -32,7 +32,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig }) {
+export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false }) {
   // Debounce the preview so a heavy re-render doesn't fire on every keystroke.
   // This only resets while the `gallery` prop keeps changing (i.e. while typing);
   // the parent (PagePreview) is memoized so unrelated re-renders, like autosave
@@ -107,10 +107,11 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
         siteConfig={siteConfig}
         printStore={printStore}
         themeId={themeId}
+        hasCover={hasCover}
       />
     </ThemeProvider>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig]);
+  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig, hasCover]);
 
   if (noWrap) return inner;
 

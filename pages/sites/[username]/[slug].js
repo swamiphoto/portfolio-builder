@@ -98,6 +98,10 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
     ? allPages.filter(p => p.parentId === page.parentId && p.showInNav !== false)
     : allPages.filter(p => p.parentId === page.id && p.showInNav !== false)
   const activeSubNavId = isChildPage ? page.id : null
+  const hasCover = !!page.cover?.imageUrl
+  const coverNavLinks = hasCover
+    ? subNavPages.map(p => ({ label: p.title, href: `${basePath}/${p.slug || p.id}` }))
+    : []
   return (
     <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative theme-shell">
@@ -123,6 +127,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           description={page.description}
           slideshowHref={slideshowHref}
           clientFeaturesEnabled={!!page.clientFeatures?.enabled}
+          navLinks={coverNavLinks}
         />
         <Gallery
           name={page.title}
@@ -138,6 +143,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           siteConfig={siteConfig}
           printStore={printStore}
           themeId={theme.id}
+          hasCover={hasCover}
         />
         <SiteFooter siteConfig={siteConfig} />
       </main>
