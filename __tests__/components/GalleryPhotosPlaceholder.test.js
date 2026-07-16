@@ -22,4 +22,12 @@ describe('photos empty-state preview mirrors the layout', () => {
     expect(el).not.toBeNull()
     expect(el.getAttribute('data-photos-placeholder')).toBe(variant)
   })
+
+  it('carries data-block-index so the editor can scroll/select an empty block', () => {
+    const block = { type: 'photos', images: [], imageUrls: [], themeState: { kyoto: { variant: 'masonry' } } }
+    const { container } = render(
+      <Gallery name="" description="" blocks={[block]} pages={[]} themeId="kyoto" showPlaceholders />
+    )
+    expect(container.querySelector('[data-block-index="0"]')).not.toBeNull()
+  })
 })

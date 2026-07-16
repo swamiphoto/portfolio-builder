@@ -184,7 +184,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const variantId = resolveVariant(block, themeId)
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block"><PlaceholderGrid variant={variantId} /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} /><WiggleLine /></div> : null;
               if (variantId === 'grid') {
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
@@ -213,7 +213,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "stacked": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block"><PlaceholderGrid variant="stacked" /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="stacked" /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
@@ -226,7 +226,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "masonry": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block"><PlaceholderGrid variant="masonry" /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
                   <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} />
@@ -236,7 +236,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             }
 
             case "text": {
-              if (!block.content) return showPlaceholders ? <div key={`block-${index}`}><PlaceholderText /><WiggleLine /></div> : null;
+              if (!block.content) return showPlaceholders ? <div key={`block-${index}`} data-block-index={index} {...hoverProps}><PlaceholderText /><WiggleLine /></div> : null;
               const variantId = resolveVariant(block, themeId)
               const v = { heading: 1, subheading: 2, body: 3, quote: 4 }[variantId] || 1
               const align = resolveAlign(block, themeId)
@@ -261,7 +261,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             }
 
             case "photo": {
-              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block"><PlaceholderPhoto /><WiggleLine /></div> : null;
+              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto /><WiggleLine /></div> : null;
               if (themeId === 'manhattan' && resolveVariant(block, themeId) === 'framed') {
                 return (
                   <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
