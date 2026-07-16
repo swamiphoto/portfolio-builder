@@ -1,6 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
 import ReactPlayer from "react-player";
 
+/**
+ * Extract a YouTube thumbnail URL from a YouTube video URL.
+ * Handles watch?v=, youtu.be/, and /embed/ forms.
+ * Returns null for non-YouTube URLs (no poster shown — acceptable).
+ */
+export function posterUrl(url) {
+  if (!url) return null;
+  const match = (url || "").match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/
+  );
+  if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  return null;
+}
+
 const VideoBlock = ({ url, caption, variant = 1 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const videoRef = useRef();
@@ -70,6 +84,13 @@ const VideoBlock = ({ url, caption, variant = 1 }) => {
         <>
           <div ref={videoRef} className={`w-full ${videoStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
+            {!isVisible && posterUrl(cleanUrl) && (
+              <img
+                src={posterUrl(cleanUrl)}
+                alt=""
+                className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
+              />
+            )}
           </div>
           <div className="w-full md:w-1/3 flex items-center">{caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0">{caption}</p>}</div>
         </>
@@ -78,6 +99,13 @@ const VideoBlock = ({ url, caption, variant = 1 }) => {
         <>
           <div ref={videoRef} className={`${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
+            {!isVisible && posterUrl(cleanUrl) && (
+              <img
+                src={posterUrl(cleanUrl)}
+                alt=""
+                className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
+              />
+            )}
           </div>
           {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto">{caption}</p>}
         </>
