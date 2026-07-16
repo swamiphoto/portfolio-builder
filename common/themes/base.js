@@ -42,11 +42,11 @@ export const baseBlocks = {
     fonts: [...FONT_SLOTS],
   },
   video: {
-    defaultVariant: 'full-bleed',
+    defaultVariant: 'centered',
     variants: [
       { id: 'full-bleed', label: 'Full bleed' },
       { id: 'centered', label: 'Centered' },
-      { id: 'side-by-side', label: 'Side by side' },
+      { id: 'side-by-side', label: 'Side' },
     ],
   },
   testimonial: {

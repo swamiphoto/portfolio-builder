@@ -6,7 +6,7 @@ const LEGACY = {
   photo: (b) => (b.layout === 'Centered' || b.variant === 2 ? 'centered' : 'full-bleed'),
   photos: (b) => (b.layout === 'masonry' ? 'masonry' : 'stacked'),
   text: (b) => ({ 1: 'heading', 2: 'subheading', 3: 'body', 4: 'quote' }[b.variant || 1] || 'heading'),
-  video: (b) => (b.layout === 'Centered' ? 'centered' : { 1: 'full-bleed', 2: 'centered', 3: 'side-by-side' }[b.variant || 1] || 'full-bleed'),
+  video: (b) => (b.layout === 'Centered' ? 'centered' : { 1: 'full-bleed', 2: 'centered', 3: 'side-by-side' }[b.variant] || 'centered'),
   testimonial: (b) => (b.variant === 2 ? 'quote-above' : 'photo-above'),
 }
 

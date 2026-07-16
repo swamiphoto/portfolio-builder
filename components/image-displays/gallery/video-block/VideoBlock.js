@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
 import ReactPlayer from "react-player";
 
 /**
  * Extract a YouTube thumbnail URL from a YouTube video URL.
  * Handles watch?v=, youtu.be/, and /embed/ forms.
- * Returns null for non-YouTube URLs (no poster shown — acceptable).
+ * Returns null for non-YouTube URLs (react-player fetches its own thumbnail).
  */
 export function posterUrl(url) {
   if (!url) return null;
@@ -15,97 +15,58 @@ export function posterUrl(url) {
   return null;
 }
 
-const VideoBlock = ({ url, caption, variant = 1 }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const videoRef = useRef();
-
-  // Normalize the pasted URL. react-player caches its "can I play this?" decision,
-  // so when the field goes from empty (or a half-typed URL) to a valid one we key
-  // the player on the URL to force a clean re-init — otherwise the preview stays blank.
+// variant: 'full-bleed' (1) | 'centered' (2) | 'side' (3)
+const VideoBlock = ({ url, caption, variant = 2 }) => {
+  // react-player caches its "can I play this?" decision, so key the player on the
+  // URL to force a clean re-init when it changes — otherwise the preview stays blank.
   const cleanUrl = (url || "").trim();
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.3 } // Trigger when 30% of the video is visible
-    );
-
-    if (videoRef.current) {
-      observer.observe(videoRef.current);
-    }
-
-    return () => {
-      if (videoRef.current) {
-        observer.unobserve(videoRef.current);
-      }
-    };
-  }, []);
-
   const videoContainerStyle = (() => {
-    if (variant === 1) return "relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen"; // Updated to match PhotoBlock approach
-    if (variant === 2) return "w-full md:w-[85%] mx-auto"; // Full width on mobile, centered at 85% on desktop
-    if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row gap-6"; // Full width on mobile
-    return "w-full"; // Default fallback
+    if (variant === 1) return "relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen"; // full bleed
+    if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row gap-6"; // side
+    return "w-full md:w-[85%] mx-auto"; // centered (default)
   })();
 
-  const videoStyle = "relative pb-[56.25%] overflow-hidden shadow-lg"; // Shared video styles
+  const videoStyle = "relative pb-[56.25%] overflow-hidden"; // 16:9
   const videoWrapperStyle = variant === 1 ? "rounded-none shadow-none" : "rounded-3xl shadow-lg";
 
-  // Update the ReactPlayer components in both variants
+  // light mode: shows the real thumbnail with a play button, loads + plays on click.
+  // Reliable in every context (no IntersectionObserver autoplay that never fires in
+  // the editor preview). Falls back to react-player's own thumbnail for non-YouTube.
   const playerProps = {
     url: cleanUrl,
     className: "absolute top-0 left-0 w-full h-full",
     width: "100%",
     height: "100%",
     controls: true,
-    playing: isVisible,
-    loop: true,
-    muted: true, // Muted is required for autoplay
+    light: posterUrl(cleanUrl) || true,
+    playing: true, // start playing once the light preview is clicked
     config: {
       youtube: {
-        playerVars: {
-          modestbranding: 1,
-          rel: 0,
-          showinfo: 0,
-          fs: 1,
-          iv_load_policy: 3,
-          disablekb: 1,
-        },
+        playerVars: { modestbranding: 1, rel: 0, fs: 1, iv_load_policy: 3 },
       },
     },
   };
 
+  if (!cleanUrl) return null;
+
   return (
     <div className={`${videoContainerStyle} ${variant === 1 ? "ml-0 overflow-x-hidden" : ""}`}>
       {variant === 3 ? (
-        // Variant 3: Video on the left, caption on the right
+        // Side: video on the left, caption on the right
         <>
-          <div ref={videoRef} className={`w-full ${videoStyle}`}>
+          <div className={`w-full ${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
-            {!isVisible && posterUrl(cleanUrl) && (
-              <img
-                src={posterUrl(cleanUrl)}
-                alt=""
-                className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
-              />
-            )}
           </div>
-          <div className="w-full md:w-1/3 flex items-center">{caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0">{caption}</p>}</div>
+          <div className="w-full md:w-1/3 flex items-center">
+            {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0">{caption}</p>}
+          </div>
         </>
       ) : (
-        // Variant 1 and 2: Common layout
+        // Full-bleed and centered
         <>
-          <div ref={videoRef} className={`${videoStyle} ${videoWrapperStyle}`}>
+          <div className={`${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
-            {!isVisible && posterUrl(cleanUrl) && (
-              <img
-                src={posterUrl(cleanUrl)}
-                alt=""
-                className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
-              />
-            )}
           </div>
           {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto">{caption}</p>}
         </>

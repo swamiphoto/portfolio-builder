@@ -25,23 +25,68 @@ const PLACEHOLDER_ASPECTS = [
   'aspect-[3/4]', 'aspect-[4/3]', 'aspect-[3/4]',
 ]
 
+function PlaceholderIcon() {
+  return (
+    <svg className="w-10 h-10" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
+      <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="33" cy="18" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4 32 l10-10 a2 2 0 0 1 2.8 0l8 8 a2 2 0 0 0 2.8 0l4-4 a2 2 0 0 1 2.8 0L44 34" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function PlaceholderTile({ aspectClass = 'aspect-[4/3]' }) {
   return (
     <div className={`${aspectClass} w-full rounded-3xl flex items-center justify-center select-none mb-5`} style={{ background: '#ede7dc' }}>
-      <svg className="w-10 h-10" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
-        <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="33" cy="18" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M4 32 l10-10 a2 2 0 0 1 2.8 0l8 8 a2 2 0 0 0 2.8 0l4-4 a2 2 0 0 1 2.8 0L44 34" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      </svg>
+      <PlaceholderIcon />
     </div>
   )
 }
 
-function PlaceholderGrid({ count = 6 }) {
+// The empty-state preview shown on the right. It mirrors the block's chosen
+// layout so the photographer sees what a photos block will look like before
+// adding any images.
+function PlaceholderGrid({ variant = 'masonry' }) {
+  if (variant === 'stacked') {
+    return (
+      <div className="w-full max-w-3xl mx-auto p-4 md:p-8" data-photos-placeholder="stacked">
+        <PlaceholderTile aspectClass="aspect-[3/2]" />
+        <div className="flex gap-5">
+          <div className="flex-1"><PlaceholderTile aspectClass="aspect-[3/4]" /></div>
+          <div className="flex-1"><PlaceholderTile aspectClass="aspect-[3/4]" /></div>
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'square') {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 md:p-8" data-photos-placeholder="square">
+        <div className="grid grid-cols-2 gap-5">
+          {[0, 1, 2, 3].map((i) => <PlaceholderTile key={i} aspectClass="aspect-square" />)}
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'grid') {
+    // Justified row: equal height, widths vary by aspect (portraits narrower).
+    const ratios = [1.5, 0.7, 1.2, 1.0]
+    return (
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-8" data-photos-placeholder="grid">
+        <div className="flex gap-5" style={{ height: 200 }}>
+          {ratios.map((ar, i) => (
+            <div key={i} className="h-full rounded-3xl flex items-center justify-center select-none" style={{ background: '#ede7dc', flexGrow: ar, flexBasis: 0 }}>
+              <PlaceholderIcon />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  // masonry (default)
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-8">
+    <div className="w-full max-w-6xl mx-auto p-4 md:p-8" data-photos-placeholder="masonry">
       <div style={{ columnCount: 3, columnGap: '1.25rem' }}>
-        {PLACEHOLDER_ASPECTS.slice(0, count).map((aspect, i) => (
+        {PLACEHOLDER_ASPECTS.map((aspect, i) => (
           <div key={i} style={{ breakInside: 'avoid' }}>
             <PlaceholderTile aspectClass={aspect} />
           </div>
@@ -69,7 +114,7 @@ function PlaceholderText() {
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
@@ -125,7 +170,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   return (
     <PrintStoreProvider printStore={printStore} username={username}>
     <div className="gallery-container">
-      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} suppressCover={hasCover} />
+      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} suppressCover={hasCover} coverHeight={coverHeight} buttonStyle={coverButtonStyle} />
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {
@@ -139,7 +184,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const variantId = resolveVariant(block, themeId)
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block"><PlaceholderGrid /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block"><PlaceholderGrid variant={variantId} /><WiggleLine /></div> : null;
               if (variantId === 'grid') {
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
@@ -168,7 +213,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "stacked": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block"><PlaceholderGrid /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block"><PlaceholderGrid variant="stacked" /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
@@ -181,7 +226,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "masonry": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block"><PlaceholderGrid /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block"><PlaceholderGrid variant="masonry" /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
                   <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} />
@@ -242,7 +287,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "video": {
               const variantId = resolveVariant(block, themeId)
-              const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 1
+              const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 2
               return (
                 <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}>
                   <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} />
