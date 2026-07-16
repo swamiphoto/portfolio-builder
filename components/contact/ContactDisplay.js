@@ -37,7 +37,7 @@ function Field({ label, children }) {
   )
 }
 
-export default function ContactDisplay({ heading, subheading, buttonText, toEmail }) {
+export default function ContactDisplay({ heading, subheading, buttonText, toEmail, align = 'left', buttonStyle = 'solid' }) {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
 
@@ -75,8 +75,12 @@ export default function ContactDisplay({ heading, subheading, buttonText, toEmai
     )
   }
 
+  const solidBtn = { background: '#2c2416', color: '#f6f3ec', border: '1px solid #2c2416' }
+  const outlineBtn = { background: 'transparent', color: '#2c2416', border: '1px solid #2c2416' }
+  const btnStyle = buttonStyle === 'outline' ? outlineBtn : solidBtn
+
   return (
-    <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '3rem 2rem' }}>
+    <div data-contact-wrap style={{ maxWidth: '32rem', margin: '0 auto', padding: '3rem 2rem', textAlign: align }}>
       {heading && (
         <h2 style={{ fontFamily: SERIF, fontSize: '2rem', fontWeight: 300, color: '#1a1410', lineHeight: 1.15, marginBottom: subheading ? '0.75rem' : '2rem', marginTop: 0 }}>
           {heading}
@@ -88,7 +92,7 @@ export default function ContactDisplay({ heading, subheading, buttonText, toEmai
         </p>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
         <Field label="Your name">
           <input
             required
@@ -142,20 +146,20 @@ export default function ContactDisplay({ heading, subheading, buttonText, toEmai
 
         <button
           type="submit"
+          data-btn-style={buttonStyle}
           disabled={status === 'sending'}
           style={{
             alignSelf: 'flex-start',
             padding: '10px 24px',
-            background: status === 'sending' ? 'rgba(44,36,22,0.5)' : '#2c2416',
-            color: '#f6f3ec',
-            border: 'none',
             borderRadius: 4,
             fontSize: 13,
             fontWeight: 500,
             fontFamily: 'inherit',
             letterSpacing: '0.02em',
             cursor: status === 'sending' ? 'wait' : 'pointer',
-            transition: 'background 150ms',
+            transition: 'background 150ms, opacity 150ms',
+            opacity: status === 'sending' ? 0.5 : 1,
+            ...btnStyle,
           }}
         >
           {status === 'sending' ? 'Sending…' : (buttonText || 'Send message')}

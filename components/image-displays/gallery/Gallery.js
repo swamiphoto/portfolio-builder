@@ -12,7 +12,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign, resolveFont } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle } from "../../../common/themes/variants";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
@@ -379,6 +379,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     subheading={block.subheading}
                     buttonText={block.buttonText}
                     toEmail={siteConfig?.contact?.email}
+                    align={resolveAlign(block, themeId)}
+                    buttonStyle={resolveButtonStyle(block, themeId)}
                   />
                 </div>
               );
