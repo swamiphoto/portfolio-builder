@@ -3,7 +3,7 @@ import PopoverShell from './PopoverShell'
 import { DesignSection, PillToggle } from './designControls'
 
 export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl }) {
-  const cover = page.cover || { imageUrl: '', height: 'full', overlayText: '', variant: 'showcase', buttonStyle: 'solid' }
+  const cover = page.cover || { imageUrl: '', height: 'partial', overlayText: '', variant: 'showcase', buttonStyle: 'solid' }
 
   function update(patch) {
     onUpdate({ ...page, cover: { ...cover, ...patch } })
@@ -15,7 +15,7 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={240} title="Page Design">
       <DesignSection label="Cover height">
         <PillToggle
-          value={cover.height || 'full'}
+          value={cover.height || 'partial'}
           onChange={(v) => update({ height: v })}
           options={[
             { value: 'full',    label: 'Full'    },
@@ -32,7 +32,6 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
             options={[
               { value: 'solid',   label: 'Solid'   },
               { value: 'outline', label: 'Outline' },
-              { value: 'ghost',   label: 'Ghost'   },
             ]}
           />
         </DesignSection>
