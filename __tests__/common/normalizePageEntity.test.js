@@ -44,7 +44,7 @@ describe('normalizePageEntity — back-compat migration', () => {
     const p = normalizePageEntity({ cover: { imageUrl: 'https://x/c.jpg' }, blocks: [] })
     expect(p.cover).toEqual({
       imageUrl: 'https://x/c.jpg',
-      height: 'full',
+      height: 'partial',
       overlayText: '',
       variant: 'showcase',
       buttons: [],
@@ -52,9 +52,9 @@ describe('normalizePageEntity — back-compat migration', () => {
     })
   })
 
-  it('clamps unknown cover.height values to "full"', () => {
+  it('clamps unknown cover.height values to "partial"', () => {
     const p = normalizePageEntity({ cover: { imageUrl: 'x', height: 'weird' }, blocks: [] })
-    expect(p.cover.height).toBe('full')
+    expect(p.cover.height).toBe('partial')
   })
 
   it('preserves cover.height="partial"', () => {

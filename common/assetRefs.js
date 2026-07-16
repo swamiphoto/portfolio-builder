@@ -1,7 +1,7 @@
 import { slugify } from './pageUtils'
 
 const BUTTON_TYPES = ['url', 'slideshow', 'client-login']
-const BUTTON_STYLES = ['solid', 'outline', 'ghost']
+const BUTTON_STYLES = ['solid', 'outline']
 
 const normalizeBtn = (b) => {
   if (!b?.label) return null
@@ -245,11 +245,12 @@ export function normalizePageEntity(page) {
       buttons = []
     }
 
-    const buttonStyle = BUTTON_STYLES.includes(cover.buttonStyle) ? cover.buttonStyle : 'solid'
+    const rawStyle = cover.buttonStyle === 'ghost' ? 'outline' : cover.buttonStyle
+    const buttonStyle = BUTTON_STYLES.includes(rawStyle) ? rawStyle : 'solid'
 
     cover = {
       imageUrl: cover.imageUrl || "",
-      height: cover.height === "partial" ? "partial" : "full",
+      height: cover.height === "full" ? "full" : "partial",
       overlayText: cover.overlayText || "",
       variant: cover.variant === "cover" ? "cover" : "showcase",
       buttons,
