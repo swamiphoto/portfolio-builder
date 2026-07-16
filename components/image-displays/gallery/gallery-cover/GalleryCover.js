@@ -1,7 +1,7 @@
 import React from "react";
 import { HiOutlineArrowLeft } from "react-icons/hi2";
 
-const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick, showChildNav = true, suppressCover = false }) => {
+const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick, showChildNav = true, suppressCover = false, coverHeight = 'partial', buttonStyle = 'solid' }) => {
   // When the page has a cover image, PageCover renders the hero (title,
   // description, sub-nav links, and music-show/client buttons) over the image,
   // so this below-the-fold cover would duplicate all of it. Suppress it entirely.
@@ -14,8 +14,19 @@ const GalleryCover = ({ name, description, enableSlideshow = false, enableClient
 
   if (!hasContent) return null
 
+  // The image-less hero honors the same Full/Partial toggle as the image hero:
+  // Full fills the viewport with the content vertically centered; Partial is the
+  // compact band.
+  const isFull = coverHeight === 'full'
+  const containerCls = isFull
+    ? 'relative flex flex-col items-center justify-center text-gray-900 px-4 md:px-20 min-h-screen'
+    : 'relative flex flex-col items-center justify-center text-gray-900 px-4 pt-8 pb-6 md:px-20 md:pt-14 md:pb-8'
+  const musicBtnCls = buttonStyle === 'outline'
+    ? 'bg-transparent text-gray-900 border border-gray-900 hover:bg-gray-900/5'
+    : 'bg-gray-900 text-white border border-gray-900 hover:bg-gray-800'
+
   return (
-    <div className="relative flex flex-col items-center justify-center text-gray-900 px-4 pt-8 pb-6 md:px-20 md:pt-14 md:pb-8">
+    <div className={containerCls}>
       <div className="text-center px-6">
         {name && <h1 className="text-4xl md:text-5xl font-serif2 mb-4">{name}</h1>}
         {description && <p className="font-serif text-[20px] md:text-[22px] font-normal leading-8 max-w-3xl mx-auto mb-6 text-gray-900" style={{ letterSpacing: '-0.6px' }}>{description}</p>}
@@ -41,7 +52,7 @@ const GalleryCover = ({ name, description, enableSlideshow = false, enableClient
         {hasActions && (
           <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0 mt-6 w-full sm:w-auto">
             {enableSlideshow && (
-              <button onClick={onSlideshowClick} className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-gray-900 text-white text-base sm:text-lg font-serif font-light hover:bg-gray-800 transition tracking-wide">
+              <button onClick={onSlideshowClick} className={`w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg font-serif font-light transition tracking-wide ${musicBtnCls}`}>
                 View Music Show
               </button>
             )}

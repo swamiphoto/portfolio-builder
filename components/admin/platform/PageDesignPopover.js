@@ -13,7 +13,7 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={240} title="Page Design">
-      <DesignSection label="Cover height">
+      <DesignSection label="Hero height">
         <PillToggle
           value={cover.height || 'partial'}
           onChange={(v) => update({ height: v })}

@@ -142,6 +142,8 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
           siteConfig={siteConfig}
           printStore={printStore}
+          coverHeight={page.cover?.height || 'partial'}
+          coverButtonStyle={page.cover?.buttonStyle || 'solid'}
           themeId={theme.id}
           hasCover={hasCover}
         />

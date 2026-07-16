@@ -98,6 +98,8 @@ function PagePreview({
             onBlockClick={onBlockClick}
             siteConfig={config}
             hasCover={hasCover}
+            coverHeight={page.cover?.height || 'partial'}
+            coverButtonStyle={page.cover?.buttonStyle || 'solid'}
           />
           <SiteFooter siteConfig={config} />
         </div>

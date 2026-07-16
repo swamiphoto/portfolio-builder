@@ -175,6 +175,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             printStore={printStore}
             themeId={theme.id}
             hasCover={!!homePage?.cover?.imageUrl}
+            coverHeight={homePage?.cover?.height || 'partial'}
+            coverButtonStyle={homePage?.cover?.buttonStyle || 'solid'}
           />
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">
