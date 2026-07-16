@@ -7,7 +7,7 @@ export default function SquareGallery({ images = [], onImageClick }) {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {images.map((img, i) => {
           const rawUrl = getImageRefUrl(img) || img.url || ''
-          const src = getSizedUrl(rawUrl, 'medium') || rawUrl
+          const src = getSizedUrl(rawUrl, 'display') || rawUrl
           return (
             <div
               key={i}
