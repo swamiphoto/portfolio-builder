@@ -15,6 +15,7 @@ import { PrintStoreProvider } from "../print/PrintStoreContext";
 import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
+import GridGallery from "./grid-gallery/GridGallery";
 import FramedPhoto from "./photo-block/FramedPhoto";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -138,10 +139,12 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block"><PlaceholderGrid /><WiggleLine /></div> : null;
-              if (themeId === 'manhattan' && resolveVariant(block, themeId) === 'grid') {
+              if (variantId === 'grid') {
                 return (
-                  <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
-                    <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} />
+                  <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
+                    {themeId === 'manhattan'
+                      ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} />
+                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
                   </div>
                 );
               }
