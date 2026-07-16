@@ -24,6 +24,28 @@ function StatusBadge({ status }) {
   )
 }
 
+// A read-only labeled detail row (registrar, nameservers, connected date…).
+function InfoRow({ field, value, mono, children }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'baseline', gap: 10, padding: '6px 2px',
+      borderTop: '1px solid rgba(160,140,110,0.14)',
+    }}>
+      <span style={{ ...label, width: 78, flexShrink: 0 }}>{field}</span>
+      <span style={{ fontFamily: mono ? MONO : 'inherit', fontSize: 12, color: '#2c2416', flex: 1, wordBreak: 'break-all', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+        {children ?? value}
+      </span>
+    </div>
+  )
+}
+
+function formatDate(iso) {
+  if (!iso) return null
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  } catch { return null }
+}
+
 // One labeled DNS field with a one-click copy.
 function CopyRow({ field, value }) {
   const [copied, setCopied] = useState(false)
@@ -56,6 +78,7 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [provider, setProvider] = useState(null)
+  const [nameservers, setNameservers] = useState(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null)
   const [searching, setSearching] = useState(false)
@@ -96,13 +119,18 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
     } finally { setSearching(false) }
   }
 
-  // While a domain is pending, detect its DNS provider for tailored guidance.
+  // Detect the domain's DNS provider + nameservers — for tailored setup guidance
+  // while pending, and as reassuring "here's where it lives" detail once active.
   useEffect(() => {
-    if (!cd || cd.status === 'active') { setProvider(null); return }
+    if (!cd) { setProvider(null); setNameservers(null); return }
     let alive = true
     fetch(`/api/admin/domain/provider?name=${encodeURIComponent(cd.name)}`)
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (alive && d?.provider) setProvider(d.provider) })
+      .then((d) => {
+        if (!alive || !d) return
+        setProvider(d.provider?.name ? d.provider : null)
+        setNameservers(Array.isArray(d.nameservers) && d.nameservers.length ? d.nameservers : null)
+      })
       .catch(() => {})
     return () => { alive = false }
   }, [cd?.name, cd?.status])
@@ -144,15 +172,42 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
           </form>
         )}
 
-        {cd && cd.status === 'active' && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span style={{ fontFamily: MONO, fontSize: 12.5, color: '#2c2416' }}>{cd.name}</span>
-              <StatusBadge status={cd.status} />
+        {cd && cd.status === 'active' && (() => {
+          const rec = (cd.verification || [])[0]
+          const pointsTo = rec ? `${rec.value}` : null
+          const connectedOn = formatDate(cd.verifiedAt || cd.addedAt)
+          return (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span style={{ fontFamily: MONO, fontSize: 12.5, color: '#2c2416' }}>{cd.name}</span>
+                <a href={`https://${cd.name}`} target="_blank" rel="noreferrer"
+                  style={{ fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>Visit&nbsp;→</a>
+              </div>
+
+              {/* Where this domain actually lives — reassurance you can go manage it. */}
+              <div>
+                {provider?.name && (
+                  <InfoRow field="Registrar">
+                    {provider.name}
+                    {provider.dnsUrl && (
+                      <>{'  '}
+                        <a href={provider.dnsUrl} target="_blank" rel="noreferrer"
+                          style={{ color: '#5c4f3a', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
+                          Manage DNS →
+                        </a>
+                      </>
+                    )}
+                  </InfoRow>
+                )}
+                {nameservers && <InfoRow field="Nameservers" value={nameservers.join('\n')} mono />}
+                {pointsTo && <InfoRow field="Points to" value={pointsTo} mono />}
+                {connectedOn && <InfoRow field="Connected" value={connectedOn} />}
+              </div>
+
+              {removeBtn}
             </div>
-            {removeBtn}
-          </div>
-        )}
+          )
+        })()}
 
         {cd && cd.status !== 'active' && (
           <div className="space-y-3">

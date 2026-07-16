@@ -38,7 +38,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   if (variants.length <= 1 && !showAlignment) return null
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={220} title="Design">
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" maxWidth="calc(100vw - 24px)" title="Design">
       {variants.length > 1 && (
         <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
           <PillToggle value={current} onChange={handleVariantChange} options={variants} />

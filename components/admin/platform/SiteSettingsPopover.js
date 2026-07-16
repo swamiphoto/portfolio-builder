@@ -404,7 +404,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   const logoType = config.logoType || 'sitename'
 
   const brushButton = (
-    <HeaderIconButton innerRef={brushRef} onClick={() => setDesignOpen(v => !v)} title="Design options">
+    <HeaderIconButton innerRef={brushRef} onClick={() => setDesignOpen(v => !v)} title="Design">
       <BrushIcon />
     </HeaderIconButton>
   )
@@ -723,7 +723,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
-            Configure <ChevronRight />
+            Customize <ChevronRight />
           </button>
         )}
       </div>

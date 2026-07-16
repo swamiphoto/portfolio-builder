@@ -54,8 +54,8 @@ const PRIMARY_TYPES = [
   },
   {
     type: "page-gallery",
-    label: "Pages",
-    desc: "Thumbnail links to other pages",
+    label: "Page links",
+    desc: "Links to other pages in your site.",
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="8" height="8" rx="1.5" />

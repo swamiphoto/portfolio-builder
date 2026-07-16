@@ -51,6 +51,32 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     [debouncedGallery, assetsByUrl]
   );
 
+  // Page-gallery blocks render thumbnails of *other* pages, so their crop/focal
+  // point lives in `pages`, not in this gallery's own blocks. `inner` is memoized
+  // without `pages` (it changes every keystroke — the edited page lives in it — and
+  // would defeat the debounce). Instead track a cheap signature of just the thumbnail
+  // + focal data: it changes on reposition but is stable while typing, so live
+  // repositioning updates the preview immediately without thrashing per keystroke.
+  const pagesThumbSig = useMemo(
+    () => (pages || []).map(p => {
+      const t = p.thumbnail;
+      const fp = t?.focalPoint;
+      return `${p.id}:${t?.imageUrl || ''}:${t?.useCover ? 1 : 0}:${fp ? `${fp.x},${fp.y}` : ''}`;
+    }).join('|'),
+    [pages]
+  );
+
+  // The inline sub-nav (child links under the cover) also lives inside the memoized
+  // <Gallery> and reads its style + child pages from siteConfig/props, not from the
+  // edited gallery's blocks. Track a signature so switching sub-nav variant, or
+  // adding/renaming/reordering child pages, refreshes the preview live — otherwise
+  // the memo keeps a stale copy and variant 2's links never appear.
+  const childNavSig = useMemo(
+    () => `${siteConfig?.design?.subNavStyle || 'dropdown'}|${activeChildId || ''}|` +
+      (childPages || []).map(p => `${p.id}:${p.title || ''}`).join(','),
+    [siteConfig?.design?.subNavStyle, activeChildId, childPages]
+  );
+
   // The heavy part: drawing every block/image. Memoize it on the DEBOUNCED
   // content so per-keystroke re-renders of the parent (hero title/description,
   // hover, autosave status) reuse this exact element and React skips re-running
@@ -84,12 +110,12 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
       />
     </ThemeProvider>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [debouncedGallery, resolvedBlocks, themeId, printStore]);
+  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig]);
 
   if (noWrap) return inner;
 
   return (
-    <div className="flex-1 h-full min-w-0 overflow-y-auto bg-white">
+    <div className="flex-1 h-full min-w-0 overflow-y-auto [overflow-x:clip] bg-white">
       {inner}
     </div>
   );

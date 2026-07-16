@@ -421,7 +421,7 @@ export default function AdminIndex() {
             <div className="flex-1 min-h-0 flex justify-center">
               <div
                 ref={previewContainerRef}
-                className="overflow-y-auto w-full scroll-quiet"
+                className="overflow-y-auto [overflow-x:clip] w-full scroll-quiet"
               >
                 <PagePreview
                   config={siteConfig}

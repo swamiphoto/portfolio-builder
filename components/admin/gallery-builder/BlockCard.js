@@ -19,7 +19,7 @@ const TYPE_LABELS = {
   masonry: "Photos",
   text: "Text",
   video: "Video",
-  "page-gallery": "Page Gallery",
+  "page-gallery": "Page links",
   contact: "Contact",
   testimonial: "Testimonial",
 };
@@ -46,6 +46,126 @@ function PaintbrushIcon() {
       <path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
     </svg>
   );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
+    </svg>
+  )
+}
+
+function RepositionIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 2v12M2 8h12M8 2L6 4M8 2l2 2M8 14l-2-2M8 14l2-2M2 8l2-2M2 8l2 2M14 8l-2-2M14 8l-2 2" />
+    </svg>
+  )
+}
+
+// The "…" action menu that lives on an image thumbnail. Items are passed in so a
+// photo thumb can offer just Remove while a croppable one also offers Reposition.
+// Each item's onClick receives the trigger element, so Reposition can anchor its
+// popover to the button. The dropdown flips up when it would fall off-screen.
+function ThumbMenu({ items, tone = 'dark', size = 20 }) {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState(null)
+  const btnRef = useRef(null)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => {
+      if (menuRef.current?.contains(e.target) || btnRef.current?.contains(e.target)) return
+      setOpen(false)
+    }
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) } }
+    document.addEventListener('mousedown', onDown, true)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown, true); window.removeEventListener('keydown', onKey) }
+  }, [open])
+
+  function toggle(e) {
+    e.stopPropagation(); e.preventDefault()
+    if (open) { setOpen(false); return }
+    const rect = btnRef.current.getBoundingClientRect()
+    const menuH = items.length * 34 + 8
+    const belowSpace = window.innerHeight - rect.bottom - 8
+    const aboveSpace = rect.top - 8
+    const openUp = belowSpace < menuH && aboveSpace > belowSpace
+    setPos({
+      right: Math.max(8, window.innerWidth - rect.right),
+      ...(openUp ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+    })
+    setOpen(true)
+  }
+
+  const dark = tone === 'dark'
+  // Inline background beats a Tailwind :hover, so drive the hover state by hand.
+  const baseBg = dark
+    ? (open ? 'rgba(0,0,0,0.74)' : 'rgba(0,0,0,0.5)')
+    : (open ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.9)')
+  const hoverBg = dark ? 'rgba(0,0,0,0.74)' : 'rgba(0,0,0,0.08)'
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        draggable={false}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={toggle}
+        onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = baseBg }}
+        title="Options"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: 'none', cursor: 'pointer', padding: 0,
+          width: size, height: Math.round(size * 0.8),
+          borderRadius: 3,
+          background: baseBg,
+          color: dark ? '#fff' : '#3a362f',
+          boxShadow: dark ? 'none' : '0 1px 2px rgba(0,0,0,0.15)',
+          transition: 'background 120ms',
+        }}
+      >
+        <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor">
+          <circle cx="1.5" cy="1.5" r="1" /><circle cx="5.5" cy="1.5" r="1" /><circle cx="9.5" cy="1.5" r="1" />
+        </svg>
+      </button>
+      {open && pos && (
+        <div
+          ref={menuRef}
+          className="fixed z-[9999] rounded-md overflow-hidden whitespace-nowrap"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            ...(pos.right !== undefined ? { right: pos.right } : {}),
+            ...(pos.top !== undefined ? { top: pos.top } : {}),
+            ...(pos.bottom !== undefined ? { bottom: pos.bottom } : {}),
+            minWidth: 150,
+            background: 'var(--popover)',
+            boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+            padding: '4px 0',
+          }}
+        >
+          {items.map((it, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); it.onClick(btnRef.current) }}
+              className="w-full text-left flex items-center gap-2 transition-colors"
+              style={{ padding: '7px 12px', fontSize: 12.5, color: it.danger ? '#c14a4a' : 'var(--text-secondary)', fontWeight: 500, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = it.danger ? 'rgba(193,74,74,0.08)' : 'rgba(160,140,110,0.10)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              {it.icon}
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  )
 }
 
 function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected, isDragging }) {
@@ -81,12 +201,12 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected, 
           {caption}
         </div>
       )}
-      <button
-        onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        className="absolute top-0.5 right-0.5 bg-black/50 text-white text-[9px] px-1 py-0.5 opacity-0 group-hover/thumb:opacity-100 transition-opacity leading-none z-10"
-      >
-        ×
-      </button>
+      <div className="absolute top-0.5 right-0.5 opacity-0 group-hover/thumb:opacity-100 transition-opacity z-10">
+        <ThumbMenu
+          size={22}
+          items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onRemove() }]}
+        />
+      </div>
     </div>
   )
 }
@@ -145,6 +265,7 @@ function BlockCard({
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [selectedIndices, setSelectedIndices] = useState(new Set());
   const [photoDropHover, setPhotoDropHover] = useState(false);
+  const [photoAspect, setPhotoAspect] = useState(null); // natural w/h of the single-photo thumbnail
   const [gridDropHover, setGridDropHover] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchorRect, setPickerAnchorRect] = useState(null);
@@ -422,7 +543,18 @@ function BlockCard({
                   setShowMenu((v) => {
                     if (!v && menuBtnRef.current) {
                       const rect = menuBtnRef.current.getBoundingClientRect();
-                      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                      // Flip the menu upward when there isn't room below — otherwise
+                      // its lower items fall off the bottom of the screen.
+                      const MENU_H = 210;
+                      const belowSpace = window.innerHeight - rect.bottom - 8;
+                      const aboveSpace = rect.top - 8;
+                      const openUp = belowSpace < MENU_H && aboveSpace > belowSpace;
+                      setMenuPos({
+                        right: window.innerWidth - rect.right,
+                        ...(openUp
+                          ? { bottom: window.innerHeight - rect.top + 4 }
+                          : { top: rect.bottom + 4 }),
+                      });
                     }
                     return !v;
                   });
@@ -443,7 +575,8 @@ function BlockCard({
                   ref={menuRef}
                   className="fixed z-[9999] rounded-md overflow-hidden whitespace-nowrap"
                   style={{
-                    top: menuPos.top,
+                    ...(menuPos.top !== undefined ? { top: menuPos.top } : {}),
+                    ...(menuPos.bottom !== undefined ? { bottom: menuPos.bottom } : {}),
                     right: menuPos.right,
                     minWidth: 152,
                     background: 'var(--popover)',
@@ -598,8 +731,13 @@ function BlockCard({
               >
                 {block.imageUrl ? (
                   <div
-                    className={`relative group/img cursor-grab transition-opacity ${photoDropHover ? 'opacity-40' : ''}`}
-                    style={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 1px 4px rgba(26,18,10,0.10)' }}
+                    className={`relative group/img cursor-grab transition-opacity aspect-video flex items-center justify-center ${photoDropHover ? 'opacity-40' : ''}`}
+                    style={{
+                      borderRadius: 3, overflow: 'hidden', boxShadow: '0 1px 4px rgba(26,18,10,0.10)',
+                      // Keep the block a landscape box; a portrait shot sits inside it fully
+                      // visible (centered, sides empty) instead of being cropped to fill.
+                      ...(photoAspect !== null && photoAspect < 1 ? { background: '#ece4d2' } : {}),
+                    }}
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
@@ -614,18 +752,22 @@ function BlockCard({
                     onClick={() => setLightboxIndex(0)}
                   >
                     <img
+                      key={block.imageUrl}
                       src={getSizedUrl(block.imageUrl, 'thumbnail')}
                       alt=""
-                      className="w-full aspect-video object-cover pointer-events-none"
+                      onLoad={(e) => setPhotoAspect(e.target.naturalWidth / e.target.naturalHeight)}
+                      className={photoAspect !== null && photoAspect < 1
+                        ? "h-full w-auto object-contain pointer-events-none"
+                        : "w-full h-full object-cover pointer-events-none"}
                       onError={(e) => { if (e.target.src !== block.imageUrl) e.target.src = block.imageUrl; }}
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-100 pointer-events-none" />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onUpdate({ ...block, imageUrl: "" }); }}
-                      className="absolute top-1.5 right-1.5 bg-black/50 text-white text-[10px] px-2 py-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
-                    >
-                      × Remove
-                    </button>
+                    <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity z-10">
+                      <ThumbMenu
+                        size={22}
+                        items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "" }) }]}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div
@@ -1005,37 +1147,32 @@ function BlockCard({
                       {isBefore && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, top: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
                       {isAfter && <div aria-hidden style={{ position: 'absolute', left: 4, right: 4, bottom: -1, height: 2, background: '#8b6f47', borderRadius: 2, zIndex: 2, pointerEvents: 'none' }} />}
                       <div style={{
+                        position: 'relative',
                         width: 36, height: 36, borderRadius: 3, flexShrink: 0,
                         background: thumb ? undefined : pageThumbGradient(p.id),
                         boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)',
-                        overflow: thumb ? 'hidden' : undefined,
+                        overflow: 'hidden',
                       }}>
                         {thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />}
+                        <div
+                          onMouseDown={e => e.stopPropagation()}
+                          style={{ position: 'absolute', top: 2, right: 2, opacity: pgHoverIdx === idx ? 1 : 0, transition: 'opacity 120ms' }}
+                        >
+                          <ThumbMenu
+                            size={18}
+                            items={[
+                              // Page-gallery thumbnails are always cropped to a fixed frame, so
+                              // reposition is relevant here (unlike edge-to-edge photo blocks).
+                              ...(thumb ? [{ label: 'Reposition', icon: <RepositionIcon />, onClick: (el) => setFocalEditor({ pageId: p.id, anchorEl: el }) }] : []),
+                              { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, pageIds: (block.pageIds || []).filter(id => id !== p.id) }) },
+                            ]}
+                          />
+                        </div>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12.5, color: '#1d1b17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
                         {p.description && <div style={{ fontSize: 11, color: '#9e9788', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{p.description}</div>}
                       </div>
-                      <button
-                        type="button"
-                        draggable={false}
-                        onMouseDown={e => { e.stopPropagation() }}
-                        onClick={e => { e.stopPropagation(); setFocalEditor({ pageId: p.id, anchorEl: e.currentTarget }) }}
-                        title="Reposition thumbnail"
-                        style={{
-                          flexShrink: 0,
-                          width: 22, height: 22,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer',
-                          color: '#9e9788',
-                          opacity: pgHoverIdx === idx ? 1 : 0,
-                          transition: 'opacity 120ms',
-                        }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M8 2v12M2 8h12M8 2L6 4M8 2l2 2M8 14l-2-2M8 14l2-2M2 8l2-2M2 8l2 2M14 8l-2-2M14 8l-2 2" />
-                        </svg>
-                      </button>
                     </div>
                   )
                 })}

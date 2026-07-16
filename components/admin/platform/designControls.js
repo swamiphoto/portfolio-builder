@@ -68,6 +68,8 @@ export function PillToggle({ value, onChange, options }) {
               border: 'none',
               cursor: 'pointer',
               textAlign: 'center',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
               boxShadow: active ? '0 1px 2px rgba(60,40,15,0.14), 0 0 0 0.5px rgba(60,40,15,0.08)' : 'none',
             }}
           >

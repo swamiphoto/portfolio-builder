@@ -426,6 +426,10 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
   const initialSelectedIds = useRef(block.pageIds || []).current
   const initialParentPageId = useRef(block.parentPageId || '').current
 
+  // First-time = the block has no pages configured yet, so the primary action
+  // reads "Add N pages". Once pages exist, editing the selection reads "Save".
+  const isFirstTime = initialMode === 'manual' && initialSelectedIds.length === 0
+
   const [mode, setMode] = useState(initialMode)
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds)
   const [parentPageId, setParentPageId] = useState(initialParentPageId)
@@ -648,7 +652,10 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         </div>
         <button
           onClick={onClose}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, color: C.textMuted, display: 'flex', alignItems: 'center' }}
+          aria-label="Close"
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', width: 24, height: 24, borderRadius: 4, color: C.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 150ms' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
             <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
@@ -711,25 +718,28 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
                     setDropdownTriggerRect(rect)
                     setDropdownOpen(o => !o)
                   }}
+                  onMouseEnter={e => { e.currentTarget.style.borderBottomColor = C.text }}
+                  onMouseLeave={e => { e.currentTarget.style.borderBottomColor = dropdownOpen ? C.text : C.borderStrong }}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    background: dropdownOpen ? C.hover2 : 'transparent',
-                    border: 'none', padding: '2px 6px 3px', cursor: 'pointer',
-                    fontFamily: 'inherit', fontSize: 13.5,
-                    color: C.text, fontWeight: 500,
-                    borderRadius: 4,
-                    borderBottom: `1px dashed ${C.borderStrong}`,
                     alignSelf: 'flex-start',
-                    transition: 'background 100ms',
+                    display: 'inline-flex', alignItems: 'center', gap: 10,
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: `1px solid ${dropdownOpen ? C.text : C.borderStrong}`,
+                    padding: '0 2px 6px', cursor: 'pointer',
+                    fontFamily: 'inherit', fontSize: 13,
+                    color: parentPage ? C.text : C.textMuted, fontWeight: 500,
+                    textAlign: 'left', outline: 'none',
+                    transition: 'border-color 0.15s',
                   }}
                 >
-                  {parentPage?.title || 'Choose a parent page'}
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                    <polyline points="6 9 12 15 18 9" />
+                  {parentPage?.title || 'Choose a page'}
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke={C.textMuted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                    <path d="M4 6l4 4 4-4" />
                   </svg>
                 </button>
                 <p style={{ margin: 0, fontSize: 12.5, color: C.textBody, lineHeight: 1.5, fontFamily: SERIF, fontStyle: 'italic' }}>
-                  Any page nested inside that page will show up here. Add a nested page there, it shows up here. Reorder them there, this updates too.
+                  All pages nested under {parentPage ? <strong style={{ fontStyle: 'normal', fontWeight: 600 }}>{parentPage.title}</strong> : 'this parent page'} will show up as links, and update automatically as you add or remove pages.
                 </p>
               </div>
 
@@ -796,9 +806,11 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
         >
           {mode === 'auto'
             ? 'Apply rule'
-            : selectedIds.length > 0
-              ? `Apply ${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
-              : 'Apply'}
+            : selectedIds.length === 0
+              ? 'Add pages'
+              : isFirstTime
+                ? `Add ${selectedIds.length} ${selectedIds.length === 1 ? 'page' : 'pages'}`
+                : 'Save'}
         </button>
       </div>
     </div>

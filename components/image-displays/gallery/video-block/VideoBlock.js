@@ -5,6 +5,11 @@ const VideoBlock = ({ url, caption, variant = 1 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const videoRef = useRef();
 
+  // Normalize the pasted URL. react-player caches its "can I play this?" decision,
+  // so when the field goes from empty (or a half-typed URL) to a valid one we key
+  // the player on the URL to force a clean re-init — otherwise the preview stays blank.
+  const cleanUrl = (url || "").trim();
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -36,7 +41,7 @@ const VideoBlock = ({ url, caption, variant = 1 }) => {
 
   // Update the ReactPlayer components in both variants
   const playerProps = {
-    url: url,
+    url: cleanUrl,
     className: "absolute top-0 left-0 w-full h-full",
     width: "100%",
     height: "100%",
@@ -64,7 +69,7 @@ const VideoBlock = ({ url, caption, variant = 1 }) => {
         // Variant 3: Video on the left, caption on the right
         <>
           <div ref={videoRef} className={`w-full ${videoStyle}`}>
-            <ReactPlayer {...playerProps} />
+            <ReactPlayer key={cleanUrl} {...playerProps} />
           </div>
           <div className="w-full md:w-1/3 flex items-center">{caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0">{caption}</p>}</div>
         </>
@@ -72,7 +77,7 @@ const VideoBlock = ({ url, caption, variant = 1 }) => {
         // Variant 1 and 2: Common layout
         <>
           <div ref={videoRef} className={`${videoStyle} ${videoWrapperStyle}`}>
-            <ReactPlayer {...playerProps} />
+            <ReactPlayer key={cleanUrl} {...playerProps} />
           </div>
           {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto">{caption}</p>}
         </>

@@ -1,22 +1,30 @@
 import { useRef, useEffect, useState } from 'react'
 
-export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onClose, width = 320, title, children, headerRight, onBack, placement = 'below', draggable = false }) {
+export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onClose, width = 320, maxWidth, title, children, headerRight, onBack, placement = 'below', draggable = false }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
   const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 })
   const dragStateRef = useRef(null)
 
+  // A non-numeric width (e.g. 'max-content') lets the popover grow to fit its
+  // contents so options never wrap; positioning uses the measured rendered width.
+  const fixedWidth = typeof width === 'number'
+
   useEffect(() => {
     const rect = anchorRectProp || (anchorEl ? anchorEl.getBoundingClientRect() : null)
     if (!rect) return
 
+    // Numeric width positions exactly; auto-width popovers measure their rendered
+    // box (they render hidden-but-laid-out until `pos` is set) so clamping is correct.
+    const w = fixedWidth ? width : (ref.current?.offsetWidth || 320)
+
     if (placement === 'right') {
       const rightSpace = window.innerWidth - rect.right - 8
       const leftSpace = rect.left - 8
-      const openLeft = rightSpace < width && leftSpace > rightSpace
+      const openLeft = rightSpace < w && leftSpace > rightSpace
       const left = openLeft
-        ? Math.max(8, rect.left - width - 8)
-        : Math.min(rect.right + 8, window.innerWidth - width - 8)
+        ? Math.max(8, rect.left - w - 8)
+        : Math.min(rect.right + 8, window.innerWidth - w - 8)
       const maxHeight = Math.max(200, window.innerHeight - 16)
       const top = Math.max(8, Math.min(rect.top, window.innerHeight - maxHeight - 8))
       setPos({ left, top, maxHeight })
@@ -27,7 +35,7 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
     const belowSpace = window.innerHeight - rect.bottom - 8
     const aboveSpace = rect.top - 8
     const shouldOpenUp = belowSpace < 320 && aboveSpace > belowSpace
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8))
     if (shouldOpenUp) {
       const bottom = window.innerHeight - rect.top + 6
       const maxHeight = Math.max(180, aboveSpace)
@@ -83,6 +91,7 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
       className="fixed z-[9999] overflow-auto rounded-xl"
       style={{
         width,
+        maxWidth,
         maxHeight: pos?.maxHeight ?? '80vh',
         left: (pos?.left ?? 0) + dragDelta.x,
         ...(pos?.openUp

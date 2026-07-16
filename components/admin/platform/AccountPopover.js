@@ -96,7 +96,7 @@ function DangerItem({ title, desc, onClick }) {
     >
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontSize: 13, color: '#2c2416' }}>{title}</span>
-        <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{desc}</span>
+        <span style={{ display: 'block', fontSize: 11.5, lineHeight: 1.3, color: 'var(--text-muted)', marginTop: 1 }}>{desc}</span>
       </span>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
         <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />

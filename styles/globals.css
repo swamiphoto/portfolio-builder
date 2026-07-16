@@ -68,6 +68,15 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Full-bleed blocks span 100vw, which includes the vertical scrollbar's width —
+   a tall (e.g. portrait) full-bleed photo forces that scrollbar and then overflows
+   horizontally. Clip at the root so it never scrolls sideways. `clip` (not `hidden`)
+   keeps position: sticky working for nav/headers. */
+html,
+body {
+  overflow-x: clip;
+}
+
 a {
   @apply hover:underline;
 }

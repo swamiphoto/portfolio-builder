@@ -37,11 +37,15 @@ it('connects a domain and shows the DNS record as copyable fields', async () => 
   expect(onUpdate).toHaveBeenCalled()
 })
 
-it('shows a "Connected" badge for a verified domain', () => {
+it('shows a connected domain with a visit link, details, and no "Connected" badge or lock', () => {
   mockFetch({})
   render(<DomainPanel siteConfig={{ customDomain: { name: 'a.com', status: 'active', verification: [] } }} username="jane" onUpdate={() => {}} />)
-  expect(screen.getByText(/connected/i)).toBeInTheDocument()
-  expect(screen.queryByText(/^active$/i)).not.toBeInTheDocument()
+  expect(screen.getByText('a.com')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /visit/i })).toHaveAttribute('href', 'https://a.com')
+  // The lock icon + "Connected" label are gone; managing the domain is still possible.
+  expect(screen.queryByText(/connected/i)).not.toBeInTheDocument()
+  expect(screen.queryByText('🔒')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /remove domain/i })).toBeInTheDocument()
 })
 
 it('searches for a new domain and renders an available result with a registrar link', async () => {
