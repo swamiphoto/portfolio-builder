@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient, applyFocalPointToPage } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
+import { resolveVariant } from '../../../common/themes/variants';
 import { useDrag } from '../../../common/dragContext';
 import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
@@ -791,20 +792,52 @@ function BlockCard({
               {blockImageRefs.length === 0 ? (
                 <div
                   onClick={onAddPhotos}
-                  className={`grid grid-cols-3 cursor-pointer transition-opacity ${gridDropHover ? 'opacity-60' : ''}`}
-                  style={{ gap: 1, background: '#e8dfcd', borderRadius: 2, overflow: 'hidden' }}
+                  className={`cursor-pointer transition-opacity ${gridDropHover ? 'opacity-60' : ''}`}
+                  style={{ borderRadius: 2, overflow: 'hidden' }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
                 >
                   {(() => {
-                    const SEPIA_PLACEHOLDERS = ['#9a8466', '#a08a68', '#8a7252', '#c4a987', '#7a6244', '#5a4a36', '#a08a68', '#9a8466', '#c4a987']
-                    return SEPIA_PLACEHOLDERS.map((c, i) => (
-                      <div
-                        key={i}
-                        className="aspect-square transition-opacity"
-                        style={{ background: c, opacity: 0.85 }}
-                        onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
-                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.85' }}
-                      />
-                    ))
+                    const layout = resolveVariant(block, themeId)
+                    const Tile = ({ style }) => (
+                      <div style={{ background: '#c4a987', borderRadius: 4, ...style }} />
+                    )
+                    const containerStyle = { background: '#e8dfcd', padding: 10, borderRadius: 6 }
+                    if (layout === 'stacked') {
+                      return (
+                        <div style={{ ...containerStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <Tile style={{ height: 110 }} />
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <Tile style={{ flex: 1, height: 150 }} />
+                            <Tile style={{ flex: 1, height: 150 }} />
+                          </div>
+                        </div>
+                      )
+                    }
+                    if (layout === 'square') {
+                      return (
+                        <div style={{ ...containerStyle, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                          {Array.from({ length: 6 }).map((_, i) => <Tile key={i} style={{ aspectRatio: '1 / 1' }} />)}
+                        </div>
+                      )
+                    }
+                    if (layout === 'grid') {
+                      return (
+                        <div style={{ ...containerStyle, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {[1.6, 0.7, 1.2, 1.0, 1.5, 0.8].map((ar, i) => (
+                            <Tile key={i} style={{ flexGrow: ar, flexBasis: `${ar * 80}px`, height: 100 }} />
+                          ))}
+                        </div>
+                      )
+                    }
+                    // masonry (default, also covers 'masonry' explicitly)
+                    return (
+                      <div style={{ ...containerStyle, columnCount: 3, columnGap: 8 }}>
+                        {[100, 140, 85, 130, 95, 120].map((h, i) => (
+                          <Tile key={i} style={{ height: h, marginBottom: 8, breakInside: 'avoid', display: 'block', width: '100%' }} />
+                        ))}
+                      </div>
+                    )
                   })()}
                 </div>
               ) : (
