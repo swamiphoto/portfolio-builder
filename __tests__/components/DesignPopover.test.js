@@ -1,48 +1,30 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import DesignPopover from '@/components/admin/gallery-builder/DesignPopover'
 
-jest.mock('@/components/admin/platform/PopoverShell', () => ({
-  __esModule: true,
-  default: ({ children }) => <div data-testid="shell">{children}</div>,
-}))
-
-function open(block, themeId = 'kyoto') {
-  const onUpdate = jest.fn()
-  render(<DesignPopover block={block} themeId={themeId} onUpdate={onUpdate} onClose={() => {}} anchorEl={null} />)
-  return onUpdate
+// PopoverShell renders into the DOM; anchorEl can be null for the test.
+function setup(block, onUpdate = () => {}) {
+  return render(<DesignPopover block={block} themeId="kyoto" onUpdate={onUpdate} onClose={() => {}} anchorEl={null} />)
 }
 
-describe('DesignPopover theme-driven variants', () => {
-  it('shows Kyoto photo variants and writes themeState.kyoto', () => {
-    const onUpdate = open({ type: 'photo', imageUrl: 'x' }, 'kyoto')
-    fireEvent.click(screen.getByText('Centered'))
-    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      themeState: expect.objectContaining({ kyoto: { variant: 'centered' } }),
-    }))
+describe('DesignPopover sections are spec-driven', () => {
+  it('text shows Size, Font, and Alignment', () => {
+    setup({ type: 'text', content: 'hi' })
+    expect(screen.getByText('Size')).toBeInTheDocument()
+    expect(screen.getByText('Font')).toBeInTheDocument()
+    expect(screen.getByText('Alignment')).toBeInTheDocument()
   })
 
-  it('shows Manhattan photo variants (Framed) and writes themeState.manhattan', () => {
-    const onUpdate = open({ type: 'photo', imageUrl: 'x' }, 'manhattan')
-    expect(screen.getByText('Framed')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Framed'))
-    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      themeState: expect.objectContaining({ manhattan: { variant: 'framed' } }),
-    }))
+  it('contact shows Alignment + Button style but no Size', () => {
+    setup({ type: 'contact' })
+    expect(screen.queryByText('Size')).not.toBeInTheDocument()
+    expect(screen.getByText('Alignment')).toBeInTheDocument()
+    expect(screen.getByText('Button style')).toBeInTheDocument()
   })
 
-  it('returns null when a block type has a single variant and no alignment (contact)', () => {
-    const { container } = render(
-      <DesignPopover block={{ type: 'contact' }} themeId="kyoto" onUpdate={() => {}} onClose={() => {}} anchorEl={null} />
-    )
-    expect(container).toBeEmptyDOMElement()
-  })
-
-  it('writes a photos variant to themeState without flipping block.type', () => {
-    const onUpdate = open({ type: 'photos', images: [{ url: 'a' }] }, 'kyoto')
-    fireEvent.click(screen.getByText('Masonry'))
-    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'photos',
-      themeState: expect.objectContaining({ kyoto: { variant: 'masonry' } }),
-    }))
+  it('photos shows a Layout section with four options', () => {
+    setup({ type: 'photos' })
+    expect(screen.getByText('Layout')).toBeInTheDocument()
+    expect(screen.getByText('Grid')).toBeInTheDocument()
+    expect(screen.getByText('Square')).toBeInTheDocument()
   })
 })

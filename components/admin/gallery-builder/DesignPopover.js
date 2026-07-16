@@ -1,56 +1,58 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle } from '../../../common/themes/variants'
 
 const IconAlignLeft = () => (
   <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
-    <rect x="0" y="0"   width="14" height="2" rx="1" fill="currentColor"/>
-    <rect x="0" y="4"   width="9"  height="2" rx="1" fill="currentColor"/>
-    <rect x="0" y="8"   width="11" height="2" rx="1" fill="currentColor"/>
+    <rect x="0" y="0" width="14" height="2" rx="1" fill="currentColor"/>
+    <rect x="0" y="4" width="9" height="2" rx="1" fill="currentColor"/>
+    <rect x="0" y="8" width="11" height="2" rx="1" fill="currentColor"/>
   </svg>
 )
 const IconAlignCenter = () => (
   <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
-    <rect x="0" y="0"   width="14" height="2" rx="1" fill="currentColor"/>
-    <rect x="2.5" y="4" width="9"  height="2" rx="1" fill="currentColor"/>
-    <rect x="1" y="8"   width="12" height="2" rx="1" fill="currentColor"/>
+    <rect x="0" y="0" width="14" height="2" rx="1" fill="currentColor"/>
+    <rect x="2.5" y="4" width="9" height="2" rx="1" fill="currentColor"/>
+    <rect x="1" y="8" width="12" height="2" rx="1" fill="currentColor"/>
   </svg>
 )
-
-const ALIGN_OPTIONS = [
-  { value: 'left',   label: <IconAlignLeft /> },
-  { value: 'center', label: <IconAlignCenter /> },
-]
+const ALIGN_LABELS = { left: <IconAlignLeft />, center: <IconAlignCenter /> }
 
 export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onClose, anchorEl }) {
   const spec = getBlockSpec(themeId, block.type)
-  const variants = spec ? spec.variants.map(v => ({ value: v.id, label: v.label })) : []
-  const showAlignment = block.type === 'text'
+  if (!spec) return null
 
-  const current = resolveVariant(block, themeId)
+  const variants = (spec.variants || []).map(v => ({ value: v.id, label: v.label }))
+  const fonts = spec.fonts ? spec.fonts.map(f => ({ value: f.id, label: f.label })) : null
+  const aligns = spec.aligns ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
+  const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
 
-  function handleVariantChange(variantId) {
-    onUpdate(setVariant(block, themeId, variantId))
-  }
+  const hasSize = variants.length > 1
+  if (!hasSize && !fonts && !aligns && !buttonStyles) return null
 
-  // Single-variant, non-alignment blocks (contact, page-gallery) have nothing to show.
-  if (variants.length <= 1 && !showAlignment) return null
+  const currentFont = block.font || spec.defaultFont
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" maxWidth="calc(100vw - 24px)" title="Design">
-      {variants.length > 1 && (
+      {hasSize && (
         <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
-          <PillToggle value={current} onChange={handleVariantChange} options={variants} />
+          <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
       )}
-      {showAlignment && (
+      {fonts && (
+        <DesignSection label="Font">
+          <PillToggle value={currentFont} onChange={(v) => onUpdate({ ...block, font: v })} options={fonts} />
+        </DesignSection>
+      )}
+      {aligns && (
         <DesignSection label="Alignment">
-          <PillToggle
-            value={resolveAlign(block, themeId)}
-            onChange={(v) => onUpdate({ ...block, align: v })}
-            options={ALIGN_OPTIONS}
-          />
+          <PillToggle value={resolveAlign(block, themeId)} onChange={(v) => onUpdate({ ...block, align: v })} options={aligns} />
+        </DesignSection>
+      )}
+      {buttonStyles && (
+        <DesignSection label="Button style">
+          <PillToggle value={resolveButtonStyle(block, themeId)} onChange={(v) => onUpdate({ ...block, buttonStyle: v })} options={buttonStyles} />
         </DesignSection>
       )}
     </PopoverShell>
