@@ -10,12 +10,11 @@ export function resolveSubNavStyle(design) {
   return design?.subNavStyle === 'inline' ? 'inline' : 'dropdown'
 }
 
+// The footer always renders; this resolves which layout to use. Any legacy or
+// unknown value (including the old 'none') normalizes to 'simple'.
 export function resolveFooter(siteConfig) {
   const design = siteConfig?.design || {}
-  const footer = siteConfig?.footer || {}
-  const hidden = footer.hidden === true || design.footerLayout === 'none'
-  const layout = design.footerLayout === 'expanded' ? 'expanded' : 'simple'
-  return { hidden, layout }
+  return design.footerLayout === 'expanded' ? 'expanded' : 'simple'
 }
 
 const INTER = '"Inter", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif'

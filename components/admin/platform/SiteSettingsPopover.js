@@ -807,32 +807,27 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           )}
 
           {config.design?.navStyle !== 'menu' && (
-            <DesignSection label="Sub-navigation" description="How pages nested under another page appear in that page's menu.">
-              <DesignSelect
-                value={config.design?.subNavStyle || 'dropdown'}
-                onChange={(e) => update({ design: { ...(config.design || {}), subNavStyle: e.target.value } })}
-              >
-                <option value="dropdown">Dropdown</option>
-                <option value="inline">Links below page title</option>
-              </DesignSelect>
+            <DesignSection label="Sub-navigation" description="This is for pages that are nested under another page.">
+              <DesignNumberToggle
+                value={config.design?.subNavStyle === 'inline' ? 'inline' : 'dropdown'}
+                onChange={(v) => update({ design: { ...(config.design || {}), subNavStyle: v } })}
+                options={[
+                  { value: 'dropdown', label: '1', title: 'Dropdown' },
+                  { value: 'inline',   label: '2', title: 'Links below page title' },
+                ]}
+              />
             </DesignSection>
           )}
 
           <DesignSection label="Footer">
-            <div className="flex items-center justify-between gap-3">
-              <ToggleSwitch
-                on={config.footer?.hidden !== true}
-                onClick={() => updateFooter({ hidden: !(config.footer?.hidden === true) })}
-              />
-              <DesignNumberToggle
-                value={config.design?.footerLayout === 'expanded' ? 'expanded' : 'simple'}
-                onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
-                options={[
-                  { value: 'simple',   label: '1', title: 'Simple'   },
-                  { value: 'expanded', label: '2', title: 'Expanded' },
-                ]}
-              />
-            </div>
+            <DesignNumberToggle
+              value={config.design?.footerLayout === 'expanded' ? 'expanded' : 'simple'}
+              onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
+              options={[
+                { value: 'simple',   label: '1', title: 'Simple'   },
+                { value: 'expanded', label: '2', title: 'Expanded' },
+              ]}
+            />
           </DesignSection>
         </PopoverShell>
       )}

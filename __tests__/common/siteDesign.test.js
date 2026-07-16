@@ -25,14 +25,12 @@ describe('resolveSubNavStyle', () => {
 })
 
 describe('resolveFooter', () => {
-  it('hides for explicit footer.hidden and legacy footerLayout none', () => {
-    expect(resolveFooter({ footer: { hidden: true } }).hidden).toBe(true)
-    expect(resolveFooter({ design: { footerLayout: 'none' } }).hidden).toBe(true)
-  })
-  it('picks expanded only when explicit, else simple', () => {
-    expect(resolveFooter({ design: { footerLayout: 'expanded' } })).toEqual({ hidden: false, layout: 'expanded' })
-    expect(resolveFooter({ design: { footerLayout: 'standard' } })).toEqual({ hidden: false, layout: 'simple' })
-    expect(resolveFooter({})).toEqual({ hidden: false, layout: 'simple' })
+  it('returns the layout string; expanded only when explicit, else simple', () => {
+    expect(resolveFooter({ design: { footerLayout: 'expanded' } })).toBe('expanded')
+    expect(resolveFooter({ design: { footerLayout: 'standard' } })).toBe('simple')
+    expect(resolveFooter({ design: { footerLayout: 'none' } })).toBe('simple')
+    expect(resolveFooter({})).toBe('simple')
+    expect(resolveFooter(undefined)).toBe('simple')
   })
 })
 

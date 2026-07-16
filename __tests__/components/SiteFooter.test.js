@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react'
 import SiteFooter from '@/components/image-displays/page/SiteFooter'
 
 describe('SiteFooter', () => {
-  it('renders nothing when hidden', () => {
-    const { container } = render(<SiteFooter siteConfig={{ siteName: 'A', footer: { hidden: true } }} />)
-    expect(container).toBeEmptyDOMElement()
+  it('always renders a footer (legacy footerLayout none falls back to simple)', () => {
+    render(<SiteFooter siteConfig={{ siteName: 'Ansel', design: { footerLayout: 'none' } }} />)
+    expect(screen.getByText(/Ansel/)).toBeInTheDocument()
   })
   it('simple layout shows the copyright line only', () => {
     render(<SiteFooter siteConfig={{ siteName: 'Ansel', design: { footerLayout: 'simple' } }} />)

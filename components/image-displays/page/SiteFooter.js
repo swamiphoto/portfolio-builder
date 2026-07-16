@@ -5,8 +5,7 @@ const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
 const LABELS = { instagram: 'Instagram', facebook: 'Facebook', twitter: 'Twitter', tiktok: 'TikTok', youtube: 'YouTube', website: 'Website' }
 
 export default function SiteFooter({ siteConfig }) {
-  const { hidden, layout } = resolveFooter(siteConfig)
-  if (hidden) return null
+  const layout = resolveFooter(siteConfig)
 
   const custom = siteConfig?.footer?.customText
   const name = siteConfig?.siteName || ''

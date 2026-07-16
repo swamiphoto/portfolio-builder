@@ -63,7 +63,6 @@ export function createDefaultSiteConfig(userId) {
     },
     footer: {
       customText: `© ${new Date().getFullYear()} My Portfolio`,
-      hidden: false,
     },
     analytics: {
       googleId: '',
