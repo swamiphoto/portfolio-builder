@@ -16,6 +16,7 @@ import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
+import SquareGallery from "./square-gallery/SquareGallery";
 import FramedPhoto from "./photo-block/FramedPhoto";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -145,6 +146,13 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     {themeId === 'manhattan'
                       ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} />
                       : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
+                  </div>
+                );
+              }
+              if (variantId === 'square') {
+                return (
+                  <div key={`block-${index}`} className="photos-square-block" data-block-index={index} {...hoverProps}>
+                    <SquareGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
                   </div>
                 );
               }
