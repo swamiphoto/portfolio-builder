@@ -8,18 +8,18 @@ describe('resolveVariant', () => {
 
   it('falls back to the theme default when no state exists', () => {
     expect(resolveVariant({ type: 'photo' }, 'kyoto')).toBe('full-bleed')
-    expect(resolveVariant({ type: 'photo' }, 'manhattan')).toBe('full-width')
+    expect(resolveVariant({ type: 'photo' }, 'manhattan')).toBe('full-bleed')
   })
 
-  it('falls back to the theme default when saved variant is invalid for that theme', () => {
-    const block = { type: 'photo', themeState: { manhattan: { variant: 'full-bleed' } } }
-    // 'full-bleed' is a Kyoto id, not a Manhattan id
-    expect(resolveVariant(block, 'manhattan')).toBe('full-width')
+  it('falls back to the theme default when saved variant is not present', () => {
+    const block = { type: 'photo', themeState: { manhattan: { variant: 'full-width' } } }
+    // 'full-width' is the old manhattan-local id; no longer valid — falls back to base default
+    expect(resolveVariant(block, 'manhattan')).toBe('full-bleed')
   })
 
   it('does not cross theme keys', () => {
     const block = { type: 'photo', themeState: { kyoto: { variant: 'centered' } } }
-    expect(resolveVariant(block, 'manhattan')).toBe('full-width')
+    expect(resolveVariant(block, 'manhattan')).toBe('full-bleed')
   })
 
   it('reads legacy photo variant/layout when themeState is absent', () => {

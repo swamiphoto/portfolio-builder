@@ -1,7 +1,9 @@
+// common/themes/index.js
 // The theme registry. In-repo for now; the marketplace later merges
 // validated external themes into THEMES without touching consumers.
 import { kyoto } from './kyoto'
 import { manhattan } from './manhattan'
+import { baseBlocks, mergeBlockSpec } from './base'
 
 export const THEMES = { kyoto, manhattan }
 export const THEME_LIST = [kyoto, manhattan]
@@ -12,8 +14,11 @@ export function getTheme(id) {
 }
 
 export function getBlockSpec(themeId, blockType) {
+  const base = baseBlocks[blockType]
+  if (!base) return null
   const theme = getTheme(themeId)
-  return theme.blocks[blockType] || null
+  return mergeBlockSpec(base, theme.overrides?.[blockType])
 }
 
 export { kyoto, manhattan }
+export { baseBlocks, baseCover, FONT_SLOTS, mergeBlockSpec } from './base'

@@ -1,6 +1,6 @@
-// Manhattan — fixed left nav rail + gallery-wall grid on the right.
-// Gallery-white, cool neutral, tight uppercase sans. Variant ids are
-// theme-local and intentionally differ from Kyoto's.
+// common/themes/manhattan.js
+// Manhattan — fixed left rail + gallery-wall grid. Inherits the base menu and
+// expresses its personality purely through label/default overrides + tokens.
 export const manhattan = {
   id: 'manhattan',
   name: 'Manhattan',
@@ -10,53 +10,18 @@ export const manhattan = {
     '--theme-text': '#141414',
     '--theme-text-muted': '#6b6b6b',
     '--theme-rail-width': '260px',
+    fonts: {
+      serif: '"Cormorant Garamond", Georgia, serif',
+      display: 'Muse',
+      fraunces: '"Fraunces", Georgia, serif',
+      sans: 'Inter, -apple-system, system-ui, sans-serif',
+      mono: '"Geist Mono", monospace',
+    },
   },
-  blocks: {
-    photo: {
-      defaultVariant: 'full-width',
-      variants: [
-        { id: 'full-width', label: 'Full width' },
-        { id: 'framed', label: 'Framed' },
-      ],
-    },
-    photos: {
-      defaultVariant: 'grid',
-      variants: [
-        { id: 'grid', label: 'Grid' },
-        { id: 'masonry', label: 'Masonry' },
-      ],
-    },
-    text: {
-      defaultVariant: 'heading',
-      defaultAlign: 'left',
-      variants: [
-        { id: 'heading', label: 'L' },
-        { id: 'subheading', label: 'M' },
-        { id: 'body', label: 'S' },
-        { id: 'quote', label: 'Quote' },
-      ],
-    },
-    video: {
-      defaultVariant: 'full-width',
-      variants: [
-        { id: 'full-width', label: 'Full width' },
-        { id: 'framed', label: 'Framed' },
-      ],
-    },
-    testimonial: {
-      defaultVariant: 'photo-above',
-      variants: [
-        { id: 'photo-above', label: 'Photo above' },
-        { id: 'quote-above', label: 'Quote above' },
-      ],
-    },
-    'page-gallery': {
-      defaultVariant: 'grid',
-      variants: [{ id: 'grid', label: 'Grid' }],
-    },
-    contact: {
-      defaultVariant: 'standard',
-      variants: [{ id: 'standard', label: 'Standard' }],
-    },
+  overrides: {
+    photo: { labels: { 'full-bleed': 'Full width', centered: 'Framed' } },
+    photos: { defaultVariant: 'grid' },
+    video: { labels: { 'full-bleed': 'Full width', centered: 'Framed' }, hide: ['side-by-side'] },
+    text: { defaultAlign: 'left' },
   },
 }

@@ -17,10 +17,10 @@ describe('theme registry', () => {
     expect(getTheme(undefined)).toBe(kyoto)
   })
 
-  it('every theme defines every block type with a default that exists in its variants', () => {
+  it('every theme+block combo resolves a spec whose default exists in its variants', () => {
     for (const theme of THEME_LIST) {
       for (const type of BLOCK_TYPES) {
-        const spec = theme.blocks[type]
+        const spec = getBlockSpec(theme.id, type)
         expect(spec).toBeDefined()
         const ids = spec.variants.map(v => v.id)
         expect(ids).toContain(spec.defaultVariant)
@@ -29,7 +29,7 @@ describe('theme registry', () => {
   })
 
   it('getBlockSpec returns the spec or null', () => {
-    expect(getBlockSpec('manhattan', 'photo').defaultVariant).toBe('full-width')
+    expect(getBlockSpec('manhattan', 'photo').defaultVariant).toBe('full-bleed')
     expect(getBlockSpec('kyoto', 'photo').defaultVariant).toBe('full-bleed')
     expect(getBlockSpec('kyoto', 'bogus')).toBeNull()
   })

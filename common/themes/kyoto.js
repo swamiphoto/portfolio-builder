@@ -1,5 +1,6 @@
-// Kyoto — the original "minimal light" look: warm, serif, single-column,
-// top-to-bottom editorial scroll. Variant ids mirror the legacy render paths.
+// common/themes/kyoto.js
+// Kyoto — the reference theme: warm, serif, single-column editorial scroll.
+// Inherits the full base variant menu; supplies only palette + fonts.
 export const kyoto = {
   id: 'kyoto',
   name: 'Kyoto',
@@ -8,54 +9,13 @@ export const kyoto = {
     '--theme-bg': '#ffffff',
     '--theme-text': '#2c2416',
     '--theme-text-muted': '#7a6b55',
-  },
-  blocks: {
-    photo: {
-      defaultVariant: 'full-bleed',
-      variants: [
-        { id: 'full-bleed', label: 'Full Bleed' },
-        { id: 'centered', label: 'Centered' },
-      ],
-    },
-    photos: {
-      defaultVariant: 'stacked',
-      variants: [
-        { id: 'stacked', label: 'Stacked' },
-        { id: 'masonry', label: 'Masonry' },
-      ],
-    },
-    text: {
-      defaultVariant: 'heading',
-      defaultAlign: 'center',
-      variants: [
-        { id: 'heading', label: 'L' },
-        { id: 'subheading', label: 'M' },
-        { id: 'body', label: 'S' },
-        { id: 'quote', label: 'Quote' },
-      ],
-    },
-    video: {
-      defaultVariant: 'full-bleed',
-      variants: [
-        { id: 'full-bleed', label: 'Edge to edge' },
-        { id: 'centered', label: 'Centered' },
-        { id: 'side-by-side', label: 'Side by side' },
-      ],
-    },
-    testimonial: {
-      defaultVariant: 'photo-above',
-      variants: [
-        { id: 'photo-above', label: 'Photo above' },
-        { id: 'quote-above', label: 'Quote above' },
-      ],
-    },
-    'page-gallery': {
-      defaultVariant: 'list',
-      variants: [{ id: 'list', label: 'List' }],
-    },
-    contact: {
-      defaultVariant: 'standard',
-      variants: [{ id: 'standard', label: 'Standard' }],
+    fonts: {
+      serif: '"Cormorant Garamond", Georgia, serif',
+      display: 'Muse',
+      fraunces: '"Fraunces", Georgia, serif',
+      sans: 'Inter, -apple-system, system-ui, sans-serif',
+      mono: '"Geist Mono", monospace',
     },
   },
+  overrides: {},
 }
