@@ -12,7 +12,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont } from "../../../common/themes/variants";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
@@ -196,15 +196,17 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const v = { heading: 1, subheading: 2, body: 3, quote: 4 }[variantId] || 1
               const align = resolveAlign(block, themeId)
               const alignClass = align === 'left' ? 'text-left' : 'text-center';
+              const fontFamily = resolveFont(block, themeId);
               const variantClass =
-                v === 4 ? `text-lg md:text-xl italic font-serif text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300`
-                : v === 3 ? `text-base md:text-lg font-serif text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-4`
-                : v === 2 ? `text-xl md:text-2xl font-medium font-serif text-stone-700 ${alignClass} max-w-2xl mx-auto py-6`
-                : `text-3xl md:text-5xl font-light font-serif text-stone-800 ${alignClass} max-w-3xl mx-auto py-10`;
+                v === 4 ? `text-lg md:text-xl italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300`
+                : v === 3 ? `text-base md:text-lg text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-4`
+                : v === 2 ? `text-xl md:text-2xl font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto py-6`
+                : `text-3xl md:text-4xl font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto py-10`;
               return (
                 <div
                   key={`block-${index}`}
                   className={`text-block ${variantClass}`}
+                  style={{ fontFamily }}
                   data-block-index={index}
                   {...hoverProps}
                 >
