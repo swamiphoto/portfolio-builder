@@ -39,7 +39,7 @@ export const baseBlocks = {
     defaultAlign: 'center',
     aligns: ['left', 'center'],
     defaultFont: 'serif',
-    fonts: FONT_SLOTS,
+    fonts: [...FONT_SLOTS],
   },
   video: {
     defaultVariant: 'full-bleed',
@@ -90,19 +90,18 @@ export const baseCover = {
 // Apply a theme override to a base block spec. Never mutates the base.
 export function mergeBlockSpec(baseSpec, override) {
   if (!baseSpec) return null
-  if (!override) return baseSpec
-  const labels = override.labels || {}
-  const hide = new Set(override.hide || [])
+  const labels = (override || {}).labels || {}
+  const hide = new Set((override || {}).hide || [])
   let variants = (baseSpec.variants || [])
     .filter((v) => !hide.has(v.id))
     .map((v) => (labels[v.id] ? { ...v, label: labels[v.id] } : { ...v }))
-  if (override.add) variants = [...variants, ...override.add]
+  if (override && override.add) variants = [...variants, ...override.add]
   return {
     ...baseSpec,
     variants,
-    ...(override.defaultVariant ? { defaultVariant: override.defaultVariant } : {}),
-    ...(override.defaultAlign ? { defaultAlign: override.defaultAlign } : {}),
-    ...(override.defaultFont ? { defaultFont: override.defaultFont } : {}),
-    ...(override.defaultButtonStyle ? { defaultButtonStyle: override.defaultButtonStyle } : {}),
+    ...(override && override.defaultVariant ? { defaultVariant: override.defaultVariant } : {}),
+    ...(override && override.defaultAlign ? { defaultAlign: override.defaultAlign } : {}),
+    ...(override && override.defaultFont ? { defaultFont: override.defaultFont } : {}),
+    ...(override && override.defaultButtonStyle ? { defaultButtonStyle: override.defaultButtonStyle } : {}),
   }
 }

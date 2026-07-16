@@ -52,4 +52,17 @@ describe('base registry', () => {
   it('FONT_SLOTS is exported for popup consumption', () => {
     expect(FONT_SLOTS.map(f => f.id)).toContain('mono')
   })
+
+  it('mergeBlockSpec with no override returns a fresh object (not the baseSpec reference)', () => {
+    const result = mergeBlockSpec(baseBlocks.photo)
+    expect(result).not.toBe(baseBlocks.photo)
+    expect(result.variants).not.toBe(baseBlocks.photo.variants)
+    // Mutating the returned variants must not affect the base
+    result.variants.push({ id: 'injected', label: 'Injected' })
+    expect(baseBlocks.photo.variants.map(v => v.id)).toEqual(['full-bleed', 'centered'])
+  })
+
+  it('baseBlocks.text.fonts is a decoupled copy of FONT_SLOTS', () => {
+    expect(baseBlocks.text.fonts).not.toBe(FONT_SLOTS)
+  })
 })
