@@ -316,16 +316,19 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
               if (!block.text && !block.name && !photoUrl) {
                 if (!showPlaceholders) return null
+                const avatarBlob = <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #ede7dc, #d9cebd)', flexShrink: 0 }} />
+                const barsBlob = (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '28rem', alignItems: 'center' }}>
+                    <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '88%', margin: '0 auto' }} />
+                    <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '72%', margin: '0 auto' }} />
+                    <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '56%', margin: '0 auto' }} />
+                    <div style={{ height: 9, borderRadius: 4, background: '#e0d8c8', width: '6rem', marginTop: 4 }} />
+                  </div>
+                )
                 return (
-                  <div key={`block-${index}`} className="testimonial-block" data-block-index={index} {...hoverProps}>
+                  <div key={`block-${index}`} className="testimonial-block" data-block-index={index} data-testimonial-placeholder data-order={v === 2 ? 'photo-last' : 'photo-first'} {...hoverProps}>
                     <figure style={{ maxWidth: '36rem', margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #ede7dc, #d9cebd)', flexShrink: 0 }} />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '28rem' }}>
-                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '88%', margin: '0 auto' }} />
-                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '72%', margin: '0 auto' }} />
-                        <div style={{ height: 10, borderRadius: 4, background: '#e8e0d0', width: '56%', margin: '0 auto' }} />
-                      </div>
-                      <div style={{ height: 9, borderRadius: 4, background: '#e0d8c8', width: '6rem' }} />
+                      {v === 2 ? <>{barsBlob}{avatarBlob}</> : <>{avatarBlob}{barsBlob}</>}
                     </figure>
                     <WiggleLine />
                   </div>
