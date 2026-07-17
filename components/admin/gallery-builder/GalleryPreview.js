@@ -44,6 +44,22 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     return () => clearTimeout(timer);
   }, [gallery]);
 
+  // A focal-point drag (square-layout reposition) should update the preview LIVE,
+  // not 250ms after the mouse is released. Repositioning changes a block image's
+  // focalPoint on every pointer move, which otherwise keeps resetting the debounce
+  // timer above. When any image focal point changes, flush the preview immediately;
+  // typing/other edits stay debounced. Mirrors the page-thumbnail reposition path.
+  const blockFocalSig = useMemo(
+    () => (gallery.blocks || [])
+      .map(b => (b.images || []).map(im => im?.focalPoint ? `${im.focalPoint.x},${im.focalPoint.y}` : '').join(';'))
+      .join('|'),
+    [gallery]
+  );
+  useEffect(() => {
+    setDebouncedGallery(gallery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blockFocalSig]);
+
   const themeId = siteConfig?.design?.theme || 'kyoto';
 
   const resolvedBlocks = useMemo(
