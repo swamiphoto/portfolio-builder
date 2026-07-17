@@ -18,11 +18,12 @@ describe('caption styles', () => {
     expect(css.fontStyle).toBe('italic')
   })
 
-  it('accent is Cormorant 700 in red rgb(220, 38, 38)', () => {
+  it('accent is Cormorant 700 uppercase in red rgb(220, 38, 38)', () => {
     const css = captionStyleCss('accent')
     expect(css.fontFamily).toMatch(/Cormorant/)
     expect(css.fontWeight).toBe(700)
     expect(css.color).toBe('rgb(220, 38, 38)')
+    expect(css.textTransform).toBe('uppercase')
   })
 
   it('resolveCaptionStyle defaults to sans and validates', () => {

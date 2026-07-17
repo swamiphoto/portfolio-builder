@@ -17,7 +17,7 @@ export const DEFAULT_CAPTION_STYLE = 'sans'
 // by default.
 export function captionStyleCss(id) {
   if (id === 'serif') return { fontFamily: CORMORANT, fontStyle: 'italic', fontWeight: 500 }
-  if (id === 'accent') return { fontFamily: CORMORANT, fontStyle: 'normal', fontWeight: 700, color: 'rgb(220, 38, 38)' }
+  if (id === 'accent') return { fontFamily: CORMORANT, fontStyle: 'normal', fontWeight: 700, color: 'rgb(220, 38, 38)', textTransform: 'uppercase' }
   return {}
 }
 
