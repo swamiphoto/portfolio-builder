@@ -65,3 +65,10 @@ export function resolveButtonStyle(block, themeId) {
   if (block.buttonStyle && valid.includes(block.buttonStyle)) return block.buttonStyle
   return spec?.defaultButtonStyle || 'solid'
 }
+
+export function resolveSize(block, themeId) {
+  const spec = getBlockSpec(themeId, block.type)
+  const valid = (spec?.sizes || []).map((s) => s.id)
+  if (block.size && valid.includes(block.size)) return block.size
+  return spec?.defaultSize || 'medium'
+}

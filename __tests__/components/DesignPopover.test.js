@@ -45,6 +45,13 @@ describe('DesignPopover sections are spec-driven', () => {
     expect(screen.queryByText('Image side')).not.toBeInTheDocument()
   })
 
+  it('page-gallery shows a Size section (both layouts)', () => {
+    setup({ type: 'page-gallery', themeState: { kyoto: { variant: 'list' } } })
+    expect(screen.getByText('Size')).toBeInTheDocument()
+    setup({ type: 'page-gallery', themeState: { kyoto: { variant: 'mosaic' } } })
+    expect(screen.getAllByText('Size').length).toBeGreaterThan(0)
+  })
+
   it('caption write: clicking Accent sets block.captionStyle', () => {
     const onUpdate = jest.fn()
     setup({ type: 'photos' }, onUpdate)

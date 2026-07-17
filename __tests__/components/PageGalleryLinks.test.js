@@ -79,4 +79,19 @@ describe('PageGalleryLinks', () => {
     const { container } = render(<PageGalleryLinks pages={[]} variant="list" linkBase="/site" />)
     expect(container.querySelectorAll('a')).toHaveLength(0)
   })
+
+  it('size scales the container width and list thumbnail height', () => {
+    const small = render(<PageGalleryLinks pages={pages} variant="list" size="small" linkBase="/site" />)
+    expect(small.container.querySelector('div.mx-auto').className).toMatch(/max-w-4xl/)
+    expect(small.container.querySelector('img').className).toMatch(/h-\[200px\]/)
+
+    const large = render(<PageGalleryLinks pages={pages} variant="list" size="large" linkBase="/site" />)
+    expect(large.container.querySelector('div.mx-auto').className).toMatch(/max-w-6xl/)
+    expect(large.container.querySelector('img').className).toMatch(/h-\[280px\]/)
+  })
+
+  it('size scales the mosaic container width', () => {
+    const small = render(<PageGalleryLinks pages={makePages(4)} variant="mosaic" size="small" linkBase="/site" />)
+    expect(small.container.querySelector('div.mx-auto').className).toMatch(/max-w-4xl/)
+  })
 })

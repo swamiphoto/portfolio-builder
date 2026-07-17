@@ -1,4 +1,14 @@
-import { resolveVariant, resolveFont, resolveButtonStyle } from '@/common/themes/variants'
+import { resolveVariant, resolveFont, resolveButtonStyle, resolveSize } from '@/common/themes/variants'
+
+describe('resolveSize (page-gallery)', () => {
+  it('defaults to medium', () => {
+    expect(resolveSize({ type: 'page-gallery' }, 'kyoto')).toBe('medium')
+  })
+  it('accepts a valid size and rejects an invalid one', () => {
+    expect(resolveSize({ type: 'page-gallery', size: 'large' }, 'kyoto')).toBe('large')
+    expect(resolveSize({ type: 'page-gallery', size: 'bogus' }, 'kyoto')).toBe('medium')
+  })
+})
 
 describe('resolveVariant with shared ids + aliases', () => {
   it('accepts a saved shared id', () => {

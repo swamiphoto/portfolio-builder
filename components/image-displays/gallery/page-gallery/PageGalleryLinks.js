@@ -1,28 +1,23 @@
 import React from "react";
 import { pageDisplayThumbnail, focalPointToObjectPosition, pageThumbGradient } from "../../../../common/assetRefs";
 
-// Decorative rotated "stack" of cards behind each list/alternating thumbnail.
-// Heights match the responsive thumbnail so the stack lines up at every breakpoint.
-const pgStackVariants = [
-  {
-    first: "absolute -right-2 -bottom-2 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
-    second: "absolute -right-1 -bottom-1 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
-  },
-  {
-    first: "absolute -left-2 -bottom-2 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
-    second: "absolute -left-1 -bottom-1 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
-  },
-  {
-    first: "absolute -right-2 -top-2 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
-    second: "absolute -right-1 -top-1 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
-  },
-  {
-    first: "absolute -left-2 -top-2 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
-    second: "absolute -left-1 -top-1 w-full h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
-  },
-];
+// Overall image size for the block. `maxW` scales the container (both layouts);
+// `thumbH` scales the list thumbnails (and the stack behind them, which must
+// match). Height/width classes appear here as literals so Tailwind JIT emits them.
+const SIZES = {
+  small:  { maxW: "max-w-4xl", thumbH: "h-[200px] md:h-[260px] lg:h-[320px]" },
+  medium: { maxW: "max-w-5xl", thumbH: "h-[240px] md:h-[320px] lg:h-[400px]" },
+  large:  { maxW: "max-w-6xl", thumbH: "h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px]" },
+};
 
-const THUMB_HEIGHT = "h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px]";
+// Position + rotation of the two decorative "stack" cards behind a list
+// thumbnail. Height is applied per-size so the stack lines up with the thumb.
+const STACK_POS = [
+  { first: "-right-2 -bottom-2 rotate-2",  second: "-right-1 -bottom-1 rotate-1" },
+  { first: "-left-2 -bottom-2 -rotate-2",  second: "-left-1 -bottom-1 -rotate-1" },
+  { first: "-right-2 -top-2 -rotate-2",    second: "-right-1 -top-1 -rotate-1" },
+  { first: "-left-2 -top-2 rotate-2",      second: "-left-1 -top-1 rotate-1" },
+];
 
 function makeClickHandler(onChildPageClick, id) {
   if (!onChildPageClick) return undefined;
@@ -33,11 +28,12 @@ function makeClickHandler(onChildPageClick, id) {
 }
 
 // list + alternating share the same row markup; `reverse` flips the image/text
-// sides on desktop for odd rows in the alternating variant.
-function RowLink({ page, index, linkBase, onChildPageClick, reverse }) {
+// sides on desktop for odd rows in the alternating variant. `thumbH` is the
+// size-driven height ladder (shared by the thumbnail and its stack).
+function RowLink({ page, index, linkBase, onChildPageClick, reverse, thumbH }) {
   const thumb = pageDisplayThumbnail(page);
   const href = `${linkBase}/${page.slug || page.id}`;
-  const stackStyle = pgStackVariants[index % pgStackVariants.length];
+  const pos = STACK_POS[index % STACK_POS.length];
   const rowDir = reverse ? "md:flex-row-reverse" : "md:flex-row";
   return (
     <a
@@ -48,18 +44,18 @@ function RowLink({ page, index, linkBase, onChildPageClick, reverse }) {
     >
       <div className="relative md:w-1/2 lg:w-7/12">
         <div className="relative">
-          <div className={stackStyle.first} />
-          <div className={stackStyle.second} />
+          <div className={`absolute ${pos.first} w-full ${thumbH} bg-[#ede8e0] transition-transform duration-300 rounded-3xl`} />
+          <div className={`absolute ${pos.second} w-full ${thumbH} bg-[#f4efe8] transition-transform duration-300 rounded-3xl`} />
           <div className="relative overflow-hidden shadow-lg rounded-3xl">
             {thumb ? (
               <img
                 src={thumb}
                 alt={page.title}
-                className={`w-full ${THUMB_HEIGHT} object-cover relative z-10 rounded-3xl`}
+                className={`w-full ${thumbH} object-cover relative z-10 rounded-3xl`}
                 style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
               />
             ) : (
-              <div className={`w-full ${THUMB_HEIGHT} rounded-3xl`} style={{ background: pageThumbGradient(page.id) }} />
+              <div className={`w-full ${thumbH} rounded-3xl`} style={{ background: pageThumbGradient(page.id) }} />
             )}
           </div>
         </div>
@@ -133,15 +129,16 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero }) {
   );
 }
 
-export default function PageGalleryLinks({ pages, variant = "list", imageSide = "one", linkBase, onChildPageClick }) {
+export default function PageGalleryLinks({ pages, variant = "list", imageSide = "one", size = "medium", linkBase, onChildPageClick }) {
   const list = pages || [];
   if (list.length === 0) return null;
+  const sz = SIZES[size] || SIZES.medium;
 
   if (variant === "mosaic") {
     const { cols, heroes } = mosaicPlan(list.length);
     const heroSet = new Set(heroes);
     return (
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 md:px-10">
+      <div className={`${sz.maxW} mx-auto px-5 sm:px-8 md:px-10`}>
         <div
           className="grid gap-4 md:gap-6"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, alignItems: "start" }}
@@ -162,7 +159,7 @@ export default function PageGalleryLinks({ pages, variant = "list", imageSide = 
 
   const alternating = imageSide === "alternating";
   return (
-    <div className="max-w-6xl mx-auto px-5 sm:px-8 md:px-10">
+    <div className={`${sz.maxW} mx-auto px-5 sm:px-8 md:px-10`}>
       <div className="space-y-10 md:space-y-14">
         {list.map((p, i) => (
           <RowLink
@@ -172,6 +169,7 @@ export default function PageGalleryLinks({ pages, variant = "list", imageSide = 
             linkBase={linkBase}
             onChildPageClick={onChildPageClick}
             reverse={alternating && i % 2 === 1}
+            thumbH={sz.thumbH}
           />
         ))}
       </div>

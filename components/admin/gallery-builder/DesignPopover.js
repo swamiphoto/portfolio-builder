@@ -36,9 +36,10 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const captionStyles = spec.captionStyles
     ? spec.captionStyles.map(c => ({ value: c.id, label: <span style={{ ...captionStyleCss(c.id), fontSize: 12.5 }}>{c.label}</span> }))
     : null
+  const sizes = spec.sizes ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
 
   const hasSize = variants.length > 1
-  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles) return null
+  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes) return null
 
   const currentFont = block.font || spec.defaultFont
 
@@ -61,6 +62,11 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
             onChange={(v) => onUpdate({ ...block, imageSide: v })}
             options={[{ value: 'one', label: 'One side' }, { value: 'alternating', label: 'Alternating' }]}
           />
+        </DesignSection>
+      )}
+      {sizes && (
+        <DesignSection label="Size">
+          <PillToggle value={block.size || spec.defaultSize} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
         </DesignSection>
       )}
       {aligns && (

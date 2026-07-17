@@ -12,7 +12,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize } from "../../../common/themes/variants";
 import { resolveCaptionStyle, captionStyleCss } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
@@ -342,7 +342,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const variantId = resolveVariant(block, themeId);
               return (
                 <div key={`block-${index}`} className="page-gallery-block" data-block-index={index} {...hoverProps}>
-                  <PageGalleryLinks pages={linkedPages} variant={variantId} imageSide={block.imageSide} linkBase={linkBase} onChildPageClick={onChildPageClick} />
+                  <PageGalleryLinks pages={linkedPages} variant={variantId} imageSide={block.imageSide} size={resolveSize(block, themeId)} linkBase={linkBase} onChildPageClick={onChildPageClick} />
                 </div>
               );
             }

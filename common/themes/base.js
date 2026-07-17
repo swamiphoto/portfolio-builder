@@ -81,6 +81,12 @@ export const baseBlocks = {
       { id: 'list', label: 'List' },
       { id: 'mosaic', label: 'Mosaic' },
     ],
+    sizes: [
+      { id: 'small', label: 'Small' },
+      { id: 'medium', label: 'Medium' },
+      { id: 'large', label: 'Large' },
+    ],
+    defaultSize: 'medium',
   },
 }
 
