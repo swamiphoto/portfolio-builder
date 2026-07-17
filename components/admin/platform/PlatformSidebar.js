@@ -650,25 +650,24 @@ export default function PlatformSidebar({
             {isPageNestTarget && <span className="text-[10px] flex-shrink-0" style={{ color: C.accent, fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' }}>nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
-            {/* Right slot: home / count / dots */}
+            {/* Right slot: home + count / dots */}
             {!isPageNestTarget && !isImageDropTarget && (
-              <div className="relative flex-shrink-0" style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {isHome && (
-                  <span
-                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
-                    style={{ color: C.accent }}
-                  >
-                    <IconHome />
-                  </span>
-                )}
-                {!isHome && count != null && count > 0 && (
-                  <span
-                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
-                    style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}
-                  >
-                    {count}
-                  </span>
-                )}
+              <div className="relative flex-shrink-0" style={{ minWidth: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span
+                  className="group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center"
+                  style={{ gap: 3 }}
+                >
+                  {isHome && (
+                    <span style={{ color: C.accent, display: 'flex', alignItems: 'center' }}>
+                      <IconHome />
+                    </span>
+                  )}
+                  {count != null && count > 0 && (
+                    <span style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}>
+                      {count}
+                    </span>
+                  )}
+                </span>
                 <button
                   type="button"
                   onClick={e => {
