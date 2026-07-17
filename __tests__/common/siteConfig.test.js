@@ -132,10 +132,24 @@ describe('writeSiteConfig', () => {
 })
 
 describe('seedBlocksForTemplate', () => {
-  it('returns a single masonry photos block for "gallery"', () => {
+  it('seeds a mixed photo-essay scaffold for "story"', () => {
+    const blocks = seedBlocksForTemplate('story')
+    expect(blocks).toEqual([
+      { type: 'photos', images: [], imageUrls: [], layout: 'stacked' },
+      { type: 'text', content: '', variant: 1 },
+      { type: 'photo', imageUrl: '', caption: '', variant: 1 },  // full bleed
+      { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
+      { type: 'photo', imageUrl: '', caption: '', variant: 2 },  // centered
+      { type: 'video', url: '', caption: '' },  // centered
+    ])
+  })
+
+  it('seeds masonry, a centered single, and a stack for "gallery"', () => {
     const blocks = seedBlocksForTemplate('gallery')
     expect(blocks).toEqual([
       { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
+      { type: 'photo', imageUrl: '', caption: '', variant: 2 },  // single centered
+      { type: 'photos', images: [], imageUrls: [], layout: 'stacked' },
     ])
   })
 
@@ -144,6 +158,21 @@ describe('seedBlocksForTemplate', () => {
     expect(blocks).toEqual([
       { type: 'page-gallery', source: 'manual', pageIds: [] },
     ])
+  })
+
+  it('seeds a centered portrait, heading, and body for "about"', () => {
+    const blocks = seedBlocksForTemplate('about')
+    expect(blocks).toEqual([
+      { type: 'photo', imageUrl: '', caption: '', variant: 2 },  // centered portrait
+      { type: 'text', content: '', variant: 1 },  // heading
+      { type: 'text', content: '', variant: 3 },  // body
+    ])
+  })
+
+  it('seeds a single contact block for "contact"', () => {
+    const blocks = seedBlocksForTemplate('contact')
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0]).toMatchObject({ type: 'contact' })
   })
 
   it('returns a heading text block plus an empty paragraph text block for "text"', () => {
@@ -164,6 +193,8 @@ describe('defaultPage with template', () => {
     const page = defaultPage({ id: 'travel', title: 'Travel', template: 'gallery' })
     expect(page.blocks).toEqual([
       { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
+      { type: 'photo', imageUrl: '', caption: '', variant: 2 },
+      { type: 'photos', images: [], imageUrls: [], layout: 'stacked' },
     ])
   })
 

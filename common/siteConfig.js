@@ -96,11 +96,34 @@ export function createDefaultSiteConfig(userId) {
  */
 export function seedBlocksForTemplate(template) {
   switch (template) {
+    case 'story':
+      // A photo essay — a scaffold showing the range of blocks a story can mix.
+      return [
+        defaultBlock('stacked'),
+        defaultBlock('text'),  // heading
+        defaultBlock('photo'),  // full bleed (default)
+        defaultBlock('masonry'),
+        { ...defaultBlock('photo'), variant: 2 },  // centered
+        defaultBlock('video'),  // centered (default)
+      ]
     case 'gallery':
-      return [defaultBlock('masonry')]
+      return [
+        defaultBlock('masonry'),
+        { ...defaultBlock('photo'), variant: 2 },  // single centered
+        defaultBlock('stacked'),
+      ]
     case 'collection':
       return [defaultBlock('page-gallery')]
+    case 'about':
+      return [
+        { ...defaultBlock('photo'), variant: 2 },  // centered portrait
+        defaultBlock('text'),  // heading
+        { ...defaultBlock('text'), variant: 3 },  // body
+      ]
+    case 'contact':
+      return [defaultBlock('contact')]
     case 'text':
+      // Legacy template, no longer offered in the menu; kept for back-compat.
       return [
         defaultBlock('text'),  // variant 1 (heading)
         { ...defaultBlock('text'), variant: 3 },  // paragraph
