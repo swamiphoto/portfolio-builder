@@ -5,14 +5,15 @@ import { captionStyleCss } from "../../../../common/captionStyles";
 /**
  * Extract a YouTube thumbnail URL from a YouTube video URL.
  * Handles watch?v=, youtu.be/, and /embed/ forms.
- * Returns null for non-YouTube URLs (react-player fetches its own thumbnail).
+ * Uses the 16:9 maxresdefault frame (not the 4:3 hqdefault, which letterboxes the
+ * video with black bars top/bottom). Returns null for non-YouTube URLs.
  */
 export function posterUrl(url) {
   if (!url) return null;
   const match = (url || "").match(
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/
   );
-  if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  if (match) return `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
   return null;
 }
 

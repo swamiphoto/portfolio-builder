@@ -4,7 +4,7 @@ jest.mock('react-player', () => ({ __esModule: true, default: () => null }))
 
 const { posterUrl } = require('../../components/image-displays/gallery/video-block/VideoBlock')
 
-const YT_THUMB = 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg'
+const YT_THUMB = 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'
 
 describe('posterUrl', () => {
   it('handles watch?v= form', () => {
