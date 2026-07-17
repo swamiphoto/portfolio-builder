@@ -36,8 +36,20 @@ test('the empty video placeholder shows the caption', () => {
 test('the empty video placeholder reflects the layout variant', () => {
   const emptyVideo = (variant) => ({ type: 'video', url: '', themeState: { kyoto: { variant } } })
   const full = render(<Gallery name="" description="" blocks={[emptyVideo('full-bleed')]} pages={[]} themeId="kyoto" showPlaceholders />)
-  expect(full.container.querySelector('.video-block').innerHTML).toMatch(/w-screen/)
+  const fullHtml = full.container.querySelector('.video-block').innerHTML
+  // Full bleed uses the translate breakout, not the broken -ml/ml-0 combo.
+  expect(fullHtml).toMatch(/w-screen/)
+  expect(fullHtml).toMatch(/-translate-x-1\/2/)
+  expect(fullHtml).not.toMatch(/ml-0/)
 
   const centered = render(<Gallery name="" description="" blocks={[emptyVideo('centered')]} pages={[]} themeId="kyoto" showPlaceholders />)
   expect(centered.container.querySelector('.video-block').innerHTML).toMatch(/w-\[85%\]/)
+})
+
+test('the empty video placeholder applies the caption style (accent = uppercase red)', () => {
+  const block = { type: 'video', url: '', caption: 'Reel', captionStyle: 'accent' }
+  const { getByText } = render(<Gallery name="" description="" blocks={[block]} pages={[]} themeId="kyoto" showPlaceholders />)
+  const cap = getByText('Reel')
+  expect(cap.style.textTransform).toBe('uppercase')
+  expect(cap.style.color).toBe('rgb(220, 38, 38)')
 })

@@ -32,8 +32,9 @@ describe('caption styles', () => {
     expect(resolveCaptionStyle({ captionStyle: 'bogus' })).toBe('sans')
   })
 
-  it('photo and photos specs expose captionStyles', () => {
+  it('photo, photos, and video specs expose captionStyles', () => {
     expect(getBlockSpec('kyoto', 'photo').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
     expect(getBlockSpec('kyoto', 'photos').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
+    expect(getBlockSpec('kyoto', 'video').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
   })
 })

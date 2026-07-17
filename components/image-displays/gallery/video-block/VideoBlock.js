@@ -1,5 +1,6 @@
 import React from "react";
 import ReactPlayer from "react-player";
+import { captionStyleCss } from "../../../../common/captionStyles";
 
 /**
  * Extract a YouTube thumbnail URL from a YouTube video URL.
@@ -16,13 +17,14 @@ export function posterUrl(url) {
 }
 
 // variant: 'full-bleed' (1) | 'centered' (2) | 'side' (3)
-const VideoBlock = ({ url, caption, variant = 2 }) => {
+const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
+  const capCss = captionStyleCss(captionStyle);
   // react-player caches its "can I play this?" decision, so key the player on the
   // URL to force a clean re-init when it changes — otherwise the preview stays blank.
   const cleanUrl = (url || "").trim();
 
   const videoContainerStyle = (() => {
-    if (variant === 1) return "relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen"; // full bleed
+    if (variant === 1) return "relative left-1/2 -translate-x-1/2 w-screen max-w-none"; // full bleed
     if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row gap-6"; // side
     return "w-full md:w-[85%] mx-auto"; // centered (default)
   })();
@@ -51,7 +53,7 @@ const VideoBlock = ({ url, caption, variant = 2 }) => {
   if (!cleanUrl) return null;
 
   return (
-    <div className={`${videoContainerStyle} ${variant === 1 ? "ml-0 overflow-x-hidden" : ""}`}>
+    <div className={`${videoContainerStyle} ${variant === 1 ? "overflow-x-hidden" : ""}`}>
       {variant === 3 ? (
         // Side: video on the left, caption on the right
         <>
@@ -59,7 +61,7 @@ const VideoBlock = ({ url, caption, variant = 2 }) => {
             <ReactPlayer key={cleanUrl} {...playerProps} />
           </div>
           <div className="w-full md:w-1/3 flex items-center">
-            {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0">{caption}</p>}
+            {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0" style={capCss}>{caption}</p>}
           </div>
         </>
       ) : (
@@ -68,7 +70,7 @@ const VideoBlock = ({ url, caption, variant = 2 }) => {
           <div className={`${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
           </div>
-          {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto">{caption}</p>}
+          {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={capCss}>{caption}</p>}
         </>
       )}
     </div>

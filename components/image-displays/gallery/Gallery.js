@@ -13,7 +13,7 @@ import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGrad
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
 import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle } from "../../../common/themes/variants";
-import { resolveCaptionStyle } from "../../../common/captionStyles";
+import { resolveCaptionStyle, captionStyleCss } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
@@ -118,7 +118,8 @@ function PlaceholderText() {
 // Empty-state preview for a video block. Mirrors VideoBlock's variant layouts
 // (full-bleed / centered / side) and shows the caption, so design + caption
 // changes are visible before a URL is entered. variant: 1 full-bleed, 2 centered, 3 side.
-function PlaceholderVideo({ variant = 2, caption }) {
+function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans' }) {
+  const capCss = captionStyleCss(captionStyle)
   const box = (
     <div className={`relative w-full overflow-hidden select-none ${variant === 1 ? 'rounded-none' : 'rounded-3xl'}`} style={{ background: '#ede7dc', paddingBottom: '56.25%' }}>
       <div className="absolute inset-0 flex items-center justify-center">
@@ -134,18 +135,18 @@ function PlaceholderVideo({ variant = 2, caption }) {
       <div className="w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
         <div className="w-full">{box}</div>
         <div className="w-full md:w-1/3 flex items-center">
-          {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0">{caption}</p>}
+          {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0" style={capCss}>{caption}</p>}
         </div>
       </div>
     )
   }
   const containerCls = variant === 1
-    ? 'relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen ml-0 overflow-x-hidden'
+    ? 'relative left-1/2 -translate-x-1/2 w-screen max-w-none overflow-x-hidden'
     : 'w-full md:w-[85%] mx-auto'
   return (
     <div className={containerCls}>
       {box}
-      {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto">{caption}</p>}
+      {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={capCss}>{caption}</p>}
     </div>
   )
 }
@@ -325,10 +326,10 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             case "video": {
               const variantId = resolveVariant(block, themeId)
               const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 2
-              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo variant={videoVariant} caption={block.caption} /><WiggleLine /></div> : null;
+              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo variant={videoVariant} caption={block.caption} captionStyle={resolveCaptionStyle(block)} /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}>
-                  <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} />
+                  <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} captionStyle={resolveCaptionStyle(block)} />
                   <WiggleLine />
                 </div>
               );

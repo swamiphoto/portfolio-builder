@@ -54,6 +54,8 @@ export const baseBlocks = {
       { id: 'centered', label: 'Centered' },
       { id: 'side-by-side', label: 'Side' },
     ],
+    captionStyles: CAPTION_STYLE_OPTIONS,
+    defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
   testimonial: {
     defaultVariant: 'photo-above',
