@@ -6,8 +6,17 @@ const pages = [
   { id: 'b', title: 'Nevada', slug: 'nevada', thumbnail: { imageUrl: 'y.jpg' } },
 ]
 
+function makePages(n) {
+  return Array.from({ length: n }, (_, i) => ({
+    id: `p${i}`,
+    title: `Page ${i}`,
+    slug: `page-${i}`,
+    thumbnail: { imageUrl: `${i}.jpg` },
+  }))
+}
+
 describe('PageGalleryLinks', () => {
-  it('list renders two links with correct hrefs and no reversed rows', () => {
+  it('list renders two links with correct hrefs', () => {
     const { container } = render(
       <PageGalleryLinks pages={pages} variant="list" linkBase="/site" />
     )
@@ -15,24 +24,53 @@ describe('PageGalleryLinks', () => {
     expect(links).toHaveLength(2)
     expect(links[0].getAttribute('href')).toBe('/site/cali')
     expect(links[1].getAttribute('href')).toBe('/site/nevada')
+  })
+
+  it('list + imageSide "one" has no reversed rows', () => {
+    const { container } = render(
+      <PageGalleryLinks pages={pages} variant="list" imageSide="one" linkBase="/site" />
+    )
+    const links = container.querySelectorAll('a')
     links.forEach((a) => expect(a.className).not.toMatch(/flex-row-reverse/))
   })
 
-  it('alternating reverses the second row', () => {
+  it('list + imageSide "alternating" reverses the second row', () => {
     const { container } = render(
-      <PageGalleryLinks pages={pages} variant="alternating" linkBase="/site" />
+      <PageGalleryLinks pages={pages} variant="list" imageSide="alternating" linkBase="/site" />
     )
     const links = container.querySelectorAll('a')
     expect(links[0].className).not.toMatch(/md:flex-row-reverse/)
     expect(links[1].className).toMatch(/md:flex-row-reverse/)
   })
 
-  it('grid uses square thumbnails and renders titles', () => {
+  it('mosaic n=4 uses a 2-column grid with no hero tile', () => {
     const { container } = render(
-      <PageGalleryLinks pages={pages} variant="grid" linkBase="/site" />
+      <PageGalleryLinks pages={makePages(4)} variant="mosaic" linkBase="/site" />
     )
-    const squares = container.querySelectorAll('img.aspect-square')
-    expect(squares.length).toBe(2)
+    const grid = container.querySelector('div.grid')
+    expect(grid.style.gridTemplateColumns).toBe('repeat(2, minmax(0,1fr))')
+    const heroes = Array.from(container.querySelectorAll('a')).filter(
+      (a) => a.style.gridColumn === 'span 2'
+    )
+    expect(heroes).toHaveLength(0)
+    expect(container.querySelectorAll('img.aspect-\\[2\\/1\\]')).toHaveLength(0)
+  })
+
+  it('mosaic n=5 uses a 3-column grid with exactly one wide hero tile', () => {
+    const { container } = render(
+      <PageGalleryLinks pages={makePages(5)} variant="mosaic" linkBase="/site" />
+    )
+    const grid = container.querySelector('div.grid')
+    expect(grid.style.gridTemplateColumns).toBe('repeat(3, minmax(0,1fr))')
+    const heroes = Array.from(container.querySelectorAll('a')).filter(
+      (a) => a.style.gridColumn === 'span 2'
+    )
+    expect(heroes).toHaveLength(1)
+    expect(container.querySelectorAll('img.aspect-\\[2\\/1\\]')).toHaveLength(1)
+  })
+
+  it('mosaic renders titles', () => {
+    render(<PageGalleryLinks pages={pages} variant="mosaic" linkBase="/site" />)
     expect(screen.getByText('Cali')).toBeInTheDocument()
     expect(screen.getByText('Nevada')).toBeInTheDocument()
   })

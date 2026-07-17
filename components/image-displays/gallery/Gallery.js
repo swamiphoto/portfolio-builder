@@ -342,7 +342,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const variantId = resolveVariant(block, themeId);
               return (
                 <div key={`block-${index}`} className="page-gallery-block" data-block-index={index} {...hoverProps}>
-                  <PageGalleryLinks pages={linkedPages} variant={variantId} linkBase={linkBase} onChildPageClick={onChildPageClick} />
+                  <PageGalleryLinks pages={linkedPages} variant={variantId} imageSide={block.imageSide} linkBase={linkBase} onChildPageClick={onChildPageClick} />
                 </div>
               );
             }

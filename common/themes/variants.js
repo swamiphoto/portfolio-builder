@@ -14,6 +14,7 @@ const LEGACY = {
 const ALIASES = {
   photo: { 'full-width': 'full-bleed', framed: 'centered' },
   video: { 'full-width': 'full-bleed', framed: 'centered' },
+  'page-gallery': { grid: 'mosaic', alternating: 'list' },
 }
 
 export function resolveVariant(block, themeId) {

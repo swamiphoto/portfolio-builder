@@ -35,6 +35,16 @@ describe('DesignPopover sections are spec-driven', () => {
     expect(screen.getAllByText('Caption').length).toBeGreaterThan(0)
   })
 
+  it('page-gallery with list variant shows an Image side section', () => {
+    setup({ type: 'page-gallery', themeState: { kyoto: { variant: 'list' } } })
+    expect(screen.getByText('Image side')).toBeInTheDocument()
+  })
+
+  it('page-gallery with mosaic variant does NOT show an Image side section', () => {
+    setup({ type: 'page-gallery', themeState: { kyoto: { variant: 'mosaic' } } })
+    expect(screen.queryByText('Image side')).not.toBeInTheDocument()
+  })
+
   it('caption write: clicking Accent sets block.captionStyle', () => {
     const onUpdate = jest.fn()
     setup({ type: 'photos' }, onUpdate)

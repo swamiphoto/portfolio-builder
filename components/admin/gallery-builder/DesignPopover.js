@@ -54,6 +54,15 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
           <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
       )}
+      {block.type === 'page-gallery' && resolveVariant(block, themeId) === 'list' && (
+        <DesignSection label="Image side">
+          <PillToggle
+            value={block.imageSide === 'alternating' ? 'alternating' : 'one'}
+            onChange={(v) => onUpdate({ ...block, imageSide: v })}
+            options={[{ value: 'one', label: 'One side' }, { value: 'alternating', label: 'Alternating' }]}
+          />
+        </DesignSection>
+      )}
       {aligns && (
         <DesignSection label="Alignment">
           <PillToggle value={resolveAlign(block, themeId)} onChange={(v) => onUpdate({ ...block, align: v })} options={aligns} />

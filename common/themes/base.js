@@ -79,8 +79,7 @@ export const baseBlocks = {
     defaultVariant: 'list',
     variants: [
       { id: 'list', label: 'List' },
-      { id: 'alternating', label: 'Alternating' },
-      { id: 'grid', label: 'Grid' },
+      { id: 'mosaic', label: 'Mosaic' },
     ],
   },
 }
