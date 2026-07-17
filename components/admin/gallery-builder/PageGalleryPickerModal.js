@@ -739,7 +739,7 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
                   </svg>
                 </button>
                 <p style={{ margin: 0, fontSize: 12.5, color: C.textBody, lineHeight: 1.5, fontFamily: SERIF, fontStyle: 'italic' }}>
-                  All pages nested under {parentPage ? <strong style={{ fontStyle: 'normal', fontWeight: 600 }}>{parentPage.title}</strong> : 'this parent page'} will show up as links, and update automatically as you add or remove pages.
+                  All pages nested under {parentPage ? <strong style={{ fontStyle: 'normal', fontWeight: 600 }}>{parentPage.title}</strong> : 'this parent page'} will appear as links. This is useful, for instance, to display links to all your client galleries. The links stay up to date as you add or remove nested pages.
                 </p>
               </div>
 
