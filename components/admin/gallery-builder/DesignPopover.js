@@ -1,6 +1,6 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
-import { getBlockSpec } from '../../../common/themes'
+import { getBlockSpec, getTheme } from '../../../common/themes'
 import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
 
@@ -25,7 +25,11 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   if (!spec) return null
 
   const variants = (spec.variants || []).map(v => ({ value: v.id, label: v.label }))
-  const fonts = spec.fonts ? spec.fonts.map(f => ({ value: f.id, label: f.label })) : null
+  // Font pills preview their own face (family from the active theme's tokens).
+  const themeFonts = getTheme(themeId).tokens?.fonts || {}
+  const fonts = spec.fonts
+    ? spec.fonts.map(f => ({ value: f.id, label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span> }))
+    : null
   const aligns = spec.aligns ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
   const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
   // Caption pills preview their own style so the choice is legible at a glance.
@@ -40,14 +44,14 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
-      {hasSize && (
-        <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
-          <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
-        </DesignSection>
-      )}
       {fonts && (
         <DesignSection label="Font">
           <PillToggle value={currentFont} onChange={(v) => onUpdate({ ...block, font: v })} options={fonts} />
+        </DesignSection>
+      )}
+      {hasSize && (
+        <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
+          <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
       )}
       {aligns && (

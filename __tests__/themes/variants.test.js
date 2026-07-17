@@ -32,7 +32,8 @@ describe('resolveVariant', () => {
     expect(resolveVariant({ type: 'text', variant: 1 }, 'kyoto')).toBe('heading')
     expect(resolveVariant({ type: 'text', variant: 2 }, 'kyoto')).toBe('subheading')
     expect(resolveVariant({ type: 'text', variant: 3 }, 'kyoto')).toBe('body')
-    expect(resolveVariant({ type: 'text', variant: 4 }, 'kyoto')).toBe('quote')
+    // Quote was removed; legacy quote blocks (variant 4) fall back to the default.
+    expect(resolveVariant({ type: 'text', variant: 4 }, 'kyoto')).toBe('heading')
   })
 })
 

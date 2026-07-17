@@ -40,7 +40,6 @@ export const baseBlocks = {
       { id: 'heading', label: 'L' },
       { id: 'subheading', label: 'M' },
       { id: 'body', label: 'S' },
-      { id: 'quote', label: 'Quote' },
     ],
     defaultAlign: 'center',
     aligns: ['left', 'center'],
