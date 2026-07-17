@@ -1,5 +1,5 @@
 import { useMediaQuery } from 'react-responsive'
-import { getImageRefUrl } from '../../../../common/assetRefs'
+import { getImageRefUrl, focalPointToObjectPosition } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
 
 // Choose a column count that keeps the grid balanced instead of leaving a lonely
@@ -33,7 +33,8 @@ export default function SquareGallery({ images = [], onImageClick }) {
                 src={src || undefined}
                 alt={img.caption || ''}
                 loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover object-center"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ objectPosition: focalPointToObjectPosition(img.focalPoint) }}
               />
             </div>
           )

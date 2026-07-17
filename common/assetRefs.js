@@ -28,6 +28,7 @@ export function normalizeImageRef(value) {
   const ref = { assetId: value.assetId || null, url };
   if (value.caption !== undefined) ref.caption = value.caption;
   if (value.print !== undefined) ref.print = value.print;
+  if (value.focalPoint !== undefined) ref.focalPoint = normalizeFocalPoint(value.focalPoint);
   return ref;
 }
 

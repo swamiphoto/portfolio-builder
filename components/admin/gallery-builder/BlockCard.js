@@ -8,6 +8,8 @@ import DesignPopover from "./DesignPopover";
 import AdminPhotoLightbox from "../AdminPhotoLightbox";
 import PageGalleryPickerModal from "./PageGalleryPickerModal";
 import FocalPointEditor from "./FocalPointEditor";
+import ImageFocalEditor from "./ImageFocalEditor";
+import { resolveVariant } from "../../../common/themes/variants";
 import Tip from "../Tip";
 import { EditableInput, EditableTextarea } from "../platform/EditableText";
 
@@ -168,8 +170,12 @@ function ThumbMenu({ items, tone = 'dark', size = 20 }) {
   )
 }
 
-function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected, isDragging }) {
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onPreview, selected, isDragging }) {
   const caption = imageRef.caption || ''
+  const menuItems = [
+    ...(onReposition ? [{ label: 'Reposition', icon: <RepositionIcon />, onClick: (el) => onReposition(el) }] : []),
+    { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onRemove() },
+  ]
 
   return (
     <div
@@ -204,7 +210,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onPreview, selected, 
       <div className="absolute top-0.5 right-0.5 opacity-0 group-hover/thumb:opacity-100 transition-opacity z-10">
         <ThumbMenu
           size={22}
-          items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onRemove() }]}
+          items={menuItems}
         />
       </div>
     </div>
@@ -273,6 +279,7 @@ function BlockCard({
   const [pgDropTarget, setPgDropTarget] = useState(null); // { idx, pos: 'before'|'after' }
   const [pgHoverIdx, setPgHoverIdx] = useState(null)
   const [focalEditor, setFocalEditor] = useState(null) // { pageId, anchorEl }
+  const [imageFocal, setImageFocal] = useState(null) // { index, anchorEl } | null
   const lastSelectedRef = useRef(null);
   const cardRef = useRef(null);
   const menuRef = useRef(null);
@@ -817,6 +824,7 @@ function BlockCard({
                       ...r,
                       caption: resolveCaption(r, assetsByUrl || {}),
                     }));
+                    const isSquare = block.type === 'photos' && resolveVariant(block, themeId) === 'square';
                     const remainder = thumbRefs.length % 3;
                     const placeholderCount = remainder === 0 ? 0 : 3 - remainder;
                     return (
@@ -897,6 +905,7 @@ function BlockCard({
                               },
                             }}
                             onRemove={() => onRemovePhoto(ref)}
+                            onReposition={isSquare ? (el) => setImageFocal({ index: i, anchorEl: el }) : undefined}
                           />
                         ))}
                         {Array.from({ length: placeholderCount }).map((_, i) => {
@@ -918,6 +927,22 @@ function BlockCard({
                   })()}
                 </div>
               )}
+              {imageFocal != null && (() => {
+                const refs = normalizeImageRefs(block.images || block.imageUrls || [])
+                if (!refs[imageFocal.index]) return null
+                return (
+                  <ImageFocalEditor
+                    imageUrl={refs[imageFocal.index].url}
+                    focalPoint={refs[imageFocal.index].focalPoint}
+                    anchorEl={imageFocal.anchorEl}
+                    onClose={() => setImageFocal(null)}
+                    onChange={(fp) => {
+                      const next = refs.map((img, idx) => idx === imageFocal.index ? { ...img, focalPoint: fp } : img)
+                      onUpdate({ ...block, images: next, imageUrls: next.map(r => r.url) })
+                    }}
+                  />
+                )
+              })()}
             </>
           )}
 
