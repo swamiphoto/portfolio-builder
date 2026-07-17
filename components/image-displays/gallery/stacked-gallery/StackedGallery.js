@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { getSizedUrl } from "../../../../common/imageUtils";
+import { captionStyleCss } from "../../../../common/captionStyles";
 import styles from "./StackedGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 
-const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick }) => {
+const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans' }) => {
+  const capCss = captionStyleCss(captionStyle);
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const imageUrls = useMemo(
@@ -97,7 +99,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                           </div>
                         </div>
                         {getCaptionForUrl(image.src) && (
-                          <p className="mt-2 text-sm italic text-center text-gray-500">{getCaptionForUrl(image.src)}</p>
+                          <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{getCaptionForUrl(image.src)}</p>
                         )}
                       </div>
                     ) : null
@@ -122,7 +124,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   </div>
                 </div>
                 {getCaptionForUrl(entry.src) && (
-                  <p className="mt-2 text-sm italic text-center text-gray-500 max-w-[72%]">{getCaptionForUrl(entry.src)}</p>
+                  <p className="mt-2 text-sm italic text-center text-gray-500 max-w-[72%]" style={capCss}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>
             )}

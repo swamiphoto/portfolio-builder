@@ -1,8 +1,9 @@
 import React from "react";
 import { getSizedUrl } from "../../../../common/imageUtils";
+import { captionStyleCss } from "../../../../common/captionStyles";
 import BuyPrintButton from "../../print/BuyPrintButton";
 
-const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick, print }) => {
+const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick, print, captionStyle = 'sans' }) => {
   const [aspectRatio, setAspectRatio] = React.useState(null);
   const imgRef = React.useRef(null);
 
@@ -27,7 +28,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, onImageClick, print }
   );
 
   const renderCaption = () => {
-    return <p className="my-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto">{caption}</p>;
+    return <p className="my-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
   };
 
   const renderImage = () => {

@@ -13,6 +13,7 @@ import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGrad
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
 import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle } from "../../../common/themes/variants";
+import { resolveCaptionStyle } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
@@ -204,8 +205,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />}
                   <WiggleLine />
                 </div>
               );
@@ -217,8 +218,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} captionStyle={resolveCaptionStyle(block)} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />}
                   <WiggleLine />
                 </div>
               );
@@ -229,7 +230,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" /><WiggleLine /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
-                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} />
                   <WiggleLine />
                 </div>
               );
@@ -265,7 +266,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               if (themeId === 'manhattan' && resolveVariant(block, themeId) === 'framed') {
                 return (
                   <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
-                    <FramedPhoto imageUrl={getImageRefUrl(block.image || block.imageUrl)} caption={block.caption} onImageClick={makeClickHandler(index)} />
+                    <FramedPhoto imageUrl={getImageRefUrl(block.image || block.imageUrl)} caption={block.caption} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />
                   </div>
                 );
               }
@@ -279,6 +280,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     variant={photoVariant}
                     onImageClick={makeClickHandler(index)}
                     print={block.print}
+                    captionStyle={resolveCaptionStyle(block)}
                   />
                   <WiggleLine />
                 </div>

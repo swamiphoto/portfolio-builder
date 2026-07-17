@@ -1,10 +1,12 @@
 import React from "react";
 import Masonry from "react-masonry-css";
 import { getSizedUrl } from "../../../../common/imageUtils";
+import { captionStyleCss } from "../../../../common/captionStyles";
 import styles from "./MasonryGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 
-const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns }) => {
+const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans' }) => {
+  const capCss = captionStyleCss(captionStyle);
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   const breakpointColumnsObj = columns != null ? { default: columns } : { default: 2, 700: 1 };
 
@@ -34,7 +36,7 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns }) 
                       </div>
                     </div>
                     {caption && (
-                      <p className="mt-2 text-sm italic text-center text-gray-500">{caption}</p>
+                      <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{caption}</p>
                     )}
                   </div>
                 );

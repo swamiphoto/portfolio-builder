@@ -27,6 +27,20 @@ describe('DesignPopover sections are spec-driven', () => {
     expect(screen.getByText('Grid')).toBeInTheDocument()
     expect(screen.getByText('Square')).toBeInTheDocument()
   })
+
+  it('photos and photo show a Caption section', () => {
+    setup({ type: 'photos' })
+    expect(screen.getByText('Caption')).toBeInTheDocument()
+    setup({ type: 'photo' })
+    expect(screen.getAllByText('Caption').length).toBeGreaterThan(0)
+  })
+
+  it('caption write: clicking Accent sets block.captionStyle', () => {
+    const onUpdate = jest.fn()
+    setup({ type: 'photos' }, onUpdate)
+    fireEvent.click(screen.getByText('Accent'))
+    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ captionStyle: 'accent' }))
+  })
 })
 
 describe('DesignPopover write wiring', () => {

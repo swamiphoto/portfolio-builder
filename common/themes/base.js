@@ -3,6 +3,8 @@
 // wholesale and diverge only via `overrides` + `tokens`. Variant ids are stable
 // and semantic — shared across every theme. Pure data: safe to import anywhere.
 
+import { CAPTION_STYLE_OPTIONS, DEFAULT_CAPTION_STYLE } from '../captionStyles'
+
 export const FONT_SLOTS = [
   { id: 'serif', label: 'Serif' },
   { id: 'display', label: 'Display' },
@@ -18,6 +20,8 @@ export const baseBlocks = {
       { id: 'full-bleed', label: 'Full bleed' },
       { id: 'centered', label: 'Centered' },
     ],
+    captionStyles: CAPTION_STYLE_OPTIONS,
+    defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
   photos: {
     defaultVariant: 'stacked',
@@ -27,6 +31,8 @@ export const baseBlocks = {
       { id: 'grid', label: 'Grid' },
       { id: 'square', label: 'Square' },
     ],
+    captionStyles: CAPTION_STYLE_OPTIONS,
+    defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
   text: {
     defaultVariant: 'heading',

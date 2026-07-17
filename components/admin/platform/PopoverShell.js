@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 
-export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onClose, width = 320, maxWidth, title, children, headerRight, onBack, placement = 'below', draggable = false }) {
+export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onClose, width = 320, minWidth, maxWidth, title, children, headerRight, onBack, placement = 'below', draggable = false }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
   const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 })
@@ -91,6 +91,7 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
       className="fixed z-[9999] overflow-auto rounded-xl"
       style={{
         width,
+        minWidth,
         maxWidth,
         maxHeight: pos?.maxHeight ?? '80vh',
         left: (pos?.left ?? 0) + dragDelta.x,
