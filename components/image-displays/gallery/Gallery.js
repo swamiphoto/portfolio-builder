@@ -121,13 +121,11 @@ function PlaceholderText() {
 function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans' }) {
   const capCss = captionStyleCss(captionStyle)
   const box = (
-    <div className={`relative w-full overflow-hidden select-none ${variant === 1 ? 'rounded-none' : 'rounded-3xl'}`} style={{ background: '#ede7dc', paddingBottom: '56.25%' }}>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <svg className="w-14 h-14" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
-          <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M20 17 L33 24 L20 31 Z" fill="currentColor" />
-        </svg>
-      </div>
+    <div className={`w-full aspect-[16/9] overflow-hidden select-none flex items-center justify-center ${variant === 1 ? 'rounded-none' : 'rounded-3xl'}`} style={{ background: '#ede7dc' }}>
+      <svg className="w-14 h-14" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M20 17 L33 24 L20 31 Z" fill="currentColor" />
+      </svg>
     </div>
   )
   if (variant === 3) {

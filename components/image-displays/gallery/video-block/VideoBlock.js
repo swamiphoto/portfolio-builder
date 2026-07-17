@@ -30,7 +30,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
     return "w-full md:w-[85%] mx-auto"; // centered (default)
   })();
 
-  const videoStyle = "relative pb-[56.25%] overflow-hidden"; // 16:9
+  const videoStyle = "relative aspect-[16/9] w-full overflow-hidden"; // standard 16:9
   const videoWrapperStyle = variant === 1 ? "rounded-none shadow-none" : "rounded-3xl shadow-lg";
 
   // light mode: shows the real thumbnail with a play button, loads + plays on click.
