@@ -5,7 +5,7 @@ import { DesignSection, PillToggle as DesignPillToggle, DesignSelect } from './d
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { THEME_LIST } from '../../../common/themes'
 import { resolveNavStyle } from '../../../common/navStyles'
-import { resolveFooterSocial } from '../../../common/siteDesign'
+import { resolveFooterSocial, SOCIAL_KEYS } from '../../../common/siteDesign'
 import { EditableInput } from './EditableText'
 
 export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
@@ -367,7 +367,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   )
 }
 
-export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare }) {
+export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare, onEditHandles }) {
   const config = siteConfig || {}
   const [view, setView] = useState('main') // 'main' | 'cover' | 'domain' | 'analytics' | 'print' | 'sharing'
   const [designOpen, setDesignOpen] = useState(false)
@@ -830,6 +830,18 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
                 { value: 'icons', label: 'Icons' },
               ]}
             />
+            {onEditHandles && (
+              <button
+                type="button"
+                onClick={onEditHandles}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#2c2416' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+                style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 11.5, color: 'var(--text-secondary)', transition: 'color 0.15s' }}
+              >
+                {SOCIAL_KEYS.some((k) => config?.contact?.[k]) ? 'Edit handles' : 'Add your handles'}
+                <span aria-hidden>→</span>
+              </button>
+            )}
           </DesignSection>
         </PopoverShell>
       )}

@@ -1034,6 +1034,7 @@ export default function PlatformSidebar({
           onPickShareSquare={onPickShareSquare}
           onViewCover={onViewCover}
           onDisableCover={onDisableCover}
+          onEditHandles={() => { setSiteSettingsOpen(false); setAccountOpen(true) }}
         />
       )}
 
