@@ -96,9 +96,6 @@ function IconSettings(p) {
 function IconBell(p) {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
 }
-function IconHome(p) {
-  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
-}
 function IconCollapse(p) {
   return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13L5 8l5-5"/></svg>
 }
@@ -135,9 +132,10 @@ function IconDots(p) {
   return <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="5.5" cy="1.5" r="1"/><circle cx="9.5" cy="1.5" r="1"/></svg>
 }
 
-function PageThumb({ page }) {
+function PageThumb({ page, isHome }) {
   const src = pageDisplayThumbnail(page)
-  const base = { width: 24, height: 24, borderRadius: 3, flexShrink: 0 }
+  const ring = isHome ? { boxShadow: `0 0 0 1.5px ${C.accent}` } : {}
+  const base = { width: 24, height: 24, borderRadius: 3, flexShrink: 0, ...ring }
   if (src) {
     return <img src={getSizedUrl(src, 'thumbnail')} alt="" style={{ ...base, objectFit: 'cover', display: 'block' }} />
   }
@@ -582,7 +580,7 @@ export default function PlatformSidebar({
             }}
           >
             <div className="flex-shrink-0 flex items-center">
-              <PageThumb page={page} />
+              <PageThumb page={page} isHome={isHome} />
             </div>
             <input
               autoFocus
@@ -595,7 +593,7 @@ export default function PlatformSidebar({
                 if (e.key === 'Escape') setRenamingId(null)
               }}
               style={{
-                flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500,
+                flex: 1, minWidth: 0, fontSize: 13, fontFamily: SERIF, fontWeight: 500,
                 color: '#3a2e1f', background: 'transparent',
                 border: 'none', outline: 'none', padding: 0,
               }}
@@ -635,13 +633,13 @@ export default function PlatformSidebar({
           >
             {/* Thumbnail */}
             <div className="flex-shrink-0 flex items-center">
-              <PageThumb page={page} />
+              <PageThumb page={page} isHome={isHome} />
             </div>
 
             {/* Title */}
             <span
               className="flex-1 truncate"
-              style={{ fontSize: 13, color: isSelected ? '#3a2e1f' : C.textBody, fontWeight: isSelected ? 600 : 400 }}
+              style={{ fontSize: 13, fontFamily: SERIF, color: isSelected ? '#3a2e1f' : C.textBody, fontWeight: isSelected ? 600 : 400 }}
             >
               {page.title || 'Untitled'}
             </span>
@@ -652,22 +650,15 @@ export default function PlatformSidebar({
 
             {/* Right slot: home + count / dots */}
             {!isPageNestTarget && !isImageDropTarget && (
-              <div className="relative flex-shrink-0" style={{ minWidth: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span
-                  className="group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center"
-                  style={{ gap: 3 }}
-                >
-                  {isHome && (
-                    <span style={{ color: C.accent, display: 'flex', alignItems: 'center' }}>
-                      <IconHome />
-                    </span>
-                  )}
-                  {count != null && count > 0 && (
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}>
-                      {count}
-                    </span>
-                  )}
-                </span>
+              <div className="relative flex-shrink-0" style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {count != null && count > 0 && (
+                  <span
+                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
+                    style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}
+                  >
+                    {count}
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={e => {
