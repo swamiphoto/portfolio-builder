@@ -22,7 +22,7 @@ export function DesignSection({ label, description, children }) {
         </div>
       )}
       {description && (
-        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: 10 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: 10 }}>
           {description}
         </div>
       )}
