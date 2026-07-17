@@ -96,8 +96,8 @@ function IconSettings(p) {
 function IconBell(p) {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
 }
-function IconHome(p) {
-  return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+function IconHomeFilled(p) {
+  return <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" {...p}><path fillRule="evenodd" clipRule="evenodd" d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.69-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z"/><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198c.03-.028.061-.056.091-.086L12 5.43z"/></svg>
 }
 function IconCollapse(p) {
   return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13L5 8l5-5"/></svg>
@@ -135,15 +135,28 @@ function IconDots(p) {
   return <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="5.5" cy="1.5" r="1"/><circle cx="9.5" cy="1.5" r="1"/></svg>
 }
 
-function PageThumb({ page }) {
+function PageThumb({ page, isHome }) {
   const src = pageDisplayThumbnail(page)
   const base = { width: 24, height: 24, borderRadius: 3, flexShrink: 0 }
+  const homeIcon = <IconHomeFilled style={{ color: 'rgba(255,255,255,0.95)' }} />
+
   if (src) {
-    return <img src={getSizedUrl(src, 'thumbnail')} alt="" style={{ ...base, objectFit: 'cover', display: 'block' }} />
+    return (
+      <div style={{ ...base, position: 'relative', overflow: 'hidden' }}>
+        <img src={getSizedUrl(src, 'thumbnail')} alt="" style={{ width: 24, height: 24, objectFit: 'cover', display: 'block' }} />
+        {isHome && (
+          <span style={{ position: 'absolute', inset: 0, background: 'rgba(20,10,2,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {homeIcon}
+          </span>
+        )}
+      </div>
+    )
   }
   return (
     <div style={{ ...base, background: pageThumbGradient(page.id), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.85)' }}>
-      {page.type === 'link' && <IconLink width={11} height={11} strokeWidth={2} />}
+      {isHome
+        ? homeIcon
+        : page.type === 'link' && <IconLink width={11} height={11} strokeWidth={2} />}
     </div>
   )
 }
@@ -582,7 +595,7 @@ export default function PlatformSidebar({
             }}
           >
             <div className="flex-shrink-0 flex items-center">
-              <PageThumb page={page} />
+              <PageThumb page={page} isHome={isHome} />
             </div>
             <input
               autoFocus
@@ -635,7 +648,7 @@ export default function PlatformSidebar({
           >
             {/* Thumbnail */}
             <div className="flex-shrink-0 flex items-center">
-              <PageThumb page={page} />
+              <PageThumb page={page} isHome={isHome} />
             </div>
 
             {/* Title */}
@@ -650,22 +663,17 @@ export default function PlatformSidebar({
             {isPageNestTarget && <span className="text-[10px] flex-shrink-0" style={{ color: C.accent, fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' }}>nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
-            {/* Right slot: home icon + count / dots */}
+            {/* Right slot: count / dots */}
             {!isPageNestTarget && !isImageDropTarget && (
-              <div className="relative flex-shrink-0" style={{ height: 20, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <span
-                  className="group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center"
-                  style={{ gap: 4 }}
-                >
-                  {isHome && (
-                    <span style={{ display: 'flex', alignItems: 'center', color: C.accent, opacity: 0.8 }}>
-                      <IconHome />
-                    </span>
-                  )}
-                  {count != null && count > 0 && (
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}>{count}</span>
-                  )}
-                </span>
+              <div className="relative flex-shrink-0" style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {count != null && count > 0 && (
+                  <span
+                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
+                    style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}
+                  >
+                    {count}
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={e => {
@@ -673,8 +681,8 @@ export default function PlatformSidebar({
                     setDotsAnchorEl(e.currentTarget)
                     setMenuOpenId(menuOpenId === page.id ? null : page.id)
                   }}
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-end rounded transition-opacity duration-[120ms]"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, paddingRight: 0 }}
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms]"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted }}
                 >
                   <IconDots />
                 </button>
