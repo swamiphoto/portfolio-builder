@@ -115,6 +115,21 @@ function PlaceholderText() {
   )
 }
 
+function PlaceholderVideo() {
+  return (
+    <div className="w-full md:w-[85%] mx-auto px-4 md:px-0">
+      <div className="relative w-full rounded-3xl overflow-hidden select-none" style={{ background: '#ede7dc', paddingBottom: '56.25%' }}>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg className="w-14 h-14" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M20 17 L33 24 L20 31 Z" fill="currentColor" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   const adminViewport = useAdminViewport()
@@ -288,6 +303,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             }
 
             case "video": {
+              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo /><WiggleLine /></div> : null;
               const variantId = resolveVariant(block, themeId)
               const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 2
               return (
