@@ -139,7 +139,7 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans' }) {
     )
   }
   const containerCls = variant === 1
-    ? 'relative left-1/2 -translate-x-1/2 w-screen max-w-none overflow-x-hidden'
+    ? 'w-full mx-auto'
     : 'w-full md:w-[85%] mx-auto'
   return (
     <div className={containerCls}>

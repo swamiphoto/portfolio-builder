@@ -37,13 +37,15 @@ test('the empty video placeholder reflects the layout variant', () => {
   const emptyVideo = (variant) => ({ type: 'video', url: '', themeState: { kyoto: { variant } } })
   const full = render(<Gallery name="" description="" blocks={[emptyVideo('full-bleed')]} pages={[]} themeId="kyoto" showPlaceholders />)
   const fullHtml = full.container.querySelector('.video-block').innerHTML
-  // Full bleed uses the translate breakout, not the broken -ml/ml-0 combo.
-  expect(fullHtml).toMatch(/w-screen/)
-  expect(fullHtml).toMatch(/-translate-x-1\/2/)
-  expect(fullHtml).not.toMatch(/ml-0/)
+  // Full bleed = full content width, square corners (not the inset rounded centered box).
+  expect(fullHtml).toMatch(/aspect-\[16\/9\]/)
+  expect(fullHtml).toMatch(/rounded-none/)
+  expect(fullHtml).not.toMatch(/w-screen/)
 
   const centered = render(<Gallery name="" description="" blocks={[emptyVideo('centered')]} pages={[]} themeId="kyoto" showPlaceholders />)
-  expect(centered.container.querySelector('.video-block').innerHTML).toMatch(/w-\[85%\]/)
+  const centeredHtml = centered.container.querySelector('.video-block').innerHTML
+  expect(centeredHtml).toMatch(/w-\[85%\]/)
+  expect(centeredHtml).toMatch(/rounded-3xl/)
 })
 
 test('the empty video placeholder applies the caption style (accent = uppercase red)', () => {

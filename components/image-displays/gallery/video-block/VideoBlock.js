@@ -25,7 +25,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
   const cleanUrl = (url || "").trim();
 
   const videoContainerStyle = (() => {
-    if (variant === 1) return "relative left-1/2 -translate-x-1/2 w-screen max-w-none"; // full bleed
+    if (variant === 1) return "w-full mx-auto"; // full bleed: full content width, square corners
     if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6"; // side
     return "w-full md:w-[85%] mx-auto"; // centered (default)
   })();
@@ -54,7 +54,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
   if (!cleanUrl) return null;
 
   return (
-    <div className={`${videoContainerStyle} ${variant === 1 ? "overflow-x-hidden" : ""}`}>
+    <div className={videoContainerStyle}>
       {variant === 3 ? (
         // Side: video on the left, caption on the right
         <>
