@@ -8,6 +8,7 @@ import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '..
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
+import { getSizedUrl } from '../../../common/gcsClient'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
@@ -95,6 +96,9 @@ function IconSettings(p) {
 function IconBell(p) {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
 }
+function IconHome(p) {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+}
 function IconCollapse(p) {
   return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13L5 8l5-5"/></svg>
 }
@@ -130,21 +134,16 @@ function IconDocument(props) {
 function IconDots(p) {
   return <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="5.5" cy="1.5" r="1"/><circle cx="9.5" cy="1.5" r="1"/></svg>
 }
-function IconDragHandle(p) {
-  return <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="4.5" cy="1.5" r="1"/><circle cx="1.5" cy="5" r="1"/><circle cx="4.5" cy="5" r="1"/><circle cx="1.5" cy="8.5" r="1"/><circle cx="4.5" cy="8.5" r="1"/></svg>
-}
 
 function PageThumb({ page }) {
   const src = pageDisplayThumbnail(page)
-  const base = { width: 24, height: 24, borderRadius: 6, flexShrink: 0 }
+  const base = { width: 24, height: 24, borderRadius: 3, flexShrink: 0 }
   if (src) {
-    return <img src={src} alt="" style={{ ...base, objectFit: 'cover', display: 'block' }} />
+    return <img src={getSizedUrl(src, 'thumbnail')} alt="" style={{ ...base, objectFit: 'cover', display: 'block' }} />
   }
   return (
-    <div style={{ ...base, background: pageThumbGradient(page.id), position: 'relative' }}>
-      {page.type === 'link' && (
-        <span style={{ position: 'absolute', bottom: 1, right: 2, fontSize: 8, color: 'rgba(255,255,255,0.75)', lineHeight: 1 }}>↗</span>
-      )}
+    <div style={{ ...base, background: pageThumbGradient(page.id), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.85)' }}>
+      {page.type === 'link' && <IconLink width={11} height={11} strokeWidth={2} />}
     </div>
   )
 }
@@ -537,6 +536,7 @@ export default function PlatformSidebar({
     const isPageBeforeTarget = pageDropTarget?.type === 'before' && pageDropTarget.pageId === page.id
     const isPageAfterTarget = pageDropTarget?.type === 'after' && pageDropTarget.pageId === page.id
     const isLink = page.type === 'link'
+    const isHome = siteConfig.homePageId === page.id
     const isSelected = selectedPageId === page.id
     const count = !isLink ? countPagePhotos(page) : null
     const lineLeft = 8 + 10 + depth * 18 // outer margin + row padding + indent
@@ -633,14 +633,9 @@ export default function PlatformSidebar({
             onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
             onMouseLeave={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'transparent' }}
           >
-            {/* Thumbnail / drag handle */}
-            <div className="flex-shrink-0 flex items-center justify-center">
-              <span className="group-hover:hidden flex items-center">
-                <PageThumb page={page} />
-              </span>
-              <span className="hidden group-hover:flex items-center justify-center cursor-grab active:cursor-grabbing" style={{ width: 24, height: 24 }}>
-                <IconDragHandle />
-              </span>
+            {/* Thumbnail */}
+            <div className="flex-shrink-0 flex items-center">
+              <PageThumb page={page} />
             </div>
 
             {/* Title */}
@@ -655,10 +650,18 @@ export default function PlatformSidebar({
             {isPageNestTarget && <span className="text-[10px] flex-shrink-0" style={{ color: C.accent, fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' }}>nest</span>}
             {isImageDropTarget && !isPageNestTarget && <span className="text-[10px] text-blue-500 flex-shrink-0">Drop</span>}
 
-            {/* Right slot: count / dots */}
+            {/* Right slot: home / count / dots */}
             {!isPageNestTarget && !isImageDropTarget && (
               <div className="relative flex-shrink-0" style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {count != null && count > 0 && (
+                {isHome && (
+                  <span
+                    className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
+                    style={{ color: C.accent }}
+                  >
+                    <IconHome />
+                  </span>
+                )}
+                {!isHome && count != null && count > 0 && (
                   <span
                     className="absolute group-hover:opacity-0 transition-opacity duration-[120ms] flex items-center justify-center w-full h-full"
                     style={{ fontFamily: MONO, fontSize: 10, color: C.textFaint }}
