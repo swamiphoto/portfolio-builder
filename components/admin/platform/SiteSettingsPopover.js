@@ -823,16 +823,16 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           <DesignSection
             label="Social links"
             description={onEditHandles ? (
-              <>Shown in the footer, from your{' '}
+              <>You can add these in your{' '}
                 <button
                   type="button"
                   onClick={onEditHandles}
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#2c2416' }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'inherit' }}
                   style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', transition: 'color 0.15s' }}
-                >contact handles</button>
+                >profile</button>
               </>
-            ) : 'Shown in the footer, from your contact handles'}
+            ) : 'You can add these in your profile'}
           >
             <DesignPillToggle
               value={resolveFooterSocial(config)}
