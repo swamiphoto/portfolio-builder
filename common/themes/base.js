@@ -77,7 +77,11 @@ export const baseBlocks = {
   },
   'page-gallery': {
     defaultVariant: 'list',
-    variants: [{ id: 'list', label: 'List' }],
+    variants: [
+      { id: 'list', label: 'List' },
+      { id: 'alternating', label: 'Alternating' },
+      { id: 'grid', label: 'Grid' },
+    ],
   },
 }
 

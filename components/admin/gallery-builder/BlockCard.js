@@ -259,7 +259,7 @@ function BlockCard({
   }, []);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
   const { startDrag, endDrag } = useDrag()
-  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video" || block.type === "contact" || block.type === "testimonial";
+  const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video" || block.type === "contact" || block.type === "testimonial" || block.type === "page-gallery";
 
   const { data: session } = useSession();
   const ownerFirstName = session?.user?.name?.split(' ')[0] || 'you';

@@ -9,7 +9,7 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, pageThumbGradient, focalPointToObjectPosition } from "../../../common/assetRefs";
+import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
 import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle } from "../../../common/themes/variants";
@@ -19,6 +19,7 @@ import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
 import SquareGallery from "./square-gallery/SquareGallery";
 import FramedPhoto from "./photo-block/FramedPhoto";
+import PageGalleryLinks from "./page-gallery/PageGalleryLinks";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -338,54 +339,10 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 .map(id => (pages || []).find(p => p.id === id))
                 .filter(Boolean);
               if (linkedPages.length === 0) return null;
-              const pgStackVariants = [
-                {
-                  first: "absolute -right-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
-                  second: "absolute -right-1 -bottom-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
-                },
-                {
-                  first: "absolute -left-2 -bottom-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
-                  second: "absolute -left-1 -bottom-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
-                },
-                {
-                  first: "absolute -right-2 -top-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] -rotate-2 transition-transform duration-300 rounded-3xl",
-                  second: "absolute -right-1 -top-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] -rotate-1 transition-transform duration-300 rounded-3xl",
-                },
-                {
-                  first: "absolute -left-2 -top-2 w-full h-[400px] md:h-[500px] bg-[#ede8e0] rotate-2 transition-transform duration-300 rounded-3xl",
-                  second: "absolute -left-1 -top-1 w-full h-[400px] md:h-[500px] bg-[#f4efe8] rotate-1 transition-transform duration-300 rounded-3xl",
-                },
-              ];
+              const variantId = resolveVariant(block, themeId);
               return (
-                <div key={`block-${index}`} className="page-gallery-block max-w-7xl mx-auto p-4" data-block-index={index} {...hoverProps}>
-                  <div className="space-y-8">
-                    {linkedPages.map((p, i) => {
-                      const thumb = pageDisplayThumbnail(p);
-                      const href = `${linkBase}/${p.slug || p.id}`;
-                      const stackStyle = pgStackVariants[i % pgStackVariants.length];
-                      return (
-                        <a key={p.id} href={href} onClick={onChildPageClick ? (e) => { e.preventDefault(); onChildPageClick(p.id); } : undefined} className="flex flex-col md:flex-row gap-6 group hover:opacity-95 transition-opacity hover:no-underline" style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <div className="relative md:w-7/12">
-                            <div className="relative">
-                              <div className={stackStyle.first} />
-                              <div className={stackStyle.second} />
-                              <div className="relative overflow-hidden shadow-lg rounded-3xl">
-                                {thumb ? (
-                                  <img src={thumb} alt={p.title} className="w-full h-[400px] md:h-[500px] object-cover relative z-10 rounded-3xl" style={{ objectPosition: focalPointToObjectPosition(p.thumbnail?.focalPoint) }} />
-                                ) : (
-                                  <div className="w-full h-[400px] md:h-[500px] rounded-3xl" style={{ background: pageThumbGradient(p.id) }} />
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="md:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-0 md:px-8">
-                            <h2 className="text-4xl font-medium tracking-tight font-serif" style={{ color: '#1a1410', fontWeight: 400 }}>{p.title}</h2>
-                            {p.description && <p className="font-serif" style={{ color: '#7a6b55', fontSize: '1.1rem', lineHeight: 1.6 }}>{p.description}</p>}
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
+                <div key={`block-${index}`} className="page-gallery-block" data-block-index={index} {...hoverProps}>
+                  <PageGalleryLinks pages={linkedPages} variant={variantId} linkBase={linkBase} onChildPageClick={onChildPageClick} />
                 </div>
               );
             }
