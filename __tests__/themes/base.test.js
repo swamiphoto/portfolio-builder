@@ -7,8 +7,9 @@ describe('base registry', () => {
     expect(baseBlocks.photos.variants.map(v => v.id)).toEqual(['stacked', 'masonry', 'grid', 'square'])
   })
 
-  it('text exposes the shared font slots and center default align', () => {
-    expect(baseBlocks.text.fonts.map(f => f.id)).toEqual(['serif', 'display', 'fraunces', 'sans', 'mono'])
+  it('text exposes the font menu (categories) and center default align', () => {
+    expect(baseBlocks.text.fonts.map(f => f.id)).toEqual(['serif', 'display', 'fraunces'])
+    expect(baseBlocks.text.fonts.find(f => f.id === 'fraunces').label).toBe('Editorial')
     expect(baseBlocks.text.defaultFont).toBe('serif')
     expect(baseBlocks.text.defaultAlign).toBe('center')
   })
@@ -49,8 +50,9 @@ describe('base registry', () => {
     expect(added.variants.map(v => v.id)).toContain('carousel')
   })
 
-  it('FONT_SLOTS is exported for popup consumption', () => {
-    expect(FONT_SLOTS.map(f => f.id)).toContain('mono')
+  it('FONT_SLOTS is the category font menu (serif/display/editorial)', () => {
+    expect(FONT_SLOTS.map(f => f.id)).toEqual(['serif', 'display', 'fraunces'])
+    expect(FONT_SLOTS.map(f => f.label)).toEqual(['Serif', 'Display', 'Editorial'])
   })
 
   it('mergeBlockSpec with no override returns a fresh object (not the baseSpec reference)', () => {

@@ -58,13 +58,13 @@ describe('DesignPopover write wiring', () => {
     )
   })
 
-  it('font write: clicking Mono calls onUpdate with font: "mono"', () => {
+  it('font write: clicking Editorial calls onUpdate with font: "fraunces"', () => {
     const onUpdate = jest.fn()
     setup({ type: 'text', content: 'hi' }, onUpdate)
-    // "Mono" is unambiguous in this render — only appears once in the font section
-    fireEvent.click(screen.getByText('Mono'))
+    // "Editorial" is the Fraunces slot's category label; unique in this render.
+    fireEvent.click(screen.getByText('Editorial'))
     expect(onUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'text', font: 'mono' })
+      expect.objectContaining({ type: 'text', font: 'fraunces' })
     )
   })
 

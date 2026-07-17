@@ -5,12 +5,13 @@
 
 import { CAPTION_STYLE_OPTIONS, DEFAULT_CAPTION_STYLE } from '../captionStyles'
 
+// The text-block font menu. Labels are style categories (not font names). The
+// ids still map to theme.tokens.fonts, which retains sans/mono families for any
+// block that already stored them, even though they're no longer offered here.
 export const FONT_SLOTS = [
   { id: 'serif', label: 'Serif' },
   { id: 'display', label: 'Display' },
-  { id: 'fraunces', label: 'Fraunces' },
-  { id: 'sans', label: 'Sans' },
-  { id: 'mono', label: 'Mono' },
+  { id: 'fraunces', label: 'Editorial' },
 ]
 
 export const baseBlocks = {
