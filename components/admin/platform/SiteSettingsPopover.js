@@ -807,7 +807,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           )}
 
           {config.design?.navStyle !== 'menu' && (
-            <DesignSection label="Sub-navigation" description="Submenu for nested pages">
+            <DesignSection label="Nested pages">
               <DesignPillToggle
                 value={config.design?.subNavStyle === 'inline' ? 'inline' : 'dropdown'}
                 onChange={(v) => update({ design: { ...(config.design || {}), subNavStyle: v } })}
