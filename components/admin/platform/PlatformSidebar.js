@@ -138,7 +138,7 @@ function IconDots(p) {
 function PageThumb({ page, isHome }) {
   const src = pageDisplayThumbnail(page)
   const base = { width: 24, height: 24, borderRadius: 3, flexShrink: 0 }
-  const homeIcon = <IconHomeFilled style={{ color: 'rgba(255,255,255,0.95)' }} />
+  const homeIcon = <IconHomeFilled style={{ color: 'rgba(255,228,185,0.62)' }} />
 
   if (src) {
     return (
