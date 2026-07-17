@@ -838,9 +838,9 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               value={resolveFooterSocial(config)}
               onChange={(v) => update({ design: { ...(config.design || {}), footerSocial: v } })}
               options={[
-                { value: 'off',   label: 'Off'   },
                 { value: 'text',  label: 'Text'  },
                 { value: 'icons', label: 'Icons' },
+                { value: 'off',   label: 'Off'   },
               ]}
             />
           </DesignSection>
