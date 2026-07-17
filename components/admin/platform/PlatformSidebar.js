@@ -7,6 +7,7 @@ import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
+import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
@@ -144,6 +145,21 @@ function IconDots(p) {
 }
 function IconDragHandle(p) {
   return <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="4.5" cy="1.5" r="1"/><circle cx="1.5" cy="5" r="1"/><circle cx="4.5" cy="5" r="1"/><circle cx="1.5" cy="8.5" r="1"/><circle cx="4.5" cy="8.5" r="1"/></svg>
+}
+
+function PageThumb({ page }) {
+  const src = pageDisplayThumbnail(page)
+  const base = { width: 24, height: 24, borderRadius: 6, flexShrink: 0 }
+  if (src) {
+    return <img src={src} alt="" style={{ ...base, objectFit: 'cover', display: 'block' }} />
+  }
+  return (
+    <div style={{ ...base, background: pageThumbGradient(page.id), position: 'relative' }}>
+      {page.type === 'link' && (
+        <span style={{ position: 'absolute', bottom: 1, right: 2, fontSize: 8, color: 'rgba(255,255,255,0.75)', lineHeight: 1 }}>↗</span>
+      )}
+    </div>
+  )
 }
 
 function PageMenuItem({ icon, label, desc, onClick }) {
