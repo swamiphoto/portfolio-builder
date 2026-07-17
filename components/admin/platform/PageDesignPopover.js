@@ -12,7 +12,7 @@ export default function PageDesignPopover({ page, onUpdate, onClose, anchorEl })
   const showButtonStyle = !!(page.slideshow?.enabled || page.clientFeatures?.enabled)
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={240} title="Page Design">
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Page Design">
       <DesignSection label="Hero height">
         <PillToggle
           value={cover.height || 'partial'}

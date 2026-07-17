@@ -457,7 +457,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           </Field>
         </div>
         {coverDesignOpen && (
-          <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width={240} title="Cover Design">
+          <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Cover Design">
             <DesignSection label="Button Style">
               <DesignPillToggle
                 value={cover.buttonStyle || 'solid'}

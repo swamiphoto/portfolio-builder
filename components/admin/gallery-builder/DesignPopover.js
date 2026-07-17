@@ -39,7 +39,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const currentFont = block.font || spec.defaultFont
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={212} maxWidth="calc(100vw - 24px)" title="Design">
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
       {hasSize && (
         <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
           <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
