@@ -52,6 +52,8 @@ export function PillToggle({ value, onChange, options }) {
             key={v}
             type="button"
             onClick={() => onChange(v)}
+            onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(120,90,60,0.10)' }}
+            onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
             className="transition-all"
             style={{
               minWidth: 36,
@@ -101,6 +103,8 @@ export function NumberToggle({ value, onChange, options }) {
             key={v}
             type="button"
             onClick={() => onChange(v)}
+            onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(120,90,60,0.10)' }}
+            onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
             title={title}
             className="transition-all"
             style={{
