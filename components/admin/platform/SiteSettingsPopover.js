@@ -5,6 +5,7 @@ import { DesignSection, PillToggle as DesignPillToggle, DesignSelect } from './d
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { THEME_LIST } from '../../../common/themes'
 import { resolveNavStyle } from '../../../common/navStyles'
+import { resolveFooterSocial } from '../../../common/siteDesign'
 import { EditableInput } from './EditableText'
 
 export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
@@ -819,13 +820,14 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSection>
           )}
 
-          <DesignSection label="Footer">
+          <DesignSection label="Social links" description="Shown in the footer, from your contact handles">
             <DesignPillToggle
-              value={config.design?.footerLayout === 'expanded' ? 'expanded' : 'simple'}
-              onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
+              value={resolveFooterSocial(config)}
+              onChange={(v) => update({ design: { ...(config.design || {}), footerSocial: v } })}
               options={[
-                { value: 'simple',   label: 'Simple'   },
-                { value: 'expanded', label: 'Expanded' },
+                { value: 'off',   label: 'Off'   },
+                { value: 'text',  label: 'Text'  },
+                { value: 'icons', label: 'Icons' },
               ]}
             />
           </DesignSection>

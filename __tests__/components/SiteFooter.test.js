@@ -23,4 +23,14 @@ describe('SiteFooter', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
     expect(screen.getByText(/Ansel/)).toBeInTheDocument()
   })
+  it('icons mode renders social links as icon buttons (aria-labelled)', () => {
+    render(<SiteFooter siteConfig={{ siteName: 'Ansel', design: { footerSocial: 'icons' }, contact: { instagram: '@ansel' } }} />)
+    const link = screen.getByLabelText('Instagram')
+    expect(link.getAttribute('href')).toBe('https://instagram.com/ansel')
+    expect(link.querySelector('svg')).toBeInTheDocument()
+  })
+  it('defaults (unset) to icons for a site with contacts', () => {
+    render(<SiteFooter siteConfig={{ siteName: 'Ansel', contact: { instagram: '@ansel' } }} />)
+    expect(screen.getByLabelText('Instagram')).toBeInTheDocument()
+  })
 })

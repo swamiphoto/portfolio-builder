@@ -17,6 +17,18 @@ export function resolveFooter(siteConfig) {
   return design.footerLayout === 'expanded' ? 'expanded' : 'simple'
 }
 
+// How social links appear in the footer: 'off' | 'text' | 'icons'. The footer's
+// copyright line always renders regardless — this only controls the socials.
+// Prefers the new `footerSocial` field; falls back to the legacy `footerLayout`
+// (expanded -> text, simple -> off); new/unset sites default to 'icons'.
+export function resolveFooterSocial(siteConfig) {
+  const design = siteConfig?.design || {}
+  if (['off', 'text', 'icons'].includes(design.footerSocial)) return design.footerSocial
+  if (design.footerLayout === 'expanded') return 'text'
+  if (design.footerLayout === 'simple') return 'off'
+  return 'icons'
+}
+
 const INTER = '"Inter", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif'
 const FRAUNCES = '"Fraunces", Georgia, serif'
 
