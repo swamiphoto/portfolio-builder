@@ -767,7 +767,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       />
 
       {designOpen && (
-        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={280} title="Design">
+        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width="max-content" minWidth={280} maxWidth="calc(100vw - 24px)" title="Design">
           <DesignSection label="Theme">
             <DesignSelect
               value={config.design?.theme || 'kyoto'}
@@ -785,9 +785,9 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
                 value={config.logoFont || 'theme'}
                 onChange={(v) => update({ logoFont: v })}
                 options={[
-                  { value: 'theme',     label: 'Default'   },
-                  { value: 'modern',    label: 'Modern'    },
-                  { value: 'editorial', label: 'Editorial' },
+                  { value: 'theme',     label: <span style={{ fontFamily: 'Muse', fontSize: 15, lineHeight: 1 }}>Signature</span> },
+                  { value: 'modern',    label: <span style={{ fontFamily: 'Inter, -apple-system, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, fontSize: 11 }}>Modern</span> },
+                  { value: 'editorial', label: <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 13 }}>Editorial</span> },
                 ]}
               />
             </DesignSection>
