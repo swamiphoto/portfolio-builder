@@ -60,6 +60,15 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockFocalSig]);
 
+  // Adding or removing a block is a discrete action (not per-keystroke typing), so
+  // flush it to the preview immediately — this makes a new block's placeholder appear
+  // at once so the editor can scroll to it, instead of after the 250ms debounce.
+  const blockCount = (gallery.blocks || []).length;
+  useEffect(() => {
+    setDebouncedGallery(gallery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blockCount]);
+
   const themeId = siteConfig?.design?.theme || 'kyoto';
 
   const resolvedBlocks = useMemo(

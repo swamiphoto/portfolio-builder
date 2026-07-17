@@ -111,16 +111,18 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
   const { startDrag, endDrag, dropTargetPageId } = useDrag()
 
+  const scrollSidebarToBlock = (index) => {
+    const el = blocksContainerRef.current;
+    if (!el) return;
+    const card = el.querySelector(`[data-block-index="${index}"]`);
+    if (!card) return;
+    card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setGlowingBlockIndex(index);
+    setTimeout(() => setGlowingBlockIndex(null), 3500);
+  };
+
   useImperativeHandle(ref, () => ({
-    scrollToBlock(index) {
-      const el = blocksContainerRef.current;
-      if (!el) return;
-      const card = el.querySelector(`[data-block-index="${index}"]`);
-      if (!card) return;
-      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      setGlowingBlockIndex(index);
-      setTimeout(() => setGlowingBlockIndex(null), 3500);
-    },
+    scrollToBlock(index) { scrollSidebarToBlock(index); },
     openAddBlockMenu(index, anchorRect) {
       setMenuAnchorRect(anchorRect);
       setInsertAtIndex(index);
@@ -132,21 +134,15 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
   const addBlock = (block) => {
     const blocks = [...(gallery.blocks || [])];
-    const isAppend = insertAtIndex === null;
-    if (insertAtIndex !== null) {
-      blocks.splice(insertAtIndex, 0, block);
-    } else {
-      blocks.push(block);
-    }
+    const insertIndex = insertAtIndex !== null ? insertAtIndex : blocks.length;
+    blocks.splice(insertIndex, 0, block);
     onChange({ ...gallery, blocks });
     setInsertAtIndex(null);
-    if (isAppend) {
-      setTimeout(() => {
-        if (blocksContainerRef.current) {
-          blocksContainerRef.current.scrollTop = blocksContainerRef.current.scrollHeight;
-        }
-      }, 50);
-    }
+    // Scroll both the block sidebar and the live preview to the new block so its
+    // placeholder is visible, wherever it was inserted. The preview scroll waits a
+    // beat longer for the (flush-rendered) block to mount.
+    setTimeout(() => scrollSidebarToBlock(insertIndex), 60);
+    setTimeout(() => onScrollPreviewToBlock?.(insertIndex), 160);
   };
 
   const updateBlock = (index, updated) => {
