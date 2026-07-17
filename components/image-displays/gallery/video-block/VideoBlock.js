@@ -25,7 +25,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
 
   const videoContainerStyle = (() => {
     if (variant === 1) return "relative left-1/2 -translate-x-1/2 w-screen max-w-none"; // full bleed
-    if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row gap-6"; // side
+    if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6"; // side
     return "w-full md:w-[85%] mx-auto"; // centered (default)
   })();
 
@@ -57,7 +57,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
       {variant === 3 ? (
         // Side: video on the left, caption on the right
         <>
-          <div className={`w-full ${videoStyle} ${videoWrapperStyle}`}>
+          <div className={`w-full md:w-2/3 ${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
           </div>
           <div className="w-full md:w-1/3 flex items-center">

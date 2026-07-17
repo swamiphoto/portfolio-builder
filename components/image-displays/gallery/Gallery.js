@@ -132,8 +132,8 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans' }) {
   )
   if (variant === 3) {
     return (
-      <div className="w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
-        <div className="w-full">{box}</div>
+      <div className="w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6">
+        <div className="w-full md:w-2/3">{box}</div>
         <div className="w-full md:w-1/3 flex items-center">
           {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0" style={capCss}>{caption}</p>}
         </div>
