@@ -733,7 +733,10 @@ function BlockCard({
                   }
                   if (!url) url = e.dataTransfer.getData('text/plain');
                   if (url) {
-                    const updatedTarget = { ...block, imageUrl: url };
+                    // Clear the normalized `image` object so the new imageUrl wins —
+                    // the renderer reads `block.image || block.imageUrl`, so a stale
+                    // `image` would otherwise shadow the replacement.
+                    const updatedTarget = { ...block, imageUrl: url, image: null };
                     if (srcIdx !== null && srcRefs && onMoveImagesAcrossBlocks) {
                       onMoveImagesAcrossBlocks(srcIdx, srcRefs, blockIndex, updatedTarget);
                     } else {
@@ -778,7 +781,7 @@ function BlockCard({
                     <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity z-10">
                       <ThumbMenu
                         size={22}
-                        items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "" }) }]}
+                        items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "", image: null }) }]}
                       />
                     </div>
                   </div>

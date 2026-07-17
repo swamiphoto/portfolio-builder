@@ -134,10 +134,11 @@ function PlaceholderPhoto({ variant = 'full-bleed', size = 'large' }) {
       </div>
     )
   }
-  // full-bleed (default): span the content width, square corners
+  // full-bleed (default): span the content width at a normal landscape ratio
+  // (same proportions a real image gets), square corners.
   return (
     <div className="w-full" data-photo-placeholder="full-bleed">
-      <div className="w-full aspect-[3/1] flex items-center justify-center select-none" style={{ background: '#ede7dc' }}>
+      <div className="w-full aspect-[3/2] flex items-center justify-center select-none" style={{ background: '#ede7dc' }}>
         <PlaceholderIcon />
       </div>
     </div>

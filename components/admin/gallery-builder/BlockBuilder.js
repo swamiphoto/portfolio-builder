@@ -181,7 +181,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     if (!block) return;
     const urls = new Set(imageRefs.map(r => r.url));
     if (block.type === 'photo') {
-      if (urls.has(block.imageUrl)) blocks[blockIndex] = { ...block, imageUrl: '' };
+      if (urls.has(block.imageUrl)) blocks[blockIndex] = { ...block, imageUrl: '', image: null };
     } else {
       const remaining = normalizeImageRefs(block.images || block.imageUrls || []).filter(r => !urls.has(r.url));
       blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
@@ -196,7 +196,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     if (src) {
       const urls = new Set(imageRefs.map(r => r.url));
       if (src.type === 'photo') {
-        if (urls.has(src.imageUrl)) blocks[sourceBlockIndex] = { ...src, imageUrl: '' };
+        if (urls.has(src.imageUrl)) blocks[sourceBlockIndex] = { ...src, imageUrl: '', image: null };
       } else {
         const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter(r => !urls.has(r.url));
         blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) };
