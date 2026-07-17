@@ -19,7 +19,7 @@ export const manhattan = {
     },
   },
   overrides: {
-    photo: { labels: { 'full-bleed': 'Full width', centered: 'Framed' } },
+    photo: { labels: { 'full-bleed': 'Full width', centered: 'Framed' }, hide: ['side-by-side'] },
     photos: { defaultVariant: 'grid' },
     video: { labels: { 'full-bleed': 'Full width', centered: 'Framed' }, hide: ['side-by-side'] },
     text: { defaultAlign: 'left' },

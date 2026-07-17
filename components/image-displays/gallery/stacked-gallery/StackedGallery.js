@@ -4,8 +4,9 @@ import { captionStyleCss } from "../../../../common/captionStyles";
 import styles from "./StackedGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 
-const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans' }) => {
+const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72 }) => {
   const capCss = captionStyleCss(captionStyle);
+  const colWidth = `${widthPct}%`;
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const imageUrls = useMemo(
@@ -74,7 +75,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
         {combinedRows.map((entry, index) => (
           <div key={`row-${index}`} className="mb-8">
             {Array.isArray(entry) ? (
-              <div style={{ width: "72%", margin: "0 auto" }}>
+              <div style={{ width: colWidth, margin: "0 auto" }}>
                 <div className="flex flex-row items-start justify-center gap-4">
                   {entry.map((image, idx) =>
                     image ? (
@@ -108,7 +109,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
               </div>
             ) : (
               <div className="w-full flex flex-col items-center">
-                <div className="relative group w-[72%]">
+                <div className="relative group" style={{ width: colWidth }}>
                   <img
                     src={getSizedUrl(entry.src, 'display')}
                     alt=""
@@ -124,7 +125,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   </div>
                 </div>
                 {getCaptionForUrl(entry.src) && (
-                  <p className="mt-2 text-sm italic text-center text-gray-500 max-w-[72%]" style={capCss}>{getCaptionForUrl(entry.src)}</p>
+                  <p className="mt-2 text-sm italic text-center text-gray-500" style={{ ...capCss, maxWidth: colWidth }}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>
             )}

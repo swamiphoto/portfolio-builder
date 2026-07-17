@@ -12,9 +12,9 @@ function balancedColumns(n) {
   return 3
 }
 
-export default function SquareGallery({ images = [], onImageClick }) {
+export default function SquareGallery({ images = [], onImageClick, maxCols = 3 }) {
   const isSmall = useMediaQuery({ maxWidth: 767 })
-  const cols = Math.min(balancedColumns(images.length), isSmall ? 2 : 3)
+  const cols = Math.min(balancedColumns(images.length), isSmall ? 2 : maxCols)
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8">

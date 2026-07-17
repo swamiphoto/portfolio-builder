@@ -12,7 +12,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize, resolvePhotoSize } from "../../../common/themes/variants";
 import { resolveCaptionStyle, captionStyleCss } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
@@ -26,6 +26,16 @@ const PLACEHOLDER_ASPECTS = [
   'aspect-[4/3]', 'aspect-[3/4]', 'aspect-[4/3]',
   'aspect-[3/4]', 'aspect-[4/3]', 'aspect-[3/4]',
 ]
+
+// Per-layout size scales. Larger images = fewer columns / wider single image.
+// Defaults (see resolvePhotoSize) keep existing galleries unchanged: masonry &
+// stacked → large, square & grid → medium.
+const MASONRY_COLS = { small: 4, medium: 3, large: 2 }
+const SQUARE_COLS = { small: 4, medium: 3, large: 2 }
+const GRID_BASIS = { small: 160, medium: 220, large: 300 }
+const STACKED_PCT = { small: 44, medium: 56, large: 72 }
+const PHOTO_CENTERED_PCT = { small: 44, medium: 56, large: 72 }
+const sizeKey = (s) => (s === 'small' || s === 'medium' || s === 'large' ? s : 'large')
 
 function PlaceholderIcon() {
   return (
@@ -48,10 +58,11 @@ function PlaceholderTile({ aspectClass = 'aspect-[4/3]' }) {
 // The empty-state preview shown on the right. It mirrors the block's chosen
 // layout so the photographer sees what a photos block will look like before
 // adding any images.
-function PlaceholderGrid({ variant = 'masonry' }) {
+function PlaceholderGrid({ variant = 'masonry', size = 'large' }) {
+  const sz = sizeKey(size)
   if (variant === 'stacked') {
     return (
-      <div className="w-full max-w-3xl mx-auto p-4 md:p-8" data-photos-placeholder="stacked">
+      <div className="w-full mx-auto p-4 md:p-8" style={{ maxWidth: `${STACKED_PCT[sz] + 12}%` }} data-photos-placeholder="stacked">
         <PlaceholderTile aspectClass="aspect-[3/2]" />
         <div className="flex gap-5">
           <div className="flex-1"><PlaceholderTile aspectClass="aspect-[3/4]" /></div>
@@ -61,10 +72,11 @@ function PlaceholderGrid({ variant = 'masonry' }) {
     )
   }
   if (variant === 'square') {
+    const cols = SQUARE_COLS[sz]
     return (
       <div className="w-full max-w-4xl mx-auto p-4 md:p-8" data-photos-placeholder="square">
-        <div className="grid grid-cols-2 gap-5">
-          {[0, 1, 2, 3].map((i) => <PlaceholderTile key={i} aspectClass="aspect-square" />)}
+        <div className="grid gap-5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+          {Array.from({ length: cols * 2 }).map((_, i) => <PlaceholderTile key={i} aspectClass="aspect-square" />)}
         </div>
       </div>
     )
@@ -74,7 +86,7 @@ function PlaceholderGrid({ variant = 'masonry' }) {
     const ratios = [1.5, 0.7, 1.2, 1.0]
     return (
       <div className="w-full max-w-6xl mx-auto p-4 md:p-8" data-photos-placeholder="grid">
-        <div className="flex gap-5" style={{ height: 200 }}>
+        <div className="flex gap-5" style={{ height: sz === 'large' ? 260 : sz === 'small' ? 150 : 200 }}>
           {ratios.map((ar, i) => (
             <div key={i} className="h-full rounded-3xl flex items-center justify-center select-none" style={{ background: '#ede7dc', flexGrow: ar, flexBasis: 0 }}>
               <PlaceholderIcon />
@@ -85,9 +97,10 @@ function PlaceholderGrid({ variant = 'masonry' }) {
     )
   }
   // masonry (default)
+  const cols = MASONRY_COLS[sz]
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-8" data-photos-placeholder="masonry">
-      <div style={{ columnCount: 3, columnGap: '1.25rem' }}>
+      <div style={{ columnCount: cols, columnGap: '1.25rem' }}>
         {PLACEHOLDER_ASPECTS.map((aspect, i) => (
           <div key={i} style={{ breakInside: 'avoid' }}>
             <PlaceholderTile aspectClass={aspect} />
@@ -98,10 +111,35 @@ function PlaceholderGrid({ variant = 'masonry' }) {
   )
 }
 
-function PlaceholderPhoto() {
+// Empty-state preview for a single photo block. Mirrors PhotoBlock's variants:
+// full-bleed spans the content width with square corners, centered is a narrower
+// rounded tile scaled by size, side puts the image next to a caption column.
+function PlaceholderPhoto({ variant = 'full-bleed', size = 'large' }) {
+  const sz = sizeKey(size)
+  if (variant === 'side-by-side') {
+    return (
+      <div className="w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6 px-4 md:px-0" data-photo-placeholder="side">
+        <div className="w-full md:w-2/3"><PlaceholderTile aspectClass="aspect-[3/2]" /></div>
+        <div className="w-full md:w-1/3 space-y-3">
+          <div className="h-4 rounded-full w-3/4" style={{ background: '#ede7dc' }} />
+          <div className="h-4 rounded-full w-1/2" style={{ background: '#ede7dc' }} />
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'centered') {
+    return (
+      <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: `${PHOTO_CENTERED_PCT[sz]}%` }} data-photo-placeholder="centered">
+        <PlaceholderTile aspectClass="aspect-[3/2]" />
+      </div>
+    )
+  }
+  // full-bleed (default): span the content width, square corners
   return (
-    <div className="mx-auto max-w-3xl w-full px-4 md:px-8">
-      <PlaceholderTile aspectClass="aspect-[3/2]" />
+    <div className="w-full" data-photo-placeholder="full-bleed">
+      <div className="w-full aspect-[3/1] flex items-center justify-center select-none" style={{ background: '#ede7dc' }}>
+        <PlaceholderIcon />
+      </div>
     </div>
   )
 }
@@ -218,30 +256,31 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
           switch (block.type) {
             case "photos": {
               const variantId = resolveVariant(block, themeId)
+              const size = sizeKey(resolvePhotoSize(block, themeId))
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} size={size} /><WiggleLine /></div> : null;
               if (variantId === 'grid') {
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
                     {themeId === 'manhattan'
                       ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} />
-                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} />}
+                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} />}
                   </div>
                 );
               }
               if (variantId === 'square') {
                 return (
                   <div key={`block-${index}`} className="photos-square-block" data-block-index={index} {...hoverProps}>
-                    <SquareGallery images={imageRefs} onImageClick={makeClickHandler(index)} />
+                    <SquareGallery images={imageRefs} onImageClick={makeClickHandler(index)} maxCols={SQUARE_COLS[size]} />
                   </div>
                 );
               }
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} captionStyle={resolveCaptionStyle(block)} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={STACKED_PCT[size]} />}
                   <WiggleLine />
                 </div>
               );
@@ -297,22 +336,24 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             }
 
             case "photo": {
-              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto /><WiggleLine /></div> : null;
-              if (themeId === 'manhattan' && resolveVariant(block, themeId) === 'framed') {
+              const variantId = resolveVariant(block, themeId)
+              const size = sizeKey(resolvePhotoSize(block, themeId))
+              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto variant={variantId} size={size} /><WiggleLine /></div> : null;
+              if (themeId === 'manhattan' && variantId === 'framed') {
                 return (
                   <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
                     <FramedPhoto imageUrl={getImageRefUrl(block.image || block.imageUrl)} caption={block.caption} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />
                   </div>
                 );
               }
-              const variantId = resolveVariant(block, themeId)
-              const photoVariant = variantId === 'centered' ? 2 : 1
+              const photoVariant = { centered: 2, 'side-by-side': 3 }[variantId] || 1
               return (
                 <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
                   <PhotoBlock
                     imageUrl={getImageRefUrl(block.image || block.imageUrl)}
                     caption={block.caption}
                     variant={photoVariant}
+                    widthPct={PHOTO_CENTERED_PCT[size]}
                     onImageClick={makeClickHandler(index)}
                     print={block.print}
                     captionStyle={resolveCaptionStyle(block)}

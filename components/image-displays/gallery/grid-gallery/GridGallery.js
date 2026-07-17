@@ -22,7 +22,7 @@ function initialAspect(img) {
   return FALLBACK_ASPECT
 }
 
-export default function GridGallery({ images = [], onImageClick }) {
+export default function GridGallery({ images = [], onImageClick, basis = 220 }) {
   // aspects: array of floats, one per image, parallel to `images`
   const [aspects, setAspects] = useState(() => images.map(initialAspect))
 
@@ -72,7 +72,7 @@ export default function GridGallery({ images = [], onImageClick }) {
               data-grid-item
               style={{
                 flexGrow: ar,
-                flexBasis: `${ar * 220}px`,
+                flexBasis: `${ar * basis}px`,
               }}
               className="relative overflow-hidden rounded-2xl shadow cursor-pointer"
               onClick={() => onImageClick?.(i)}

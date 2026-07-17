@@ -39,6 +39,7 @@ describe('base registry', () => {
     expect(merged.variants).toEqual([
       { id: 'full-bleed', label: 'Full width' },
       { id: 'centered', label: 'Framed' },
+      { id: 'side-by-side', label: 'Side' },
     ])
     // base is not mutated
     expect(baseBlocks.photo.variants[0].label).toBe('Full bleed')
@@ -61,7 +62,7 @@ describe('base registry', () => {
     expect(result.variants).not.toBe(baseBlocks.photo.variants)
     // Mutating the returned variants must not affect the base
     result.variants.push({ id: 'injected', label: 'Injected' })
-    expect(baseBlocks.photo.variants.map(v => v.id)).toEqual(['full-bleed', 'centered'])
+    expect(baseBlocks.photo.variants.map(v => v.id)).toEqual(['full-bleed', 'centered', 'side-by-side'])
   })
 
   it('baseBlocks.text.fonts is a decoupled copy of FONT_SLOTS', () => {

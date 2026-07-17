@@ -10,6 +10,7 @@ import PageGalleryPickerModal from "./PageGalleryPickerModal";
 import FocalPointEditor from "./FocalPointEditor";
 import ImageFocalEditor from "./ImageFocalEditor";
 import { resolveVariant } from "../../../common/themes/variants";
+import { getBlockSpec } from "../../../common/themes";
 import Tip from "../Tip";
 import { EditableInput, EditableTextarea } from "../platform/EditableText";
 
@@ -381,27 +382,32 @@ function BlockCard({
     ? [{ url: block.imageUrl || block.image?.url || '', ...(block.caption !== undefined ? { caption: block.caption } : {}) }]
     : [];
 
+  // The muted label on the right of the header shows the block's chosen design —
+  // its layout/variant for most blocks, the font for text, the hero height for
+  // the cover. Resolver-driven so it stays correct as variants/labels evolve.
   const headerMeta = (() => {
-    if (isPhotoBlock) {
-      const layout = block.type === 'masonry' ? 'masonry'
-        : block.type === 'stacked' ? 'stacked'
-        : (block.layout || '').toLowerCase();
-      if (layout === 'masonry') return 'Masonry';
-      if (layout === 'stacked') return 'Stacked';
+    // Hero cover: the height lives on the page, not the block.
+    if (block.type === 'page') {
+      const pg = (pages || []).find((p) => p.id === sourcePageId);
+      return (pg?.cover?.height === 'full') ? 'Full' : 'Partial';
+    }
+    const spec = getBlockSpec(themeId, block.type);
+    if (!spec) {
+      // Legacy standalone masonry/stacked block types carry no spec.
+      if (block.type === 'masonry') return 'Masonry';
+      if (block.type === 'stacked') return 'Stacked';
       return null;
     }
-    if (block.type === 'photo') {
-      const layout = block.layout;
-      if (!layout || layout === 'Full Bleed' || layout === 'Edge to edge') return 'Full Bleed';
-      return 'Centered';
+    // Text: the font style (Serif / Display / Editorial) is the meaningful choice.
+    if (block.type === 'text' && spec.fonts) {
+      const fontId = block.font || spec.defaultFont;
+      return spec.fonts.find((f) => f.id === fontId)?.label || null;
     }
-    if (block.type === 'text') return null;
-    if (block.type === 'video') return 'Video';
-    if (block.type === 'page-gallery') {
-      const n = (block.pageIds || []).length;
-      return n > 0 ? `${n} page${n === 1 ? '' : 's'}` : null;
-    }
-    return null;
+    // Contact has a single 'Standard' variant — nothing worth surfacing.
+    if (block.type === 'contact') return null;
+    // Everything else: the current layout/variant label.
+    const variantId = resolveVariant(block, themeId);
+    return (spec.variants || []).find((v) => v.id === variantId)?.label || null;
   })();
 
   return (

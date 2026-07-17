@@ -72,3 +72,15 @@ export function resolveSize(block, themeId) {
   if (block.size && valid.includes(block.size)) return block.size
   return spec?.defaultSize || 'medium'
 }
+
+// Photo/photos size default depends on the active layout so existing galleries
+// keep their density: square + grid default to medium, everything else (stacked,
+// masonry, single centered photo) defaults to large. An explicit block.size wins.
+export function resolvePhotoSizeDefault(variantId) {
+  return variantId === 'square' || variantId === 'grid' ? 'medium' : 'large'
+}
+
+export function resolvePhotoSize(block, themeId) {
+  if (block.size) return block.size
+  return resolvePhotoSizeDefault(resolveVariant(block, themeId))
+}

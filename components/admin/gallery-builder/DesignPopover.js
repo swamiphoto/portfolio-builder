@@ -1,7 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec, getTheme } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
 
 const IconAlignLeft = () => (
@@ -36,7 +36,13 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const captionStyles = spec.captionStyles
     ? spec.captionStyles.map(c => ({ value: c.id, label: <span style={{ ...captionStyleCss(c.id), fontSize: 12.5 }}>{c.label}</span> }))
     : null
-  const sizes = spec.sizes ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
+  const currentVariant = resolveVariant(block, themeId)
+  // Only offer Size for layouts that actually respond to it (e.g. not full-bleed
+  // photos). `sizeVariants` on the spec lists the variants where size applies.
+  const sizeAllowed = !spec.sizeVariants || spec.sizeVariants.includes(currentVariant)
+  const sizes = spec.sizes && sizeAllowed ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
+  const isPhotoBlock = block.type === 'photos' || block.type === 'photo'
+  const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)
 
   const hasSize = variants.length > 1
   if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes) return null
@@ -66,7 +72,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
       )}
       {sizes && (
         <DesignSection label="Size">
-          <PillToggle value={block.size || spec.defaultSize} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
+          <PillToggle value={sizeValue} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
         </DesignSection>
       )}
       {aligns && (
