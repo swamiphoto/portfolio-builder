@@ -77,9 +77,6 @@ function StatusLine({ saveStatus, hasUnpublishedChanges, lastSavedAt }) {
 }
 
 // Icons — page type icons match the Sepia spec (Heroicons outline, strokeWidth 1.5, rounded).
-function IconHome(p) {
-  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
-}
 function IconText(p) {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="4" y1="7" x2="14" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="17" y2="17"/></svg>
 }
@@ -109,16 +106,6 @@ function IconPublish(p) {
 }
 function IconPlus(p) {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 5v14M5 12h14"/></svg>
-}
-function IconImages(props) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="3" y="3" width="8" height="11" rx="1.5" />
-      <rect x="13" y="3" width="8" height="6" rx="1.5" />
-      <rect x="13" y="12" width="8" height="9" rx="1.5" />
-      <rect x="3" y="17" width="8" height="4" rx="1.5" />
-    </svg>
-  )
 }
 function IconGrid(props) {
   return (
@@ -510,19 +497,6 @@ export default function PlatformSidebar({
     document.addEventListener('pointerup', onUp)
   }
 
-  function PageTypeIcon({ page }) {
-    const isHome = siteConfig.homePageId === page.id
-    if (isHome) return <IconHome />
-    if (page.type === 'link') return <IconLink />
-    switch (page.kind) {
-      case 'collection': return <IconGrid />
-      case 'text': return <IconText />
-      case 'blank': return <IconDocument />
-      case 'gallery':
-      default: return <IconGallery />
-    }
-  }
-
   function renderDraftRow() {
     return (
       <div style={{ position: 'relative' }}>
@@ -535,12 +509,7 @@ export default function PlatformSidebar({
             boxShadow: 'inset 0 0 0 1px rgba(139,111,71,0.22)',
           }}
         >
-          <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 14, color: C.accent }}>
-            {draftRow?.template === 'text' ? <IconText />
-              : draftRow?.template === 'collection' ? <IconGrid />
-              : draftRow?.template === 'blank' ? <IconDocument />
-              : <IconGallery />}
-          </div>
+          <div style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, border: '1.5px dashed rgba(139,111,71,0.30)', background: 'transparent' }} />
           <input
             autoFocus
             value={draftValue}
@@ -612,8 +581,8 @@ export default function PlatformSidebar({
               boxShadow: 'inset 0 0 0 1px rgba(139,111,71,0.28)',
             }}
           >
-            <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 14, color: C.accent }}>
-              <PageTypeIcon page={page} />
+            <div className="flex-shrink-0 flex items-center">
+              <PageThumb page={page} />
             </div>
             <input
               autoFocus
@@ -1024,8 +993,8 @@ export default function PlatformSidebar({
             }}
           >
             {draggedPage && (
-              <span style={{ display: 'flex', alignItems: 'center', color: C.accent }}>
-                <PageTypeIcon page={draggedPage} />
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <PageThumb page={draggedPage} />
               </span>
             )}
             <span>{pageDrag.title}</span>
