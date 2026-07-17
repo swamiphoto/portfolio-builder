@@ -15,14 +15,14 @@ export function DesignSection({ label, description, children }) {
             textTransform: 'uppercase',
             color: 'var(--text-muted)',
             fontWeight: 500,
-            marginBottom: description ? 4 : 2,
+            marginBottom: description ? 1 : 2,
           }}
         >
           {label}
         </div>
       )}
       {description && (
-        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: 10 }}>
           {description}
         </div>
       )}
