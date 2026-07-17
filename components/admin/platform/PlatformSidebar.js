@@ -664,15 +664,12 @@ export default function PlatformSidebar({
             onMouseEnter={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
             onMouseLeave={e => { if (!isSelected && !isPageNestTarget && !isImageDropTarget) e.currentTarget.style.background = 'transparent' }}
           >
-            {/* Icon / drag handle */}
-            <div
-              className="flex-shrink-0 flex items-center justify-center"
-              style={{ width: 14, color: isSelected ? C.accent : C.textMuted }}
-            >
+            {/* Thumbnail / drag handle */}
+            <div className="flex-shrink-0 flex items-center justify-center">
               <span className="group-hover:hidden flex items-center">
-                <PageTypeIcon page={page} />
+                <PageThumb page={page} />
               </span>
-              <span className="hidden group-hover:flex items-center cursor-grab active:cursor-grabbing">
+              <span className="hidden group-hover:flex items-center justify-center cursor-grab active:cursor-grabbing" style={{ width: 24, height: 24 }}>
                 <IconDragHandle />
               </span>
             </div>
