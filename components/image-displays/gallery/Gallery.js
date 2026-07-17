@@ -252,9 +252,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 <div
                   key={`block-${index}`}
                   className={`text-block ${variantClass}`}
-                  style={{ fontFamily }}
                   data-block-index={index}
                   {...hoverProps}
+                  style={{ ...hoverProps.style, fontFamily }}
                 >
                   {block.content}
                 </div>
