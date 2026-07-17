@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import PopoverShell from './PopoverShell'
 import DomainPanel from './DomainPanel'
-import { DesignSection, PillToggle as DesignPillToggle, NumberToggle as DesignNumberToggle, DesignSelect } from './designControls'
+import { DesignSection, PillToggle as DesignPillToggle, DesignSelect } from './designControls'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { THEME_LIST } from '../../../common/themes'
 import { resolveNavStyle } from '../../../common/navStyles'
@@ -795,12 +795,12 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
           {resolveNavStyle(config.design?.theme || 'kyoto') !== 'left-rail' && (
             <DesignSection label="Navigation">
-              <DesignNumberToggle
+              <DesignPillToggle
                 value={config.design?.navStyle === 'menu' ? 'menu' : 'links'}
                 onChange={(v) => update({ design: { ...(config.design || {}), navStyle: v } })}
                 options={[
-                  { value: 'links', label: '1', title: 'Links' },
-                  { value: 'menu',  label: '2', title: 'Menu'  },
+                  { value: 'links', label: 'Links' },
+                  { value: 'menu',  label: 'Menu'  },
                 ]}
               />
             </DesignSection>
@@ -808,24 +808,24 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
           {config.design?.navStyle !== 'menu' && (
             <DesignSection label="Sub-navigation" description="This is for pages that are nested under another page.">
-              <DesignNumberToggle
+              <DesignPillToggle
                 value={config.design?.subNavStyle === 'inline' ? 'inline' : 'dropdown'}
                 onChange={(v) => update({ design: { ...(config.design || {}), subNavStyle: v } })}
                 options={[
-                  { value: 'dropdown', label: '1', title: 'Dropdown' },
-                  { value: 'inline',   label: '2', title: 'Links below page title' },
+                  { value: 'dropdown', label: 'Dropdown' },
+                  { value: 'inline',   label: 'Inline'   },
                 ]}
               />
             </DesignSection>
           )}
 
           <DesignSection label="Footer">
-            <DesignNumberToggle
+            <DesignPillToggle
               value={config.design?.footerLayout === 'expanded' ? 'expanded' : 'simple'}
               onChange={(v) => update({ design: { ...(config.design || {}), footerLayout: v } })}
               options={[
-                { value: 'simple',   label: '1', title: 'Simple'   },
-                { value: 'expanded', label: '2', title: 'Expanded' },
+                { value: 'simple',   label: 'Simple'   },
+                { value: 'expanded', label: 'Expanded' },
               ]}
             />
           </DesignSection>
