@@ -752,15 +752,17 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
                 {parentPage ? (
                   <>
                     <ThumbCascade pages={childrenOfParent} />
-                    <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 500, color: C.textBody }}>
-                      {childrenOfParent.length} {childrenOfParent.length === 1 ? 'page' : 'pages'} will display
-                    </span>
-                    {childrenOfParent.length > 0 && (
-                      <span style={{ fontSize: 12.5, color: C.textMuted, textAlign: 'center', lineHeight: 1.4, maxWidth: 240 }}>
-                        {childrenOfParent.slice(0, 3).map(p => p.title).join(', ')}
-                        {childrenOfParent.length > 3 && `, +${childrenOfParent.length - 3} more`}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 500, color: C.textBody }}>
+                        {childrenOfParent.length} {childrenOfParent.length === 1 ? 'page' : 'pages'} will display
                       </span>
-                    )}
+                      {childrenOfParent.length > 0 && (
+                        <span style={{ fontSize: 12.5, color: C.textMuted, textAlign: 'center', lineHeight: 1.4, maxWidth: 240 }}>
+                          {childrenOfParent.slice(0, 3).map(p => p.title).join(', ')}
+                          {childrenOfParent.length > 3 && `, +${childrenOfParent.length - 3} more`}
+                        </span>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
