@@ -25,3 +25,19 @@ test('a video block with a url does not show the placeholder', () => {
   )
   expect(container.querySelector(PLAY_TRIANGLE)).toBeNull()
 })
+
+test('the empty video placeholder shows the caption', () => {
+  const { getByText } = render(
+    <Gallery name="" description="" blocks={[{ type: 'video', url: '', caption: 'Behind the scenes' }]} pages={[]} themeId="kyoto" showPlaceholders />
+  )
+  expect(getByText('Behind the scenes')).toBeInTheDocument()
+})
+
+test('the empty video placeholder reflects the layout variant', () => {
+  const emptyVideo = (variant) => ({ type: 'video', url: '', themeState: { kyoto: { variant } } })
+  const full = render(<Gallery name="" description="" blocks={[emptyVideo('full-bleed')]} pages={[]} themeId="kyoto" showPlaceholders />)
+  expect(full.container.querySelector('.video-block').innerHTML).toMatch(/w-screen/)
+
+  const centered = render(<Gallery name="" description="" blocks={[emptyVideo('centered')]} pages={[]} themeId="kyoto" showPlaceholders />)
+  expect(centered.container.querySelector('.video-block').innerHTML).toMatch(/w-\[85%\]/)
+})
