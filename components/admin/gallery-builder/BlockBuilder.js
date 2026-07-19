@@ -181,7 +181,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     if (!block) return;
     const urls = new Set(imageRefs.map(r => r.url));
     if (block.type === 'photo') {
-      if (urls.has(block.imageUrl)) blocks[blockIndex] = { ...block, imageUrl: '' };
+      if (urls.has(block.imageUrl)) blocks[blockIndex] = { ...block, imageUrl: '', image: null };
     } else {
       const remaining = normalizeImageRefs(block.images || block.imageUrls || []).filter(r => !urls.has(r.url));
       blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
@@ -196,7 +196,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     if (src) {
       const urls = new Set(imageRefs.map(r => r.url));
       if (src.type === 'photo') {
-        if (urls.has(src.imageUrl)) blocks[sourceBlockIndex] = { ...src, imageUrl: '' };
+        if (urls.has(src.imageUrl)) blocks[sourceBlockIndex] = { ...src, imageUrl: '', image: null };
       } else {
         const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter(r => !urls.has(r.url));
         blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) };
@@ -219,13 +219,10 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       style={{ background: '#efeae1' }}
     >
 
-      {/* MASTHEAD — Editing eyebrow + page title (mirrors page sidebar masthead) */}
+      {/* MASTHEAD — page title + toolbar (mirrors page sidebar masthead) */}
       {onToggleExpand && (
         <div className="flex-shrink-0" style={{ padding: '18px 14px 12px', borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b0a490' }}>
-              Editing
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 10 }}>
             <div style={{ display: 'flex', gap: 1 }}>
               {/* Page settings */}
               {onOpenPageSettings && (
@@ -236,13 +233,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="2" y1="4" x2="14" y2="4"/>
-                      <line x1="2" y1="8" x2="14" y2="8"/>
-                      <line x1="2" y1="12" x2="14" y2="12"/>
-                      <circle cx="5" cy="4" r="1.4" fill="currentColor" stroke="none"/>
-                      <circle cx="10" cy="8" r="1.4" fill="currentColor" stroke="none"/>
-                      <circle cx="6.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>
                     </svg>
                   </button>
                 </Tip>
@@ -276,12 +269,14 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
                   {allExpanded ? (
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6l5-4 5 4M3 10l5 4 5-4" />
+                    // Collapse all — double chevron up
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 7l4-4 4 4M4 12l4-4 4 4" />
                     </svg>
                   ) : (
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 4h10M3 8h10M3 12h10" />
+                    // Expand all — double chevron down
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4l4 4 4-4M4 9l4 4 4-4" />
                     </svg>
                   )}
                 </button>

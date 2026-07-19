@@ -14,13 +14,29 @@ export const FONT_SLOTS = [
   { id: 'fraunces', label: 'Editorial' },
 ]
 
+// Shared size scale for photo/photos blocks. Semantics are per-layout (columns
+// for masonry/square, image width for stacked/centered, tile scale for grid),
+// but the ids and labels are common. See resolvePhotoSize in themes/variants.js
+// for the layout-aware default (square/grid → medium, everything else → large).
+export const SIZE_OPTIONS = [
+  { id: 'small', label: 'Small' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'large', label: 'Large' },
+]
+
 export const baseBlocks = {
   photo: {
     defaultVariant: 'full-bleed',
     variants: [
       { id: 'full-bleed', label: 'Full bleed' },
       { id: 'centered', label: 'Centered' },
+      { id: 'side-by-side', label: 'Side' },
     ],
+    sizes: SIZE_OPTIONS,
+    defaultSize: 'large',
+    // Full bleed spans the viewport and Side has fixed proportions, so size only
+    // applies to the centered layout.
+    sizeVariants: ['centered'],
     captionStyles: CAPTION_STYLE_OPTIONS,
     defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
@@ -32,6 +48,9 @@ export const baseBlocks = {
       { id: 'grid', label: 'Grid' },
       { id: 'square', label: 'Square' },
     ],
+    sizes: SIZE_OPTIONS,
+    defaultSize: 'large',
+    sizeVariants: ['stacked', 'masonry', 'grid', 'square'],
     captionStyles: CAPTION_STYLE_OPTIONS,
     defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },

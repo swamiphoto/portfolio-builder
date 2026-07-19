@@ -12,15 +12,23 @@ describe('SquareGallery', () => {
     container.querySelectorAll('img').forEach((im) => expect(im.className).toMatch(/object-cover/))
   })
 
-  it('balances 4 images into a 2-column grid (not 3+1)', () => {
-    const { container } = render(<SquareGallery images={imgs(4)} onImageClick={() => {}} />)
-    const grid = container.querySelector('[data-square-item]').parentElement
-    expect(grid.style.gridTemplateColumns).toMatch(/repeat\(2,/)
-  })
-
-  it('caps larger sets at 3 columns', () => {
+  it('defaults to 3 columns (medium)', () => {
     const { container } = render(<SquareGallery images={imgs(6)} onImageClick={() => {}} />)
     const grid = container.querySelector('[data-square-item]').parentElement
     expect(grid.style.gridTemplateColumns).toMatch(/repeat\(3,/)
+  })
+
+  it('maxCols drives column count (size: large 2 / medium 3 / small 4)', () => {
+    const large = render(<SquareGallery images={imgs(6)} maxCols={2} onImageClick={() => {}} />)
+    expect(large.container.querySelector('[data-square-item]').parentElement.style.gridTemplateColumns).toMatch(/repeat\(2,/)
+
+    const small = render(<SquareGallery images={imgs(6)} maxCols={4} onImageClick={() => {}} />)
+    expect(small.container.querySelector('[data-square-item]').parentElement.style.gridTemplateColumns).toMatch(/repeat\(4,/)
+  })
+
+  it('never renders more columns than images', () => {
+    const { container } = render(<SquareGallery images={imgs(2)} maxCols={4} onImageClick={() => {}} />)
+    const grid = container.querySelector('[data-square-item]').parentElement
+    expect(grid.style.gridTemplateColumns).toMatch(/repeat\(2,/)
   })
 })

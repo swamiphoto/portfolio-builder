@@ -138,7 +138,9 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
       if (!block) return prev;
       if (block.type === "photo" || block.type === "testimonial") {
         const first = refs[0];
-        if (first) blocks[photoPickerBlockIndex] = { ...block, imageUrl: first.url };
+        // Clear the normalized `image` object so the new imageUrl wins — the
+        // renderer reads `block.image || block.imageUrl`.
+        if (first) blocks[photoPickerBlockIndex] = { ...block, imageUrl: first.url, image: null };
       } else {
         const existing = normalizeImageRefs(block.images || block.imageUrls || []);
         const merged = [...existing, ...refs];

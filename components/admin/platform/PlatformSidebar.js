@@ -134,6 +134,15 @@ function IconDocument(props) {
 function IconDots(p) {
   return <svg width="11" height="3" viewBox="0 0 11 3" fill="currentColor" {...p}><circle cx="1.5" cy="1.5" r="1"/><circle cx="5.5" cy="1.5" r="1"/><circle cx="9.5" cy="1.5" r="1"/></svg>
 }
+function IconStory(p) {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+}
+function IconUser(p) {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+}
+function IconMail(p) {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+}
 
 function PageThumb({ page, isHome }) {
   const src = pageDisplayThumbnail(page)
@@ -1112,6 +1121,8 @@ export default function PlatformSidebar({
       {/* Nav "+" add menu — portalled */}
       {navAddMenuOpen && navAddBtnRef.current && typeof document !== 'undefined' && (() => {
         const rect = navAddBtnRef.current.getBoundingClientRect()
+        const MENU_W = 240
+        const left = Math.min(Math.max(8, rect.left), window.innerWidth - MENU_W - 8)
         return createPortal(
           <div
             ref={navAddMenuRef}
@@ -1119,8 +1130,8 @@ export default function PlatformSidebar({
             style={{
               position: 'fixed',
               top: rect.bottom + 4,
-              right: window.innerWidth - rect.right,
-              minWidth: 240,
+              left,
+              minWidth: MENU_W,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
               padding: '4px 0',
@@ -1131,22 +1142,34 @@ export default function PlatformSidebar({
               Start from template
             </div>
             <PageMenuItem
+              icon={<IconStory />}
+              label="Story"
+              desc="A photo essay — mix text, photos, and video"
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'story') }}
+            />
+            <PageMenuItem
               icon={<IconGallery />}
               label="Gallery"
-              desc="Photos in a grid or masonry layout"
+              desc="A body of work in mixed photo layouts"
               onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'gallery') }}
             />
             <PageMenuItem
               icon={<IconGrid />}
               label="Collection"
-              desc="An index linking to other pages"
+              desc="A cover grid linking to your galleries"
               onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'collection') }}
             />
             <PageMenuItem
-              icon={<IconText />}
-              label="Text"
-              desc="Use for About, Contact, FAQ, etc."
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'text') }}
+              icon={<IconUser />}
+              label="About"
+              desc="A portrait, intro, and short bio"
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'about') }}
+            />
+            <PageMenuItem
+              icon={<IconMail />}
+              label="Contact"
+              desc="A contact form visitors can send from"
+              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'contact') }}
             />
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
             <PageMenuItem
@@ -1169,6 +1192,8 @@ export default function PlatformSidebar({
       {/* Bottom "Add Page" menu — portalled, opens above the button */}
       {addMenuOpen && addBtnRef.current && typeof document !== 'undefined' && (() => {
         const rect = addBtnRef.current.getBoundingClientRect()
+        const MENU_W = Math.max(rect.width, 240)
+        const left = Math.min(Math.max(8, rect.left), window.innerWidth - MENU_W - 8)
         return createPortal(
           <div
             ref={addMenuRef}
@@ -1176,8 +1201,8 @@ export default function PlatformSidebar({
             style={{
               position: 'fixed',
               bottom: window.innerHeight - rect.top + 4,
-              left: rect.left,
-              minWidth: Math.max(rect.width, 240),
+              left,
+              minWidth: MENU_W,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
               padding: '4px 0',
@@ -1188,22 +1213,34 @@ export default function PlatformSidebar({
               Start from template
             </div>
             <PageMenuItem
+              icon={<IconStory />}
+              label="Story"
+              desc="A photo essay — mix text, photos, and video"
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'story') }}
+            />
+            <PageMenuItem
               icon={<IconGallery />}
               label="Gallery"
-              desc="Photos in a grid or masonry layout"
+              desc="A body of work in mixed photo layouts"
               onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'gallery') }}
             />
             <PageMenuItem
               icon={<IconGrid />}
               label="Collection"
-              desc="An index linking to other pages"
+              desc="A cover grid linking to your galleries"
               onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'collection') }}
             />
             <PageMenuItem
-              icon={<IconText />}
-              label="Text"
-              desc="Use for About, Contact, FAQ, etc."
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'text') }}
+              icon={<IconUser />}
+              label="About"
+              desc="A portrait, intro, and short bio"
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'about') }}
+            />
+            <PageMenuItem
+              icon={<IconMail />}
+              label="Contact"
+              desc="A contact form visitors can send from"
+              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'contact') }}
             />
             <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
             <PageMenuItem

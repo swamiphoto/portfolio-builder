@@ -10,6 +10,7 @@ import PageGalleryPickerModal from "./PageGalleryPickerModal";
 import FocalPointEditor from "./FocalPointEditor";
 import ImageFocalEditor from "./ImageFocalEditor";
 import { resolveVariant } from "../../../common/themes/variants";
+import { getBlockSpec } from "../../../common/themes";
 import Tip from "../Tip";
 import { EditableInput, EditableTextarea } from "../platform/EditableText";
 
@@ -381,27 +382,32 @@ function BlockCard({
     ? [{ url: block.imageUrl || block.image?.url || '', ...(block.caption !== undefined ? { caption: block.caption } : {}) }]
     : [];
 
+  // The muted label on the right of the header shows the block's chosen design —
+  // its layout/variant for most blocks, the font for text, the hero height for
+  // the cover. Resolver-driven so it stays correct as variants/labels evolve.
   const headerMeta = (() => {
-    if (isPhotoBlock) {
-      const layout = block.type === 'masonry' ? 'masonry'
-        : block.type === 'stacked' ? 'stacked'
-        : (block.layout || '').toLowerCase();
-      if (layout === 'masonry') return 'Masonry';
-      if (layout === 'stacked') return 'Stacked';
+    // Hero cover: the height lives on the page, not the block.
+    if (block.type === 'page') {
+      const pg = (pages || []).find((p) => p.id === sourcePageId);
+      return (pg?.cover?.height === 'full') ? 'Full' : 'Partial';
+    }
+    const spec = getBlockSpec(themeId, block.type);
+    if (!spec) {
+      // Legacy standalone masonry/stacked block types carry no spec.
+      if (block.type === 'masonry') return 'Masonry';
+      if (block.type === 'stacked') return 'Stacked';
       return null;
     }
-    if (block.type === 'photo') {
-      const layout = block.layout;
-      if (!layout || layout === 'Full Bleed' || layout === 'Edge to edge') return 'Full Bleed';
-      return 'Centered';
+    // Text: the font style (Serif / Display / Editorial) is the meaningful choice.
+    if (block.type === 'text' && spec.fonts) {
+      const fontId = block.font || spec.defaultFont;
+      return spec.fonts.find((f) => f.id === fontId)?.label || null;
     }
-    if (block.type === 'text') return null;
-    if (block.type === 'video') return 'Video';
-    if (block.type === 'page-gallery') {
-      const n = (block.pageIds || []).length;
-      return n > 0 ? `${n} page${n === 1 ? '' : 's'}` : null;
-    }
-    return null;
+    // Contact has a single 'Standard' variant — nothing worth surfacing.
+    if (block.type === 'contact') return null;
+    // Everything else: the current layout/variant label.
+    const variantId = resolveVariant(block, themeId);
+    return (spec.variants || []).find((v) => v.id === variantId)?.label || null;
   })();
 
   return (
@@ -494,9 +500,16 @@ function BlockCard({
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
-                    <path d="M8 3v10M3 8h10" />
-                  </svg>
+                  {block.type === "photo" && block.imageUrl ? (
+                    // Replace (swap arrows) — a plus would imply adding another photo.
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
+                      <path d="M8 3v10M3 8h10" />
+                    </svg>
+                  )}
                 </button>
               </Tip>
             )}
@@ -727,7 +740,10 @@ function BlockCard({
                   }
                   if (!url) url = e.dataTransfer.getData('text/plain');
                   if (url) {
-                    const updatedTarget = { ...block, imageUrl: url };
+                    // Clear the normalized `image` object so the new imageUrl wins —
+                    // the renderer reads `block.image || block.imageUrl`, so a stale
+                    // `image` would otherwise shadow the replacement.
+                    const updatedTarget = { ...block, imageUrl: url, image: null };
                     if (srcIdx !== null && srcRefs && onMoveImagesAcrossBlocks) {
                       onMoveImagesAcrossBlocks(srcIdx, srcRefs, blockIndex, updatedTarget);
                     } else {
@@ -772,7 +788,7 @@ function BlockCard({
                     <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity z-10">
                       <ThumbMenu
                         size={22}
-                        items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "" }) }]}
+                        items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "", image: null }) }]}
                       />
                     </div>
                   </div>
