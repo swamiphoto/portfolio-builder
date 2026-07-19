@@ -500,9 +500,16 @@ function BlockCard({
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
-                    <path d="M8 3v10M3 8h10" />
-                  </svg>
+                  {block.type === "photo" && block.imageUrl ? (
+                    // Replace (swap arrows) — a plus would imply adding another photo.
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
+                      <path d="M8 3v10M3 8h10" />
+                    </svg>
+                  )}
                 </button>
               </Tip>
             )}

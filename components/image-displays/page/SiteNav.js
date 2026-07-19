@@ -142,8 +142,9 @@ function OverflowNav({ items, basePath, dark = false, currentPath = '', currentP
     if (!wrap || !measure) return
     const GAP = 32 // matches gap-8
     const MORE = 60 + GAP // reserve room for the "More" trigger
+    const PAD = 12 // safety gap so links never butt right up against the logo
     const recompute = () => {
-      const avail = wrap.clientWidth
+      const avail = wrap.clientWidth - PAD
       const kids = Array.from(measure.children)
       const total = kids.reduce((a, el, i) => a + el.offsetWidth + (i > 0 ? GAP : 0), 0)
       if (total <= avail) { setVisibleCount(items.length); return }
@@ -157,7 +158,14 @@ function OverflowNav({ items, basePath, dark = false, currentPath = '', currentP
     recompute()
     const ro = new ResizeObserver(recompute)
     ro.observe(wrap)
-    return () => ro.disconnect()
+    // Link + wordmark widths change once the serif fonts load, which can change
+    // how many links fit without resizing `wrap` — so the ResizeObserver alone
+    // misses it. Re-measure when fonts settle.
+    let cancelled = false
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(() => { if (!cancelled) recompute() })
+    }
+    return () => { cancelled = true; ro.disconnect() }
   }, [items])
 
   useEffect(() => {
@@ -176,9 +184,12 @@ function OverflowNav({ items, basePath, dark = false, currentPath = '', currentP
     <nav ref={wrapRef} className="flex-1 min-w-0 flex justify-end items-center relative">
       {/* Hidden measurer: the full list at natural size. */}
       <ul ref={measureRef} aria-hidden className="flex gap-8 absolute invisible pointer-events-none" style={{ left: -99999, top: 0 }}>
-        {items.map(item => (
-          <li key={item.id}><span className="font-serif text-base font-medium whitespace-nowrap">{item.title}</span></li>
-        ))}
+        {items.map(item => {
+          // Parents in dropdown mode render an extra caret button — include its
+          // width here so the fit measurement matches the real row.
+          const hasCaret = subNavMode === 'dropdown' && (item.children || []).length > 0
+          return <li key={item.id}><span className="font-serif text-base font-medium whitespace-nowrap">{item.title}{hasCaret ? '  ▾' : ''}</span></li>
+        })}
       </ul>
 
       <ul className="flex gap-8 items-center">
@@ -440,11 +451,11 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
 
   if (style === 'header-dropdown') {
     return (
-      <header className="px-8 py-5 flex items-center justify-between">
+      <header className="px-8 py-5 flex items-center justify-between gap-8">
         {onPageClick ? (
-          <button className="font-serif2 text-2xl text-gray-900 tracking-wide text-left" style={logoStyle || undefined}>{brand}</button>
+          <button className="font-serif2 text-2xl text-gray-900 tracking-wide text-left shrink-0 whitespace-nowrap" style={logoStyle || undefined}>{brand}</button>
         ) : (
-          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left" style={logoStyle || undefined}>{brand}</a>
+          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left shrink-0 whitespace-nowrap" style={logoStyle || undefined}>{brand}</a>
         )}
 
         {/* Desktop nav — hidden in mobile preview or when Menu mode is on */}
