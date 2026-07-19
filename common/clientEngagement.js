@@ -94,3 +94,41 @@ export async function readEngagement(userId, pageId) {
 export async function writeEngagement(userId, pageId, data) {
   await uploadJSON(getClientDataPath(userId, pageId), data)
 }
+
+// Aggregate one page's engagement into a per-photoUrl map, resolving deviceId → name.
+// favBy is deduped by deviceId (first-seen order by ts); comments are chronological.
+export function aggregateByPhoto(data) {
+  const nameOf = (deviceId) => data.people?.[deviceId]?.name || 'Someone'
+  const map = {}
+  const ensure = (url) => (map[url] ||= { favBy: [], favCount: 0, comments: [], commentCount: 0 })
+  const seenFav = {} // url -> Set(deviceId)
+
+  for (const f of [...(data.favorites || [])].sort((a, b) => a.ts - b.ts)) {
+    const entry = ensure(f.photoUrl)
+    const set = (seenFav[f.photoUrl] ||= new Set())
+    if (set.has(f.deviceId)) continue
+    set.add(f.deviceId)
+    entry.favBy.push(nameOf(f.deviceId))
+    entry.favCount = entry.favBy.length
+  }
+
+  for (const c of [...(data.comments || [])].sort((a, b) => a.ts - b.ts)) {
+    const entry = ensure(c.photoUrl)
+    entry.comments.push({ id: c.id, name: nameOf(c.deviceId), text: c.text, ts: c.ts })
+    entry.commentCount = entry.comments.length
+  }
+
+  return map
+}
+
+export function lastActivityTs(data) {
+  let max = 0
+  for (const list of [data.favorites, data.comments, data.submissions]) {
+    for (const item of list || []) if (item.ts > max) max = item.ts
+  }
+  return max
+}
+
+export function hasFeedback(data) {
+  return (data.favorites?.length || 0) > 0 || (data.comments?.length || 0) > 0
+}
