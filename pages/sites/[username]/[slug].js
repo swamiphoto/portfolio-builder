@@ -14,6 +14,7 @@ import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import { getTheme } from '../../../common/themes'
+import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -129,24 +130,31 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           clientFeaturesEnabled={!!page.clientFeatures?.enabled}
           navLinks={coverNavLinks}
         />
-        <Gallery
-          name={page.title}
-          description={page.description}
-          blocks={resolvedBlocks}
-          pages={siteConfig.pages}
-          childPages={subNavPages}
-          activeChildId={activeSubNavId}
+        <ClientEngagementProvider
           username={username}
-          basePath={basePath}
-          enableSlideshow={!!slideshowHref}
-          onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
-          siteConfig={siteConfig}
-          printStore={printStore}
-          coverHeight={page.cover?.height || 'partial'}
-          coverButtonStyle={page.cover?.buttonStyle || 'solid'}
-          themeId={theme.id}
-          hasCover={hasCover}
-        />
+          pageId={page.id}
+          clientFeatures={page.clientFeatures}
+          branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '' }}
+        >
+          <Gallery
+            name={page.title}
+            description={page.description}
+            blocks={resolvedBlocks}
+            pages={siteConfig.pages}
+            childPages={subNavPages}
+            activeChildId={activeSubNavId}
+            username={username}
+            basePath={basePath}
+            enableSlideshow={!!slideshowHref}
+            onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
+            siteConfig={siteConfig}
+            printStore={printStore}
+            coverHeight={page.cover?.height || 'partial'}
+            coverButtonStyle={page.cover?.buttonStyle || 'solid'}
+            themeId={theme.id}
+            hasCover={hasCover}
+          />
+        </ClientEngagementProvider>
         <SiteFooter siteConfig={siteConfig} />
       </main>
     </div>
