@@ -99,6 +99,15 @@ describe('POST /api/client/engagement', () => {
     expect(res.json.mock.calls[0][0].error).toBe('email required')
   })
 
+  it('enforces requireEmail on comment', async () => {
+    mockReadSiteConfig.mockResolvedValue(siteWith({ ...CF, comments: { enabled: true, requireEmail: true } }))
+    mockRead.mockResolvedValue({ ...emptyEngagement(), people: { d1: { name: 'P', email: '', firstSeen: 1 } } })
+    const res = mockRes()
+    await handler({ method: 'POST', body: { username: 'u', pageId: 'p1', deviceId: 'd1', action: 'comment', photoUrl: 'x', text: 'hi' } }, res)
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.json.mock.calls[0][0].error).toBe('email required')
+  })
+
   it('submit emails the photographer with the selection', async () => {
     mockRead.mockResolvedValue({
       ...emptyEngagement(),

@@ -7,6 +7,10 @@ import { readSiteConfig } from '../../../common/siteConfig'
 import { readEngagement, writeEngagement, applyEngagementAction } from '../../../common/clientEngagement'
 import { sendMail } from '../../../common/email/mailer'
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+}
+
 async function resolvePage(username, pageId) {
   if (!username || !pageId) return null
   const lookup = await lookupUserByUsername(String(username))
@@ -74,7 +78,7 @@ export default async function handler(req, res) {
             to,
             subject: `${person} submitted ${picks.length} favorite${picks.length === 1 ? '' : 's'} — ${pageTitle}`,
             text: `${person} submitted ${picks.length} favorites on "${pageTitle}".\n\n${picks.join('\n')}`,
-            html: `<p><strong>${person}</strong> submitted ${picks.length} favorites on &ldquo;${pageTitle}&rdquo;.</p><ul>${picks.map(u => `<li><a href="${u}">${u}</a></li>`).join('')}</ul>`,
+            html: `<p><strong>${escapeHtml(person)}</strong> submitted ${picks.length} favorites on &ldquo;${escapeHtml(pageTitle)}&rdquo;.</p><ul>${picks.map(u => `<li><a href="${escapeHtml(u)}">${escapeHtml(u)}</a></li>`).join('')}</ul>`,
           })
         }
       }
