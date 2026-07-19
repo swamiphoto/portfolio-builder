@@ -2,6 +2,8 @@ import React from "react";
 import { getSizedUrl } from "../../../../common/imageUtils";
 import { captionStyleCss } from "../../../../common/captionStyles";
 import BuyPrintButton from "../../print/BuyPrintButton";
+import EngagementActions from "../../engagement/EngagementActions";
+import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 
 // variant: 1 full-bleed | 2 centered | 3 side (image left, caption right).
 // widthPct scales the centered layout (small/medium/large → 44/56/72).
@@ -29,6 +31,12 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
     </div>
   );
 
+  const engagementOverlay = (
+    <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+      <EngagementActions imageUrl={imageUrl} />
+    </div>
+  );
+
   const renderCaption = () => {
     return <p className="my-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
   };
@@ -53,7 +61,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
                   e.target.style.display = 'none';
                 }}
               />
+              <WatermarkOverlay />
               {buyOverlay}
+              {engagementOverlay}
             </div>
           </div>
           <div className="w-full md:w-1/3 flex items-center">
@@ -83,7 +93,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
                 e.target.style.display = 'none';
               }}
             />
+            <WatermarkOverlay />
             {buyOverlay}
+            {engagementOverlay}
           </div>
         </div>
       );
@@ -103,7 +115,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
             e.target.style.display = 'none';
           }}
         />
+        <WatermarkOverlay />
         {buyOverlay}
+        {engagementOverlay}
       </div>
     );
   };
