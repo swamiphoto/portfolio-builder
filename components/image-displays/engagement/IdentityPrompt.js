@@ -14,7 +14,7 @@ export default function IdentityPrompt({ requireEmail, initial, onSave, onCancel
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
+    <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4" onClick={onCancel}>
       <form onSubmit={submit} onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 space-y-4">
         <div>
           <h2 className="text-lg font-medium text-stone-800">Who&rsquo;s picking?</h2>

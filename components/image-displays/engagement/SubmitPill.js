@@ -21,11 +21,11 @@ export default function SubmitPill() {
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-stone-900/95 backdrop-blur text-white text-sm pl-5 pr-2 py-2 rounded-full shadow-xl">
       <span>{ctx.myFavoriteCount} selected</span>
       {confirming ? (
-        <button onClick={() => { ctx.submitFavorites(); setConfirming(false) }} className="bg-white text-stone-900 px-4 py-1.5 rounded-full font-medium">
+        <button onClick={() => { ctx.submitFavorites(); setConfirming(false) }} className="bg-white hover:bg-white/90 transition-colors text-stone-900 px-4 py-1.5 rounded-full font-medium">
           Confirm send
         </button>
       ) : (
-        <button onClick={() => setConfirming(true)} className="bg-white/15 px-4 py-1.5 rounded-full">
+        <button onClick={() => setConfirming(true)} className="bg-white/15 hover:bg-white/25 transition-colors px-4 py-1.5 rounded-full">
           Submit favorites
         </button>
       )}

@@ -18,8 +18,8 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
     comments: !!(enabled && clientFeatures?.comments?.enabled),
     submitWorkflow: !!(enabled && clientFeatures?.favorites?.submitWorkflow),
     watermark: !!(enabled && clientFeatures?.watermark?.enabled),
-    favoritesRequireEmail: !!clientFeatures?.favorites?.requireEmail,
-    commentsRequireEmail: !!clientFeatures?.comments?.requireEmail,
+    favoritesRequireEmail: !!(enabled && clientFeatures?.favorites?.requireEmail),
+    commentsRequireEmail: !!(enabled && clientFeatures?.comments?.requireEmail),
   }), [enabled, clientFeatures])
 
   const [identity, setIdentity] = useState(null)
@@ -52,19 +52,18 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
   }, [username, pageId])
 
   const performFavorite = useCallback((id, photoUrl) => {
-    setData(prev => {
-      const mine = prev.favorites.some(f => f.photoUrl === photoUrl && f.deviceId === id.deviceId)
-      const favorites = mine
-        ? prev.favorites.filter(f => !(f.photoUrl === photoUrl && f.deviceId === id.deviceId))
-        : [...prev.favorites, { photoUrl, deviceId: id.deviceId, ts: Date.now() }]
-      post({ deviceId: id.deviceId, action: mine ? 'unfavorite' : 'favorite', photoUrl }).catch(() => {
-        setData(p => ({ ...p, favorites: prev.favorites })) // rollback
-        setError('Could not save — try again')
-        setTimeout(() => setError(null), 2500)
-      })
-      return { ...prev, favorites }
+    const mine = data.favorites.some(f => f.photoUrl === photoUrl && f.deviceId === id.deviceId)
+    const favorites = mine
+      ? data.favorites.filter(f => !(f.photoUrl === photoUrl && f.deviceId === id.deviceId))
+      : [...data.favorites, { photoUrl, deviceId: id.deviceId, ts: Date.now() }]
+    const prevFavorites = data.favorites
+    setData(prev => ({ ...prev, favorites }))
+    post({ deviceId: id.deviceId, action: mine ? 'unfavorite' : 'favorite', photoUrl }).catch(() => {
+      setData(p => ({ ...p, favorites: prevFavorites })) // rollback
+      setError('Could not save — try again')
+      setTimeout(() => setError(null), 2500)
     })
-  }, [post])
+  }, [data, post])
 
   const performComment = useCallback((id, photoUrl, text) => {
     const entry = { id: `tmp_${Date.now()}`, photoUrl, deviceId: id.deviceId, text, ts: Date.now() }
