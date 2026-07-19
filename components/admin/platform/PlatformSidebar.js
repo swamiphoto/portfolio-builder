@@ -13,6 +13,7 @@ import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
 import EmptyHint from '../onboarding/EmptyHint'
+import NotificationsPopover, { useUnreadNotifications } from './NotificationsPopover'
 
 // Design tokens
 const C = {
@@ -297,6 +298,9 @@ export default function PlatformSidebar({
   const [pageSettingsAnchorEl, setPageSettingsAnchorEl] = useState(null)
   const menuRef = useRef(null)
   const addMenuRef = useRef(null)
+  const bellRef = useRef(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [unread, clearUnread] = useUnreadNotifications()
   const addBtnRef = useRef(null)
   const navAddBtnRef = useRef(null)
   const { drag, dropTargetPageId, setDropTargetPageId } = useDrag()
@@ -745,9 +749,18 @@ export default function PlatformSidebar({
             sepia
           </span>
           <div style={{ display: 'flex', gap: 2 }}>
-            <IconButton label="Notifications">
-              <IconBell />
-            </IconButton>
+            <span ref={bellRef} style={{ position: 'relative', display: 'inline-flex' }}>
+              <IconButton label="Notifications" onClick={() => { setNotifOpen(v => !v); clearUnread() }}>
+                <IconBell />
+              </IconButton>
+              {unread && (
+                <span style={{
+                  position: 'absolute', top: 3, right: 3, width: 6, height: 6,
+                  borderRadius: '50%', background: '#c14a4a', pointerEvents: 'none',
+                }} />
+              )}
+            </span>
+            {notifOpen && <NotificationsPopover anchorEl={bellRef.current} onClose={() => setNotifOpen(false)} />}
             {onCollapse && (
               <IconButton label="Collapse panel" onClick={onCollapse}>
                 <IconCollapse />
