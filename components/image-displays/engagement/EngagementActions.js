@@ -4,6 +4,7 @@
 // exactly like BuyPrintButton self-gates on the print store.
 import React from 'react'
 import { useClientEngagement } from './ClientEngagementContext'
+import PhotoFeedbackBadge from './PhotoFeedbackBadge'
 
 const btnStyle = {
   display: 'inline-flex',
@@ -44,7 +45,19 @@ function CommentIcon() {
 
 export default function EngagementActions({ imageUrl }) {
   const ctx = useClientEngagement()
-  if (!ctx || (!ctx.features.favorites && !ctx.features.comments)) return null
+  if (!ctx) return null
+
+  if (ctx.mode === 'review') {
+    return (
+      <PhotoFeedbackBadge
+        favCount={ctx.favoriteCount(imageUrl)}
+        commentCount={ctx.commentCount(imageUrl)}
+        onOpen={() => ctx.openReview(imageUrl)}
+      />
+    )
+  }
+
+  if (!ctx.features.favorites && !ctx.features.comments) return null
 
   const mine = ctx.isFavorited(imageUrl)
   const favCount = ctx.favoriteCount(imageUrl)

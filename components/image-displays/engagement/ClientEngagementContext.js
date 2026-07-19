@@ -158,3 +158,21 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
     </Ctx.Provider>
   )
 }
+
+// Read-only "review" context for the editor preview: EngagementActions renders
+// a static feedback badge (no client interactions). Shares Ctx so the existing
+// engagementOverlay slot in every gallery layout lights up unchanged.
+export function ReviewFeedbackProvider({ feedbackByPhoto, onOpenPhoto, children }) {
+  const value = useMemo(() => ({
+    mode: 'review',
+    features: { favorites: true, comments: true },
+    favoriteCount: (url) => feedbackByPhoto?.[url]?.favCount || 0,
+    commentCount: (url) => feedbackByPhoto?.[url]?.commentCount || 0,
+    openReview: (url) => onOpenPhoto && onOpenPhoto(url),
+    // no-op client surface so any accidental call is harmless
+    isFavorited: () => false,
+    toggleFavorite: () => {},
+    openComments: (url) => onOpenPhoto && onOpenPhoto(url),
+  }), [feedbackByPhoto, onOpenPhoto])
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+}

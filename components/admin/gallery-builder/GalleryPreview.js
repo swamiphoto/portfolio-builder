@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import Gallery from "../../image-displays/gallery/Gallery";
 import { resolveCaption } from '../../../common/captionResolver'
 import ThemeProvider from '../../image-displays/ThemeProvider'
+import { useEditorFeedback } from './EditorFeedbackContext'
+import { ReviewFeedbackProvider } from '../../image-displays/engagement/ClientEngagementContext'
 
 function printForUrl(assetsByUrl, url) {
   const p = assetsByUrl?.[url]?.print
@@ -33,6 +35,8 @@ function resolveBlock(block, assetsByUrl) {
 }
 
 export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid' }) {
+  const feedbackCtx = useEditorFeedback()
+
   // Debounce the preview so a heavy re-render doesn't fire on every keystroke.
   // This only resets while the `gallery` prop keeps changing (i.e. while typing);
   // the parent (PagePreview) is memoized so unrelated re-renders, like autosave
@@ -140,11 +144,15 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig, hasCover, coverHeight, coverButtonStyle]);
 
-  if (noWrap) return inner;
+  const content = (feedbackCtx?.showFeedback && feedbackCtx.hasFeedback)
+    ? <ReviewFeedbackProvider feedbackByPhoto={feedbackCtx.feedbackByPhoto} onOpenPhoto={feedbackCtx.openPhoto}>{inner}</ReviewFeedbackProvider>
+    : inner
+
+  if (noWrap) return content;
 
   return (
     <div className="flex-1 h-full min-w-0 overflow-y-auto [overflow-x:clip] bg-white">
-      {inner}
+      {content}
     </div>
   );
 }
