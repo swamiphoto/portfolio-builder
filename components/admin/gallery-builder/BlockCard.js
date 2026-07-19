@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useSession } from "next-auth/react";
 import { getSizedUrl } from "../../../common/imageUtils";
+import { EditorPhotoBadge } from './EditorFeedbackContext';
 import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient, applyFocalPointToPage } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
@@ -214,6 +215,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onPrevi
           items={menuItems}
         />
       </div>
+      <EditorPhotoBadge url={imageRef.url} />
     </div>
   )
 }
@@ -791,6 +793,7 @@ function BlockCard({
                         items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "", image: null }) }]}
                       />
                     </div>
+                    <EditorPhotoBadge url={block.imageUrl} />
                   </div>
                 ) : (
                   <div
