@@ -76,7 +76,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   // Client-side gate only — not a security boundary. Real protection lives in clientFeatures.
   const [unlocked, setUnlocked] = useState(!page.password)
   if (!unlocked) {
-    return <PasswordGate pageTitle={page.title} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
+    return <PasswordGate pageTitle={page.title} message={page.passwordGateMessage} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
   }
 
   const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''

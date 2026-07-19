@@ -1,7 +1,7 @@
 // components/image-displays/page/PasswordGate.js
 import { useState } from 'react'
 
-export default function PasswordGate({ pageTitle, onUnlock }) {
+export default function PasswordGate({ pageTitle, message, onUnlock }) {
   const [val, setVal] = useState('')
   const [error, setError] = useState(false)
 
@@ -15,7 +15,7 @@ export default function PasswordGate({ pageTitle, onUnlock }) {
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
       <form onSubmit={submit} className="w-full max-w-xs space-y-3">
         <h1 className="text-lg font-semibold text-stone-800">{pageTitle}</h1>
-        <p className="text-sm text-stone-500">This page is protected.</p>
+        <p className="text-sm text-stone-500 whitespace-pre-line">{message?.trim() || 'This page is protected.'}</p>
         <input
           type="password"
           autoFocus

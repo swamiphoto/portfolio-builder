@@ -90,7 +90,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)
   if (!unlocked) {
-    return <PasswordGate pageTitle={homePage?.title || 'Protected'} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
+    return <PasswordGate pageTitle={homePage?.title || 'Protected'} message={homePage?.passwordGateMessage} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
   }
 
   if (hasCoverPage) {

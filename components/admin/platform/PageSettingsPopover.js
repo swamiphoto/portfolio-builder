@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { slugify } from '../../../common/pageUtils'
 import { getPagePhotos } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/imageUtils'
@@ -9,6 +9,27 @@ import Tip from '../Tip'
 
 const BORDER = 'rgba(160,140,110,0.18)'
 const INPUT = 'w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug'
+
+function AutoGrowTextarea({ value, onChange, placeholder, maxLength }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      maxLength={maxLength}
+      className="w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent resize-none overflow-hidden leading-snug"
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+    />
+  )
+}
 
 function Toggle({ checked, onChange, label, hint, disabled }) {
   return (
@@ -191,10 +212,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             onChange={(e) => update({ password: e.target.value })}
             autoComplete="off"
           />
-          <textarea
-            className="w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent resize-none leading-snug"
+          <AutoGrowTextarea
             placeholder="Gate message (optional)"
-            rows={2}
+            maxLength={300}
             value={page.passwordGateMessage || ''}
             onChange={(e) => update({ passwordGateMessage: e.target.value })}
           />
