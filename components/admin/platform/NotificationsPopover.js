@@ -16,7 +16,7 @@ function timeAgo(ts) {
 
 function line(e) {
   if (e.type === 'submit') return `${e.person.name} submitted ${e.count} favorite${e.count === 1 ? '' : 's'}`
-  if (e.type === 'comment') return `${e.person.name} commented: "${e.text.length > 60 ? e.text.slice(0, 60) + '…' : e.text}"`
+  if (e.type === 'comment') return `${e.person.name} commented: “${e.text.length > 60 ? e.text.slice(0, 60) + '…' : e.text}”`
   return `${e.person.name} favorited a photo`
 }
 
