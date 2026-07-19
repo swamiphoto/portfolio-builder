@@ -132,6 +132,7 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
       })
     }),
     submitted,
+    switchIdentity: () => setPendingAction({ kind: 'favorite', run: () => {} }),
   } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post])
 
   if (!enabled) return children

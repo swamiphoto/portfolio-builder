@@ -12,6 +12,8 @@
 import { useEffect, useState } from 'react'
 import { getImageRefUrl } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
+import EngagementActions from '../../engagement/EngagementActions'
+import WatermarkOverlay from '../../engagement/WatermarkOverlay'
 
 const FALLBACK_ASPECT = 1.5
 
@@ -74,7 +76,7 @@ export default function GridGallery({ images = [], onImageClick, basis = 220 }) 
                 flexGrow: ar,
                 flexBasis: `${ar * basis}px`,
               }}
-              className="relative overflow-hidden rounded-2xl shadow cursor-pointer"
+              className="relative group overflow-hidden rounded-2xl shadow cursor-pointer"
               onClick={() => onImageClick?.(i)}
             >
               {/* Intrinsic-ratio spacer so height is driven by flex row settling */}
@@ -85,6 +87,10 @@ export default function GridGallery({ images = [], onImageClick, basis = 220 }) 
                 loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover"
               />
+              <WatermarkOverlay />
+              <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                <EngagementActions imageUrl={rawUrl} />
+              </div>
             </div>
           )
         })}

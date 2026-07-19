@@ -70,4 +70,29 @@ describe('applyEngagementAction', () => {
     applyEngagementAction(d, { type: 'favorite', deviceId: 'd1', ts: 1, photoUrl: 'https://cdn/a.jpg' })
     expect(d.favorites).toHaveLength(0)
   })
+
+  it('identify rejects a new deviceId when people is at MAX_PEOPLE limit', () => {
+    const people = {}
+    for (let i = 0; i < LIMITS.MAX_PEOPLE; i++) {
+      people[`device_${i}`] = { name: `Person ${i}`, email: '', firstSeen: 1 }
+    }
+    const data = { ...emptyEngagement(), people }
+    let err
+    try {
+      applyEngagementAction(data, { type: 'identify', deviceId: 'new_device', ts: 1, name: 'Newcomer', email: '' })
+    } catch (e) { err = e }
+    expect(err).toBeTruthy()
+    expect(err.status).toBe(400)
+  })
+
+  it('submit rejects when submissions is at MAX_SUBMISSIONS limit', () => {
+    const submissions = Array.from({ length: LIMITS.MAX_SUBMISSIONS }, (_, i) => ({ deviceId: `d${i}`, ts: i, count: 0 }))
+    const data = { ...emptyEngagement(), submissions }
+    let err
+    try {
+      applyEngagementAction(data, { type: 'submit', deviceId: 'd1', ts: 9999 })
+    } catch (e) { err = e }
+    expect(err).toBeTruthy()
+    expect(err.status).toBe(400)
+  })
 })

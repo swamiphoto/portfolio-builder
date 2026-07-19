@@ -1,6 +1,8 @@
 import { useMediaQuery } from 'react-responsive'
 import { getImageRefUrl, focalPointToObjectPosition } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
+import EngagementActions from '../../engagement/EngagementActions'
+import WatermarkOverlay from '../../engagement/WatermarkOverlay'
 
 // The Size control drives tile size directly via column count (large 2 / medium 3
 // / small 4). Cap at the image count (no empty columns) and at 2 on small screens.
@@ -19,7 +21,7 @@ export default function SquareGallery({ images = [], onImageClick, maxCols = 3 }
             <div
               key={i}
               data-square-item
-              className="relative aspect-square overflow-hidden rounded-2xl shadow cursor-pointer"
+              className="relative group aspect-square overflow-hidden rounded-2xl shadow cursor-pointer"
               onClick={() => onImageClick?.(i)}
             >
               <img
@@ -29,6 +31,10 @@ export default function SquareGallery({ images = [], onImageClick, maxCols = 3 }
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{ objectPosition: focalPointToObjectPosition(img.focalPoint) }}
               />
+              <WatermarkOverlay />
+              <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                <EngagementActions imageUrl={rawUrl} />
+              </div>
             </div>
           )
         })}

@@ -4,7 +4,7 @@
 // acceptable at client-gallery volumes.
 import { downloadJSON, uploadJSON } from './gcsClient'
 
-export const LIMITS = { NAME: 100, EMAIL: 200, COMMENT: 1000, MAX_FAVORITES: 5000, MAX_COMMENTS: 2000 }
+export const LIMITS = { NAME: 100, EMAIL: 200, COMMENT: 1000, MAX_FAVORITES: 5000, MAX_COMMENTS: 2000, MAX_PEOPLE: 500, MAX_SUBMISSIONS: 200 }
 
 export function getClientDataPath(userId, pageId) {
   return `users/${userId}/client-data/${pageId}.json`
@@ -38,6 +38,7 @@ export function applyEngagementAction(data, action) {
     if (!name || name.length > LIMITS.NAME) throw bad('invalid name')
     if (email.length > LIMITS.EMAIL) throw bad('invalid email')
     const existing = next.people[deviceId]
+    if (!existing && Object.keys(next.people).length >= LIMITS.MAX_PEOPLE) throw bad('too many people')
     next.people[deviceId] = { name, email, firstSeen: existing?.firstSeen ?? ts }
     return next
   }
@@ -67,6 +68,7 @@ export function applyEngagementAction(data, action) {
   }
 
   if (type === 'submit') {
+    if (next.submissions.length >= LIMITS.MAX_SUBMISSIONS) throw bad('too many submissions')
     const count = next.favorites.filter(f => f.deviceId === deviceId).length
     next.submissions.push({ deviceId, ts, count })
     return next

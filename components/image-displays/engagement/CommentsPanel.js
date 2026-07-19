@@ -45,16 +45,23 @@ export default function CommentsPanel({ photoUrl, onClose }) {
           ))}
         </div>
         {ctx.features.comments && (
-          <form onSubmit={submit} className="p-3 border-t border-stone-100 flex gap-2">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Add a comment…"
-              maxLength={1000}
-              className="flex-1 border border-stone-300 rounded-full px-4 py-2 text-sm outline-none focus:border-stone-500"
-            />
-            <button type="submit" disabled={!draft.trim()} className="text-sm bg-stone-900 text-white px-4 py-2 rounded-full disabled:opacity-40">Post</button>
-          </form>
+          <div className="p-3 border-t border-stone-100">
+            <form onSubmit={submit} className="flex gap-2">
+              <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Add a comment…"
+                maxLength={1000}
+                className="flex-1 border border-stone-300 rounded-full px-4 py-2 text-sm outline-none focus:border-stone-500"
+              />
+              <button type="submit" disabled={!draft.trim()} className="text-sm bg-stone-900 text-white px-4 py-2 rounded-full disabled:opacity-40">Post</button>
+            </form>
+            {ctx.identity && (
+              <p className="mt-2 text-xs text-stone-400">
+                Commenting as {ctx.identity.name} · <button onClick={() => ctx.switchIdentity()} className="underline hover:text-stone-600">Not you?</button>
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>
