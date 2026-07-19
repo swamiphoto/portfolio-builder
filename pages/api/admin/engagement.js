@@ -3,11 +3,29 @@
 import { withAuth } from '../../../common/withAuth'
 import { listFiles, downloadJSON } from '../../../common/gcsClient'
 import { readSiteConfig } from '../../../common/siteConfig'
+import { readEngagement, aggregateByPhoto, lastActivityTs, hasFeedback } from '../../../common/clientEngagement'
 
 const MAX_EVENTS = 200
 
 async function handler(req, res, user) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+
+  const pageId = req.query?.pageId
+  if (pageId) {
+    try {
+      const data = await readEngagement(user.id, pageId)
+      return res.status(200).json({
+        pageId,
+        byPhoto: aggregateByPhoto(data),
+        lastActivityTs: lastActivityTs(data),
+        hasFeedback: hasFeedback(data),
+      })
+    } catch (err) {
+      console.error('[admin/engagement pageMode]', err)
+      return res.status(200).json({ pageId, byPhoto: {}, lastActivityTs: 0, hasFeedback: false })
+    }
+  }
+
   try {
     const [keys, siteConfig] = await Promise.all([
       listFiles(`users/${user.id}/client-data/`),
