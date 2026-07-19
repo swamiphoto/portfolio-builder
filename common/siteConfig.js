@@ -161,6 +161,7 @@ export function defaultPage(overrides = {}) {
       downloads: { enabled: false, quality: ['web'], requireEmail: false, watermarkEnabled: false },
       favorites: { enabled: false, requireEmail: false, submitWorkflow: false },
       comments: { enabled: false, requireEmail: false },
+      watermark: { enabled: false },
       purchase: { enabled: false, defaultPrice: null, currency: 'USD', tiers: { web: null, print: null, original: null } },
     },
     passwordGateMessage: '',

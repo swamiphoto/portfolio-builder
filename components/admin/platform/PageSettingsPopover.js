@@ -433,6 +433,10 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 <Toggle checked={cf.comments?.requireEmail || false} onChange={(v) => updateCf('comments', { requireEmail: v })} label="Require email" />
               </FeatureBlock>
 
+              <FeatureBlock label="Watermark" checked={cf.watermark?.enabled || false} onToggle={(v) => updateCf('watermark', { enabled: v })}>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Overlays your logo or site name on photos. A deterrent, not protection.</p>
+              </FeatureBlock>
+
               <FeatureBlock label="Purchase" checked={cf.purchase?.enabled || false} onToggle={(v) => updateCf('purchase', { enabled: v })}>
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Default price per photo</div>
