@@ -305,6 +305,9 @@ export function normalizePageEntity(page) {
           enabled: cf.comments?.enabled ?? false,
           requireEmail: cf.comments?.requireEmail ?? false,
         },
+        watermark: {
+          enabled: cf.watermark?.enabled ?? false,
+        },
         purchase: {
           enabled: cf.purchase?.enabled ?? false,
           defaultPrice: cf.purchase?.defaultPrice ?? null,
