@@ -78,7 +78,12 @@ export function applyEngagementAction(data, action) {
 export async function readEngagement(userId, pageId) {
   try {
     const data = await downloadJSON(getClientDataPath(userId, pageId))
-    return { ...emptyEngagement(), ...data }
+    return {
+      people: data?.people && typeof data.people === 'object' && !Array.isArray(data.people) ? data.people : {},
+      favorites: Array.isArray(data?.favorites) ? data.favorites : [],
+      comments: Array.isArray(data?.comments) ? data.comments : [],
+      submissions: Array.isArray(data?.submissions) ? data.submissions : [],
+    }
   } catch {
     return emptyEngagement()
   }
