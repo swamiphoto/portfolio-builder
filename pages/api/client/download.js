@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
     const buf = await upstream.arrayBuffer()
     const buffer = Buffer.from(buf)
-    const ext = rawPhotoUrl.split('.').pop()?.split('?')[0] || 'jpg'
+    const ext = downloadUrl.split('.').pop()?.split('?')[0] || 'jpg'
     const filename = quality === 'display' ? `photo-web.${ext}` : `photo-original.${ext}`
 
     res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/jpeg')
