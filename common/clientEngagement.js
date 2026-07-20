@@ -96,6 +96,7 @@ export async function readEngagement(userId, pageId) {
       favorites: Array.isArray(data?.favorites) ? data.favorites : [],
       comments: Array.isArray(data?.comments) ? data.comments : [],
       submissions: Array.isArray(data?.submissions) ? data.submissions : [],
+      downloads: Array.isArray(data?.downloads) ? data.downloads : [],
     }
   } catch {
     return emptyEngagement()
