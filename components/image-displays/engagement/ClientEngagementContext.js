@@ -16,21 +16,23 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
   const features = useMemo(() => ({
     favorites: !!(enabled && clientFeatures?.favorites?.enabled),
     comments: !!(enabled && clientFeatures?.comments?.enabled),
-    submitWorkflow: !!(enabled && clientFeatures?.favorites?.submitWorkflow),
+    submitWorkflow: !!(enabled && clientFeatures?.favorites?.enabled),
     watermark: !!(enabled && clientFeatures?.watermark?.enabled),
-    favoritesRequireEmail: !!(enabled && clientFeatures?.favorites?.requireEmail),
-    commentsRequireEmail: !!(enabled && clientFeatures?.comments?.requireEmail),
+    favoritesRequireEmail: !!(enabled && clientFeatures?.favorites?.enabled),
+    commentsRequireEmail: !!(enabled && clientFeatures?.comments?.enabled),
+    downloads: !!(enabled && clientFeatures?.downloads?.enabled),
   }), [enabled, clientFeatures])
 
   const [identity, setIdentity] = useState(null)
   const [data, setData] = useState({ people: {}, favorites: [], comments: [], submissions: [] })
   const [pendingAction, setPendingAction] = useState(null) // action queued behind the identity prompt
   const [commentsUrl, setCommentsUrl] = useState(null)
+  const [downloadUrl, setDownloadUrl] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => { setIdentity(getClientIdentity(username)) }, [username])
 
-  const interactive = features.favorites || features.comments
+  const interactive = features.favorites || features.comments || features.downloads
   useEffect(() => {
     if (!interactive) return
     let alive = true
@@ -82,6 +84,7 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
   // requireEmail per feature: the identity prompt collects email when the toggle demands it.
   const needsIdentity = useCallback((kind) => {
     if (!identity) return true
+    if (kind === 'download') return !identity.email
     const wantEmail = kind === 'comment' ? features.commentsRequireEmail : features.favoritesRequireEmail
     return wantEmail && !identity.email
   }, [identity, features])
@@ -122,6 +125,11 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
     myFavoriteCount: myFavorites.size,
     toggleFavorite: (photoUrl) => runOrPrompt('favorite', (id) => performFavorite(id, photoUrl)),
     openComments: (photoUrl) => setCommentsUrl(photoUrl),
+    openDownload: (photoUrl) => runOrPrompt('download', () => setDownloadUrl(photoUrl)),
+    downloadUrl,
+    closeDownload: () => setDownloadUrl(null),
+    username,
+    pageId,
     addComment: (photoUrl, text) => runOrPrompt('comment', (id) => performComment(id, photoUrl, text)),
     submitFavorites: () => runOrPrompt('favorite', (id) => {
       post({ deviceId: id.deviceId, action: 'submit' }).then(() => {
@@ -133,7 +141,7 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
     }),
     submitted,
     switchIdentity: () => setPendingAction({ kind: 'favorite', run: () => {} }),
-  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post])
+  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId])
 
   if (!enabled) return children
 
@@ -142,7 +150,13 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
       {children}
       {pendingAction && (
         <IdentityPrompt
-          requireEmail={pendingAction.kind === 'comment' ? features.commentsRequireEmail : features.favoritesRequireEmail}
+          requireEmail={
+            pendingAction.kind === 'download'
+              ? true
+              : pendingAction.kind === 'comment'
+                ? features.commentsRequireEmail
+                : features.favoritesRequireEmail
+          }
           initial={identity}
           onSave={completeIdentity}
           onCancel={() => setPendingAction(null)}
