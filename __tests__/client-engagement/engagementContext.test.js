@@ -47,7 +47,7 @@ it('loads engagement on mount and prompts for identity on first heart', async ()
 })
 
 it('with identity saved, heart optimistically updates and POSTs', async () => {
-  localStorage.setItem('sepia:client-identity:u', JSON.stringify({ deviceId: 'd1', name: 'Priya', email: '' }))
+  localStorage.setItem('sepia:client-identity:u', JSON.stringify({ deviceId: 'd1', name: 'Priya', email: 'priya@x.com' }))
   global.fetch = jest.fn()
     .mockResolvedValueOnce({ ok: true, json: async () => ({ people: {}, favorites: [], comments: [], submissions: [] }) }) // GET
     .mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }) // POSTs

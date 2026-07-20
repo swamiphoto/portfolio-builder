@@ -74,6 +74,8 @@ describe('GET /api/client/engagement', () => {
 
 describe('POST /api/client/engagement', () => {
   it('favorites a photo and persists', async () => {
+    // Email is always required for favorites; pre-populate the person record with an email.
+    mockRead.mockResolvedValue({ ...emptyEngagement(), people: { d1: { name: 'Priya', email: 'p@x.com', firstSeen: 1 } } })
     const res = mockRes()
     await handler({ method: 'POST', body: { username: 'u', pageId: 'p1', deviceId: 'd1', action: 'favorite', photoUrl: 'https://cdn/a.jpg' } }, res)
     expect(res.status).toHaveBeenCalledWith(200)
@@ -122,11 +124,13 @@ describe('POST /api/client/engagement', () => {
     expect(mockSendMail.mock.calls[0][0].subject).toContain('1')
   })
 
-  it('rejects submit when submitWorkflow off', async () => {
-    mockReadSiteConfig.mockResolvedValue(siteWith({ ...CF, favorites: { enabled: true, submitWorkflow: false } }))
+  it('allows submit whenever favorites is enabled (submitWorkflow flag removed)', async () => {
+    // submitWorkflow is no longer a separate toggle; submit is allowed when favorites.enabled is true.
+    mockReadSiteConfig.mockResolvedValue(siteWith({ ...CF, favorites: { enabled: true } }))
+    mockRead.mockResolvedValue({ ...emptyEngagement(), people: { d1: { name: 'Priya', email: 'p@x.com', firstSeen: 1 } } })
     const res = mockRes()
     await handler({ method: 'POST', body: { username: 'u', pageId: 'p1', deviceId: 'd1', action: 'submit' } }, res)
-    expect(res.status).toHaveBeenCalledWith(403)
+    expect(res.status).toHaveBeenCalledWith(200)
   })
 
   it('propagates reducer validation as 400', async () => {

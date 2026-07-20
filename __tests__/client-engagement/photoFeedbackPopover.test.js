@@ -26,7 +26,9 @@ it('closes via the close button', async () => {
   expect(onClose).toHaveBeenCalled()
 })
 
-it('shows an empty-comments hint when there are only favorites', () => {
+it('shows only the favorites row (no comments section) when there are only favorites', () => {
   render(<PhotoFeedbackPopover feedback={{ favBy: ['Priya'], favCount: 1, comments: [], commentCount: 0 }} onClose={() => {}} />)
-  expect(screen.getByText(/No comments/i)).toBeTruthy()
+  expect(screen.getByText(/Favorited by Priya/i)).toBeTruthy()
+  expect(screen.queryByText(/No comments/i)).toBeNull()
+  expect(screen.queryByText(/No feedback/i)).toBeNull()
 })

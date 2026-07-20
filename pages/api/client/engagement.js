@@ -27,8 +27,8 @@ function actionAllowed(cf, action) {
   const com = cf.comments?.enabled
   if (action === 'favorite' || action === 'unfavorite') return !!fav
   if (action === 'comment') return !!com
-  if (action === 'submit') return !!(fav && cf.favorites?.submitWorkflow)
-  if (action === 'identify') return !!(fav || com)
+  if (action === 'submit') return !!fav
+  if (action === 'identify') return !!(fav || com || cf.downloads?.enabled)
   return false
 }
 
@@ -55,10 +55,10 @@ export default async function handler(req, res) {
 
       const data = await readEngagement(ctx.userId, ctx.page.id)
 
-      // requireEmail enforcement: acting person must have an email on file.
+      // Email is always required for favorites/comments — no per-feature toggle.
       const needsEmail =
-        ((action === 'favorite' || action === 'unfavorite' || action === 'submit') && cf.favorites?.requireEmail) ||
-        (action === 'comment' && cf.comments?.requireEmail)
+        (action === 'favorite' || action === 'unfavorite' || action === 'submit') && cf.favorites?.enabled ||
+        action === 'comment' && cf.comments?.enabled
       if (needsEmail && !(data.people?.[deviceId]?.email || (action === 'identify' && email))) {
         return res.status(400).json({ error: 'email required' })
       }
