@@ -7,6 +7,7 @@ import { getClientIdentity, saveClientIdentity } from '../../../common/clientIde
 import IdentityPrompt from './IdentityPrompt'
 import CommentsPanel from './CommentsPanel'
 import SubmitPill from './SubmitPill'
+import DownloadSheet from './DownloadSheet'
 
 const Ctx = createContext(null)
 export function useClientEngagement() { return useContext(Ctx) }
@@ -163,6 +164,7 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
         />
       )}
       {commentsUrl && <CommentsPanel photoUrl={commentsUrl} onClose={() => setCommentsUrl(null)} />}
+      {downloadUrl && <DownloadSheet photoUrl={downloadUrl} onClose={() => setDownloadUrl(null)} />}
       {features.submitWorkflow && <SubmitPill />}
       {error && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-stone-900 text-white text-sm px-4 py-2 rounded-full shadow-lg">
