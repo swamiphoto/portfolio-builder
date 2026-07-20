@@ -385,86 +385,46 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Client Features" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
-          <Toggle
-            checked={cf.enabled || false}
-            onChange={(v) => update({ clientFeatures: { ...cf, enabled: v } })}
-            label="Enable client features"
-          />
-          {cf.enabled && <>
+          <FeatureBlock label="Downloads" checked={cf.downloads?.enabled || false} onToggle={(v) => updateCf('downloads', { enabled: v })}>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+              Clients can download web and full-res versions. Email is always required.
+            </p>
+          </FeatureBlock>
+
+          <FeatureBlock label="Favorites" checked={cf.favorites?.enabled || false} onToggle={(v) => updateCf('favorites', { enabled: v })} />
+
+          <FeatureBlock label="Comments" checked={cf.comments?.enabled || false} onToggle={(v) => updateCf('comments', { enabled: v })} />
+
+          <FeatureBlock label="Watermark" checked={cf.watermark?.enabled || false} onToggle={(v) => updateCf('watermark', { enabled: v })}>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Overlays your logo or site name on photos. A deterrent, not protection.</p>
+          </FeatureBlock>
+
+          <FeatureBlock label="Purchase" checked={cf.purchase?.enabled || false} onToggle={(v) => updateCf('purchase', { enabled: v })}>
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Client password</div>
-              <input
-                type="text"
-                className={INPUT}
-                placeholder="Required to access client content"
-                value={cf.password || ''}
-                onChange={(e) => update({ clientFeatures: { ...cf, password: e.target.value } })}
-                autoComplete="off"
-              />
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Default price per photo</div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{cf.purchase?.currency || 'USD'}</span>
+                <input
+                  type="number" min="0" step="0.01"
+                  className="flex-1 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                  placeholder="0.00"
+                  value={cf.purchase?.defaultPrice ?? ''}
+                  onChange={(e) => updateCf('purchase', { defaultPrice: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                />
+              </div>
             </div>
-            <div className="space-y-3">
-              <FeatureBlock label="Downloads" checked={cf.downloads?.enabled || false} onToggle={(v) => updateCf('downloads', { enabled: v })}>
-                <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Quality</div>
-                {['web', 'print', 'original'].map((q) => (
-                  <label key={q} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(cf.downloads?.quality || ['web']).includes(q)}
-                      onChange={(e) => {
-                        const cur = cf.downloads?.quality || ['web']
-                        const next = e.target.checked ? [...new Set([...cur, q])] : cur.filter(x => x !== q)
-                        updateCf('downloads', { quality: next })
-                      }}
-                      className="w-3 h-3"
-                    />
-                    <span className="text-xs capitalize" style={{ color: 'var(--text-secondary)' }}>{q}</span>
-                  </label>
-                ))}
-                <Toggle checked={cf.downloads?.requireEmail || false} onChange={(v) => updateCf('downloads', { requireEmail: v })} label="Require email to download" />
-                <Toggle checked={cf.downloads?.watermarkEnabled || false} onChange={(v) => updateCf('downloads', { watermarkEnabled: v })} label="Watermark" />
-              </FeatureBlock>
-
-              <FeatureBlock label="Favorites" checked={cf.favorites?.enabled || false} onToggle={(v) => updateCf('favorites', { enabled: v })}>
-                <Toggle checked={cf.favorites?.requireEmail || false} onChange={(v) => updateCf('favorites', { requireEmail: v })} label="Require email" />
-                <Toggle checked={cf.favorites?.submitWorkflow || false} onChange={(v) => updateCf('favorites', { submitWorkflow: v })} label="Submit workflow" hint="Client clicks 'Submit selection' when done; you're notified" />
-              </FeatureBlock>
-
-              <FeatureBlock label="Comments" checked={cf.comments?.enabled || false} onToggle={(v) => updateCf('comments', { enabled: v })}>
-                <Toggle checked={cf.comments?.requireEmail || false} onChange={(v) => updateCf('comments', { requireEmail: v })} label="Require email" />
-              </FeatureBlock>
-
-              <FeatureBlock label="Watermark" checked={cf.watermark?.enabled || false} onToggle={(v) => updateCf('watermark', { enabled: v })}>
-                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Overlays your logo or site name on photos. A deterrent, not protection.</p>
-              </FeatureBlock>
-
-              <FeatureBlock label="Purchase" checked={cf.purchase?.enabled || false} onToggle={(v) => updateCf('purchase', { enabled: v })}>
-                <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Default price per photo</div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{cf.purchase?.currency || 'USD'}</span>
-                    <input
-                      type="number" min="0" step="0.01"
-                      className="flex-1 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
-                      placeholder="0.00"
-                      value={cf.purchase?.defaultPrice ?? ''}
-                      onChange={(e) => updateCf('purchase', { defaultPrice: e.target.value === '' ? null : parseFloat(e.target.value) })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Currency</div>
-                  <select
-                    style={{ ...selectStyle, width: 'auto' }}
-                    value={cf.purchase?.currency || 'USD'}
-                    onChange={(e) => updateCf('purchase', { currency: e.target.value })}
-                  >
-                    {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Override pricing per photo in the photo block inspector.</p>
-              </FeatureBlock>
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Currency</div>
+              <select
+                style={{ ...selectStyle, width: 'auto' }}
+                value={cf.purchase?.currency || 'USD'}
+                onChange={(e) => updateCf('purchase', { currency: e.target.value })}
+              >
+                {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-          </>}
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Override pricing per photo in the photo block inspector.</p>
+          </FeatureBlock>
         </div>
       </PopoverShell>
     )
