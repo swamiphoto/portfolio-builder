@@ -56,9 +56,17 @@ export function siteUrlFor(siteConfig, username, rootDomain) {
 export function parseHost(host, rootDomain) {
   const h = (host || '').replace(/^https?:\/\//, '')
   const root = (rootDomain || '').replace(/^https?:\/\//, '')
-  if (!root || h === root || h === `www.${root}`) return { kind: 'root', subdomain: null }
-  if (h.endsWith(`.${root}`)) {
-    const sub = h.slice(0, h.length - root.length - 1)
+  if (!root) return { kind: 'custom', subdomain: null }
+
+  // Strip ports for comparison — domain relationships are port-agnostic.
+  // This lets dev subdomains (e.g. swamiphoto.lvh.me:3001) match the configured
+  // root domain (lvh.me:3000) even when the server is on a different port.
+  const hBare = h.replace(/:\d+$/, '')
+  const rootBare = root.replace(/:\d+$/, '')
+
+  if (hBare === rootBare || hBare === `www.${rootBare}`) return { kind: 'root', subdomain: null }
+  if (hBare.endsWith(`.${rootBare}`)) {
+    const sub = hBare.slice(0, hBare.length - rootBare.length - 1)
     if (sub === 'www') return { kind: 'root', subdomain: null }
     return { kind: 'subdomain', subdomain: sub }
   }
