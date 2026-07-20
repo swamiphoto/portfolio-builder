@@ -4,14 +4,14 @@
 // acceptable at client-gallery volumes.
 import { downloadJSON, uploadJSON } from './gcsClient'
 
-export const LIMITS = { NAME: 100, EMAIL: 200, COMMENT: 1000, MAX_FAVORITES: 5000, MAX_COMMENTS: 2000, MAX_PEOPLE: 500, MAX_SUBMISSIONS: 200 }
+export const LIMITS = { NAME: 100, EMAIL: 200, COMMENT: 1000, MAX_FAVORITES: 5000, MAX_COMMENTS: 2000, MAX_PEOPLE: 500, MAX_SUBMISSIONS: 200, MAX_DOWNLOADS: 10000 }
 
 export function getClientDataPath(userId, pageId) {
   return `users/${userId}/client-data/${pageId}.json`
 }
 
 export function emptyEngagement() {
-  return { people: {}, favorites: [], comments: [], submissions: [] }
+  return { people: {}, favorites: [], comments: [], submissions: [], downloads: [] }
 }
 
 function bad(message) {
@@ -30,6 +30,7 @@ export function applyEngagementAction(data, action) {
     favorites: [...data.favorites],
     comments: [...data.comments],
     submissions: [...data.submissions],
+    downloads: [...(data.downloads || [])],
   }
 
   if (type === 'identify') {
@@ -71,6 +72,16 @@ export function applyEngagementAction(data, action) {
     if (next.submissions.length >= LIMITS.MAX_SUBMISSIONS) throw bad('too many submissions')
     const count = next.favorites.filter(f => f.deviceId === deviceId).length
     next.submissions.push({ deviceId, ts, count })
+    return next
+  }
+
+  if (type === 'download') {
+    const photoUrl = String(action.photoUrl || '')
+    const quality = String(action.quality || 'display')
+    if (!photoUrl) throw bad('invalid photoUrl')
+    if (!['display', 'original'].includes(quality)) throw bad('invalid quality')
+    if (next.downloads.length >= LIMITS.MAX_DOWNLOADS) throw bad('too many downloads')
+    next.downloads = [...next.downloads, { photoUrl, deviceId, quality, ts }]
     return next
   }
 
