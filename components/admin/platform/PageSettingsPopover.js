@@ -380,14 +380,15 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
           <FeatureBlock
             label="Purchase"
-            description="Let clients pay to download more photos. The first few are free; the rest are sold in packages. Checkout is handled for you."
+            description={
+              !cf.downloads?.enabled
+                ? 'Turn on Downloads first — purchases gate how many downloads are free.'
+                : 'Let clients pay to download more photos. The first few are free; the rest are sold in packages. Checkout is handled for you.'
+            }
             checked={cf.purchase?.enabled || false}
             disabled={!cf.downloads?.enabled}
             onToggle={(v) => updateCf('purchase', { enabled: v })}
           >
-            {!cf.downloads?.enabled && (
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Turn on Downloads first — purchases gate how many downloads are free.</p>
-            )}
             {cf.downloads?.enabled && !paymentsReady && (
               <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
             )}

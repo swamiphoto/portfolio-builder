@@ -13,6 +13,13 @@ describe('buildDigitalAmounts', () => {
     })
   })
 
+  it('clamps platformFee to retail when platformFeePct > 100', () => {
+    const a = buildDigitalAmounts({ price: 5000, platformFeePct: 150 })
+    expect(a.platformFee).toBe(5000)
+    expect(a.applicationFee).toBe(5000)
+    expect(a.profit).toBe(0)
+  })
+
   it('defaults platformFee to 0 and rounds to whole cents', () => {
     const a = buildDigitalAmounts({ price: 4001, platformFeePct: 15 })
     expect(a.platformFee).toBe(600) // round(4001 * 0.15) = round(600.15) = 600

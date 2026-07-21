@@ -4,7 +4,7 @@
 // total == retail. All values are integer cents.
 export function buildDigitalAmounts({ price, platformFeePct = 0, currency = 'USD' }) {
   const retail = Math.max(0, Math.round(price))
-  const platformFee = Math.round(retail * (Number(platformFeePct) || 0) / 100)
+  const platformFee = Math.min(retail, Math.round(retail * (Number(platformFeePct) || 0) / 100))
   return {
     retail,
     platformFee,

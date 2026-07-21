@@ -13,7 +13,7 @@ export function dollarsToCents(v) {
 
 export function centsToDollars(cents) {
   const n = (cents || 0) / 100
-  return Number.isInteger(n) ? String(n) : String(n)
+  return String(n)
 }
 
 export function addPackage(list) {

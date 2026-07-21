@@ -161,7 +161,12 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
         body: JSON.stringify({ username, pageId, packageId, buyer: { email: id?.email, name: id?.name }, returnPath: window.location.pathname }),
       })
       const body = await res.json().catch(() => null)
-      if (body?.url) window.location.href = body.url
+      if (body?.url) {
+        window.location.href = body.url
+      } else {
+        setError('Could not start checkout — try again')
+        setTimeout(() => setError(null), 2500)
+      }
     },
     openDownload: (photoUrl) => runOrPrompt('download', () => {
       if (features.purchase) {
