@@ -154,22 +154,25 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
       </Head>
       <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />
       <main className="theme-content">
-        <PageCover
-          cover={homePage?.cover}
-          title={homePage?.title}
-          description={homePage?.description}
-          slideshowHref={slideshowHref}
-          clientFeaturesEnabled={!!homePage?.clientFeatures?.enabled}
-          primaryButton={null}
-        />
         {homePage ? (
           <ClientEngagementProvider
             username={username}
             pageId={homePage.id}
             pageSlug={homePage.slug || homePage.id}
             clientFeatures={homePage.clientFeatures}
+            paymentsReady={printStore.paymentsReady}
+            currency={printStore.currency}
+            heroPresent={!!homePage?.cover?.imageUrl}
             branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
           >
+            <PageCover
+              cover={homePage?.cover}
+              title={homePage?.title}
+              description={homePage?.description}
+              slideshowHref={slideshowHref}
+              clientFeaturesEnabled={!!homePage?.clientFeatures?.enabled}
+              primaryButton={null}
+            />
             <Gallery
               name={homePage.title}
               description={homePage.description}

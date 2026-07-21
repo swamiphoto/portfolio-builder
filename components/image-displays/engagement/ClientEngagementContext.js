@@ -153,8 +153,8 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     branding: branding || {},
     identity,
     isFavorited: (url) => myFavorites.has(url),
-    favoriteCount: (url) => data.favorites.filter(f => f.photoUrl === url).length,
-    commentCount: (url) => data.comments.filter(c => c.photoUrl === url).length,
+    favoriteCount: (url) => (data.favorites || []).filter(f => f.photoUrl === url).length,
+    commentCount: (url) => (data.comments || []).filter(c => c.photoUrl === url).length,
     commentsFor: (url) => data.comments
       .filter(c => c.photoUrl === url)
       .map(c => ({ id: c.id, name: data.people[c.deviceId]?.name || 'Someone', text: c.text, ts: c.ts })),

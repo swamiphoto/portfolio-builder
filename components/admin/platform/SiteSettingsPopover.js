@@ -289,7 +289,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                     <ToggleSwitch on={!!ps.showPriceOnImage} onChange={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
                   </div>
                   <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-                    Displays “From $X" on photos that are for sale.
+                    Displays “From $X” on photos that are for sale.
                   </p>
                 </div>
               </div>

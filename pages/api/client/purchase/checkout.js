@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const platformFeePct = Number(
       process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT ?? process.env.PLATFORM_FEE_PCT ?? ps.platformFeePct ?? 0
     ) || 0
-    const amounts = buildDigitalAmounts({ price: pkg.price, platformFeePct, currency: purchase.currency || ps.currency })
+    const amounts = buildDigitalAmounts({ price: pkg.price, platformFeePct, currency: ps.currency })
 
     const order = {
       id: newOrderId(),

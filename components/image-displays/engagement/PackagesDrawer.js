@@ -30,8 +30,13 @@ export default function PackagesDrawer({ open, onClose }) {
   const { packages, purchaseCurrency } = ctx
 
   function buy(id) {
-    if (ctx.identity?.email) setLoading(id) // only show the redirect state when checkout will go straight through
-    ctx.buyPackage(id)
+    if (ctx.identity?.email) {
+      setLoading(id)
+      ctx.buyPackage(id)
+    } else {
+      onClose()          // close the drawer so the identity prompt (lower z-index) is visible
+      ctx.buyPackage(id) // queues the identity prompt, then checks out on completion
+    }
   }
 
   return (

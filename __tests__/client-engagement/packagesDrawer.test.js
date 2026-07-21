@@ -30,3 +30,20 @@ it('shows "Packages", lists grants + prices, and buys via buyPackage — with no
   fireEvent.click(screen.getByText('Entire gallery'))
   expect(buyPackage).toHaveBeenCalledWith('pkg_all')
 })
+
+it('closes the drawer before calling buyPackage when the buyer has no email', () => {
+  const buyPackage = jest.fn()
+  const onClose = jest.fn()
+  useClientEngagement.mockReturnValue({
+    identity: { email: '' },
+    purchaseCurrency: 'USD',
+    packages: [
+      { id: 'pkg_all', label: 'Entire gallery', credits: 'all', price: 15000 },
+    ],
+    buyPackage,
+  })
+  render(<PackagesDrawer open onClose={onClose} />)
+  fireEvent.click(screen.getByText('Entire gallery'))
+  expect(onClose).toHaveBeenCalled()
+  expect(buyPackage).toHaveBeenCalledWith('pkg_all')
+})
