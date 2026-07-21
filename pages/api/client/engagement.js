@@ -5,6 +5,7 @@
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readEngagement, writeEngagement, applyEngagementAction } from '../../../common/clientEngagement'
+import { viewerPurchaseState } from '../../../common/clientPurchase'
 import { sendMail } from '../../../common/email/mailer'
 
 function escapeHtml(s) {
@@ -43,7 +44,17 @@ export default async function handler(req, res) {
       for (const [deviceId, person] of Object.entries(data.people || {})) {
         people[deviceId] = { name: person.name }
       }
-      return res.status(200).json({ people, favorites: data.favorites, comments: data.comments, submissions: data.submissions })
+      const payload = { people, favorites: data.favorites, comments: data.comments, submissions: data.submissions }
+
+      const purchase = ctx.page.clientFeatures?.purchase
+      if (purchase?.enabled) {
+        const { deviceId } = req.query
+        const email = deviceId ? data.people?.[deviceId]?.email : null
+        const state = viewerPurchaseState({ data, email, freeAllowance: purchase.freeAllowance || 0 })
+        payload.purchase = { ...state, freeAllowance: purchase.freeAllowance || 0 }
+      }
+
+      return res.status(200).json(payload)
     }
 
     if (req.method === 'POST') {
