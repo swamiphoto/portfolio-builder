@@ -345,6 +345,72 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
     )
   }
 
+  // ── Packages drill-in ─────────────────────────────────────────────────────
+  if (view === 'packages') {
+    const purchase = cf.purchase || {}
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Packages" onBack={() => setView('client')}>
+        <div className="px-3 py-3 space-y-4">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Free downloads</div>
+            <input
+              type="number" min="0" step="1"
+              className="w-20 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+              value={purchase.freeAllowance ?? 0}
+              onChange={(e) => updateCf('purchase', { freeAllowance: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+            />
+            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>How many photos each client can download for free before paying.</p>
+          </div>
+          <div className="space-y-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Packages</div>
+            {(purchase.packages || []).map((pkg) => (
+              <div key={pkg.id} className="rounded-md p-2 space-y-1.5" style={{ border: '1px solid rgba(160,140,110,0.22)' }}>
+                <input
+                  type="text" placeholder="Package name"
+                  className="w-full border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                  value={pkg.label}
+                  onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { label: e.target.value }) })}
+                />
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={pkg.credits === 'all'}
+                      onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: e.target.checked ? 'all' : 10 }) })}
+                    />
+                    Entire gallery
+                  </label>
+                  {pkg.credits !== 'all' && (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number" min="1" step="1" title="Photos"
+                        className="w-14 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent text-center"
+                        value={pkg.credits}
+                        onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: Math.max(1, parseInt(e.target.value, 10) || 1) }) })}
+                      />
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>photos</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 ml-auto">
+                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{siteConfig?.printStore?.currency || 'USD'}</span>
+                    <input
+                      type="number" min="0" step="0.01" placeholder="0.00"
+                      className="w-16 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                      value={centsToDollars(pkg.price)}
+                      onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { price: dollarsToCents(e.target.value) }) })}
+                    />
+                  </div>
+                  <button type="button" aria-label="Remove package" className="px-1" style={{ color: 'var(--text-muted)' }} onClick={() => updateCf('purchase', { packages: removePackage(purchase.packages, pkg.id) })}>×</button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="text-[11px] font-mono uppercase tracking-[0.07em]" style={{ color: '#8b6f47' }} onClick={() => updateCf('purchase', { packages: addPackage(purchase.packages) })}>+ Add package</button>
+          </div>
+        </div>
+      </PopoverShell>
+    )
+  }
+
   // ── Client features drill-in ──────────────────────────────────────────────
   if (view === 'client') {
     return (
@@ -378,90 +444,40 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             onToggle={(v) => updateCf('watermark', { enabled: v })}
           />
 
-          <FeatureBlock
-            label="Purchase"
-            description={
-              !cf.downloads?.enabled
-                ? 'Turn on Downloads first — purchases gate how many downloads are free.'
-                : 'Let clients pay to download more photos. The first few are free; the rest are sold in packages. Checkout is handled for you.'
-            }
-            checked={cf.purchase?.enabled || false}
-            disabled={!cf.downloads?.enabled}
-            onToggle={(v) => updateCf('purchase', { enabled: v })}
-          >
-            {cf.downloads?.enabled && !paymentsReady && (
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
-            )}
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Free downloads</div>
-              <input
-                type="number" min="0" step="1"
-                className="w-20 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
-                value={cf.purchase?.freeAllowance ?? 0}
-                onChange={(e) => updateCf('purchase', { freeAllowance: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Packages</span>
+              <ToggleSwitch
+                on={cf.purchase?.enabled || false}
+                onChange={(v) => {
+                  // Delivery depends on downloads; enabling Packages enables Downloads too.
+                  const patch = { clientFeatures: { ...cf, purchase: { ...(cf.purchase || {}), enabled: v } } }
+                  if (v) patch.clientFeatures.downloads = { ...(cf.downloads || {}), enabled: true }
+                  update(patch)
+                }}
+                ariaLabel="Packages"
               />
             </div>
-            <div className="space-y-2">
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Packages</div>
-              {(cf.purchase?.packages || []).map((pkg) => (
-                <div key={pkg.id} className="flex items-center gap-1.5">
-                  <input
-                    type="text" placeholder="Label"
-                    className="flex-1 min-w-0 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
-                    value={pkg.label}
-                    onChange={(e) => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { label: e.target.value }) })}
-                  />
-                  {pkg.credits === 'all' ? (
-                    <span className="text-[10px] w-14 text-center" style={{ color: 'var(--text-muted)' }}>All</span>
-                  ) : (
-                    <input
-                      type="number" min="1" step="1" title="Photos" placeholder="#"
-                      className="w-12 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent text-center"
-                      value={pkg.credits}
-                      onChange={(e) => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { credits: Math.max(1, parseInt(e.target.value, 10) || 1) }) })}
-                    />
-                  )}
-                  <button
-                    type="button"
-                    title="Toggle whole-gallery"
-                    className="text-[10px] px-1"
-                    style={{ color: pkg.credits === 'all' ? '#8b6f47' : 'var(--text-muted)' }}
-                    onClick={() => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { credits: pkg.credits === 'all' ? 10 : 'all' }) })}
-                  >∞</button>
-                  <div className="flex items-center gap-0.5">
-                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{cf.purchase?.currency || 'USD'}</span>
-                    <input
-                      type="number" min="0" step="0.01" placeholder="0.00"
-                      className="w-16 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
-                      value={centsToDollars(pkg.price)}
-                      onChange={(e) => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { price: dollarsToCents(e.target.value) }) })}
-                    />
-                  </div>
-                  <button
-                    type="button" aria-label="Remove package" className="px-1"
-                    style={{ color: 'var(--text-muted)' }}
-                    onClick={() => updateCf('purchase', { packages: removePackage(cf.purchase.packages, pkg.id) })}
-                  >×</button>
-                </div>
-              ))}
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.4, marginTop: 3 }}>
+              Sell downloads in packages. Clients buy from your gallery; checkout is handled for you.
+            </div>
+            {cf.purchase?.enabled && (
               <button
                 type="button"
-                className="text-[11px] font-mono uppercase tracking-[0.07em]"
-                style={{ color: '#8b6f47' }}
-                onClick={() => updateCf('purchase', { packages: addPackage(cf.purchase?.packages) })}
-              >+ Add package</button>
-            </div>
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Currency</div>
-              <select
-                style={{ ...selectStyle, width: 'auto' }}
-                value={cf.purchase?.currency || 'USD'}
-                onChange={(e) => updateCf('purchase', { currency: e.target.value })}
+                onClick={() => setView('packages')}
+                className="flex items-center gap-0.5 text-xs mt-2"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
               >
-                {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </FeatureBlock>
+                Configure
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            )}
+            {cf.purchase?.enabled && !paymentsReady && (
+              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
+            )}
+          </div>
         </div>
       </PopoverShell>
     )
