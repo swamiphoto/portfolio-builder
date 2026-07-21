@@ -8,7 +8,7 @@ import IdentityPrompt from './IdentityPrompt'
 import CommentsPanel from './CommentsPanel'
 import SubmitPill from './SubmitPill'
 import DownloadSheet from './DownloadSheet'
-import PurchaseSheet from './PurchaseSheet'
+import PackagesDrawer from './PackagesDrawer'
 import PurchasePrompt from './PurchasePrompt'
 
 const Ctx = createContext(null)
@@ -216,7 +216,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
       )}
       {commentsUrl && <CommentsPanel photoUrl={commentsUrl} onClose={() => setCommentsUrl(null)} />}
       {downloadUrl && <DownloadSheet photoUrl={downloadUrl} onClose={() => setDownloadUrl(null)} />}
-      {purchaseOpen && <PurchaseSheet onClose={() => setPurchaseOpen(false)} />}
+      <PackagesDrawer open={purchaseOpen} onClose={() => setPurchaseOpen(false)} />
       {features.submitWorkflow && <SubmitPill />}
       {features.purchase && !heroPresent && <PurchasePrompt />}
       {error && (
