@@ -1,4 +1,5 @@
 import { slugify } from './pageUtils'
+import { normalizePurchaseConfig } from './clientPurchase'
 
 const BUTTON_TYPES = ['url', 'slideshow', 'client-login']
 const BUTTON_STYLES = ['solid', 'outline']
@@ -308,12 +309,7 @@ export function normalizePageEntity(page) {
         watermark: {
           enabled: cf.watermark?.enabled ?? false,
         },
-        purchase: {
-          enabled: cf.purchase?.enabled ?? false,
-          defaultPrice: cf.purchase?.defaultPrice ?? null,
-          currency: cf.purchase?.currency ?? 'USD',
-          tiers: cf.purchase?.tiers ?? { web: null, print: null, original: null },
-        },
+        purchase: normalizePurchaseConfig(cf.purchase),
       }
     })(),
     blocks: (page.blocks || []).map((block) => normalizeBlockImageFields(block)),
