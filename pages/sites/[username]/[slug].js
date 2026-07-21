@@ -135,6 +135,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           pageId={page.id}
           pageSlug={page.slug || page.id}
           clientFeatures={page.clientFeatures}
+          paymentsReady={printStore.paymentsReady}
           branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
         >
           <Gallery
