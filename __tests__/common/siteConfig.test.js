@@ -29,13 +29,13 @@ describe('createDefaultSiteConfig', () => {
     expect(config.pages[0].showInNav).toBe(false)
     expect(config.pages[0].thumbnail).toEqual({ imageUrl: '', useCover: true })
     expect(config.pages[0].thumbnailUrl).toBe('')
-    expect(config.pages[0]).not.toHaveProperty('type')
+    expect(config.pages[0].type).toBe('page')
     expect(config.pages[0]).not.toHaveProperty('albums')
   })
 
-  it('sets default theme to minimal-light', () => {
+  it('sets default theme to kyoto', () => {
     const config = createDefaultSiteConfig('user-123')
-    expect(config.theme).toBe('minimal-light')
+    expect(config.design.theme).toBe('kyoto')
   })
 
   it('sets publishedAt to null', () => {
