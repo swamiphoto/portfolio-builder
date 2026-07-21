@@ -7,7 +7,9 @@ import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
+import ToggleSwitch from "../common/ToggleSwitch";
 import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
+import { useEditorFeedback } from './EditorFeedbackContext';
 
 function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
   const ref = useRef(null);
@@ -106,6 +108,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const [expandedOverride, setExpandedOverride] = useState(null);
   const [allExpanded, setAllExpanded] = useState(true);
   const [glowingBlockIndex, setGlowingBlockIndex] = useState(null);
+
+  const feedbackCtx = useEditorFeedback();
 
   const blocksContainerRef = useRef(null);
 
@@ -224,6 +228,22 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         <div className="flex-shrink-0" style={{ padding: '18px 14px 12px', borderBottom: '1px solid rgba(26,18,10,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 10 }}>
             <div style={{ display: 'flex', gap: 1 }}>
+              {/* Client feedback toggle */}
+              {feedbackCtx?.hasFeedback && (
+                <Tip label={feedbackCtx.showFeedback ? 'Hide client feedback' : 'Show client feedback'} side="bottom">
+                  <button
+                    onClick={() => feedbackCtx.setShowFeedback(!feedbackCtx.showFeedback)}
+                    style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: feedbackCtx.showFeedback ? 'rgba(193,74,74,0.12)' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: feedbackCtx.showFeedback ? '#c14a4a' : '#9e9788', transition: 'background 120ms' }}
+                    onMouseEnter={e => { if (!feedbackCtx.showFeedback) e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
+                    onMouseLeave={e => { if (!feedbackCtx.showFeedback) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={feedbackCtx.showFeedback ? '#c14a4a' : 'none'} stroke="currentColor" strokeWidth="1.8">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    </svg>
+                  </button>
+                </Tip>
+              )}
+
               {/* Page settings */}
               {onOpenPageSettings && (
                 <Tip label="Page settings" side="bottom">
@@ -402,11 +422,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   className="flex items-center gap-2 cursor-pointer pt-0.5"
                   onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
                 >
-                  <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
-                       style={{ background: gallery.visibility === "unlisted" ? 'var(--sepia-accent)' : 'var(--border)' }}>
-                    <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`}
-                         style={{ background: 'var(--card)' }} />
-                  </div>
+                  <ToggleSwitch
+                    on={gallery.visibility === "unlisted"}
+                    onChange={(v) => updateField("visibility", v ? "unlisted" : "public")}
+                    ariaLabel="Unlisted"
+                  />
                   <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Unlisted</span>
                 </div>
 
@@ -416,11 +436,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={() => updateField("enableSlideshow", !gallery.enableSlideshow)}
                   >
-                    <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
-                         style={{ background: gallery.enableSlideshow ? 'var(--sepia-accent)' : 'var(--border)' }}>
-                      <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`}
-                           style={{ background: 'var(--card)' }} />
-                    </div>
+                    <ToggleSwitch
+                      on={!!gallery.enableSlideshow}
+                      onChange={(v) => updateField("enableSlideshow", v)}
+                      ariaLabel="Include slideshow"
+                    />
                     <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Include slideshow</span>
                   </div>
                   {gallery.enableSlideshow && gallery.slug && (

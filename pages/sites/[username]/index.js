@@ -13,6 +13,7 @@ import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import { getTheme } from '../../../common/themes'
+import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -90,7 +91,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)
   if (!unlocked) {
-    return <PasswordGate pageTitle={homePage?.title || 'Protected'} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
+    return <PasswordGate pageTitle={homePage?.title || 'Protected'} message={homePage?.passwordGateMessage} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
   }
 
   if (hasCoverPage) {
@@ -162,22 +163,30 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
           primaryButton={null}
         />
         {homePage ? (
-          <Gallery
-            name={homePage.title}
-            description={homePage.description}
-            blocks={resolvedBlocks}
-            pages={siteConfig.pages}
+          <ClientEngagementProvider
             username={username}
-            basePath={basePath}
-            enableSlideshow={!!slideshowHref}
-            onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
-            siteConfig={siteConfig}
-            printStore={printStore}
-            themeId={theme.id}
-            hasCover={!!homePage?.cover?.imageUrl}
-            coverHeight={homePage?.cover?.height || 'partial'}
-            coverButtonStyle={homePage?.cover?.buttonStyle || 'solid'}
-          />
+            pageId={homePage.id}
+            pageSlug={homePage.slug || homePage.id}
+            clientFeatures={homePage.clientFeatures}
+            branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
+          >
+            <Gallery
+              name={homePage.title}
+              description={homePage.description}
+              blocks={resolvedBlocks}
+              pages={siteConfig.pages}
+              username={username}
+              basePath={basePath}
+              enableSlideshow={!!slideshowHref}
+              onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
+              siteConfig={siteConfig}
+              printStore={printStore}
+              themeId={theme.id}
+              hasCover={!!homePage?.cover?.imageUrl}
+              coverHeight={homePage?.cover?.height || 'partial'}
+              coverButtonStyle={homePage?.cover?.buttonStyle || 'solid'}
+            />
+          </ClientEngagementProvider>
         ) : (
           <div className="flex items-center justify-center h-64 text-sm text-gray-400">
             No content yet.

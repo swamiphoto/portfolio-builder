@@ -4,6 +4,9 @@ import BlockBuilder from '../gallery-builder/BlockBuilder'
 import GalleryPreview from '../gallery-builder/GalleryPreview'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
 import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail } from '../../../common/assetRefs'
+import { useClientFeedback } from './useClientFeedback'
+import { EditorFeedbackProvider } from '../gallery-builder/EditorFeedbackContext'
+import ClientFeedbackBanner from './ClientFeedbackBanner'
 
 function pageToGallery(page) {
   return {
@@ -30,6 +33,8 @@ function galleryToPage(page, gallery) {
 export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageChange }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
+
+  const feedback = useClientFeedback(page.id, !!page.clientFeatures?.enabled)
 
   const libraryImages = libraryData?.images || null
 
@@ -150,40 +155,50 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
     : 'idle'
 
   return (
-    <div className="flex h-full">
-      <BlockBuilder
-        gallery={gallery}
-        onChange={handleGalleryChange}
-        onPublish={null}
-        publishing={false}
-        autosaveStatus={autosaveStatus}
-        hasDraft={false}
-        isPublished={false}
-        onAddPhotosToBlock={handleAddPhotosToBlock}
-        onPickThumbnail={null}
-        expanded={expanded}
-        onToggleExpand={() => setExpanded(v => !v)}
-        pages={pages}
-        getAssetByUrl={getAssetByUrl}
-        allSets={allSets}
-        setsByUrl={setsByUrl}
-        onToggleSet={handleToggleSet}
-        onPrintChange={handlePrintChange}
-        themeId={siteConfig?.design?.theme || 'kyoto'}
-      />
+    <EditorFeedbackProvider
+      pageId={page.id}
+      feedbackByPhoto={feedback.byPhoto}
+      hasFeedback={feedback.hasFeedback}
+      lastActivityTs={feedback.lastActivityTs}
+    >
+      <div className="flex flex-col h-full">
+        <ClientFeedbackBanner />
+        <div className="flex flex-1 min-h-0">
+          <BlockBuilder
+            gallery={gallery}
+            onChange={handleGalleryChange}
+            onPublish={null}
+            publishing={false}
+            autosaveStatus={autosaveStatus}
+            hasDraft={false}
+            isPublished={false}
+            onAddPhotosToBlock={handleAddPhotosToBlock}
+            onPickThumbnail={null}
+            expanded={expanded}
+            onToggleExpand={() => setExpanded(v => !v)}
+            pages={pages}
+            getAssetByUrl={getAssetByUrl}
+            allSets={allSets}
+            setsByUrl={setsByUrl}
+            onToggleSet={handleToggleSet}
+            onPrintChange={handlePrintChange}
+            themeId={siteConfig?.design?.theme || 'kyoto'}
+          />
 
-      <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} assetsByUrl={assetsByUrl} printStore={siteConfig?.printStore} />
+          <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} assetsByUrl={assetsByUrl} printStore={siteConfig?.printStore} />
+        </div>
 
-      {photoPickerOpen && (
-        <PhotoPickerModal
-          images={libraryImages || []}
-          libraryConfig={libraryData}
-          loading={libraryLoading}
-          blockType={page.blocks?.[photoPickerBlockIndex]?.type || 'photo'}
-          onConfirm={handlePhotoPickerConfirm}
-          onClose={() => { setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null) }}
-        />
-      )}
-    </div>
+        {photoPickerOpen && (
+          <PhotoPickerModal
+            images={libraryImages || []}
+            libraryConfig={libraryData}
+            loading={libraryLoading}
+            blockType={page.blocks?.[photoPickerBlockIndex]?.type || 'photo'}
+            onConfirm={handlePhotoPickerConfirm}
+            onClose={() => { setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null) }}
+          />
+        )}
+      </div>
+    </EditorFeedbackProvider>
   )
 }

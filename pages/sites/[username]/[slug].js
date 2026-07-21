@@ -14,6 +14,7 @@ import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import { getTheme } from '../../../common/themes'
+import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -76,7 +77,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   // Client-side gate only — not a security boundary. Real protection lives in clientFeatures.
   const [unlocked, setUnlocked] = useState(!page.password)
   if (!unlocked) {
-    return <PasswordGate pageTitle={page.title} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
+    return <PasswordGate pageTitle={page.title} message={page.passwordGateMessage} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
   }
 
   const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
@@ -129,24 +130,32 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           clientFeaturesEnabled={!!page.clientFeatures?.enabled}
           navLinks={coverNavLinks}
         />
-        <Gallery
-          name={page.title}
-          description={page.description}
-          blocks={resolvedBlocks}
-          pages={siteConfig.pages}
-          childPages={subNavPages}
-          activeChildId={activeSubNavId}
+        <ClientEngagementProvider
           username={username}
-          basePath={basePath}
-          enableSlideshow={!!slideshowHref}
-          onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
-          siteConfig={siteConfig}
-          printStore={printStore}
-          coverHeight={page.cover?.height || 'partial'}
-          coverButtonStyle={page.cover?.buttonStyle || 'solid'}
-          themeId={theme.id}
-          hasCover={hasCover}
-        />
+          pageId={page.id}
+          pageSlug={page.slug || page.id}
+          clientFeatures={page.clientFeatures}
+          branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
+        >
+          <Gallery
+            name={page.title}
+            description={page.description}
+            blocks={resolvedBlocks}
+            pages={siteConfig.pages}
+            childPages={subNavPages}
+            activeChildId={activeSubNavId}
+            username={username}
+            basePath={basePath}
+            enableSlideshow={!!slideshowHref}
+            onSlideshowClick={() => { if (slideshowHref) window.location.href = slideshowHref }}
+            siteConfig={siteConfig}
+            printStore={printStore}
+            coverHeight={page.cover?.height || 'partial'}
+            coverButtonStyle={page.cover?.buttonStyle || 'solid'}
+            themeId={theme.id}
+            hasCover={hasCover}
+          />
+        </ClientEngagementProvider>
         <SiteFooter siteConfig={siteConfig} />
       </main>
     </div>

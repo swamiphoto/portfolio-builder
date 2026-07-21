@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
 import BuyPrintButton from "./print/BuyPrintButton";
+import EngagementActions from "./engagement/EngagementActions";
+import WatermarkOverlay from "./engagement/WatermarkOverlay";
 
 export default function PhotoLightbox({ images, index, onClose, onNavigate, printStore }) {
   const image = images[index];
@@ -85,6 +87,13 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
               <BuyPrintButton print={image.print} imageUrl={image.url} />
             </div>
           )}
+          <WatermarkOverlay />
+          <div
+            className="absolute top-3 left-3 transition-opacity duration-500"
+            style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
+          >
+            <EngagementActions imageUrl={image.url} />
+          </div>
         </div>
         {image.caption && (
           <p className="mt-3 text-white/70 text-sm italic text-center max-w-xl">{image.caption}</p>

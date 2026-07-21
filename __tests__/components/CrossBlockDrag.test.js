@@ -5,6 +5,7 @@ jest.mock('../../common/dragContext', () => ({
   DragProvider: ({ children }) => children,
 }))
 jest.mock('../../common/imageUtils', () => ({ getSizedUrl: (url) => url }))
+jest.mock('next-auth/react', () => ({ useSession: () => ({ data: null, status: 'unauthenticated' }) }))
 jest.mock('../../common/assetRefs', () => ({
   normalizeImageRefs: (x) => Array.isArray(x) ? x : [],
   buildMultiImageFields: (refs) => ({ images: refs }),

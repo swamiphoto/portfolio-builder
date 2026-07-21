@@ -4,6 +4,8 @@ import { getSizedUrl } from "../../../../common/imageUtils";
 import { captionStyleCss } from "../../../../common/captionStyles";
 import styles from "./MasonryGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
+import EngagementActions from "../../engagement/EngagementActions";
+import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 
 const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans' }) => {
   const capCss = captionStyleCss(captionStyle);
@@ -31,8 +33,12 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
                         }}
                         onClick={() => onImageClick && onImageClick(index)}
                       />
+                      <WatermarkOverlay />
                       <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <BuyPrintButton print={print} imageUrl={url} />
+                      </div>
+                      <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                        <EngagementActions imageUrl={url} />
                       </div>
                     </div>
                     {caption && (

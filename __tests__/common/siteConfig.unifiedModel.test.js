@@ -40,13 +40,13 @@ describe('createDefaultSiteConfig — unified page model', () => {
   })
 
   it('home page reserves clientFeatures with all flags off', () => {
-    expect(home.clientFeatures).toEqual({
-      enabled: false,
-      passwordHash: '',
-      watermarkEnabled: false,
-      votingEnabled: false,
-      downloadEnabled: false,
-    })
+    const cf = home.clientFeatures
+    expect(cf.enabled).toBe(false)
+    expect(cf.downloads.enabled).toBe(false)
+    expect(cf.favorites.enabled).toBe(false)
+    expect(cf.comments.enabled).toBe(false)
+    expect(cf.watermark.enabled).toBe(false)
+    expect(cf.purchase.enabled).toBe(false)
   })
 
   it('home page is not in main nav by default (existing behavior preserved)', () => {

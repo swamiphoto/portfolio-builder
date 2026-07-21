@@ -6,13 +6,14 @@ import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
-import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
+import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/gcsClient'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
 import EmptyHint from '../onboarding/EmptyHint'
+import NotificationsPopover, { useUnreadNotifications } from './NotificationsPopover'
 
 // Design tokens
 const C = {
@@ -297,6 +298,9 @@ export default function PlatformSidebar({
   const [pageSettingsAnchorEl, setPageSettingsAnchorEl] = useState(null)
   const menuRef = useRef(null)
   const addMenuRef = useRef(null)
+  const bellRef = useRef(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [unread, clearUnread] = useUnreadNotifications()
   const addBtnRef = useRef(null)
   const navAddBtnRef = useRef(null)
   const { drag, dropTargetPageId, setDropTargetPageId } = useDrag()
@@ -745,9 +749,18 @@ export default function PlatformSidebar({
             sepia
           </span>
           <div style={{ display: 'flex', gap: 2 }}>
-            <IconButton label="Notifications">
-              <IconBell />
-            </IconButton>
+            <span ref={bellRef} style={{ position: 'relative', display: 'inline-flex' }}>
+              <IconButton label="Notifications" onClick={() => { setNotifOpen(v => !v); clearUnread() }}>
+                <IconBell />
+              </IconButton>
+              {unread && (
+                <span style={{
+                  position: 'absolute', top: 3, right: 3, width: 6, height: 6,
+                  borderRadius: '50%', background: '#c14a4a', pointerEvents: 'none',
+                }} />
+              )}
+            </span>
+            {notifOpen && <NotificationsPopover anchorEl={bellRef.current} onClose={() => setNotifOpen(false)} onSelectPage={(id) => { onSelectPage?.(id); setNotifOpen(false) }} />}
             {onCollapse && (
               <IconButton label="Collapse panel" onClick={onCollapse}>
                 <IconCollapse />
@@ -795,7 +808,13 @@ export default function PlatformSidebar({
           <Tip label="Preview site" side="bottom">
             <button
               type="button"
-              onClick={() => { if (username) window.open(`/sites/${username}`, '_blank') }}
+              onClick={() => {
+                if (!username) return
+                const base = basePathFor(window.location.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
+                const page = siteConfig?.pages?.find(p => p.id === selectedPageId)
+                const href = page?.slug ? `${base}/${page.slug}` : (base || '/')
+                window.open(href, '_blank')
+              }}
               style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 height: 28, padding: '0 10px', borderRadius: 5,

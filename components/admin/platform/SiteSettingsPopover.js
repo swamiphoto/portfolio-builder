@@ -7,6 +7,7 @@ import { THEME_LIST } from '../../../common/themes'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { resolveFooterSocial } from '../../../common/siteDesign'
 import { EditableInput } from './EditableText'
+import ToggleSwitch from '../common/ToggleSwitch'
 
 export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
 
@@ -172,40 +173,6 @@ function DrillRow({ label, hint, onDrillIn }) {
 }
 
 
-function ToggleSwitch({ on, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative flex-shrink-0 transition-colors"
-      style={{
-        width: 32,
-        height: 18,
-        borderRadius: 999,
-        background: on ? '#8b6f47' : 'rgba(120,90,60,0.18)',
-        boxShadow: 'inset 0 1px 1.5px rgba(60,40,15,0.12)',
-        border: 'none',
-        cursor: 'pointer',
-        padding: 0,
-      }}
-    >
-      <span
-        className="absolute transition-transform"
-        style={{
-          top: 2,
-          left: 2,
-          width: 14,
-          height: 14,
-          borderRadius: 999,
-          background: '#f5ecd6',
-          boxShadow: '0 1px 2px rgba(60,40,15,0.22), 0 0 0 0.5px rgba(60,40,15,0.10)',
-          transform: on ? 'translateX(14px)' : 'translateX(0)',
-        }}
-      />
-    </button>
-  )
-}
-
 const BrushIcon = () => (
   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
@@ -274,7 +241,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         {/* Enable */}
         <div className="flex items-center justify-between">
           <span style={{ fontSize: 13, color: '#2c2416' }}>Enable print store</span>
-          <ToggleSwitch on={enabled} onClick={() => updatePrintStore({ enabled: !enabled })} />
+          <ToggleSwitch on={enabled} onChange={() => updatePrintStore({ enabled: !enabled })} />
         </div>
 
         {enabled && (
@@ -305,7 +272,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                 <div>
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
-                    <ToggleSwitch on={!!ps.showPriceOnImage} onClick={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+                    <ToggleSwitch on={!!ps.showPriceOnImage} onChange={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
                   </div>
                   <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
                     Displays “From $X” on photos that are for sale.
@@ -700,7 +667,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       <div className="flex items-center" style={{ padding: '11px 14px', borderBottom: DIVIDER_SOFT }}>
         <ToggleSwitch
           on={config.hasCoverPage !== false}
-          onClick={() => {
+          onChange={() => {
             const enabling = config.hasCoverPage === false
             update({ hasCoverPage: enabling })
             if (!enabling) onDisableCover?.()
@@ -733,7 +700,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       <div className="flex items-center" style={{ padding: '11px 14px', borderBottom: DIVIDER_SOFT }}>
         <ToggleSwitch
           on={!!config.printStore?.enabled}
-          onClick={() => update({ printStore: { ...(config.printStore || {}), enabled: !config.printStore?.enabled } })}
+          onChange={() => update({ printStore: { ...(config.printStore || {}), enabled: !config.printStore?.enabled } })}
         />
         <span style={{ marginLeft: 10, fontSize: 13, color: '#2c2416', flex: 1 }} className="select-none">Enable print store</span>
         {config.printStore?.enabled && (
@@ -789,6 +756,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
                   { value: 'theme',     label: <span style={{ fontFamily: 'Muse', fontSize: 15, lineHeight: 1 }}>Signature</span> },
                   { value: 'modern',    label: <span style={{ fontFamily: 'Inter, -apple-system, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, fontSize: 11 }}>Modern</span> },
                   { value: 'editorial', label: <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 13 }}>Editorial</span> },
+                  { value: 'cormorant', label: <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 12 }}>Classic</span> },
                 ]}
               />
             </DesignSection>

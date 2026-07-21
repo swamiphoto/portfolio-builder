@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useSession } from "next-auth/react";
 import { getSizedUrl } from "../../../common/imageUtils";
+import { EditorPhotoBadge } from './EditorFeedbackContext';
 import { normalizeImageRefs, buildMultiImageFields, getNestedGalleries, pageDisplayThumbnail, pageThumbGradient, applyFocalPointToPage } from "../../../common/assetRefs";
 import { resolveCaption, isCaptionOverridden } from '../../../common/captionResolver';
 import { useDrag } from '../../../common/dragContext';
@@ -214,6 +215,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onPrevi
           items={menuItems}
         />
       </div>
+      <EditorPhotoBadge url={imageRef.url} />
     </div>
   )
 }
@@ -791,6 +793,7 @@ function BlockCard({
                         items={[{ label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onUpdate({ ...block, imageUrl: "", image: null }) }]}
                       />
                     </div>
+                    <EditorPhotoBadge url={block.imageUrl} />
                   </div>
                 ) : (
                   <div
@@ -1375,5 +1378,11 @@ export default memo(BlockCard, (prev, next) =>
   prev.glowing === next.glowing &&
   prev.expandedOverride?.ts === next.expandedOverride?.ts &&
   prev.blockIndex === next.blockIndex &&
-  prev.assetsByUrl === next.assetsByUrl
+  prev.assetsByUrl === next.assetsByUrl &&
+  // Sets data loads async (library fetch resolves after first paint). Without
+  // these, the card never re-renders when allSets/setsByUrl arrive, so the
+  // lightbox's set picker stays empty. Both are useMemo'd on libraryData, so
+  // this only re-renders when sets actually change.
+  prev.allSets === next.allSets &&
+  prev.setsByUrl === next.setsByUrl
 );

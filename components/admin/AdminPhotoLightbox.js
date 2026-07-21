@@ -8,6 +8,14 @@ const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 const SERIF = '"Cormorant Garamond", "Muse", Georgia, serif';
 const BORDER = 'rgba(160,140,110,0.18)';
 
+// Inline underlined link inside a note — matches the "profile" link in the site
+// settings descriptions (inherits the note's font + muted color, underlined).
+const noteLinkStyle = {
+  background: 'none', border: 'none', padding: 0, font: 'inherit',
+  color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2,
+  cursor: 'pointer', transition: 'color 0.15s',
+};
+
 function formatBytes(bytes) {
   if (!bytes) return null;
   if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -49,97 +57,6 @@ function slugToPath(slug) {
   ).join(' / ');
 }
 
-function slugToChipLabel(slug) {
-  const parts = slug.split('/');
-  if (parts.length === 1) return parts[0].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  return parts.slice(-2).map(p => p.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(' / ');
-}
-
-function buildSetTree(sets) {
-  const bySlug = {};
-  sets.forEach(c => { bySlug[c.slug] = { ...c, children: [] }; });
-  const roots = [];
-  sets.forEach(({ slug }) => {
-    const parts = slug.split('/');
-    if (parts.length === 1) {
-      roots.push(bySlug[slug]);
-    } else {
-      const parentSlug = parts.slice(0, -1).join('/');
-      if (bySlug[parentSlug]) bySlug[parentSlug].children.push(bySlug[slug]);
-      else roots.push(bySlug[slug]);
-    }
-  });
-  return roots;
-}
-
-function subtreeMatches(node, q) {
-  const leafName = node.slug.split('/').pop().split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  if (leafName.toLowerCase().includes(q)) return true;
-  return node.children.some(child => subtreeMatches(child, q));
-}
-
-const LINE_COLOR = 'rgba(160,140,110,0.22)';
-
-function TreeNode({ node, depth, currentSlugs, onAdd, query }) {
-  const q = query?.toLowerCase() || '';
-  const leafName = node.slug.split('/').pop().split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  const selfMatches = !q || leafName.toLowerCase().includes(q);
-  const hasMatchingChild = q && node.children.some(child => subtreeMatches(child, q));
-  const [expanded, setExpanded] = useState(depth < 1);
-  const isExpanded = q ? (selfMatches || hasMatchingChild) : expanded;
-
-  if (q && !selfMatches && !hasMatchingChild) return null;
-
-  const isAdded = currentSlugs.has(node.slug);
-  const INDENT = 14;
-  const left = 8 + depth * INDENT;
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {depth > 0 && (
-        <div style={{ position: 'absolute', left: left - INDENT + 7, top: 0, bottom: 0, width: 1, background: LINE_COLOR, pointerEvents: 'none' }} />
-      )}
-      <div
-        className="flex items-center"
-        style={{ paddingLeft: left, paddingRight: 8, height: 26 }}
-        onMouseEnter={e => { if (!isAdded) e.currentTarget.style.background = 'rgba(44,36,22,0.04)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-      >
-        {node.children.length > 0 ? (
-          <button
-            onMouseDown={e => { e.preventDefault(); if (!q) setExpanded(v => !v); }}
-            style={{ color: '#b0a490', width: 14, flexShrink: 0, fontSize: 9, fontFamily: MONO, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            {isExpanded ? '▾' : '▸'}
-          </button>
-        ) : (
-          <span style={{ width: 14, flexShrink: 0 }}>
-            {depth > 0 && (
-              <span style={{ display: 'inline-block', width: 6, height: 1, background: LINE_COLOR, verticalAlign: 'middle', marginLeft: 0 }} />
-            )}
-          </span>
-        )}
-        <button
-          onMouseDown={e => { e.preventDefault(); if (!isAdded) onAdd(node.slug, node.type); }}
-          disabled={isAdded}
-          style={{
-            flex: 1, textAlign: 'left', background: 'none', border: 'none', padding: 0,
-            fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.01em',
-            color: isAdded ? '#b0a490' : (!selfMatches ? '#a8967a' : '#2c2416'),
-            cursor: isAdded ? 'default' : 'pointer',
-          }}
-        >
-          {leafName}
-          {isAdded && <span style={{ marginLeft: 5, fontSize: 9, color: '#a8967a' }}>✓</span>}
-        </button>
-      </div>
-      {isExpanded && node.children.map(child => (
-        <TreeNode key={child.slug} node={child} depth={depth + 1} currentSlugs={currentSlugs} onAdd={onAdd} query={query} />
-      ))}
-    </div>
-  );
-}
-
 function SetPicker({ current, all, onToggle }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -147,16 +64,25 @@ function SetPicker({ current, all, onToggle }) {
   const containerRef = useRef(null);
 
   const currentSlugs = new Set(current.map(c => c.slug));
-  const tree = buildSetTree(all || []);
-  const hasAnyMatch = q => tree.some(node => subtreeMatches(node, q.toLowerCase()));
+
+  // Flat, sorted, filtered list — no tree, no connector lines, no indentation,
+  // mirroring the library's clean set rows.
+  const q = query.trim().toLowerCase();
+  const items = (all || [])
+    .slice()
+    .sort((a, b) => a.slug.localeCompare(b.slug))
+    .filter(s => !q || s.slug.toLowerCase().includes(q));
 
   useEffect(() => {
     const handler = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target)) { setOpen(false); setQuery(''); }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Focus the search field when the popover opens.
+  useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
 
   const add = (slug, type) => {
     onToggle(slug, type, true);
@@ -165,103 +91,147 @@ function SetPicker({ current, all, onToggle }) {
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {current.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {current.map(({ slug, type }) => {
-            const parts = slug.split('/').map(p =>
-              p.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-            ).slice(-2);
-            return (
-              <span
-                key={slug}
-                title={slugToPath(slug)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 3,
-                  fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.03em',
-                  padding: '2px 6px 2px 8px', borderRadius: 3,
-                  background: 'rgba(139,111,71,0.1)',
-                  border: '1px solid rgba(139,111,71,0.22)',
-                }}
-              >
-                <span>
-                  {parts.map((part, i) => (
-                    <span key={i}>
-                      {i > 0 && <span style={{ color: '#b0a490', margin: '0 2px' }}>/</span>}
-                      <span style={{ color: i === parts.length - 1 ? '#2c2416' : '#a8967a' }}>{part}</span>
-                    </span>
-                  ))}
-                </span>
-                <button
-                  onClick={() => onToggle(slug, type, false)}
-                  style={{ color: '#a8967a', background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', lineHeight: 1, fontSize: 13 }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#5c4f3a'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#a8967a'}
-                >
-                  ×
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {all && all.length > 0 && (
-        <div style={{ position: 'relative' }}>
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            placeholder="Add to set…"
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.01em',
-              color: '#2c2416',
-              background: '#ede8df',
-              border: `1px solid ${BORDER}`,
-              borderRadius: 4,
-              padding: '5px 10px',
-              outline: 'none',
-            }}
-            onFocus={e => { e.target.style.borderColor = 'rgba(139,111,71,0.45)'; setOpen(true); }}
-            onBlur={e => { e.target.style.borderColor = BORDER; }}
-            onChange={e => { setQuery(e.target.value); setOpen(true); }}
-            onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setQuery(''); } }}
-          />
-          {open && (
-            <div
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      {/* Pills + inline add link share one wrapping row so "Add" sits beside the
+          last pill instead of dropping to its own line. */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
+        {current.map(({ slug, type }) => {
+          const parts = slug.split('/').map(p =>
+            p.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+          ).slice(-2);
+          return (
+            <span
+              key={slug}
+              title={slugToPath(slug)}
               style={{
-                position: 'absolute', zIndex: 30, top: '100%', marginTop: 4,
-                left: 0, right: 0,
-                background: '#f9f6f1',
-                border: `1px solid ${BORDER}`,
-                borderRadius: 6,
-                boxShadow: '0 4px 16px rgba(26,18,10,0.12)',
-                maxHeight: 200, overflowY: 'auto',
-                padding: '4px 0',
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.03em',
+                padding: '2px 6px 2px 8px', borderRadius: 3,
+                background: 'rgba(139,111,71,0.1)',
+                border: '1px solid rgba(139,111,71,0.22)',
               }}
             >
-              {query && !hasAnyMatch(query) ? (
-                <div style={{ padding: '8px 12px', fontFamily: MONO, fontSize: 10.5, color: '#a8967a' }}>No sets match</div>
-              ) : (
-                tree.map(node => (
-                  <TreeNode key={node.slug} node={node} depth={0} currentSlugs={currentSlugs} onAdd={add} query={query} />
-                ))
-              )}
-            </div>
-          )}
+              <span>
+                {parts.map((part, i) => (
+                  <span key={i}>
+                    {i > 0 && <span style={{ color: '#b0a490', margin: '0 2px' }}>/</span>}
+                    <span style={{ color: i === parts.length - 1 ? '#2c2416' : '#a8967a' }}>{part}</span>
+                  </span>
+                ))}
+              </span>
+              <button
+                onClick={() => onToggle(slug, type, false)}
+                style={{ color: '#a8967a', background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', lineHeight: 1, fontSize: 13 }}
+                onMouseEnter={e => e.currentTarget.style.color = '#5c4f3a'}
+                onMouseLeave={e => e.currentTarget.style.color = '#a8967a'}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
+
+        {all && all.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.03em',
+              color: '#8b6f47', background: 'none', border: 'none',
+              padding: '2px 2px', cursor: 'pointer', lineHeight: 1,
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = '#5c4f3a'}
+            onMouseLeave={e => e.currentTarget.style.color = '#8b6f47'}
+          >
+            <span style={{ fontSize: 12, lineHeight: 1 }}>+</span> {current.length > 0 ? 'Add' : 'Add to set'}
+          </button>
+        )}
+      </div>
+
+      {all && all.length > 0 && open && (
+        <div
+          style={{
+            position: 'absolute', zIndex: 30, top: '100%', marginTop: 6,
+            left: 0, right: 0,
+            background: '#f9f6f1',
+            border: `1px solid ${BORDER}`,
+            borderRadius: 6,
+            boxShadow: '0 4px 16px rgba(26,18,10,0.12)',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: 6, borderBottom: `1px solid ${BORDER}` }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              placeholder="Search sets…"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.01em',
+                color: '#2c2416', background: '#fdfbf7',
+                border: `1px solid ${BORDER}`, borderRadius: 4, padding: '5px 9px', outline: 'none',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(139,111,71,0.45)'; }}
+              onBlur={e => { e.target.style.borderColor = BORDER; }}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setQuery(''); } }}
+            />
+          </div>
+          <div style={{ maxHeight: 200, overflowY: 'auto', padding: '4px 0' }}>
+            {items.length === 0 ? (
+              <div style={{ padding: '8px 12px', fontFamily: MONO, fontSize: 10.5, color: '#a8967a' }}>No sets match</div>
+            ) : (
+              items.map(({ slug, type }) => {
+                const parts = slug.split('/').map(p =>
+                  p.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                ).slice(-2);
+                const isAdded = currentSlugs.has(slug);
+                return (
+                  <button
+                    key={slug}
+                    type="button"
+                    disabled={isAdded}
+                    onMouseDown={e => { e.preventDefault(); if (!isAdded) add(slug, type); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', width: '100%',
+                      textAlign: 'left', background: 'transparent', border: 'none',
+                      padding: '5px 12px', cursor: isAdded ? 'default' : 'pointer',
+                      fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.01em',
+                      color: isAdded ? '#b0a490' : '#2c2416',
+                    }}
+                    onMouseEnter={e => { if (!isAdded) e.currentTarget.style.background = 'rgba(44,36,22,0.05)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      {parts.map((part, i) => (
+                        <span key={i}>
+                          {i > 0 && <span style={{ color: '#b0a490', margin: '0 2px' }}>/</span>}
+                          <span style={{ color: i === parts.length - 1 ? 'inherit' : '#a8967a' }}>{part}</span>
+                        </span>
+                      ))}
+                    </span>
+                    {isAdded && <span style={{ marginLeft: 5, fontSize: 9, color: '#a8967a' }}>✓</span>}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function Section({ title, children }) {
+// Stacked settings section — hairline between each, full-width padding, mono
+// uppercase title. Matches PageSettingsPopover / AlbumSidebar across the admin.
+function Section({ title, children, first }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ fontFamily: MONO, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#a8967a', margin: 0 }}>
+    <div style={{ padding: first ? '0 16px 15px' : '15px 16px', borderTop: first ? 'none' : `1px solid ${BORDER}` }}>
+      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#a8967a', marginBottom: 9 }}>
         {title}
-      </p>
+      </div>
       {children}
     </div>
   );
@@ -299,6 +269,7 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
 
   const [caption, setCaption] = useState(image?.caption || '');
   const [saved, setSaved] = useState(true);
+  const fileRef = useRef(null);
 
   // Print/sell state. When a parent wires onSellChange (the library grid), we
   // defer to it. When it doesn't (opened from a page/gallery block), the
@@ -489,10 +460,10 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
           </svg>
         </button>
 
-        <div style={{ padding: '48px 16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ padding: '44px 0 12px', display: 'flex', flexDirection: 'column' }}>
 
           {/* Caption */}
-          <Section title="Caption">
+          <Section title="Caption" first>
             <textarea
               value={caption}
               rows={3}
@@ -519,35 +490,69 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             )}
           </Section>
 
-          {/* Sell as print */}
-          <Section title="Sell as print">
+          {/* File — metadata + the high-res version that powers downloads & larger prints */}
+          <Section title="File">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <Row label="Filename"><FilenameValue filename={filename} /></Row>
+              <Row label="Dimensions" value={dimensions} />
+              <Row label="Size" value={sizeLabel} />
+              <Row label="Captured" value={capturedAt} />
+              <Row label="Uploaded" value={uploadedAt} />
+            </div>
+            <p style={{ margin: '9px 0 0', fontSize: 11.5, color: '#a8967a', lineHeight: 1.45 }}>
+              {effectivePrint?.masterStorageKey ? (
+                <>A larger version is uploaded (enables larger prints and high-res downloads).{' '}
+                  <button type="button" onClick={() => fileRef.current?.click()} style={noteLinkStyle}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}>
+                    Replace it
+                  </button>.
+                </>
+              ) : (
+                <>You can{' '}
+                  <button type="button" onClick={() => fileRef.current?.click()} style={noteLinkStyle}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}>
+                    upload a larger version
+                  </button>{' '}
+                  to unlock larger prints and high-res downloads.
+                </>
+              )}
+            </p>
+          </Section>
+
+          {/* Prints — sell toggle + quality; the file that powers it lives above */}
+          <Section title="Prints">
             <SellAsPrintPanel
               asset={image ? { ...image, print: effectivePrint } : image}
               onSellChange={handleSell}
-              onUploadMaster={handleUploadMaster}
             />
           </Section>
 
-          {/* File */}
-          <Section title="File">
-            <Row label="Filename"><FilenameValue filename={filename} /></Row>
-            <Row label="Dimensions" value={dimensions} />
-            <Row label="Size" value={sizeLabel} />
-            <Row label="Captured" value={capturedAt} />
-            <Row label="Uploaded" value={uploadedAt} />
+          {/* Camera / EXIF — always present for a stable panel; empty state when
+              the file carries no camera metadata (screenshots, stripped exports). */}
+          <Section title="Camera">
+            {(camera || lens || focal || aperture || shutter || iso || flash || gps) ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Row label="Camera" value={camera} />
+                <Row label="Lens" value={lens} />
+                <Row label="Focal" value={focal} />
+                <Row label="Aperture" value={aperture} />
+                <Row label="Shutter" value={shutter} />
+                <Row label="ISO" value={iso} />
+                <Row label="Flash" value={flash} />
+                <Row label="GPS" value={gps} />
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: 11.5, color: '#c4b49a', fontStyle: 'italic', lineHeight: 1.45 }}>
+                No camera details in this file.
+              </p>
+            )}
           </Section>
 
-          {/* Camera / EXIF */}
-          {(camera || lens || focal || aperture || shutter || iso || flash || gps) && (
-            <Section title="Camera">
-              <Row label="Camera" value={camera} />
-              <Row label="Lens" value={lens} />
-              <Row label="Focal" value={focal} />
-              <Row label="Aperture" value={aperture} />
-              <Row label="Shutter" value={shutter} />
-              <Row label="ISO" value={iso} />
-              <Row label="Flash" value={flash} />
-              <Row label="GPS" value={gps} />
+          {blockIds.length > 0 && (
+            <Section title="Used in pages">
+              <span style={{ fontFamily: MONO, fontSize: 10.5, color: '#2c2416' }}>
+                {blockIds.length} block{blockIds.length !== 1 ? 's' : ''}
+              </span>
             </Section>
           )}
 
@@ -560,15 +565,16 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             />
           </Section>
 
-          {blockIds.length > 0 && (
-            <Section title="Used in pages">
-              <span style={{ fontFamily: MONO, fontSize: 10.5, color: '#2c2416' }}>
-                {blockIds.length} block{blockIds.length !== 1 ? 's' : ''}
-              </span>
-            </Section>
-          )}
-
         </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          aria-label="Upload a higher-resolution version"
+          onChange={(e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) handleUploadMaster(f); }}
+          style={{ display: 'none' }}
+        />
       </div>
     </div>
   );

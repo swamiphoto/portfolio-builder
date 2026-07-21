@@ -35,8 +35,8 @@ describe('resolveFooter', () => {
 })
 
 describe('logoFontStyle', () => {
-  it('returns null for theme/default', () => {
-    expect(logoFontStyle('theme')).toBeNull()
+  it('returns Muse serif for theme, null for undefined', () => {
+    expect(logoFontStyle('theme')).toEqual({ fontFamily: '"Muse", Georgia, serif', textTransform: 'none', letterSpacing: '0.05em' })
     expect(logoFontStyle(undefined)).toBeNull()
   })
   it('returns Inter uppercase for modern', () => {

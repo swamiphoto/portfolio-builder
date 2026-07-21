@@ -16,9 +16,9 @@ describe('SiteNav logo font', () => {
     expect(brand.style.fontFamily).toMatch(/Inter/)
     expect(brand.style.textTransform).toBe('uppercase')
   })
-  it('leaves the wordmark unstyled for logoFont=theme', () => {
+  it('applies Muse serif for logoFont=theme', () => {
     render(<SiteNav siteConfig={cfg({ logoFont: 'theme' })} username="me" variant="left-rail" basePath="/sites/me" />)
     const brand = screen.getByText('Ansel A')
-    expect(brand.style.fontFamily).toBe('')
+    expect(brand.style.fontFamily).toContain('Muse')
   })
 })

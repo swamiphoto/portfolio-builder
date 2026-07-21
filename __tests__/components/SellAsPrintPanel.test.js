@@ -28,13 +28,11 @@ describe('SellAsPrintPanel', () => {
     expect(screen.getByText(/16 × 24/)).toBeInTheDocument()
   })
 
-  it('prompts for a higher-res upload and forwards the chosen file', () => {
-    const onUploadMaster = jest.fn()
-    const asset = makeAsset({ sellable: true, availableSizes: ['8x10'], maxSharpSize: '8x10' })
-    render(<SellAsPrintPanel asset={asset} printStore={printStore} onSellChange={() => {}} onUploadMaster={onUploadMaster} />)
-    expect(screen.getByText(/higher-resolution/i)).toBeInTheDocument()
-    const file = new File(['x'], 'master.jpg', { type: 'image/jpeg' })
-    fireEvent.change(screen.getByLabelText(/upload a higher-resolution file/i), { target: { files: [file] } })
-    expect(onUploadMaster).toHaveBeenCalledWith(file)
+  it('warns when the photo is too small to print sharply', () => {
+    // The full-res upload moved to the lightbox File panel; this panel now only
+    // reflects print quality. With no sharp size, it warns and points there.
+    const asset = makeAsset({ sellable: true, availableSizes: [], maxSharpSize: null })
+    render(<SellAsPrintPanel asset={asset} onSellChange={() => {}} />)
+    expect(screen.getByText(/too small to print sharply/i)).toBeInTheDocument()
   })
 })

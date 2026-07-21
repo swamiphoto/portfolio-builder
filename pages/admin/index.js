@@ -10,6 +10,9 @@ import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPicker
 import AdminLibrary from '../../components/admin/AdminLibrary'
 import PagePreview from '../../components/admin/platform/PagePreview'
 import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState'
+import ClientFeedbackBanner from '../../components/admin/platform/ClientFeedbackBanner'
+import { EditorFeedbackProvider } from '../../components/admin/gallery-builder/EditorFeedbackContext'
+import { useClientFeedback } from '../../components/admin/platform/useClientFeedback'
 import { defaultPage } from '../../common/siteConfig'
 import { useRouter } from 'next/router'
 import GuidedTour from '../../components/admin/onboarding/GuidedTour'
@@ -17,6 +20,26 @@ import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
 import { buildTourSteps, WELCOME, BLOCKS_TIP_STEP } from '../../components/admin/onboarding/tourSteps'
 
 const AUTOSAVE_DELAY = 1500
+
+// Which page is being edited/previewed right now: the explicitly selected page,
+// else the homepage default (mirrors the `selectedPage` derivation below). Pulled
+// out as a pure helper so the client-feedback hook can key off it above the early
+// returns without duplicating the resolution.
+function resolveEditingPage(siteConfig, selectedPageId, showLibrary) {
+  const pages = siteConfig?.pages || []
+  if (!pages.length) return null
+  if (selectedPageId) {
+    const explicit = pages.find(p => p.id === selectedPageId)
+    if (explicit) return explicit
+  }
+  if (showLibrary) return null
+  return pages.find(p => p.id === siteConfig.homePageId)
+    || pages.find(p => p.id === 'home')
+    || pages.find(p => p.showInNav && p.type !== 'link')
+    || pages.find(p => p.type !== 'link')
+    || pages[0]
+    || null
+}
 
 export default function AdminIndex() {
   const { data: session, status } = useSession()
@@ -286,6 +309,14 @@ export default function AdminIndex() {
     setShowLibrary(false)
   }, [siteConfig, updateConfig])
 
+  // Client-feedback for the page being edited. Must run before the early returns
+  // (rules of hooks); it no-ops until siteConfig loads and the page has features.
+  const editingPage = useMemo(
+    () => resolveEditingPage(siteConfig, selectedPageId, showLibrary),
+    [siteConfig, selectedPageId, showLibrary]
+  )
+  const clientFeedback = useClientFeedback(editingPage?.id, !!editingPage?.clientFeatures?.enabled)
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center h-screen text-sm text-gray-400">
@@ -296,23 +327,8 @@ export default function AdminIndex() {
 
   if (!session || !siteConfig) return null
 
-  // The page set as the homepage, used as the default view when nothing is
-  // explicitly selected (so the empty state only shows when there are no pages).
-  const resolveHomePage = () => {
-    const pages = siteConfig.pages || []
-    if (!pages.length) return null
-    return pages.find(p => p.id === siteConfig.homePageId)
-      || pages.find(p => p.id === 'home')
-      || pages.find(p => p.showInNav && p.type !== 'link')
-      || pages.find(p => p.type !== 'link')
-      || pages[0]
-      || null
-  }
-
-  const selectedPage = (selectedPageId
-    ? siteConfig.pages.find(p => p.id === selectedPageId) || null
-    : null)
-    || (showLibrary ? null : resolveHomePage())
+  // Resolved above the early returns (so the client-feedback hook can key off it).
+  const selectedPage = editingPage
 
   const sidebar = (
     <PlatformSidebar
@@ -417,6 +433,7 @@ export default function AdminIndex() {
       } else {
         content = (
           <div className="h-full flex flex-col">
+            <ClientFeedbackBanner />
             {/* Preview frame — driven by the deferred config so it never blocks input */}
             <div className="flex-1 min-h-0 flex justify-center">
               <div
@@ -457,6 +474,12 @@ export default function AdminIndex() {
 
   return (
     <DragProvider>
+      <EditorFeedbackProvider
+        pageId={selectedPage?.id}
+        feedbackByPhoto={clientFeedback.byPhoto}
+        hasFeedback={clientFeedback.hasFeedback}
+        lastActivityTs={clientFeedback.lastActivityTs}
+      >
       <AdminLayout
         sidebar={sidebar} panel={panel}
         panelCollapsed={blockSidebarCollapsed} onTogglePanel={() => setBlockSidebarCollapsed(v => !v)}
@@ -467,6 +490,7 @@ export default function AdminIndex() {
       >
         {content}
       </AdminLayout>
+      </EditorFeedbackProvider>
 
       {showLibrary && (
         <div

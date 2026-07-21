@@ -31,11 +31,15 @@ export function resolveFooterSocial(siteConfig) {
 
 const INTER = '"Inter", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif'
 const FRAUNCES = '"Fraunces", Georgia, serif'
+const CORMORANT = '"Cormorant Garamond", Georgia, serif'
+const MUSE = '"Muse", Georgia, serif'
 
 // Wordmark styling for the site-name logo. `null` = keep the theme's default.
 export function logoFontStyle(logoFont) {
-  if (logoFont === 'modern') return { fontFamily: INTER, textTransform: 'uppercase', letterSpacing: '0.16em' }
-  if (logoFont === 'editorial') return { fontFamily: FRAUNCES, textTransform: 'none', letterSpacing: '0.01em' }
+  if (logoFont === 'modern')    return { fontFamily: INTER,      textTransform: 'uppercase', letterSpacing: '0.16em' }
+  if (logoFont === 'editorial') return { fontFamily: FRAUNCES,   textTransform: 'none',      letterSpacing: '0.01em' }
+  if (logoFont === 'cormorant') return { fontFamily: CORMORANT,  textTransform: 'uppercase', letterSpacing: '0.20em' }
+  if (logoFont === 'theme')     return { fontFamily: MUSE,       textTransform: 'none',      letterSpacing: '0.05em' }
   return null
 }
 

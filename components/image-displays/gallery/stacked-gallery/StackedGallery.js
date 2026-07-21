@@ -3,6 +3,8 @@ import { getSizedUrl } from "../../../../common/imageUtils";
 import { captionStyleCss } from "../../../../common/captionStyles";
 import styles from "./StackedGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
+import EngagementActions from "../../engagement/EngagementActions";
+import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 
 const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72 }) => {
   const capCss = captionStyleCss(captionStyle);
@@ -95,8 +97,12 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                               e.target.style.display = 'none';
                             }}
                           />
+                          <WatermarkOverlay />
                           <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <BuyPrintButton print={getPrintForUrl(image.src)} imageUrl={image.src} />
+                          </div>
+                          <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                            <EngagementActions imageUrl={image.src} />
                           </div>
                         </div>
                         {getCaptionForUrl(image.src) && (
@@ -120,8 +126,12 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                       e.target.style.display = 'none';
                     }}
                   />
+                  <WatermarkOverlay />
                   <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <BuyPrintButton print={getPrintForUrl(entry.src)} imageUrl={entry.src} />
+                  </div>
+                  <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                    <EngagementActions imageUrl={entry.src} />
                   </div>
                 </div>
                 {getCaptionForUrl(entry.src) && (
