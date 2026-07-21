@@ -34,7 +34,6 @@ export function normalizePurchaseConfig(purchase) {
   return {
     enabled: p.enabled ?? false,
     freeAllowance: toInt(p.freeAllowance, 0),
-    currency: p.currency || 'USD',
     packages,
   }
 }

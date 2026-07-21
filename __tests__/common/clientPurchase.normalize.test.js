@@ -4,7 +4,7 @@ import { normalizePurchaseConfig } from '@/common/clientPurchase'
 describe('normalizePurchaseConfig', () => {
   it('fills defaults from empty/undefined', () => {
     expect(normalizePurchaseConfig(undefined)).toEqual({
-      enabled: false, freeAllowance: 0, currency: 'USD', packages: [],
+      enabled: false, freeAllowance: 0, packages: [],
     })
   })
 
@@ -16,14 +16,13 @@ describe('normalizePurchaseConfig', () => {
 
   it('keeps well-formed packages and preserves ids', () => {
     const p = normalizePurchaseConfig({
-      enabled: true, currency: 'EUR',
+      enabled: true,
       packages: [
         { id: 'pkg_a', label: '10 more', credits: 10, price: 4000 },
         { id: 'pkg_b', label: 'Everything', credits: 'all', price: 15000 },
       ],
     })
     expect(p.enabled).toBe(true)
-    expect(p.currency).toBe('EUR')
     expect(p.packages).toEqual([
       { id: 'pkg_a', label: '10 more', credits: 10, price: 4000 },
       { id: 'pkg_b', label: 'Everything', credits: 'all', price: 15000 },

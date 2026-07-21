@@ -162,7 +162,7 @@ export function defaultPage(overrides = {}) {
       favorites: { enabled: false, requireEmail: false, submitWorkflow: false },
       comments: { enabled: false, requireEmail: false },
       watermark: { enabled: false },
-      purchase: { enabled: false, freeAllowance: 0, currency: 'USD', packages: [] },
+      purchase: { enabled: false, freeAllowance: 0, packages: [] },
     },
     passwordGateMessage: '',
     blocks,
