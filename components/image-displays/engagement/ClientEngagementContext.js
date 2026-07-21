@@ -9,6 +9,7 @@ import CommentsPanel from './CommentsPanel'
 import SubmitPill from './SubmitPill'
 import DownloadSheet from './DownloadSheet'
 import PurchaseSheet from './PurchaseSheet'
+import PurchasePrompt from './PurchasePrompt'
 
 const Ctx = createContext(null)
 export function useClientEngagement() { return useContext(Ctx) }
@@ -211,6 +212,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
       {downloadUrl && <DownloadSheet photoUrl={downloadUrl} onClose={() => setDownloadUrl(null)} />}
       {purchaseOpen && <PurchaseSheet onClose={() => setPurchaseOpen(false)} />}
       {features.submitWorkflow && <SubmitPill />}
+      {features.purchase && <PurchasePrompt />}
       {error && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-stone-900 text-white text-sm px-4 py-2 rounded-full shadow-lg">
           {error}
