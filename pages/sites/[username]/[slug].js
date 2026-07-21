@@ -122,22 +122,24 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
       </Head>
       <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />
       <main className="theme-content">
-        <PageCover
-          cover={page.cover}
-          title={page.title}
-          description={page.description}
-          slideshowHref={slideshowHref}
-          clientFeaturesEnabled={!!page.clientFeatures?.enabled}
-          navLinks={coverNavLinks}
-        />
         <ClientEngagementProvider
           username={username}
           pageId={page.id}
           pageSlug={page.slug || page.id}
           clientFeatures={page.clientFeatures}
           paymentsReady={printStore.paymentsReady}
+          currency={printStore.currency}
+          heroPresent={hasCover}
           branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
         >
+          <PageCover
+            cover={page.cover}
+            title={page.title}
+            description={page.description}
+            slideshowHref={slideshowHref}
+            clientFeaturesEnabled={!!page.clientFeatures?.enabled}
+            navLinks={coverNavLinks}
+          />
           <Gallery
             name={page.title}
             description={page.description}
