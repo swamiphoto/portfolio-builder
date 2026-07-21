@@ -7,6 +7,7 @@ import { resolveCaption } from '../../../common/captionResolver'
 import PopoverShell from './PopoverShell'
 import Tip from '../Tip'
 import ToggleSwitch from '../common/ToggleSwitch'
+import { addPackage, updatePackage, removePackage, dollarsToCents, centsToDollars } from './purchasePackages'
 
 const BORDER = 'rgba(160,140,110,0.18)'
 const INPUT = 'w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug'
@@ -32,12 +33,12 @@ function AutoGrowTextarea({ value, onChange, placeholder, maxLength }) {
   )
 }
 
-function FeatureBlock({ label, description, checked, onToggle, children }) {
+function FeatureBlock({ label, description, checked, onToggle, disabled, children }) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
-        <ToggleSwitch on={checked} onChange={onToggle} ariaLabel={label} />
+        <span className="text-xs font-medium" style={{ color: disabled ? 'var(--text-muted)' : 'var(--text-secondary)' }}>{label}</span>
+        <ToggleSwitch on={checked} onChange={disabled ? undefined : onToggle} disabled={disabled} ariaLabel={label} />
       </div>
       {/* Description sits tight under the title (like the site's other settings),
           full-width below the toggle row. Controls appear when on. */}
@@ -127,6 +128,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const currentThumbUrl = page.thumbnail?.imageUrl || pagePhotos[0] || null
   const cf = page.clientFeatures || {}
   const canSlideshow = pagePhotos.length >= 6
+  const paymentsReady = !!(siteConfig?.printStore?.chargesEnabled && siteConfig?.printStore?.stripeConnectAccountId)
 
   const rawSequence = buildPreviewSequence(page.blocks || [], excluded)
   const sequence = rawSequence.map(item =>
@@ -378,22 +380,75 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
           <FeatureBlock
             label="Purchase"
-            description="Let clients buy prints of your photos, with checkout handled for you."
+            description="Let clients pay to download more photos. The first few are free; the rest are sold in packages. Checkout is handled for you."
             checked={cf.purchase?.enabled || false}
+            disabled={!cf.downloads?.enabled}
             onToggle={(v) => updateCf('purchase', { enabled: v })}
           >
+            {!cf.downloads?.enabled && (
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Turn on Downloads first — purchases gate how many downloads are free.</p>
+            )}
+            {cf.downloads?.enabled && !paymentsReady && (
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
+            )}
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Default price per photo</div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{cf.purchase?.currency || 'USD'}</span>
-                <input
-                  type="number" min="0" step="0.01"
-                  className="flex-1 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
-                  placeholder="0.00"
-                  value={cf.purchase?.defaultPrice ?? ''}
-                  onChange={(e) => updateCf('purchase', { defaultPrice: e.target.value === '' ? null : parseFloat(e.target.value) })}
-                />
-              </div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Free downloads</div>
+              <input
+                type="number" min="0" step="1"
+                className="w-20 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                value={cf.purchase?.freeAllowance ?? 0}
+                onChange={(e) => updateCf('purchase', { freeAllowance: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Packages</div>
+              {(cf.purchase?.packages || []).map((pkg) => (
+                <div key={pkg.id} className="flex items-center gap-1.5">
+                  <input
+                    type="text" placeholder="Label"
+                    className="flex-1 min-w-0 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                    value={pkg.label}
+                    onChange={(e) => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { label: e.target.value }) })}
+                  />
+                  {pkg.credits === 'all' ? (
+                    <span className="text-[10px] w-14 text-center" style={{ color: 'var(--text-muted)' }}>All</span>
+                  ) : (
+                    <input
+                      type="number" min="1" step="1" title="Photos" placeholder="#"
+                      className="w-12 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent text-center"
+                      value={pkg.credits}
+                      onChange={(e) => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { credits: Math.max(1, parseInt(e.target.value, 10) || 1) }) })}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    title="Toggle whole-gallery"
+                    className="text-[10px] px-1"
+                    style={{ color: pkg.credits === 'all' ? '#8b6f47' : 'var(--text-muted)' }}
+                    onClick={() => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { credits: pkg.credits === 'all' ? 10 : 'all' }) })}
+                  >∞</button>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{cf.purchase?.currency || 'USD'}</span>
+                    <input
+                      type="number" min="0" step="0.01" placeholder="0.00"
+                      className="w-16 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                      value={centsToDollars(pkg.price)}
+                      onChange={(e) => updateCf('purchase', { packages: updatePackage(cf.purchase.packages, pkg.id, { price: dollarsToCents(e.target.value) }) })}
+                    />
+                  </div>
+                  <button
+                    type="button" aria-label="Remove package" className="px-1"
+                    style={{ color: 'var(--text-muted)' }}
+                    onClick={() => updateCf('purchase', { packages: removePackage(cf.purchase.packages, pkg.id) })}
+                  >×</button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="text-[11px] font-mono uppercase tracking-[0.07em]"
+                style={{ color: '#8b6f47' }}
+                onClick={() => updateCf('purchase', { packages: addPackage(cf.purchase?.packages) })}
+              >+ Add package</button>
             </div>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Currency</div>
@@ -405,7 +460,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Override pricing per photo in the photo block inspector.</p>
           </FeatureBlock>
         </div>
       </PopoverShell>
