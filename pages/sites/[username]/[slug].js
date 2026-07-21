@@ -15,6 +15,7 @@ import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import { getTheme } from '../../../common/themes'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
+import { pageDisplayThumbnail } from '../../../common/assetRefs'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -129,6 +130,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           clientFeatures={page.clientFeatures}
           paymentsReady={printStore.paymentsReady}
           currency={printStore.currency}
+          heroPhoto={pageDisplayThumbnail(page)}
           heroPresent={hasCover}
           branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
         >

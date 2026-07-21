@@ -14,7 +14,7 @@ import PurchasePrompt from './PurchasePrompt'
 const Ctx = createContext(null)
 export function useClientEngagement() { return useContext(Ctx) }
 
-export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, paymentsReady, currency, heroPresent, branding, children }) {
+export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, paymentsReady, currency, heroPhoto, heroPresent, branding, children }) {
   const enabled = !!clientFeatures?.enabled
   const features = useMemo(() => ({
     favorites: !!(enabled && clientFeatures?.favorites?.enabled),
@@ -164,6 +164,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     paymentsReady: !!paymentsReady,
     packages: purchaseCfg.packages || [],
     purchaseCurrency: currency || 'USD',
+    packageThumb: heroPhoto || '',
     purchaseState,
     isUnlocked: (url) => !!purchaseState && (purchaseState.all || purchaseState.unlockedUrls?.includes(url)),
     canUnlockMore: () => !!purchaseState && (purchaseState.all || purchaseState.remaining > 0),
@@ -193,7 +194,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     }),
     submitted,
     switchIdentity: () => setPendingAction({ kind: 'favorite', run: () => {} }),
-  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug, purchaseState, purchaseOpen, paymentsReady, purchaseCfg, currency, heroPresent, performCheckout])
+  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug, purchaseState, purchaseOpen, paymentsReady, purchaseCfg, currency, heroPhoto, heroPresent, performCheckout])
 
   if (!enabled) return children
 

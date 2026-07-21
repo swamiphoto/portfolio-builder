@@ -31,6 +31,19 @@ it('shows "Packages", lists grants + prices, and buys via buyPackage — with no
   expect(buyPackage).toHaveBeenCalledWith('pkg_all')
 })
 
+it('renders a stacked-photo thumbnail per package when a photo is available', () => {
+  useClientEngagement.mockReturnValue({
+    identity: { email: 'mia@x.com' },
+    purchaseCurrency: 'USD',
+    packageThumb: 'https://cdn.example.com/photos/x.jpg',
+    packages: [{ id: 'pkg_a', label: 'Add-on pack', credits: 10, price: 4000 }],
+    buyPackage: jest.fn(),
+  })
+  render(<PackagesDrawer open onClose={() => {}} />)
+  const imgs = document.querySelectorAll('[data-pkg-thumb]')
+  expect(imgs.length).toBeGreaterThanOrEqual(1)
+})
+
 it('closes the drawer before calling buyPackage when the buyer has no email', () => {
   const buyPackage = jest.fn()
   const onClose = jest.fn()

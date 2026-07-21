@@ -4,6 +4,7 @@
 // state is shown; it simply lists what's for sale.
 import { useEffect, useState } from 'react'
 import { useClientEngagement } from './ClientEngagementContext'
+import { getSizedUrl } from '../../../common/imageUtils'
 
 const PANEL_WIDTH = 460
 
@@ -13,6 +14,18 @@ function formatPrice(cents, currency) {
   } catch {
     return `${((cents || 0) / 100).toFixed(2)} ${currency || 'USD'}`
   }
+}
+
+function StackThumb({ src }) {
+  if (!src) return null
+  const bg = { backgroundImage: `url('${src}')`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  return (
+    <div data-pkg-thumb style={{ position: 'relative', width: 48, height: 48, flexShrink: 0 }}>
+      <i style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', transform: 'rotate(-7deg) translate(-3px,2px)', filter: 'brightness(.9)', ...bg }} />
+      <i style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', transform: 'rotate(4deg) translate(3px,1px)', filter: 'brightness(.95)', ...bg }} />
+      <i style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', border: '2px solid #fdf9f4', ...bg }} />
+    </div>
+  )
 }
 
 export default function PackagesDrawer({ open, onClose }) {
@@ -27,7 +40,7 @@ export default function PackagesDrawer({ open, onClose }) {
   }, [open, onClose])
 
   if (!ctx) return null
-  const { packages, purchaseCurrency } = ctx
+  const { packages, purchaseCurrency, packageThumb } = ctx
 
   function buy(id) {
     if (ctx.identity?.email) {
@@ -65,10 +78,11 @@ export default function PackagesDrawer({ open, onClose }) {
               type="button"
               disabled={loading === pkg.id}
               onClick={() => buy(pkg.id)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#fdf9f4', border: '1px solid rgba(160,140,110,0.22)', borderRadius: 10, cursor: 'pointer', width: '100%' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '14px 16px', background: '#fdf9f4', border: '1px solid rgba(160,140,110,0.22)', borderRadius: 10, cursor: 'pointer', width: '100%' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#fbf4ea' }}
               onMouseLeave={(e) => { e.currentTarget.style.background = '#fdf9f4' }}
             >
+              <StackThumb src={packageThumb ? (getSizedUrl(packageThumb, 'thumbnail') || packageThumb) : ''} />
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{pkg.label}</div>
                 <div style={{ fontSize: 12, color: '#a8967a', marginTop: 2 }}>
