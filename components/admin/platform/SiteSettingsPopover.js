@@ -269,13 +269,27 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                   </p>
                 </Field>
 
+                <Field label="Currency">
+                  <select
+                    className={inputCls}
+                    style={inputStyle}
+                    value={ps.currency || 'USD'}
+                    onChange={(e) => updatePrintStore({ currency: e.target.value })}
+                  >
+                    {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
+                    Used for prints and package sales.
+                  </p>
+                </Field>
+
                 <div>
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
                     <ToggleSwitch on={!!ps.showPriceOnImage} onChange={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
                   </div>
                   <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-                    Displays “From $X” on photos that are for sale.
+                    Displays “From $X" on photos that are for sale.
                   </p>
                 </div>
               </div>
