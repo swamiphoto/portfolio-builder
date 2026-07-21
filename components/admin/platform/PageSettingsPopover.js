@@ -445,12 +445,25 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           />
 
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Packages</span>
+            <div className="flex items-center">
+              <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-secondary)' }}>Packages</span>
+              {cf.purchase?.enabled && (
+                <button
+                  type="button"
+                  onClick={() => setView('packages')}
+                  className="flex items-center gap-0.5 text-xs mr-2"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
+                >
+                  Configure
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
+              )}
               <ToggleSwitch
                 on={cf.purchase?.enabled || false}
                 onChange={(v) => {
-                  // Delivery depends on downloads; enabling Packages enables Downloads too.
+                  // Delivery depends on downloads; enabling Packages enables Downloads too (one atomic write).
                   const patch = { clientFeatures: { ...cf, purchase: { ...(cf.purchase || {}), enabled: v } } }
                   if (v) patch.clientFeatures.downloads = { ...(cf.downloads || {}), enabled: true }
                   update(patch)
@@ -461,19 +474,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.4, marginTop: 3 }}>
               Sell downloads in packages. Clients buy from your gallery; checkout is handled for you.
             </div>
-            {cf.purchase?.enabled && (
-              <button
-                type="button"
-                onClick={() => setView('packages')}
-                className="flex items-center gap-0.5 text-xs mt-2"
-                style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
-              >
-                Configure
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </button>
-            )}
             {cf.purchase?.enabled && !paymentsReady && (
               <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
             )}
