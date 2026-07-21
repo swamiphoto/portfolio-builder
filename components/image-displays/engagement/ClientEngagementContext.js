@@ -14,7 +14,7 @@ import PurchasePrompt from './PurchasePrompt'
 const Ctx = createContext(null)
 export function useClientEngagement() { return useContext(Ctx) }
 
-export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, paymentsReady, branding, children }) {
+export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, paymentsReady, currency, heroPresent, branding, children }) {
   const enabled = !!clientFeatures?.enabled
   const features = useMemo(() => ({
     favorites: !!(enabled && clientFeatures?.favorites?.enabled),
@@ -106,7 +106,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
   // requireEmail per feature: the identity prompt collects email when the toggle demands it.
   const needsIdentity = useCallback((kind) => {
     if (!identity) return true
-    if (kind === 'download') return !identity.email
+    if (kind === 'download' || kind === 'purchase') return !identity.email
     const wantEmail = kind === 'comment' ? features.commentsRequireEmail : features.favoritesRequireEmail
     return wantEmail && !identity.email
   }, [identity, features])
@@ -124,8 +124,22 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     if (pendingAction) { pendingAction.run(saved); setPendingAction(null) }
   }, [username, post, pendingAction])
 
+  const performCheckout = useCallback(async (id, packageId) => {
+    const res = await fetch('/api/client/purchase/checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, pageId, packageId, buyer: { email: id?.email, name: id?.name }, returnPath: window.location.pathname }),
+    })
+    const body = await res.json().catch(() => null)
+    if (body?.url) {
+      window.location.href = body.url
+    } else {
+      setError('Could not start checkout — try again')
+      setTimeout(() => setError(null), 2500)
+    }
+  }, [username, pageId])
+
   const myFavorites = useMemo(() => new Set(
-    identity ? data.favorites.filter(f => f.deviceId === identity.deviceId).map(f => f.photoUrl) : []
+    identity ? (data.favorites || []).filter(f => f.deviceId === identity.deviceId).map(f => f.photoUrl) : []
   ), [data.favorites, identity])
 
   const submitted = useMemo(() => {
@@ -149,25 +163,12 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     openComments: (photoUrl) => setCommentsUrl(photoUrl),
     paymentsReady: !!paymentsReady,
     packages: purchaseCfg.packages || [],
-    purchaseCurrency: purchaseCfg.currency || 'USD',
+    purchaseCurrency: currency || 'USD',
     purchaseState,
     isUnlocked: (url) => !!purchaseState && (purchaseState.all || purchaseState.unlockedUrls?.includes(url)),
     canUnlockMore: () => !!purchaseState && (purchaseState.all || purchaseState.remaining > 0),
     openPurchase: () => setPurchaseOpen(true),
-    startCheckout: async (packageId) => {
-      const id = getClientIdentity(username)
-      const res = await fetch('/api/client/purchase/checkout', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, pageId, packageId, buyer: { email: id?.email, name: id?.name }, returnPath: window.location.pathname }),
-      })
-      const body = await res.json().catch(() => null)
-      if (body?.url) {
-        window.location.href = body.url
-      } else {
-        setError('Could not start checkout — try again')
-        setTimeout(() => setError(null), 2500)
-      }
-    },
+    buyPackage: (packageId) => runOrPrompt('purchase', (id) => performCheckout(id, packageId)),
     openDownload: (photoUrl) => runOrPrompt('download', () => {
       if (features.purchase) {
         const unlocked = !!purchaseState && (purchaseState.all || purchaseState.unlockedUrls?.includes(photoUrl))
@@ -192,7 +193,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     }),
     submitted,
     switchIdentity: () => setPendingAction({ kind: 'favorite', run: () => {} }),
-  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug, purchaseState, purchaseOpen, paymentsReady, purchaseCfg])
+  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug, purchaseState, purchaseOpen, paymentsReady, purchaseCfg, currency, heroPresent, performCheckout])
 
   if (!enabled) return children
 
@@ -202,7 +203,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
       {pendingAction && (
         <IdentityPrompt
           requireEmail={
-            pendingAction.kind === 'download'
+            pendingAction.kind === 'download' || pendingAction.kind === 'purchase'
               ? true
               : pendingAction.kind === 'comment'
                 ? features.commentsRequireEmail
@@ -217,7 +218,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
       {downloadUrl && <DownloadSheet photoUrl={downloadUrl} onClose={() => setDownloadUrl(null)} />}
       {purchaseOpen && <PurchaseSheet onClose={() => setPurchaseOpen(false)} />}
       {features.submitWorkflow && <SubmitPill />}
-      {features.purchase && <PurchasePrompt />}
+      {features.purchase && !heroPresent && <PurchasePrompt />}
       {error && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-stone-900 text-white text-sm px-4 py-2 rounded-full shadow-lg">
           {error}
