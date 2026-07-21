@@ -55,8 +55,10 @@ export default function PurchaseSheet({ onClose }) {
             >
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: '#2c2416' }}>{pkg.label}</div>
-                {pkg.credits === 'all' && (
+                {pkg.credits === 'all' ? (
                   <div style={{ fontSize: 11, color: '#a8967a', marginTop: 2 }}>Everything in this gallery</div>
+                ) : (
+                  <div style={{ fontSize: 11, color: '#a8967a', marginTop: 2 }}>{pkg.credits} more photo{pkg.credits === 1 ? '' : 's'}</div>
                 )}
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#2c2416' }}>
