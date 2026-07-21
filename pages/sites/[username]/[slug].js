@@ -133,8 +133,9 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         <ClientEngagementProvider
           username={username}
           pageId={page.id}
+          pageSlug={page.slug || page.id}
           clientFeatures={page.clientFeatures}
-          branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '' }}
+          branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
         >
           <Gallery
             name={page.title}

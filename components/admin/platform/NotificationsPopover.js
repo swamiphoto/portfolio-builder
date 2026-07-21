@@ -3,6 +3,7 @@
 // selection submissions across all pages, newest first.
 import { useEffect, useState } from 'react'
 import PopoverShell from './PopoverShell'
+import { getSizedUrl } from '../../../common/imageUtils'
 
 const LAST_SEEN_KEY = 'sepia:notif-last-seen'
 
@@ -14,13 +15,29 @@ function timeAgo(ts) {
   return `${Math.floor(s / 86400)}d`
 }
 
-function line(e) {
+function summary(e) {
   if (e.type === 'submit') return `${e.person.name} submitted ${e.count} favorite${e.count === 1 ? '' : 's'}`
-  if (e.type === 'comment') return `${e.person.name} commented: “${e.text.length > 60 ? e.text.slice(0, 60) + '…' : e.text}”`
+  if (e.type === 'comment') return `${e.person.name}: "${e.text.length > 55 ? e.text.slice(0, 55) + '…' : e.text}"`
   return `${e.person.name} favorited a photo`
 }
 
-export default function NotificationsPopover({ anchorEl, onClose }) {
+function PhotoThumb({ url }) {
+  if (!url) return null
+  const src = getSizedUrl(url, 'thumbnail') || url
+  return (
+    <img
+      src={src}
+      alt=""
+      style={{
+        width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0,
+        boxShadow: '0 1px 4px rgba(20,14,8,0.14)',
+      }}
+      onError={(e) => { e.target.style.display = 'none' }}
+    />
+  )
+}
+
+export default function NotificationsPopover({ anchorEl, onClose, onSelectPage }) {
   const [events, setEvents] = useState(null)
 
   useEffect(() => {
@@ -32,18 +49,41 @@ export default function NotificationsPopover({ anchorEl, onClose }) {
   }, [])
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Notifications" placement="below">
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={340} title="Notifications" placement="below">
       <div className="max-h-96 overflow-y-auto">
-        {events === null && <div className="px-4 py-6 text-xs text-center" style={{ color: 'var(--text-muted)' }}>Loading…</div>}
+        {events === null && (
+          <div className="px-4 py-6 text-xs text-center" style={{ color: 'var(--text-muted)' }}>Loading…</div>
+        )}
         {events?.length === 0 && (
           <div className="px-4 py-8 text-xs text-center" style={{ color: 'var(--text-muted)' }}>
             No client activity yet. Enable client features on a page and share it.
           </div>
         )}
         {(events || []).map((e, i) => (
-          <div key={i} className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(160,140,110,0.12)' }}>
-            <div className="text-xs leading-snug" style={{ color: 'var(--text-secondary)' }}>{line(e)}</div>
-            <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{e.pageTitle} · {timeAgo(e.ts)}</div>
+          <div
+            key={i}
+            className="flex items-center gap-3 px-4 py-3"
+            style={{ borderBottom: '1px solid rgba(160,140,110,0.10)' }}
+          >
+            {/* Text */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="text-xs leading-snug" style={{ color: 'var(--text-secondary)' }}>
+                {summary(e)}
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                <button
+                  type="button"
+                  onClick={() => onSelectPage?.(e.pageId)}
+                  className="text-[10px] font-medium hover:underline text-left"
+                  style={{ color: 'var(--sepia-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  {e.pageTitle}
+                </button>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>· {timeAgo(e.ts)}</span>
+              </div>
+            </div>
+            {/* Thumbnail */}
+            <PhotoThumb url={e.photoUrl} />
           </div>
         ))}
       </div>

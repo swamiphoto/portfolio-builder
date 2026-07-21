@@ -51,5 +51,5 @@ export function EditorPhotoBadge({ url }) {
   if (!ctx || !ctx.showFeedback) return null
   const fb = ctx.feedbackByPhoto[url]
   if (!fb) return null
-  return <PhotoFeedbackBadge favCount={fb.favCount} commentCount={fb.commentCount} onOpen={() => ctx.openPhoto(url)} />
+  return <PhotoFeedbackBadge compact favCount={fb.favCount} commentCount={fb.commentCount} onOpen={() => ctx.openPhoto(url)} />
 }

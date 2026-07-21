@@ -6,6 +6,7 @@ import { buildPreviewSequence, MUSIC_POOL, musicIdToUrl, musicUrlToId, randomMus
 import { resolveCaption } from '../../../common/captionResolver'
 import PopoverShell from './PopoverShell'
 import Tip from '../Tip'
+import ToggleSwitch from '../common/ToggleSwitch'
 
 const BORDER = 'rgba(160,140,110,0.18)'
 const INPUT = 'w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug'
@@ -31,48 +32,20 @@ function AutoGrowTextarea({ value, onChange, placeholder, maxLength }) {
   )
 }
 
-function Toggle({ checked, onChange, label, hint, disabled }) {
+function FeatureBlock({ label, description, checked, onToggle, children }) {
   return (
-    <div
-      onClick={() => !disabled && onChange(!checked)}
-      className={`flex items-start gap-2 ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-    >
-      <div
-        className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 mt-0.5"
-        style={{ background: checked ? 'var(--sepia-accent)' : 'var(--border)' }}
-      >
-        <div
-          className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`}
-          style={{ background: 'var(--card)' }}
-        />
-      </div>
-      <div>
-        <div className="text-xs select-none leading-tight" style={{ color: 'var(--text-secondary)' }}>{label}</div>
-        {hint && <div className="text-[10px] select-none leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>{hint}</div>}
-      </div>
-    </div>
-  )
-}
-
-function FeatureBlock({ label, checked, onToggle, children }) {
-  return (
-    <div className="space-y-2">
+    <div>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
-        <button
-          type="button"
-          onClick={() => onToggle(!checked)}
-          className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
-          style={{ background: checked ? 'var(--sepia-accent)' : 'var(--border)' }}
-        >
-          <div
-            className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`}
-            style={{ background: 'var(--card)' }}
-          />
-        </button>
+        <ToggleSwitch on={checked} onChange={onToggle} ariaLabel={label} />
       </div>
+      {/* Description sits tight under the title (like the site's other settings),
+          full-width below the toggle row. Controls appear when on. */}
+      {description && (
+        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.4, marginTop: 3 }}>{description}</div>
+      )}
       {checked && children && (
-        <div className="pl-3 space-y-2" style={{ borderLeft: `1px solid ${BORDER}` }}>{children}</div>
+        <div className="space-y-2" style={{ marginTop: 8 }}>{children}</div>
       )}
     </div>
   )
@@ -90,17 +63,7 @@ function Section({ label, children }) {
 function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, disabled, hint }) {
   return (
     <div className="px-3 py-2.5 flex items-center" style={{ borderBottom: `1px solid ${BORDER}` }}>
-      <button
-        type="button"
-        onClick={() => !disabled && onToggle(!checked)}
-        className={`w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
-        style={{ background: checked ? 'var(--sepia-accent)' : 'var(--border)' }}
-      >
-        <div
-          className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : 'translate-x-[2px]'}`}
-          style={{ background: 'var(--card)' }}
-        />
-      </button>
+      <ToggleSwitch on={checked} onChange={onToggle} disabled={disabled} ariaLabel={label} />
       <div className="flex-1 ml-2 min-w-0">
         <div className="text-xs select-none leading-tight" style={{ color: 'var(--text-secondary)' }}>{label}</div>
         {hint && <div className="text-[10px] select-none leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>{hint}</div>}
@@ -385,21 +348,40 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Client Features" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
-          <FeatureBlock label="Downloads" checked={cf.downloads?.enabled || false} onToggle={(v) => updateCf('downloads', { enabled: v })}>
-            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-              Clients can download web and full-res versions. Email is always required.
-            </p>
-          </FeatureBlock>
+          <FeatureBlock
+            label="Downloads"
+            description="Enable clients to download your photos. For larger prints, upload a high-res version in the photo viewer."
+            checked={cf.downloads?.enabled || false}
+            onToggle={(v) => updateCf('downloads', { enabled: v })}
+          />
 
-          <FeatureBlock label="Favorites" checked={cf.favorites?.enabled || false} onToggle={(v) => updateCf('favorites', { enabled: v })} />
+          <FeatureBlock
+            label="Favorites"
+            description="Let clients mark their favorite photos."
+            checked={cf.favorites?.enabled || false}
+            onToggle={(v) => updateCf('favorites', { enabled: v })}
+          />
 
-          <FeatureBlock label="Comments" checked={cf.comments?.enabled || false} onToggle={(v) => updateCf('comments', { enabled: v })} />
+          <FeatureBlock
+            label="Comments"
+            description="Let clients leave comments on photos."
+            checked={cf.comments?.enabled || false}
+            onToggle={(v) => updateCf('comments', { enabled: v })}
+          />
 
-          <FeatureBlock label="Watermark" checked={cf.watermark?.enabled || false} onToggle={(v) => updateCf('watermark', { enabled: v })}>
-            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Overlays your logo or site name on photos. A deterrent, not protection.</p>
-          </FeatureBlock>
+          <FeatureBlock
+            label="Watermark"
+            description="Overlays your logo on photos."
+            checked={cf.watermark?.enabled || false}
+            onToggle={(v) => updateCf('watermark', { enabled: v })}
+          />
 
-          <FeatureBlock label="Purchase" checked={cf.purchase?.enabled || false} onToggle={(v) => updateCf('purchase', { enabled: v })}>
+          <FeatureBlock
+            label="Purchase"
+            description="Let clients buy prints of your photos, with checkout handled for you."
+            checked={cf.purchase?.enabled || false}
+            onToggle={(v) => updateCf('purchase', { enabled: v })}
+          >
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Default price per photo</div>
               <div className="flex items-center gap-1">

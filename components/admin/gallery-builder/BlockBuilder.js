@@ -7,6 +7,7 @@ import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
+import ToggleSwitch from "../common/ToggleSwitch";
 import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 import { useEditorFeedback } from './EditorFeedbackContext';
 
@@ -421,11 +422,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   className="flex items-center gap-2 cursor-pointer pt-0.5"
                   onClick={() => updateField("visibility", gallery.visibility === "unlisted" ? "public" : "unlisted")}
                 >
-                  <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
-                       style={{ background: gallery.visibility === "unlisted" ? 'var(--sepia-accent)' : 'var(--border)' }}>
-                    <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.visibility === "unlisted" ? "translate-x-[14px]" : "translate-x-[2px]"}`}
-                         style={{ background: 'var(--card)' }} />
-                  </div>
+                  <ToggleSwitch
+                    on={gallery.visibility === "unlisted"}
+                    onChange={(v) => updateField("visibility", v ? "unlisted" : "public")}
+                    ariaLabel="Unlisted"
+                  />
                   <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Unlisted</span>
                 </div>
 
@@ -435,11 +436,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={() => updateField("enableSlideshow", !gallery.enableSlideshow)}
                   >
-                    <div className="w-7 h-[14px] rounded-full transition-colors relative flex-shrink-0"
-                         style={{ background: gallery.enableSlideshow ? 'var(--sepia-accent)' : 'var(--border)' }}>
-                      <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full shadow-sm transition-transform ${gallery.enableSlideshow ? "translate-x-[14px]" : "translate-x-[2px]"}`}
-                           style={{ background: 'var(--card)' }} />
-                    </div>
+                    <ToggleSwitch
+                      on={!!gallery.enableSlideshow}
+                      onChange={(v) => updateField("enableSlideshow", v)}
+                      ariaLabel="Include slideshow"
+                    />
                     <span className="text-xs select-none" style={{ color: 'var(--text-secondary)' }}>Include slideshow</span>
                   </div>
                   {gallery.enableSlideshow && gallery.slug && (

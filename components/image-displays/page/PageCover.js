@@ -37,7 +37,7 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
   return (
     <section className={`relative w-full ${heightClass} overflow-hidden`}>
       <img
-        src={getSizedUrl(cover.imageUrl, 'large') || cover.imageUrl}
+        src={getSizedUrl(cover.imageUrl, 'display') || cover.imageUrl}
         alt={cover.overlayText || title || ''}
         className="absolute inset-0 w-full h-full object-cover"
       />

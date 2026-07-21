@@ -3,6 +3,7 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { getSizedUrl } from '../../../common/imageUtils'
 import { readEngagement, writeEngagement, applyEngagementAction } from '../../../common/clientEngagement'
+import { readLibraryConfig } from '../../../common/adminConfig'
 
 const R2_PREFIX = process.env.R2_PUBLIC_URL || ''
 
@@ -47,17 +48,32 @@ export default async function handler(req, res) {
       console.error('[client/download] log error', logErr)
     }
 
+    // For full-res: prefer an uploaded print master over the web URL
+    let printMasterUrl = null
+    if (quality === 'original') {
+      try {
+        const library = await readLibraryConfig(lookup.userId)
+        const asset = Object.values(library?.assets || {}).find(
+          a => a.publicUrl === rawPhotoUrl || a.url === rawPhotoUrl
+        )
+        if (asset?.print?.masterStorageKey && R2_PREFIX) {
+          printMasterUrl = `${R2_PREFIX}/${asset.print.masterStorageKey}`
+        }
+      } catch { /* fall back to web URL */ }
+    }
+
     // Resolve and fetch
     const downloadUrl = quality === 'display'
       ? (getSizedUrl(rawPhotoUrl, 'display') || rawPhotoUrl)
-      : rawPhotoUrl
+      : (printMasterUrl || rawPhotoUrl)
     const upstream = await fetch(downloadUrl)
     if (!upstream.ok) return res.status(502).json({ error: 'Could not fetch photo' })
 
     const buf = await upstream.arrayBuffer()
     const buffer = Buffer.from(buf)
     const ext = downloadUrl.split('.').pop()?.split('?')[0] || 'jpg'
-    const filename = quality === 'display' ? `photo-web.${ext}` : `photo-original.${ext}`
+    const pageSlug = page.slug || page.id || 'photo'
+    const filename = quality === 'display' ? `${pageSlug}-web.${ext}` : `${pageSlug}-full.${ext}`
 
     res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/jpeg')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)

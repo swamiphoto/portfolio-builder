@@ -12,7 +12,7 @@ import DownloadSheet from './DownloadSheet'
 const Ctx = createContext(null)
 export function useClientEngagement() { return useContext(Ctx) }
 
-export function ClientEngagementProvider({ username, pageId, clientFeatures, branding, children }) {
+export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, branding, children }) {
   const enabled = !!clientFeatures?.enabled
   const features = useMemo(() => ({
     favorites: !!(enabled && clientFeatures?.favorites?.enabled),
@@ -131,6 +131,7 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
     closeDownload: () => setDownloadUrl(null),
     username,
     pageId,
+    pageSlug,
     addComment: (photoUrl, text) => runOrPrompt('comment', (id) => performComment(id, photoUrl, text)),
     submitFavorites: () => runOrPrompt('favorite', (id) => {
       post({ deviceId: id.deviceId, action: 'submit' }).then(() => {
@@ -142,7 +143,7 @@ export function ClientEngagementProvider({ username, pageId, clientFeatures, bra
     }),
     submitted,
     switchIdentity: () => setPendingAction({ kind: 'favorite', run: () => {} }),
-  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId])
+  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug])
 
   if (!enabled) return children
 

@@ -89,7 +89,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
           )}
           <WatermarkOverlay />
           <div
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 transition-opacity duration-500"
+            className="absolute top-3 left-3 transition-opacity duration-500"
             style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
           >
             <EngagementActions imageUrl={image.url} />

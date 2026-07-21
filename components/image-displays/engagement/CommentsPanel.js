@@ -1,6 +1,5 @@
 // components/image-displays/engagement/CommentsPanel.js
 // Per-photo comments: bottom sheet on small screens, centered card on desktop.
-// Visible to anyone with gallery access.
 import { useState } from 'react'
 import { useClientEngagement } from './ClientEngagementContext'
 import { getSizedUrl } from '../../../common/imageUtils'
@@ -28,37 +27,98 @@ export default function CommentsPanel({ photoUrl, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[80vh] flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b border-stone-100">
-          <img src={getSizedUrl(photoUrl, 'thumbnail')} alt="" className="w-12 h-12 object-cover rounded-lg" />
-          <div className="flex-1 text-sm font-medium text-stone-700">Comments</div>
-          <button onClick={onClose} aria-label="Close comments" className="text-stone-400 text-2xl leading-none px-1">×</button>
+    <div
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
+      style={{ background: 'rgba(20,14,8,0.45)' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl flex flex-col"
+        style={{
+          background: 'var(--card)',
+          maxHeight: '80vh',
+          boxShadow: 'var(--popover-shadow)',
+          border: '1px solid var(--card-border)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid var(--border-warm-light)' }}>
+          <img
+            src={getSizedUrl(photoUrl, 'thumbnail')}
+            alt=""
+            style={{ width: 42, height: 42, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+          />
+          <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.01em' }}>Comments</div>
+          <button
+            onClick={onClose}
+            aria-label="Close comments"
+            style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, flexShrink: 0 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {comments.length === 0 && <p className="text-sm text-stone-400">No comments yet — be the first.</p>}
-          {comments.map(c => (
-            <div key={c.id}>
-              <div className="text-xs text-stone-400">{c.name} · {timeAgo(c.ts)}</div>
-              <div className="text-sm text-stone-700 whitespace-pre-line">{c.text}</div>
-            </div>
-          ))}
+
+        {/* Comments list */}
+        <div className="flex-1 overflow-y-auto scroll-thin" style={{ padding: '16px 20px' }}>
+          {comments.length === 0 && (
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>No comments yet — be the first.</p>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {comments.map(c => (
+              <div key={c.id}>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 3, letterSpacing: '0.01em' }}>
+                  {c.name} · {timeAgo(c.ts)}
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55, whiteSpace: 'pre-line' }}>{c.text}</div>
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Input */}
         {ctx.features.comments && (
-          <div className="p-3 border-t border-stone-100">
-            <form onSubmit={submit} className="flex gap-2">
+          <div style={{ padding: '6px 20px 18px' }}>
+            <form onSubmit={submit} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Add a comment…"
                 maxLength={1000}
-                className="flex-1 border border-stone-300 rounded-full px-4 py-2 text-sm outline-none focus:border-stone-500"
+                className="site-input"
+                style={{
+                  flex: 1, borderBottom: '1px solid var(--border-warm)', background: 'transparent',
+                  padding: '6px 0', fontSize: 14, color: 'var(--text-primary)', outline: 'none',
+                }}
               />
-              <button type="submit" disabled={!draft.trim()} className="text-sm bg-stone-900 text-white px-4 py-2 rounded-full disabled:opacity-40">Post</button>
+              <button
+                type="submit"
+                disabled={!draft.trim()}
+                style={{
+                  background: 'var(--sepia-accent)', color: '#faf8f4', border: 'none',
+                  padding: '7px 16px', borderRadius: 6, fontSize: 13, fontWeight: 500,
+                  cursor: draft.trim() ? 'pointer' : 'default', flexShrink: 0,
+                  opacity: draft.trim() ? 1 : 0.4, transition: 'opacity 0.15s ease, background 0.15s ease',
+                }}
+                onMouseEnter={e => { if (draft.trim()) e.currentTarget.style.background = '#7a6040' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--sepia-accent)' }}
+              >
+                Post
+              </button>
             </form>
             {ctx.identity && (
-              <p className="mt-2 text-xs text-stone-400">
-                Commenting as {ctx.identity.name} · <button onClick={() => ctx.switchIdentity()} className="underline hover:text-stone-600">Not you?</button>
+              <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+                Commenting as {ctx.identity.name} ·{' '}
+                <button
+                  onClick={() => ctx.switchIdentity()}
+                  style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: 11, padding: 0 }}
+                >
+                  Not you?
+                </button>
               </p>
             )}
           </div>

@@ -1378,5 +1378,11 @@ export default memo(BlockCard, (prev, next) =>
   prev.glowing === next.glowing &&
   prev.expandedOverride?.ts === next.expandedOverride?.ts &&
   prev.blockIndex === next.blockIndex &&
-  prev.assetsByUrl === next.assetsByUrl
+  prev.assetsByUrl === next.assetsByUrl &&
+  // Sets data loads async (library fetch resolves after first paint). Without
+  // these, the card never re-renders when allSets/setsByUrl arrive, so the
+  // lightbox's set picker stays empty. Both are useMemo'd on libraryData, so
+  // this only re-renders when sets actually change.
+  prev.allSets === next.allSets &&
+  prev.setsByUrl === next.setsByUrl
 );

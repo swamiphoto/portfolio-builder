@@ -166,8 +166,9 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
           <ClientEngagementProvider
             username={username}
             pageId={homePage.id}
+            pageSlug={homePage.slug || homePage.id}
             clientFeatures={homePage.clientFeatures}
-            branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '' }}
+            branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
           >
             <Gallery
               name={homePage.title}

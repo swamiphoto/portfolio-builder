@@ -4,31 +4,70 @@
 import { useState } from 'react'
 import { useClientEngagement } from './ClientEngagementContext'
 
+const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
+const INK = '#1a120a'
+const INK_TEXT = '#f5f0e8'
+
+const pillStyle = {
+  position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+  display: 'flex', alignItems: 'center', gap: 10,
+  background: 'rgba(20,14,8,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+  color: INK_TEXT, padding: '9px 9px 9px 16px', borderRadius: 999,
+  fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em',
+  boxShadow: '0 8px 28px rgba(26,18,10,0.32)',
+  whiteSpace: 'nowrap',
+}
+
+const submitBtnStyle = {
+  background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)',
+  color: INK_TEXT, padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
+  fontFamily: MONO, fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase',
+  transition: 'background 0.15s ease',
+}
+
+const toastStyle = {
+  position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+  display: 'flex', alignItems: 'center', gap: 8,
+  background: INK, color: INK_TEXT, padding: '10px 16px', borderRadius: 8,
+  fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em',
+  boxShadow: '0 8px 28px rgba(26,18,10,0.28)',
+}
+
 export default function SubmitPill() {
   const ctx = useClientEngagement()
-  const [confirming, setConfirming] = useState(false)
-  if (!ctx || !ctx.features.submitWorkflow || ctx.myFavoriteCount === 0) return null
+  const [toast, setToast] = useState(null)
 
-  if (ctx.submitted) {
+  if (!ctx || !ctx.features.submitWorkflow) return null
+
+  if (toast) {
     return (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur text-stone-600 text-sm px-5 py-2.5 rounded-full shadow-lg border border-stone-200">
-        ✓ {ctx.myFavoriteCount} favorite{ctx.myFavoriteCount === 1 ? '' : 's'} sent
+      <div style={toastStyle}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#5aa76b', flexShrink: 0 }} />
+        {toast.count} favorite{toast.count === 1 ? '' : 's'} sent
       </div>
     )
   }
 
+  if (ctx.submitted || ctx.myFavoriteCount === 0) return null
+
+  const handleSubmit = () => {
+    const count = ctx.myFavoriteCount
+    ctx.submitFavorites()
+    setToast({ count })
+    setTimeout(() => setToast(null), 2500)
+  }
+
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-stone-900/95 backdrop-blur text-white text-sm pl-5 pr-2 py-2 rounded-full shadow-xl">
+    <div style={pillStyle}>
       <span>{ctx.myFavoriteCount} selected</span>
-      {confirming ? (
-        <button onClick={() => { ctx.submitFavorites(); setConfirming(false) }} className="bg-white hover:bg-white/90 transition-colors text-stone-900 px-4 py-1.5 rounded-full font-medium">
-          Confirm send
-        </button>
-      ) : (
-        <button onClick={() => setConfirming(true)} className="bg-white/15 hover:bg-white/25 transition-colors px-4 py-1.5 rounded-full">
-          Submit favorites
-        </button>
-      )}
+      <button
+        style={submitBtnStyle}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+        onClick={handleSubmit}
+      >
+        Submit favorites
+      </button>
     </div>
   )
 }
