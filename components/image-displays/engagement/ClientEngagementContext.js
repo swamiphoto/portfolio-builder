@@ -8,11 +8,13 @@ import IdentityPrompt from './IdentityPrompt'
 import CommentsPanel from './CommentsPanel'
 import SubmitPill from './SubmitPill'
 import DownloadSheet from './DownloadSheet'
+import PackagesDrawer from './PackagesDrawer'
+import PurchasePrompt from './PurchasePrompt'
 
 const Ctx = createContext(null)
 export function useClientEngagement() { return useContext(Ctx) }
 
-export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, branding, children }) {
+export function ClientEngagementProvider({ username, pageId, pageSlug, clientFeatures, paymentsReady, currency, heroPhoto, heroPresent, branding, children }) {
   const enabled = !!clientFeatures?.enabled
   const features = useMemo(() => ({
     favorites: !!(enabled && clientFeatures?.favorites?.enabled),
@@ -22,7 +24,8 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     favoritesRequireEmail: !!(enabled && clientFeatures?.favorites?.enabled),
     commentsRequireEmail: !!(enabled && clientFeatures?.comments?.enabled),
     downloads: !!(enabled && clientFeatures?.downloads?.enabled),
-  }), [enabled, clientFeatures])
+    purchase: !!(enabled && clientFeatures?.purchase?.enabled && paymentsReady),
+  }), [enabled, clientFeatures, paymentsReady])
 
   const [identity, setIdentity] = useState(null)
   const [data, setData] = useState({ people: {}, favorites: [], comments: [], submissions: [] })
@@ -30,19 +33,37 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
   const [commentsUrl, setCommentsUrl] = useState(null)
   const [downloadUrl, setDownloadUrl] = useState(null)
   const [error, setError] = useState(null)
+  const purchaseCfg = clientFeatures?.purchase || {}
+  const [purchaseState, setPurchaseState] = useState(null) // { unlockedUrls, unlockedCount, ceiling, all, remaining }
+  const [purchaseOpen, setPurchaseOpen] = useState(false)
 
   useEffect(() => { setIdentity(getClientIdentity(username)) }, [username])
 
-  const interactive = features.favorites || features.comments || features.downloads
+  const interactive = features.favorites || features.comments || features.downloads || features.purchase
+  const refetch = useCallback(() => {
+    const id = getClientIdentity(username)
+    const qs = new URLSearchParams({ username, pageId })
+    if (id?.deviceId) qs.set('deviceId', id.deviceId)
+    return fetch(`/api/client/engagement?${qs}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) { setData(d); if (d.purchase) setPurchaseState(d.purchase) } })
+      .catch(() => {})
+  }, [username, pageId])
+
   useEffect(() => {
     if (!interactive) return
     let alive = true
-    fetch(`/api/client/engagement?username=${encodeURIComponent(username)}&pageId=${encodeURIComponent(pageId)}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (alive && d) setData(d) })
-      .catch(() => {})
+    refetch().then(() => { if (!alive) return })
     return () => { alive = false }
-  }, [interactive, username, pageId])
+  }, [interactive, refetch])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!new URLSearchParams(window.location.search).get('purchase')) return
+    let n = 0
+    const tick = () => { refetch(); if (++n < 5) setTimeout(tick, 2000) }
+    tick()
+  }, [refetch])
 
   const post = useCallback(async (body) => {
     const res = await fetch('/api/client/engagement', {
@@ -85,7 +106,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
   // requireEmail per feature: the identity prompt collects email when the toggle demands it.
   const needsIdentity = useCallback((kind) => {
     if (!identity) return true
-    if (kind === 'download') return !identity.email
+    if (kind === 'download' || kind === 'purchase') return !identity.email
     const wantEmail = kind === 'comment' ? features.commentsRequireEmail : features.favoritesRequireEmail
     return wantEmail && !identity.email
   }, [identity, features])
@@ -103,8 +124,22 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     if (pendingAction) { pendingAction.run(saved); setPendingAction(null) }
   }, [username, post, pendingAction])
 
+  const performCheckout = useCallback(async (id, packageId) => {
+    const res = await fetch('/api/client/purchase/checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, pageId, packageId, buyer: { email: id?.email, name: id?.name }, returnPath: window.location.pathname }),
+    })
+    const body = await res.json().catch(() => null)
+    if (body?.url) {
+      window.location.href = body.url
+    } else {
+      setError('Could not start checkout — try again')
+      setTimeout(() => setError(null), 2500)
+    }
+  }, [username, pageId])
+
   const myFavorites = useMemo(() => new Set(
-    identity ? data.favorites.filter(f => f.deviceId === identity.deviceId).map(f => f.photoUrl) : []
+    identity ? (data.favorites || []).filter(f => f.deviceId === identity.deviceId).map(f => f.photoUrl) : []
   ), [data.favorites, identity])
 
   const submitted = useMemo(() => {
@@ -118,15 +153,31 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     branding: branding || {},
     identity,
     isFavorited: (url) => myFavorites.has(url),
-    favoriteCount: (url) => data.favorites.filter(f => f.photoUrl === url).length,
-    commentCount: (url) => data.comments.filter(c => c.photoUrl === url).length,
+    favoriteCount: (url) => (data.favorites || []).filter(f => f.photoUrl === url).length,
+    commentCount: (url) => (data.comments || []).filter(c => c.photoUrl === url).length,
     commentsFor: (url) => data.comments
       .filter(c => c.photoUrl === url)
       .map(c => ({ id: c.id, name: data.people[c.deviceId]?.name || 'Someone', text: c.text, ts: c.ts })),
     myFavoriteCount: myFavorites.size,
     toggleFavorite: (photoUrl) => runOrPrompt('favorite', (id) => performFavorite(id, photoUrl)),
     openComments: (photoUrl) => setCommentsUrl(photoUrl),
-    openDownload: (photoUrl) => runOrPrompt('download', () => setDownloadUrl(photoUrl)),
+    paymentsReady: !!paymentsReady,
+    packages: purchaseCfg.packages || [],
+    purchaseCurrency: currency || 'USD',
+    packageThumb: heroPhoto || '',
+    purchaseState,
+    isUnlocked: (url) => !!purchaseState && (purchaseState.all || purchaseState.unlockedUrls?.includes(url)),
+    canUnlockMore: () => !!purchaseState && (purchaseState.all || purchaseState.remaining > 0),
+    openPurchase: () => setPurchaseOpen(true),
+    buyPackage: (packageId) => runOrPrompt('purchase', (id) => performCheckout(id, packageId)),
+    openDownload: (photoUrl) => runOrPrompt('download', () => {
+      if (features.purchase) {
+        const unlocked = !!purchaseState && (purchaseState.all || purchaseState.unlockedUrls?.includes(photoUrl))
+        const canMore = !!purchaseState && (purchaseState.all || purchaseState.remaining > 0)
+        if (!unlocked && !canMore) { setPurchaseOpen(true); return }
+      }
+      setDownloadUrl(photoUrl)
+    }),
     downloadUrl,
     closeDownload: () => setDownloadUrl(null),
     username,
@@ -143,7 +194,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
     }),
     submitted,
     switchIdentity: () => setPendingAction({ kind: 'favorite', run: () => {} }),
-  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug])
+  } : null, [enabled, features, branding, identity, data, myFavorites, submitted, runOrPrompt, performFavorite, performComment, post, downloadUrl, username, pageId, pageSlug, purchaseState, purchaseOpen, paymentsReady, purchaseCfg, currency, heroPhoto, heroPresent, performCheckout])
 
   if (!enabled) return children
 
@@ -153,7 +204,7 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
       {pendingAction && (
         <IdentityPrompt
           requireEmail={
-            pendingAction.kind === 'download'
+            pendingAction.kind === 'download' || pendingAction.kind === 'purchase'
               ? true
               : pendingAction.kind === 'comment'
                 ? features.commentsRequireEmail
@@ -166,7 +217,9 @@ export function ClientEngagementProvider({ username, pageId, pageSlug, clientFea
       )}
       {commentsUrl && <CommentsPanel photoUrl={commentsUrl} onClose={() => setCommentsUrl(null)} />}
       {downloadUrl && <DownloadSheet photoUrl={downloadUrl} onClose={() => setDownloadUrl(null)} />}
+      <PackagesDrawer open={purchaseOpen} onClose={() => setPurchaseOpen(false)} />
       {features.submitWorkflow && <SubmitPill />}
+      {features.purchase && !heroPresent && <PurchasePrompt />}
       {error && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-stone-900 text-white text-sm px-4 py-2 rounded-full shadow-lg">
           {error}

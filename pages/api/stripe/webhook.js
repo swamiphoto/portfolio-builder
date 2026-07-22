@@ -4,6 +4,8 @@ import { getOrder, saveOrder } from '../../../common/orders'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readUserProfile } from '../../../common/userProfile'
 import { placeOrderForPaidOrder } from '../../../common/fulfillment/placeOrderForPaidOrder'
+import { readEngagement, writeEngagement } from '../../../common/clientEngagement'
+import { grantEntitlement } from '../../../common/clientPurchase'
 
 // IMPORTANT: print checkouts are DIRECT CHARGES on the photographer's connected
 // account, so `checkout.session.completed` fires on the CONNECTED account — not
@@ -47,18 +49,29 @@ export default async function handler(req, res) {
           order.stripe.paymentIntentId = session.payment_intent || null
           await saveOrder(userId, order)
 
-          // Resolve where to notify the photographer, then place the lab order.
-          const [config, profile] = await Promise.all([
-            readSiteConfig(userId).catch(() => null),
-            readUserProfile(userId).catch(() => null),
-          ])
-          const photographerEmail =
-            config?.clientDefaults?.notificationEmail ||
-            config?.contact?.email ||
-            profile?.email ||
-            null
-          const siteName = config?.siteName || 'your portfolio'
-          await placeOrderForPaidOrder(order, { photographerEmail, siteName })
+          if (order.type === 'digital') {
+            // Digital fulfillment = grant download credits to the buyer's email.
+            const data = await readEngagement(userId, order.pageId)
+            const next = grantEntitlement(data, {
+              email: order.buyer?.email,
+              credits: order.credits,
+              orderId: order.id,
+            })
+            await writeEngagement(userId, order.pageId, next)
+          } else {
+            // Print fulfillment: notify the photographer, then place the lab order.
+            const [config, profile] = await Promise.all([
+              readSiteConfig(userId).catch(() => null),
+              readUserProfile(userId).catch(() => null),
+            ])
+            const photographerEmail =
+              config?.clientDefaults?.notificationEmail ||
+              config?.contact?.email ||
+              profile?.email ||
+              null
+            const siteName = config?.siteName || 'your portfolio'
+            await placeOrderForPaidOrder(order, { photographerEmail, siteName })
+          }
         }
       }
     }

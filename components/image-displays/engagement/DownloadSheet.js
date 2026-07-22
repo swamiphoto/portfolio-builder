@@ -10,7 +10,7 @@ export default function DownloadSheet({ photoUrl, onClose }) {
 
   const slug = ctx.pageSlug || ctx.pageId || 'photo'
 
-  function triggerDownload(quality) {
+  async function triggerDownload(quality) {
     setLoading(quality)
     const params = new URLSearchParams({
       username: ctx.username,
@@ -19,9 +19,41 @@ export default function DownloadSheet({ photoUrl, onClose }) {
       quality,
       deviceId: ctx.identity.deviceId,
     })
+    const filename = quality === 'display' ? `${slug}-web.jpg` : `${slug}-full.jpg`
+
+    if (ctx.features?.purchase) {
+      try {
+        const res = await fetch(`/api/client/download?${params}`)
+        if (res.status === 402) {
+          setLoading(null)
+          onClose()
+          ctx.openPurchase?.()
+          return
+        }
+        if (!res.ok) {
+          setLoading(null)
+          return
+        }
+        const blob = await res.blob()
+        const objectUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(objectUrl)
+        setLoading(null)
+        onClose()
+      } catch {
+        setLoading(null)
+      }
+      return
+    }
+
     const a = document.createElement('a')
     a.href = `/api/client/download?${params}`
-    a.download = quality === 'display' ? `${slug}-web.jpg` : `${slug}-full.jpg`
+    a.download = filename
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

@@ -15,11 +15,11 @@ describe('publicPrintForAsset', () => {
 describe('publicPrintStore', () => {
   it('returns only public fields with defaults, never internal ones', () => {
     const cfg = { printStore: { enabled: true, markup: 2.5, currency: 'USD', showPriceOnImage: true, stripeConnectAccountId: 'acct_secret', platformFeePct: 0 } }
-    expect(publicPrintStore(cfg)).toEqual({ enabled: true, markup: 2.5, currency: 'USD', showPriceOnImage: true })
+    expect(publicPrintStore(cfg)).toEqual({ enabled: true, markup: 2.5, currency: 'USD', showPriceOnImage: true, paymentsReady: false })
   })
 
   it('applies safe defaults when printStore is missing', () => {
-    expect(publicPrintStore({})).toEqual({ enabled: false, markup: 3, currency: 'USD', showPriceOnImage: false })
+    expect(publicPrintStore({})).toEqual({ enabled: false, markup: 3, currency: 'USD', showPriceOnImage: false, paymentsReady: false })
   })
 })
 
@@ -28,7 +28,7 @@ describe('publicSiteConfig', () => {
     const cfg = { siteName: 'X', pages: [], printStore: { enabled: true, markup: 2, currency: 'USD', showPriceOnImage: false, stripeConnectAccountId: 'acct_secret', platformFeePct: 5 } }
     const out = publicSiteConfig(cfg)
     expect(out.siteName).toBe('X')
-    expect(out.printStore).toEqual({ enabled: true, markup: 2, currency: 'USD', showPriceOnImage: false })
+    expect(out.printStore).toEqual({ enabled: true, markup: 2, currency: 'USD', showPriceOnImage: false, paymentsReady: false })
     expect('stripeConnectAccountId' in out.printStore).toBe(false)
     expect('platformFeePct' in out.printStore).toBe(false)
   })

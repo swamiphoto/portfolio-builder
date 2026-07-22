@@ -1,37 +1,41 @@
 // components/image-displays/page/PageCover.js
 import { getSizedUrl } from '../../../common/imageUtils'
+import { secondaryButtonStyle } from '../../../common/coverButtons'
+import { useClientEngagement } from '../engagement/ClientEngagementContext'
 
 const BUTTON_STYLE_MAP = {
   solid: 'bg-white text-stone-900 hover:bg-stone-100',
   outline: 'border border-white text-white hover:bg-white/10',
 }
 
-function CtaButton({ label, href, style }) {
+function CtaButton({ label, href, onClick, style }) {
   if (!label) return null
+  const cls = `inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`
+  if (onClick) {
+    return <button type="button" onClick={onClick} className={cls}>{label}</button>
+  }
   const isExternal = href?.startsWith('http')
   return (
-    <a
-      href={href || '#'}
-      className={`inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`}
-      {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-    >
+    <a href={href || '#'} className={cls} {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
       {label}
     </a>
   )
 }
 
 export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [] }) {
+  const ctx = useClientEngagement()
   if (!cover || !cover.imageUrl) return null
-  // "full" fills the viewport; "partial" (the default) is a shorter band. Height
-  // is driven by cover.height regardless of variant so the toggle always changes
-  // the hero. Only an explicit "full" is full; anything else defaults to partial.
   const isFull = cover.height === 'full'
   const heightClass = isFull ? 'h-screen' : 'h-[60vh]'
-  const buttonStyle = cover.buttonStyle === 'outline' ? 'outline' : 'solid'
+  const primaryStyle = cover.buttonStyle === 'outline' ? 'outline' : 'solid'
+  const secondaryStyle = secondaryButtonStyle(primaryStyle)
+
+  const showPackages = !!(ctx?.features?.purchase && (ctx.packages || []).length)
 
   const buttons = []
   if (primaryButton?.label) buttons.push(primaryButton)
   if (slideshowHref) buttons.push({ label: 'View Music Show', href: slideshowHref })
+  if (showPackages) buttons.push({ label: 'View Packages', onClick: () => ctx.openPurchase() })
   if (clientFeaturesEnabled) buttons.push({ label: 'Client Login', href: '#client-login' })
 
   return (
@@ -54,7 +58,9 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
         )}
         {buttons.length > 0 && (
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {buttons.map((btn, i) => <CtaButton key={i} label={btn.label} href={btn.href} style={buttonStyle} />)}
+            {buttons.map((btn, i) => (
+              <CtaButton key={i} label={btn.label} href={btn.href} onClick={btn.onClick} style={i === 0 ? primaryStyle : secondaryStyle} />
+            ))}
           </div>
         )}
       </div>

@@ -11,7 +11,7 @@ export function getClientDataPath(userId, pageId) {
 }
 
 export function emptyEngagement() {
-  return { people: {}, favorites: [], comments: [], submissions: [], downloads: [] }
+  return { people: {}, favorites: [], comments: [], submissions: [], downloads: [], entitlements: {} }
 }
 
 function bad(message) {
@@ -97,6 +97,7 @@ export async function readEngagement(userId, pageId) {
       comments: Array.isArray(data?.comments) ? data.comments : [],
       submissions: Array.isArray(data?.submissions) ? data.submissions : [],
       downloads: Array.isArray(data?.downloads) ? data.downloads : [],
+      entitlements: data?.entitlements && typeof data.entitlements === 'object' && !Array.isArray(data.entitlements) ? data.entitlements : {},
     }
   } catch {
     return emptyEngagement()

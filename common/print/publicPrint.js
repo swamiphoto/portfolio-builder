@@ -20,6 +20,7 @@ export function publicPrintStore(siteConfig) {
     markup: typeof ps.markup === 'number' && ps.markup > 0 ? ps.markup : 3,
     currency: ps.currency || 'USD',
     showPriceOnImage: !!ps.showPriceOnImage,
+    paymentsReady: !!(ps.chargesEnabled && ps.stripeConnectAccountId),
   }
 }
 

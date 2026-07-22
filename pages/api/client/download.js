@@ -4,6 +4,7 @@ import { readSiteConfig } from '../../../common/siteConfig'
 import { getSizedUrl } from '../../../common/imageUtils'
 import { readEngagement, writeEngagement, applyEngagementAction } from '../../../common/clientEngagement'
 import { readLibraryConfig } from '../../../common/adminConfig'
+import { resolveDownloadAccess } from '../../../common/clientPurchase'
 
 const R2_PREFIX = process.env.R2_PUBLIC_URL || ''
 
@@ -37,6 +38,20 @@ export default async function handler(req, res) {
     const data = await readEngagement(lookup.userId, page.id)
     const person = data.people?.[deviceId]
     if (!person?.email) return res.status(403).json({ error: 'Email required for downloads' })
+
+    // Paywall: when purchase is enabled, a NEW photo past the ceiling is blocked.
+    const purchase = page.clientFeatures.purchase
+    if (purchase?.enabled) {
+      const access = resolveDownloadAccess({
+        data,
+        email: person.email,
+        photoUrl: rawPhotoUrl,
+        freeAllowance: purchase.freeAllowance || 0,
+      })
+      if (!access.allowed) {
+        return res.status(402).json({ error: 'payment_required', reason: access.reason })
+      }
+    }
 
     // Log download before streaming (best-effort — doesn't block on error)
     try {
