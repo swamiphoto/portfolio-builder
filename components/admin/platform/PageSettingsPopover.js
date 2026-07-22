@@ -348,6 +348,9 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   // ── Packages drill-in ─────────────────────────────────────────────────────
   if (view === 'packages') {
     const purchase = cf.purchase || {}
+    // One shared field treatment so every control in a package card matches.
+    const fieldCls = 'border-b border-[rgba(160,140,110,0.3)] py-1.5 text-[13px] text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors bg-transparent placeholder:text-[#c4b49a]'
+    const fieldSelectStyle = { ...selectStyle, fontSize: 13, color: '#2c2416', borderBottom: '1px solid rgba(160,140,110,0.3)', padding: '0 16px 6px 0' }
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Packages" onBack={() => setView('client')}>
         <div className="px-3 py-3 space-y-4">
@@ -385,7 +388,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                     <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>Package name</div>
                     <input
                       type="text" placeholder="e.g. 10 more photos"
-                      className="w-[calc(100%-26px)] border-b border-[rgba(160,140,110,0.3)] py-1 text-[13px] text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent"
+                      className={`${fieldCls} w-[calc(100%-26px)]`}
                       value={pkg.label}
                       onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { label: e.target.value }) })}
                     />
@@ -394,7 +397,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                   <div className="mb-3">
                     <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>What's the offer?</div>
                     <select
-                      style={selectStyle}
+                      style={fieldSelectStyle}
                       value={isAll ? 'all' : 'number'}
                       onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: e.target.value === 'all' ? 'all' : 10 }) })}
                     >
@@ -408,7 +411,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                       <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>How many photos?</div>
                       <input
                         type="number" min="1" step="1"
-                        className="w-16 border-b border-[rgba(160,140,110,0.3)] py-1 text-xs text-[#2c2416] outline-none focus:border-[#8b6f47] bg-transparent text-center"
+                        className={`${fieldCls} w-16 text-center`}
                         value={pkg.credits}
                         onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: Math.max(1, parseInt(e.target.value, 10) || 1) }) })}
                       />
@@ -417,11 +420,11 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
                   <div>
                     <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>Price</div>
-                    <div className="inline-flex items-baseline gap-1 border-b border-[rgba(160,140,110,0.3)] pb-1">
+                    <div className="inline-flex items-baseline gap-1 border-b border-[rgba(160,140,110,0.3)] pb-1.5 transition-colors focus-within:border-[#8b6f47]">
                       <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{siteConfig?.printStore?.currency || 'USD'}</span>
                       <input
                         type="number" min="0" step="0.01" placeholder="0.00"
-                        className="w-24 text-sm text-[#2c2416] outline-none bg-transparent"
+                        className="w-24 text-[13px] text-[#2c2416] outline-none bg-transparent placeholder:text-[#c4b49a]"
                         value={centsToDollars(pkg.price)}
                         onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { price: dollarsToCents(e.target.value) }) })}
                       />
