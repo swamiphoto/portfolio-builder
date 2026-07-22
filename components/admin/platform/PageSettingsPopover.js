@@ -363,7 +363,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
               value={purchase.freeAllowance ?? 0}
               onChange={(e) => updateCf('purchase', { freeAllowance: Math.max(0, parseInt(e.target.value, 10) || 0) })}
             />
-            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>How many photos each client can download for free before paying.</p>
+            <p className="text-[11.5px] mt-1.5" style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>How many photos each client can download for free before paying.</p>
           </div>
 
           <div className="space-y-3">
@@ -394,8 +394,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                   <div className="mb-3">
                     <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>What's the offer?</div>
                     <select
-                      className="w-full text-xs text-[#2c2416] outline-none"
-                      style={{ border: '1px solid rgba(160,140,110,0.28)', borderRadius: 8, background: '#fff', padding: '8px 10px' }}
+                      style={selectStyle}
                       value={isAll ? 'all' : 'number'}
                       onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: e.target.value === 'all' ? 'all' : 10 }) })}
                     >
