@@ -20,10 +20,10 @@ function StackThumb({ src }) {
   if (!src) return null
   const bg = { backgroundImage: `url('${src}')`, backgroundSize: 'cover', backgroundPosition: 'center' }
   return (
-    <div data-pkg-thumb style={{ position: 'relative', width: 48, height: 48, flexShrink: 0 }}>
-      <i style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', transform: 'rotate(-7deg) translate(-3px,2px)', filter: 'brightness(.9)', ...bg }} />
-      <i style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', transform: 'rotate(4deg) translate(3px,1px)', filter: 'brightness(.95)', ...bg }} />
-      <i style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', border: '2px solid #fdf9f4', ...bg }} />
+    <div data-pkg-thumb aria-hidden="true" style={{ position: 'relative', width: 48, height: 48, flexShrink: 0 }}>
+      <span style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', transform: 'rotate(-7deg) translate(-3px,2px)', filter: 'brightness(.9)', ...bg }} />
+      <span style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', transform: 'rotate(4deg) translate(3px,1px)', filter: 'brightness(.95)', ...bg }} />
+      <span style={{ position: 'absolute', inset: 0, borderRadius: 6, boxShadow: '0 1px 3px rgba(20,14,8,.25)', border: '2px solid #fdf9f4', ...bg }} />
     </div>
   )
 }
@@ -83,7 +83,7 @@ export default function PackagesDrawer({ open, onClose }) {
               onMouseLeave={(e) => { e.currentTarget.style.background = '#fdf9f4' }}
             >
               <StackThumb src={packageThumb ? (getSizedUrl(packageThumb, 'thumbnail') || packageThumb) : ''} />
-              <div style={{ textAlign: 'left' }}>
+              <div style={{ textAlign: 'left', flexGrow: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{pkg.label}</div>
                 <div style={{ fontSize: 12, color: '#a8967a', marginTop: 2 }}>
                   {pkg.credits === 'all' ? 'Everything in this gallery' : `${pkg.credits} more photo${pkg.credits === 1 ? '' : 's'}`}
