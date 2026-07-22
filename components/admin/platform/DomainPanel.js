@@ -108,16 +108,18 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
     finally { setBusy(false) }
   }
 
-  async function search(e) {
-    e.preventDefault()
-    if (!query.trim()) return
-    setSearching(true)
-    try {
-      const res = await fetch(`/api/admin/domain/search?q=${encodeURIComponent(query)}`)
-      const data = await res.json()
-      setResults(data.results || [])
-    } finally { setSearching(false) }
-  }
+  useEffect(() => {
+    if (!query.trim()) { setResults(null); return }
+    const t = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const res = await fetch(`/api/admin/domain/search?q=${encodeURIComponent(query)}`)
+        const data = await res.json()
+        setResults(data.results || [])
+      } finally { setSearching(false) }
+    }, 450)
+    return () => clearTimeout(t)
+  }, [query])
 
   // Detect the domain's DNS provider + nameservers — for tailored setup guidance
   // while pending, and as reassuring "here's where it lives" detail once active.
@@ -162,7 +164,7 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
 
         {!cd && (
           <form onSubmit={connect} className="space-y-2">
-            <input autoFocus style={input} placeholder="photos.yourname.com" value={name}
+            <input autoFocus style={input} placeholder="yourname.com" value={name}
               onChange={(e) => setName(e.target.value)} />
             {error && <p style={{ fontSize: 10.5, color: '#b03030' }}>{error}</p>}
             <button type="submit" disabled={busy || !name.trim()}
@@ -248,26 +250,31 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
       {!cd && (
         <div className="space-y-2" style={{ borderTop: '1px solid rgba(160,140,110,0.12)', paddingTop: 14 }}>
           <div style={label}>Find a new domain</div>
-          <form onSubmit={search}>
-            <input style={input} placeholder="Find a new domain (e.g. your name)" value={query}
-              onChange={(e) => setQuery(e.target.value)} />
-          </form>
-          {searching && <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Searching…</p>}
-          {results && results.map((r) => (
-            <div key={r.domain} className="flex items-center justify-between" style={{ fontSize: 12 }}>
-              <span style={{ fontFamily: MONO, color: r.available ? '#2c2416' : 'var(--text-muted)' }}>{r.domain}</span>
-              {r.available ? (
-                <span className="flex items-center gap-2">
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>${r.price}/yr</span>
-                  <a href={r.registrarUrl} target="_blank" rel="noreferrer"
-                    style={{ fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>Get it</a>
-                </span>
-              ) : (
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Taken</span>
-              )}
+          <input style={input} placeholder="Try a name or keyword" value={query}
+            onChange={(e) => setQuery(e.target.value)} />
+          {results && (
+            <div className="scroll-thin" style={{ maxHeight: 220, overflowY: 'auto' }}>
+              {results.map((r) => (
+                <div key={r.domain} className="flex items-center justify-between" style={{ fontSize: 12, padding: '3px 0' }}>
+                  <span style={{ fontFamily: MONO, color: r.available ? '#2c2416' : 'var(--text-muted)' }}>{r.domain}</span>
+                  {r.available ? (
+                    <span className="flex items-center gap-2">
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>${r.price}/yr</span>
+                      <a href={r.registrarUrl} target="_blank" rel="noreferrer"
+                        style={{ fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>Get it</a>
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Taken</span>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-          {results && <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>After you buy it, come back and connect it above.</p>}
+          )}
+          {(query.trim()) && (
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+              {searching ? 'Searching…' : 'After you buy it, come back and connect it above.'}
+            </p>
+          )}
         </div>
       )}
     </div>
