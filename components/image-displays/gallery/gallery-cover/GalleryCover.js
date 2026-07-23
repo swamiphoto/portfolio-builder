@@ -1,7 +1,13 @@
 import React from "react";
 import { HiOutlineArrowLeft } from "react-icons/hi2";
+import { useClientEngagement } from "../../engagement/ClientEngagementContext";
 
 const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, username, basePath, onChildPageClick, showChildNav = true, suppressCover = false, coverHeight = 'partial', buttonStyle = 'solid' }) => {
+  // "View Packages" is context-driven, same as PageCover: live gates on connected
+  // payouts; the editor preview supplies a PreviewPackagesProvider so it shows there too.
+  const ctx = useClientEngagement()
+  const showPackages = !!(ctx?.features?.purchase && (ctx.packages || []).length)
+
   // When the page has a cover image, PageCover renders the hero (title,
   // description, sub-nav links, and music-show/client buttons) over the image,
   // so this below-the-fold cover would duplicate all of it. Suppress it entirely.
@@ -9,7 +15,7 @@ const GalleryCover = ({ name, description, enableSlideshow = false, enableClient
 
   const hasChildNav = showChildNav && childPages?.length > 0
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
-  const hasActions = enableSlideshow || enableClientView
+  const hasActions = enableSlideshow || enableClientView || showPackages
   const hasContent = name || description || hasChildNav || hasActions
 
   if (!hasContent) return null
@@ -54,6 +60,11 @@ const GalleryCover = ({ name, description, enableSlideshow = false, enableClient
             {enableSlideshow && (
               <button onClick={onSlideshowClick} className={`w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg font-serif font-light transition tracking-wide ${musicBtnCls}`}>
                 View Music Show
+              </button>
+            )}
+            {showPackages && (
+              <button onClick={() => ctx?.openPurchase?.()} className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg font-serif font-light transition tracking-wide bg-transparent text-gray-900 border border-gray-900 hover:bg-gray-900/5">
+                View Packages
               </button>
             )}
             {enableClientView && (

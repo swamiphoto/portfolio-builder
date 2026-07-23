@@ -246,3 +246,28 @@ export function ReviewFeedbackProvider({ feedbackByPhoto, onOpenPhoto, children 
   }), [feedbackByPhoto, onOpenPhoto])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
+
+// Read-only packages context for the editor preview. Lights up the cover's
+// "View Packages" button (features.purchase, ignoring payout status — there is no
+// real checkout here) and opens the real PackagesDrawer so the photographer can
+// see the buying flow while editing. No network, no Stripe: buy is inert.
+// Only features.purchase is set, so favorites/comments/watermark overlays stay off.
+export function PreviewPackagesProvider({ packages, currency, thumb, children }) {
+  const [open, setOpen] = useState(false)
+  const value = useMemo(() => ({
+    mode: 'preview',
+    features: { purchase: (packages || []).length > 0 },
+    packages: packages || [],
+    purchaseCurrency: currency || 'USD',
+    packageThumb: thumb || '',
+    openPurchase: () => setOpen(true),
+    buyPackage: () => {},
+    identity: null,
+  }), [packages, currency, thumb])
+  return (
+    <Ctx.Provider value={value}>
+      {children}
+      <PackagesDrawer open={open} onClose={() => setOpen(false)} previewInert />
+    </Ctx.Provider>
+  )
+}

@@ -30,12 +30,14 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
   const primaryStyle = cover.buttonStyle === 'outline' ? 'outline' : 'solid'
   const secondaryStyle = secondaryButtonStyle(primaryStyle)
 
+  // Context-driven: live gates on connected payouts; the editor preview supplies
+  // a lightweight PreviewPackagesProvider so this lights up while editing too.
   const showPackages = !!(ctx?.features?.purchase && (ctx.packages || []).length)
 
   const buttons = []
   if (primaryButton?.label) buttons.push(primaryButton)
   if (slideshowHref) buttons.push({ label: 'View Music Show', href: slideshowHref })
-  if (showPackages) buttons.push({ label: 'View Packages', onClick: () => ctx.openPurchase() })
+  if (showPackages) buttons.push({ label: 'View Packages', onClick: () => ctx?.openPurchase?.() })
   if (clientFeaturesEnabled) buttons.push({ label: 'Client Login', href: '#client-login' })
 
   return (
