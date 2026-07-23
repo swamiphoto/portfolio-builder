@@ -30,7 +30,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const fonts = spec.fonts
     ? spec.fonts.map(f => ({ value: f.id, label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span> }))
     : null
-  const aligns = spec.aligns ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
+  const aligns = spec.aligns && spec.aligns.length > 1 ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
   const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
   // Caption pills preview their own style so the choice is legible at a glance.
   const captionStyles = spec.captionStyles

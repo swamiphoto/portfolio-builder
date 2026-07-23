@@ -137,6 +137,7 @@ export function mergeBlockSpec(baseSpec, override) {
     variants,
     ...(override && override.defaultVariant ? { defaultVariant: override.defaultVariant } : {}),
     ...(override && override.defaultAlign ? { defaultAlign: override.defaultAlign } : {}),
+    ...(override && override.aligns ? { aligns: override.aligns } : {}),
     ...(override && override.defaultFont ? { defaultFont: override.defaultFont } : {}),
     ...(override && override.defaultButtonStyle ? { defaultButtonStyle: override.defaultButtonStyle } : {}),
   }
