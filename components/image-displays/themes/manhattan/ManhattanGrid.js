@@ -7,7 +7,7 @@ import HoverCaption from '../../gallery/HoverCaption'
 
 export default function ManhattanGrid({ images = [], onImageClick, captionStyle = 'sans' }) {
   return (
-    <div className="manhattan-grid" style={{ columnGap: '1rem', columnCount: 2 }}>
+    <div className="manhattan-grid" style={{ columnGap: '1rem' }}>
       {images.map((img, i) => {
         const url = getImageRefUrl(img) || img.url || img
         const caption = img.caption || ''

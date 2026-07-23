@@ -37,7 +37,7 @@ describe('SiteNav left-rail', () => {
     renderRail(siteConfig, { currentPageId: 'work' })
     const link = screen.getByText('Work')
     // New design: active state is communicated via inline color (terracotta), not underline class
-    expect(link.style.color).toBeTruthy()
+    expect(link.style.color).toBe('var(--theme-accent, #b5502e)')
   })
 })
 

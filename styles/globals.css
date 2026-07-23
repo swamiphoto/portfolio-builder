@@ -158,5 +158,5 @@ a {
 [data-theme="manhattan"] .testimonial-block figure { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; align-items: flex-start !important; }
 [data-theme="manhattan"] .testimonial-block blockquote { color: var(--theme-text) !important; }
 [data-theme="manhattan"] [data-contact-wrap] { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; }
-[data-theme="manhattan"] .stacked-gallery-block [style*="margin: 0px auto"],
+[data-theme="manhattan"] .stacked-gallery-block [style*="margin: 0 auto"],
 [data-theme="manhattan"] .stacked-gallery-block .flex.flex-col.items-center { align-items: flex-start !important; }
