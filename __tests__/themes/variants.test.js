@@ -8,18 +8,18 @@ describe('resolveVariant', () => {
 
   it('falls back to the theme default when no state exists', () => {
     expect(resolveVariant({ type: 'photo' }, 'kyoto')).toBe('full-bleed')
-    expect(resolveVariant({ type: 'photo' }, 'manhattan')).toBe('full-bleed')
+    expect(resolveVariant({ type: 'photo' }, 'manhattan')).toBe('single')
   })
 
   it('falls back to the theme default when saved variant is not present', () => {
     const block = { type: 'photo', themeState: { manhattan: { variant: 'full-width' } } }
-    // 'full-width' is the old manhattan-local id; no longer valid — falls back to base default
-    expect(resolveVariant(block, 'manhattan')).toBe('full-bleed')
+    // 'full-width' is the old manhattan-local id; no longer valid — falls back to manhattan's single-photo default
+    expect(resolveVariant(block, 'manhattan')).toBe('single')
   })
 
   it('does not cross theme keys', () => {
     const block = { type: 'photo', themeState: { kyoto: { variant: 'centered' } } }
-    expect(resolveVariant(block, 'manhattan')).toBe('full-bleed')
+    expect(resolveVariant(block, 'manhattan')).toBe('single')
   })
 
   it('reads legacy photo variant/layout when themeState is absent', () => {

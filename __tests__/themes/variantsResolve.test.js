@@ -15,9 +15,10 @@ describe('resolveVariant with shared ids + aliases', () => {
     const b = { type: 'photos', themeState: { kyoto: { variant: 'grid' } } }
     expect(resolveVariant(b, 'kyoto')).toBe('grid')
   })
-  it('aliases legacy manhattan photo ids to shared ids', () => {
+  it('legacy manhattan photo variants collapse to the single rendering', () => {
     const b = { type: 'photo', themeState: { manhattan: { variant: 'framed' } } }
-    expect(resolveVariant(b, 'manhattan')).toBe('centered')
+    // 'framed' is no longer a valid manhattan photo variant; falls back to manhattan's single-photo default
+    expect(resolveVariant(b, 'manhattan')).toBe('single')
   })
   it('falls back to default when nothing valid', () => {
     expect(resolveVariant({ type: 'photos' }, 'kyoto')).toBe('stacked')
