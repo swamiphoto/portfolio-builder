@@ -284,8 +284,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} captionStyle={resolveCaptionStyle(block)} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={STACKED_PCT[size]} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={STACKED_PCT[size]} insideCaption={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
               );
@@ -297,8 +297,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} captionStyle={resolveCaptionStyle(block)} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
               );
@@ -309,7 +309,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
-                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} />
                   <Wiggle />
                 </div>
               );

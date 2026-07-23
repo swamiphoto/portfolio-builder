@@ -5,8 +5,9 @@ import styles from "./StackedGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
+import HoverCaption from "../HoverCaption";
 
-const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72 }) => {
+const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72, insideCaption = false }) => {
   const capCss = captionStyleCss(captionStyle);
   const colWidth = `${widthPct}%`;
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
@@ -104,8 +105,9 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                           <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                             <EngagementActions imageUrl={image.src} />
                           </div>
+                          {insideCaption && <HoverCaption caption={getCaptionForUrl(image.src)} captionStyle={captionStyle} />}
                         </div>
-                        {getCaptionForUrl(image.src) && (
+                        {getCaptionForUrl(image.src) && !insideCaption && (
                           <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{getCaptionForUrl(image.src)}</p>
                         )}
                       </div>
@@ -133,8 +135,9 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                     <EngagementActions imageUrl={entry.src} />
                   </div>
+                  {insideCaption && <HoverCaption caption={getCaptionForUrl(entry.src)} captionStyle={captionStyle} />}
                 </div>
-                {getCaptionForUrl(entry.src) && (
+                {getCaptionForUrl(entry.src) && !insideCaption && (
                   <p className="mt-2 text-sm italic text-center text-gray-500" style={{ ...capCss, maxWidth: colWidth }}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>

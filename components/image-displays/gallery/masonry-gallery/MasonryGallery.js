@@ -6,8 +6,9 @@ import styles from "./MasonryGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
+import HoverCaption from "../HoverCaption";
 
-const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans' }) => {
+const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans', insideCaption = false }) => {
   const capCss = captionStyleCss(captionStyle);
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   const breakpointColumnsObj = columns != null ? { default: columns } : { default: 2, 700: 1 };
@@ -40,8 +41,9 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
                       <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                         <EngagementActions imageUrl={url} />
                       </div>
+                      {insideCaption && <HoverCaption caption={caption} captionStyle={captionStyle} />}
                     </div>
-                    {caption && (
+                    {caption && !insideCaption && (
                       <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{caption}</p>
                     )}
                   </div>
