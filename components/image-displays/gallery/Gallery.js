@@ -268,7 +268,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
                     {themeId === 'manhattan'
-                      ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} />
+                      ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />
                       : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} />}
                   </div>
                 );
