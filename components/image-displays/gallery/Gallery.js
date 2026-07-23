@@ -191,6 +191,9 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans' }) {
 
 const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
+  // Manhattan moves its section divider into the left rail (see SiteNav); the
+  // body renders no between-section wiggles. Other themes keep them.
+  const Wiggle = () => (themeId === 'manhattan' ? null : <WiggleLine />)
   const adminViewport = useAdminViewport()
   const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
   const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
@@ -260,7 +263,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const size = sizeKey(resolvePhotoSize(block, themeId))
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} size={size} /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} size={size} /><Wiggle /></div> : null;
               if (variantId === 'grid') {
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
@@ -282,37 +285,37 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   {usemasonry
                     ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} captionStyle={resolveCaptionStyle(block)} />
                     : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={STACKED_PCT[size]} />}
-                  <WiggleLine />
+                  <Wiggle />
                 </div>
               );
             }
 
             case "stacked": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="stacked" /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="stacked" /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
                     ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} captionStyle={resolveCaptionStyle(block)} />
                     : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />}
-                  <WiggleLine />
+                  <Wiggle />
                 </div>
               );
             }
 
             case "masonry": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" /><WiggleLine /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
                   <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} />
-                  <WiggleLine />
+                  <Wiggle />
                 </div>
               );
             }
 
             case "text": {
-              if (!block.content) return showPlaceholders ? <div key={`block-${index}`} data-block-index={index} {...hoverProps}><PlaceholderText /><WiggleLine /></div> : null;
+              if (!block.content) return showPlaceholders ? <div key={`block-${index}`} data-block-index={index} {...hoverProps}><PlaceholderText /><Wiggle /></div> : null;
               const variantId = resolveVariant(block, themeId)
               const v = { heading: 1, subheading: 2, body: 3, quote: 4 }[variantId] || 1
               const align = resolveAlign(block, themeId)
@@ -339,7 +342,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             case "photo": {
               const variantId = resolveVariant(block, themeId)
               const size = sizeKey(resolvePhotoSize(block, themeId))
-              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto variant={variantId} size={size} /><WiggleLine /></div> : null;
+              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto variant={variantId} size={size} /><Wiggle /></div> : null;
               if (themeId === 'manhattan' && variantId === 'framed') {
                 return (
                   <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
@@ -359,7 +362,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     print={block.print}
                     captionStyle={resolveCaptionStyle(block)}
                   />
-                  <WiggleLine />
+                  <Wiggle />
                 </div>
               );
             }
@@ -367,11 +370,11 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             case "video": {
               const variantId = resolveVariant(block, themeId)
               const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 2
-              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo variant={videoVariant} caption={block.caption} captionStyle={resolveCaptionStyle(block)} /><WiggleLine /></div> : null;
+              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo variant={videoVariant} caption={block.caption} captionStyle={resolveCaptionStyle(block)} /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}>
                   <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} captionStyle={resolveCaptionStyle(block)} />
-                  <WiggleLine />
+                  <Wiggle />
                 </div>
               );
             }
@@ -411,7 +414,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     <figure style={{ maxWidth: '36rem', margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
                       {v === 2 ? <>{barsBlob}{avatarBlob}</> : <>{avatarBlob}{barsBlob}</>}
                     </figure>
-                    <WiggleLine />
+                    <Wiggle />
                   </div>
                 )
               }
@@ -447,7 +450,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                       </div>
                     </>}
                   </figure>
-                  <WiggleLine />
+                  <Wiggle />
                 </div>
               )
             }
