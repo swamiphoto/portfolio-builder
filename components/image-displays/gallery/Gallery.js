@@ -19,6 +19,7 @@ import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
 import GridGallery from "./grid-gallery/GridGallery";
 import SquareGallery from "./square-gallery/SquareGallery";
 import FramedPhoto from "./photo-block/FramedPhoto";
+import ManhattanPhoto from "./photo-block/ManhattanPhoto";
 import PageGalleryLinks from "./page-gallery/PageGalleryLinks";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -343,10 +344,16 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const variantId = resolveVariant(block, themeId)
               const size = sizeKey(resolvePhotoSize(block, themeId))
               if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto variant={variantId} size={size} /><Wiggle /></div> : null;
-              if (themeId === 'manhattan' && variantId === 'framed') {
+              if (themeId === 'manhattan') {
                 return (
                   <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>
-                    <FramedPhoto imageUrl={getImageRefUrl(block.image || block.imageUrl)} caption={block.caption} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />
+                    <ManhattanPhoto
+                      imageUrl={getImageRefUrl(block.image || block.imageUrl)}
+                      caption={block.caption}
+                      onImageClick={makeClickHandler(index)}
+                      captionStyle={resolveCaptionStyle(block)}
+                      print={block.print}
+                    />
                   </div>
                 );
               }
