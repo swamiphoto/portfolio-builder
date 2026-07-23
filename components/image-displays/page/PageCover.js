@@ -2,6 +2,7 @@
 import { getSizedUrl } from '../../../common/imageUtils'
 import { secondaryButtonStyle } from '../../../common/coverButtons'
 import { useClientEngagement } from '../engagement/ClientEngagementContext'
+import ManhattanHero from './ManhattanHero'
 
 const BUTTON_STYLE_MAP = {
   solid: 'bg-white text-stone-900 hover:bg-stone-100',
@@ -22,8 +23,11 @@ function CtaButton({ label, href, onClick, style }) {
   )
 }
 
-export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [] }) {
+export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [], themeId }) {
   const ctx = useClientEngagement()
+  if (themeId === 'manhattan') {
+    return <ManhattanHero title={title} description={description} slideshowHref={slideshowHref} />
+  }
   if (!cover || !cover.imageUrl) return null
   const isFull = cover.height === 'full'
   const heightClass = isFull ? 'h-screen' : 'h-[60vh]'
