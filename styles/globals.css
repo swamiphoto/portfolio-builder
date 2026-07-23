@@ -138,7 +138,25 @@ a {
 @media (min-width: 768px) {
   [data-theme="manhattan"] .theme-shell { display: flex; align-items: flex-start; }
   [data-theme="manhattan"] .theme-content { flex: 1 1 auto; min-width: 0; }
+  /* Left-anchored content with air on the right (widescreens). Left edge sits
+     where the old divider was; right padding grows with viewport. */
+  [data-theme="manhattan"] .theme-content { padding-left: 2.5rem; padding-right: clamp(2.5rem, 8vw, 8rem); }
 }
-[data-theme="manhattan"] .gallery-container { max-width: 1200px; }
-/* Manhattan full-width photo stays inside the content region (no 100vw bleed) */
-[data-theme="manhattan"] .photo-block .w-screen { position: static; left: auto; right: auto; margin-left: 0; margin-right: 0; width: 100%; }
+[data-theme="manhattan"] .gallery-container { max-width: none; }
+
+/* Sharp corners on every image in the content column. */
+[data-theme="manhattan"] .theme-content img { border-radius: 0 !important; }
+
+/* Gallery-wall: 2 columns, 3 on large screens. */
+[data-theme="manhattan"] .manhattan-grid { column-count: 2; }
+@media (min-width: 1280px) { [data-theme="manhattan"] .manhattan-grid { column-count: 3; } }
+
+/* Left-anchor blocks that ship centered (mx-auto / margin:0 auto): kill the
+   right auto-margin so everything shares one left spine; each block's own
+   max-width leaves the right-side air. !important overrides inline margins. */
+[data-theme="manhattan"] .text-block { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; color: var(--theme-text); }
+[data-theme="manhattan"] .testimonial-block figure { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; align-items: flex-start !important; }
+[data-theme="manhattan"] .testimonial-block blockquote { color: var(--theme-text) !important; }
+[data-theme="manhattan"] [data-contact-wrap] { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; }
+[data-theme="manhattan"] .stacked-gallery-block [style*="margin: 0px auto"],
+[data-theme="manhattan"] .stacked-gallery-block .flex.flex-col.items-center { align-items: flex-start !important; }
