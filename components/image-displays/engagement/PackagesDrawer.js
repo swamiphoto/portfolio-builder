@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { useClientEngagement } from './ClientEngagementContext'
 import { getSizedUrl } from '../../../common/imageUtils'
+import { useIsMobile } from '../../../common/useIsMobile'
 
 const PANEL_WIDTH = 460
 
@@ -36,6 +37,7 @@ export default function PackagesDrawer({ open, onClose, previewInert = false }) 
   const [hovered, setHovered] = useState(null) // card id under the cursor (inline styles can't :hover)
   const [btnHover, setBtnHover] = useState(null) // price-button hover, tracked separately from the card
   const [toast, setToast] = useState(null) // transient "heading to Stripe" notice shown on Buy
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (!open) return
@@ -77,7 +79,24 @@ export default function PackagesDrawer({ open, onClose, previewInert = false }) 
         role="dialog"
         aria-label="Packages"
         aria-hidden={!open}
-        style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 81, width: PANEL_WIDTH, maxWidth: '92vw', background: '#f4efe8', boxShadow: '-24px 0 60px rgba(20,14,8,0.4)', transform: open ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}
+        style={isMobile ? {
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 81,
+          width: '100%', maxHeight: '88vh',
+          background: '#f4efe8',
+          borderRadius: '16px 16px 0 0',
+          boxShadow: '0 -24px 60px rgba(20,14,8,0.4)',
+          transform: open ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)',
+          display: 'flex', flexDirection: 'column', overflowY: 'auto',
+        } : {
+          position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 81,
+          width: PANEL_WIDTH, maxWidth: '92vw',
+          background: '#f4efe8',
+          boxShadow: '-24px 0 60px rgba(20,14,8,0.4)',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)',
+          display: 'flex', flexDirection: 'column', overflowY: 'auto',
+        }}
       >
         <div style={{ position: 'relative', padding: '28px 20px 16px' }}>
           <button type="button" aria-label="Close packages" onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a6b55' }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.14)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
