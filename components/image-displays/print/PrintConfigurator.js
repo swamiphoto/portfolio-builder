@@ -102,20 +102,22 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
             Bring the photograph home
           </h3>
           <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: '#7a6b55' }}>
-            Gallery-quality prints made to order by professional labs — color-managed
-            so what you see is what you get, printed on archival lustre or matte paper
-            (or brilliant metal), and packed with care. Shipped worldwide to your door,
-            most orders arriving within about a week.
+            Order a real print of this photo, made just for you. Professional fine-art
+            labs do the printing and color-manage every file, so it looks the way it
+            does on screen. Choose archival lustre or matte paper, or bright metal. We
+            pack it with care and ship worldwide, usually landing at your door in about
+            a week. And every print supports the photographer directly.
           </p>
         </div>
 
-        {/* Preview — no ground; the print sits directly on the drawer so it reads true. */}
+        {/* Preview — no ground; the print sits directly on the drawer so it reads
+            true. Smaller + centered, with room around it so the shadow isn't clipped. */}
         <div
           style={{
-            margin: '0 20px', padding: '18px 8px 28px',
+            margin: '0 20px', padding: '26px 34px 40px',
             background: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, overflow: 'hidden',
+            flexShrink: 0,
             minHeight: 180,
           }}
         >
@@ -125,6 +127,7 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
               alt=""
               spec={spec}
               className="object-contain"
+              maxHeight="32vh"
             />
           )}
         </div>
