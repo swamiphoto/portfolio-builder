@@ -10,7 +10,8 @@ import CheckoutStep from './CheckoutStep'
 import { usePrintStore } from './PrintStoreContext'
 
 const SERIF = '"Cormorant Garamond", Georgia, serif'
-const PANEL_WIDTH = 460
+// Wide enough that the size toggles sit on one row (no ugly wrap).
+const PANEL_WIDTH = 560
 
 function defaultSpec(print) {
   const size = print?.maxSharpSize || (print?.availableSizes || [])[0] || null
@@ -95,13 +96,27 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
           </button>
         </div>
 
-        {/* Wall preview */}
+        {/* Intro — a little excitement + how it works. */}
+        <div style={{ padding: '2px 20px 4px' }}>
+          <h3 style={{ margin: '0 0 6px', fontFamily: SERIF, fontSize: 23, fontWeight: 400, color: '#2c2416', lineHeight: 1.12 }}>
+            Bring the photograph home
+          </h3>
+          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: '#7a6b55' }}>
+            Professional fine-art labs will color-manage this photo and print it on
+            high-quality photo paper. We pack it with care and ship worldwide, usually
+            landing at your door in about a week. Every order also supports the
+            photographer directly.
+          </p>
+        </div>
+
+        {/* Preview — no ground; the print sits directly on the drawer so it reads
+            true. Smaller + centered, with room around it so the shadow isn't clipped. */}
         <div
           style={{
-            margin: '0 20px', borderRadius: 8, padding: '26px 24px',
-            background: 'linear-gradient(180deg, #eae2d4 0%, #e5ddce 100%)',
+            margin: '0 20px', padding: '26px 34px 40px',
+            background: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, overflow: 'hidden',
+            flexShrink: 0,
             minHeight: 180,
           }}
         >
@@ -111,12 +126,13 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
               alt=""
               spec={spec}
               className="object-contain"
+              maxHeight="32vh"
             />
           )}
         </div>
 
         {/* Controls — only mounted when a print is loaded (avoids pricing a null size while closed) */}
-        <div style={{ padding: '22px 20px 28px' }}>
+        <div style={{ padding: '22px 20px 0' }}>
           {print && spec.size && (
             checkout ? (
               <CheckoutStep

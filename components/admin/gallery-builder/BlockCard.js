@@ -400,10 +400,16 @@ function BlockCard({
       if (block.type === 'stacked') return 'Stacked';
       return null;
     }
-    // Text: the font style (Serif / Display / Editorial) is the meaningful choice.
+    // Text: the font style is the meaningful choice.
     if (block.type === 'text' && spec.fonts) {
       const fontId = block.font || spec.defaultFont;
       return spec.fonts.find((f) => f.id === fontId)?.label || null;
+    }
+    // Manhattan: testimonial surfaces its quote style; single photo + video have
+    // no layout choice, so no (misleading) variant label.
+    if (themeId === 'manhattan') {
+      if (block.type === 'testimonial') return block.quoteStyle === 'regular' ? 'Regular' : 'Italic';
+      if (block.type === 'video' || block.type === 'photo') return null;
     }
     // Contact has a single 'Standard' variant — nothing worth surfacing.
     if (block.type === 'contact') return null;

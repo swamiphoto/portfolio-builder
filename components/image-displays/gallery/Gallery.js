@@ -37,9 +37,14 @@ const STACKED_PCT = { small: 44, medium: 56, large: 72 }
 const PHOTO_CENTERED_PCT = { small: 44, medium: 56, large: 72 }
 const sizeKey = (s) => (s === 'small' || s === 'medium' || s === 'large' ? s : 'large')
 
-function PlaceholderIcon() {
+// Manhattan empty-state palette — cool neutral, not the warm Kyoto tones.
+const MH_TILE = '#ececec'
+const MH_ICON = '#c4c4c4'
+const MH_BLOB = '#e6e6e6'
+
+function PlaceholderIcon({ color = '#d3c6b2' }) {
   return (
-    <svg className="w-10 h-10" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
+    <svg className="w-10 h-10" style={{ color }} viewBox="0 0 48 48" fill="none">
       <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="33" cy="18" r="3.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M4 32 l10-10 a2 2 0 0 1 2.8 0l8 8 a2 2 0 0 0 2.8 0l4-4 a2 2 0 0 1 2.8 0L44 34" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -76,8 +81,8 @@ function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto
       <div className="manhattan-grid" style={{ columnGap: '1rem' }} data-photos-placeholder="manhattan">
         {PLACEHOLDER_ASPECTS.map((aspect, i) => (
           <div key={i} className="mb-4" style={{ breakInside: 'avoid' }}>
-            <div className={`${aspect} w-full flex items-center justify-center select-none`} style={{ background: '#ede7dc' }}>
-              <PlaceholderIcon />
+            <div className={`${aspect} w-full flex items-center justify-center select-none`} style={{ background: MH_TILE }}>
+              <PlaceholderIcon color={MH_ICON} />
             </div>
           </div>
         ))}
@@ -152,8 +157,8 @@ function PlaceholderPhoto({ variant = 'full-bleed', size = 'large', themeId = 'k
     // Manhattan single photo spans the full content width, sharp corners.
     return (
       <div className="w-full" data-photo-placeholder="manhattan">
-        <div className="w-full aspect-[3/2] flex items-center justify-center select-none" style={{ background: '#ede7dc' }}>
-          <PlaceholderIcon />
+        <div className="w-full aspect-[3/2] flex items-center justify-center select-none" style={{ background: MH_TILE }}>
+          <PlaceholderIcon color={MH_ICON} />
         </div>
       </div>
     )
@@ -192,9 +197,9 @@ function PlaceholderText({ themeId = 'kyoto' }) {
     // Left-anchored, readable measure — matches Manhattan text blocks.
     return (
       <div className="max-w-2xl py-10 space-y-4">
-        <div className="h-6 bg-stone-100 w-3/4" />
-        <div className="h-6 bg-stone-100 w-1/2" />
-        <div className="h-6 bg-stone-100 w-5/8" />
+        <div className="h-6 w-3/4" style={{ background: MH_BLOB }} />
+        <div className="h-6 w-1/2" style={{ background: MH_BLOB }} />
+        <div className="h-6 w-5/8" style={{ background: MH_BLOB }} />
       </div>
     )
   }
@@ -213,8 +218,8 @@ function PlaceholderText({ themeId = 'kyoto' }) {
 function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans', themeId = 'kyoto' }) {
   const capCss = captionStyleCss(captionStyle)
   const box = (
-    <div className={`w-full aspect-[16/9] overflow-hidden select-none flex items-center justify-center ${variant === 1 || themeId === 'manhattan' ? 'rounded-none' : 'rounded-3xl'}`} style={{ background: '#ede7dc' }}>
-      <svg className="w-14 h-14" style={{ color: '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
+    <div className={`w-full aspect-[16/9] overflow-hidden select-none flex items-center justify-center ${variant === 1 || themeId === 'manhattan' ? 'rounded-none' : 'rounded-3xl'}`} style={{ background: themeId === 'manhattan' ? MH_TILE : '#ede7dc' }}>
+      <svg className="w-14 h-14" style={{ color: themeId === 'manhattan' ? MH_ICON : '#d3c6b2' }} viewBox="0 0 48 48" fill="none">
         <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="1.5" />
         <path d="M20 17 L33 24 L20 31 Z" fill="currentColor" />
       </svg>
@@ -379,8 +384,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const v = { heading: 1, subheading: 2, body: 3, quote: 4 }[variantId] || 1
               const align = resolveAlign(block, themeId)
               const alignClass = align === 'left' ? 'text-left' : 'text-center';
-              // Manhattan text is always sans-serif (line-height tightened via CSS).
-              const fontFamily = themeId === 'manhattan' ? 'Inter, -apple-system, system-ui, sans-serif' : resolveFont(block, themeId);
+              // Font follows the block's chosen slot (Manhattan defaults to sans;
+              // Serif/Editorial are selectable). Line-height tightened via CSS.
+              const fontFamily = resolveFont(block, themeId);
               // Manhattan: small, description-level sizes. Other themes: size/margins
               // keyed off the JS mobile flag so the admin Mobile preview scales truthfully.
               const variantClass = themeId === 'manhattan'
@@ -472,20 +478,18 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const photoUrl = getImageRefUrl(block.image || block.imageUrl)
               const v = resolveVariant(block, themeId) === 'quote-above' ? 2 : 1
               const manhattan = themeId === 'manhattan'
-              const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
               const FR = '"Fraunces", Georgia, serif'
-              const INTER = 'Inter, -apple-system, system-ui, sans-serif'
 
               if (!block.text && !block.name && !photoUrl) {
                 if (!showPlaceholders) return null
                 if (manhattan) {
-                  const mBlobAvatar = <div style={{ width: 38, height: 38, background: 'linear-gradient(135deg, #ede7dc, #d9cebd)', flexShrink: 0 }} />
-                  const mBlobName = <div style={{ height: 9, borderRadius: 4, background: '#e0d8c8', width: '5rem' }} />
+                  const mBlobAvatar = <div style={{ width: 38, height: 38, background: MH_TILE, flexShrink: 0 }} />
+                  const mBlobName = <div style={{ height: 9, borderRadius: 4, background: MH_BLOB, width: '5rem' }} />
                   const mBlobBars = (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '32rem' }}>
-                      <div style={{ height: 8, borderRadius: 4, background: '#e8e0d0', width: '90%' }} />
-                      <div style={{ height: 8, borderRadius: 4, background: '#e8e0d0', width: '74%' }} />
-                      <div style={{ height: 8, borderRadius: 4, background: '#e8e0d0', width: '55%' }} />
+                      <div style={{ height: 8, borderRadius: 4, background: MH_BLOB, width: '90%' }} />
+                      <div style={{ height: 8, borderRadius: 4, background: MH_BLOB, width: '74%' }} />
+                      <div style={{ height: 8, borderRadius: 4, background: MH_BLOB, width: '55%' }} />
                     </div>
                   )
                   return (
@@ -522,8 +526,16 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               )
+              // Quote font follows the block's chosen slot (default serif); size
+              // steps the font size down and tightens line-height progressively.
+              const tFont = resolveFont(block, themeId)
+              const tScale = {
+                large:  { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 },
+                medium: { fs: 'clamp(1.05rem, 2vw, 1.3rem)',   lh: 1.5 },
+                small:  { fs: 'clamp(0.95rem, 1.5vw, 1.1rem)', lh: 1.4 },
+              }[resolveSize(block, themeId)] || { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 }
               const quote = block.text && (
-                <blockquote style={{ fontFamily: CG, fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', fontStyle: 'italic', fontWeight: 400, color: '#2c2416', lineHeight: 1.65, margin: 0, padding: 0 }}>
+                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: block.quoteStyle === 'regular' ? 'normal' : 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
                   &#8220;{block.text}&#8221;
                 </blockquote>
               )
@@ -538,18 +550,19 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 // Left-aligned, sans-serif, small, tight line-height. The quote's
                 // italic/regular style is chosen in the editor (block.quoteStyle).
                 const italic = block.quoteStyle !== 'regular'
+                const mFont = resolveFont(block, themeId)
                 const mAvatar = photoUrl && (
                   <div style={{ width: 38, height: 38, overflow: 'hidden', flexShrink: 0 }}>
                     <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )
                 const mQuote = block.text && (
-                  <blockquote style={{ fontFamily: INTER, fontSize: '0.9rem', fontStyle: italic ? 'italic' : 'normal', fontWeight: 400, color: 'var(--theme-text, #141414)', lineHeight: 1.55, margin: 0, padding: 0 }}>
-                    &#8220;{block.text}&#8221;
+                  <blockquote style={{ fontFamily: mFont, fontSize: '0.9rem', fontStyle: italic ? 'italic' : 'normal', fontWeight: 400, color: 'var(--theme-text, #141414)', lineHeight: 1.55, margin: 0, padding: 0 }}>
+                    {block.text}
                   </blockquote>
                 )
                 const mByline = block.name && (
-                  <div style={{ fontFamily: INTER, fontSize: '0.8rem', fontWeight: 500, color: 'var(--theme-text-muted, #6b6b6b)' }}>
+                  <div style={{ fontFamily: mFont, fontSize: '0.8rem', fontWeight: 500, color: 'var(--theme-text-muted, #6b6b6b)' }}>
                     {block.name}
                   </div>
                 )

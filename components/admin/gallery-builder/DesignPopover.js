@@ -33,25 +33,30 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const aligns = spec.aligns && spec.aligns.length > 1 ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
   const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
   // Caption pills preview their own style so the choice is legible at a glance.
+  // Manhattan drops the "accent" caption style (photo + video).
   const captionStyles = spec.captionStyles
-    ? spec.captionStyles.map(c => ({ value: c.id, label: <span style={{ ...captionStyleCss(c.id), fontSize: 12.5 }}>{c.label}</span> }))
+    ? spec.captionStyles
+        .filter(c => !(themeId === 'manhattan' && c.id === 'accent'))
+        .map(c => ({ value: c.id, label: <span style={{ ...captionStyleCss(c.id), fontSize: 12.5 }}>{c.label}</span> }))
     : null
   const currentVariant = resolveVariant(block, themeId)
   // Only offer Size for layouts that actually respond to it (e.g. not full-bleed
   // photos). `sizeVariants` on the spec lists the variants where size applies.
   const sizeAllowed = !spec.sizeVariants || spec.sizeVariants.includes(currentVariant)
-  const sizes = spec.sizes && sizeAllowed ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
+  // Manhattan renders page-links and testimonials at a fixed size — no Size control.
+  const hideSize = themeId === 'manhattan' && (block.type === 'page-gallery' || block.type === 'testimonial')
+  const sizes = spec.sizes && sizeAllowed && !hideSize ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
   const isPhotoBlock = block.type === 'photos' || block.type === 'photo'
   const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)
 
   const hasSize = variants.length > 1
-  // Manhattan testimonials have no layout choice; instead they offer an
-  // italic/regular quote-style toggle.
-  const isManhattanTestimonial = block.type === 'testimonial' && themeId === 'manhattan'
-  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes && !isManhattanTestimonial) return null
+  // Testimonials expose an italic/regular style toggle (both themes).
+  const isTestimonial = block.type === 'testimonial'
+  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes && !isTestimonial) return null
 
   const currentFont = block.font || spec.defaultFont
 
+  // Panel order: Font → Style → Size → Layout → (image side / align / caption / button).
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
       {fonts && (
@@ -59,18 +64,23 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
           <PillToggle value={currentFont} onChange={(v) => onUpdate({ ...block, font: v })} options={fonts} />
         </DesignSection>
       )}
-      {hasSize && (
-        <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
-          <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
-        </DesignSection>
-      )}
-      {isManhattanTestimonial && (
-        <DesignSection label="Quote">
+      {isTestimonial && (
+        <DesignSection label="Style">
           <PillToggle
             value={block.quoteStyle === 'regular' ? 'regular' : 'italic'}
             onChange={(v) => onUpdate({ ...block, quoteStyle: v })}
             options={[{ value: 'italic', label: 'Italic' }, { value: 'regular', label: 'Regular' }]}
           />
+        </DesignSection>
+      )}
+      {sizes && (
+        <DesignSection label="Size">
+          <PillToggle value={sizeValue} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
+        </DesignSection>
+      )}
+      {hasSize && (
+        <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
+          <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
       )}
       {block.type === 'page-gallery' && themeId !== 'manhattan' && resolveVariant(block, themeId) === 'list' && (
@@ -80,11 +90,6 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
             onChange={(v) => onUpdate({ ...block, imageSide: v })}
             options={[{ value: 'one', label: 'One side' }, { value: 'alternating', label: 'Alternating' }]}
           />
-        </DesignSection>
-      )}
-      {sizes && (
-        <DesignSection label="Size">
-          <PillToggle value={sizeValue} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
         </DesignSection>
       )}
       {aligns && (

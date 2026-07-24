@@ -1,6 +1,7 @@
 import React from "react";
 import ReactPlayer from "react-player";
 import { captionStyleCss } from "../../../../common/captionStyles";
+import HoverCaption from "../HoverCaption";
 
 /**
  * Extract a YouTube thumbnail URL from a YouTube video URL.
@@ -72,10 +73,12 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans', bleed = 
       ) : (
         // Full-bleed and centered
         <>
-          <div className={`${videoStyle} ${videoWrapperStyle}`}>
+          <div className={`group ${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
+            {/* Manhattan: caption inside on hover (same as photos), not below. */}
+            {bleed && <HoverCaption caption={caption} captionStyle={captionStyle} />}
           </div>
-          {caption && <p className={`my-4 font-medium text-sm md:text-xl italic ${bleed ? 'text-left' : 'text-center max-w-3xl mx-auto'}`} style={capCss}>{caption}</p>}
+          {caption && !bleed && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={capCss}>{caption}</p>}
         </>
       )}
     </div>

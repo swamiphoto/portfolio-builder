@@ -7,7 +7,7 @@ import React from 'react'
 import { SEED_CATALOG } from '../../../common/fulfillment/seedCatalog'
 import { optionPrice } from '../../../common/print/buyerPricing'
 
-const SERIF = '"Cormorant Garamond", Georgia, serif'
+const SANS = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif'
 const pretty = (id) => id.replace('x', ' × ')
 
 function Label({ children }) {
@@ -18,9 +18,10 @@ function Label({ children }) {
   )
 }
 
+// Matches the design-panel PillToggle: inset track, lifted cream active pill.
 function Track({ children }) {
   return (
-    <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 2, padding: 2, background: 'rgba(120,90,60,0.10)', borderRadius: 7, width: 'fit-content', maxWidth: '100%' }}>
+    <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 1, padding: 2, background: 'rgba(120,90,60,0.11)', boxShadow: 'inset 0 1px 1.5px rgba(60,40,15,0.10)', borderRadius: 7, width: 'fit-content', maxWidth: '100%' }}>
       {children}
     </div>
   )
@@ -34,15 +35,16 @@ function Segment({ active, onClick, ariaLabel, children }) {
       aria-label={ariaLabel}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 7,
-        padding: '6px 13px', borderRadius: 5, fontSize: 13, whiteSpace: 'nowrap',
+        padding: '5px 12px', minHeight: 26, borderRadius: 5, fontSize: 12.5, whiteSpace: 'nowrap',
         border: 'none', cursor: 'pointer',
+        fontWeight: active ? 500 : 400,
         background: active ? '#f5ecd6' : 'transparent',
-        color: active ? '#5c4f3a' : '#9c8a6f',
-        boxShadow: active ? '0 1px 2px rgba(80,60,30,0.12)' : 'none',
+        color: active ? '#2c2416' : 'var(--text-secondary, #7a6b55)',
+        boxShadow: active ? '0 1px 2px rgba(60,40,15,0.14), 0 0 0 0.5px rgba(60,40,15,0.08)' : 'none',
         transition: 'background 0.15s, color 0.15s',
       }}
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = '#6b5d47' }}
-      onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = '#9c8a6f' }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(120,90,60,0.10)' }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
     >
       {children}
     </button>
@@ -126,17 +128,23 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
         </>
       )}
 
-      <div style={{ paddingTop: 16, borderTop: '1px solid rgba(160,140,110,0.25)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Buy CTA — sans-serif, site button style, pinned to the bottom while the
+          rest of the panel scrolls. Negative side margins break it full-width out
+          of the drawer's 20px padding; the drawer bg covers content scrolling under. */}
+      <div style={{ position: 'sticky', bottom: 0, marginTop: 10, marginLeft: -20, marginRight: -20, padding: '14px 20px 16px', background: '#f4efe8', borderTop: '1px solid rgba(160,140,110,0.25)' }}>
         <button
           type="button"
           onClick={onBuy}
           style={{
-            width: '100%', padding: '13px', borderRadius: 6, border: 'none',
-            fontFamily: SERIF, fontSize: 18, letterSpacing: '0.01em',
-            background: '#2c2416', color: '#f4efe8', opacity: 1, cursor: 'pointer',
+            width: '100%', padding: '12px 16px', borderRadius: 6, border: 'none',
+            fontFamily: SANS, fontSize: 14, fontWeight: 500, letterSpacing: '0.01em',
+            background: '#2c2416', color: '#f4efe8', cursor: 'pointer',
+            transition: 'background 0.15s ease',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#3a2f22' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#2c2416' }}
         >
-          Buy this print for ${price}
+          Buy this print · ${price}
         </button>
       </div>
     </div>

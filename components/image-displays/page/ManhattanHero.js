@@ -20,7 +20,7 @@ export default function ManhattanHero({ slideshowHref }) {
 
   const buttons = []
   if (slideshowHref) buttons.push({ label: 'View Music', href: slideshowHref })
-  if (showPackages) buttons.push({ label: 'Packages', onClick: () => ctx.openPurchase() })
+  if (showPackages) buttons.push({ label: 'View Packages', onClick: () => ctx.openPurchase() })
 
   if (buttons.length === 0) return null
 

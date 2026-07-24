@@ -27,9 +27,9 @@ test('changing block.font updates the preview text fontFamily through the deboun
   expect(el.style.cursor).toBe('pointer')
 
   rerender(
-    <GalleryPreview gallery={galleryWithFont('mono')} pages={[]} siteConfig={{ design: { theme: 'kyoto' } }} username="me" onBlockClick={() => {}} />
+    <GalleryPreview gallery={galleryWithFont('display')} pages={[]} siteConfig={{ design: { theme: 'kyoto' } }} username="me" onBlockClick={() => {}} />
   )
   act(() => { jest.advanceTimersByTime(400) })
-  expect(container.querySelector('.text-block').style.fontFamily).toMatch(/Geist Mono/)
+  expect(container.querySelector('.text-block').style.fontFamily).toMatch(/Muse/)
   jest.useRealTimers()
 })
