@@ -46,16 +46,23 @@ export function setVariant(block, themeId, variantId) {
   }
 }
 
+// A stored value carried over from another theme is honored only if it's a valid
+// option for THIS theme; otherwise it resets to this theme's default. (e.g. an
+// align/font/style the current theme doesn't offer falls back, not persists.)
 export function resolveAlign(block, themeId) {
-  if (block.align) return block.align
   const spec = getBlockSpec(themeId, block.type)
+  const valid = spec?.aligns
+  if (block.align && (!valid || valid.includes(block.align))) return block.align
   return spec?.defaultAlign || 'center'
 }
 
 export function resolveFont(block, themeId) {
   const fonts = getTheme(themeId).tokens?.fonts || {}
   const spec = getBlockSpec(themeId, block.type)
-  const slot = block.font || spec?.defaultFont || 'serif'
+  const validIds = (spec?.fonts || []).map((f) => f.id)
+  const slot = (block.font && (!validIds.length || validIds.includes(block.font)))
+    ? block.font
+    : (spec?.defaultFont || 'serif')
   return fonts[slot] || fonts.serif || '"Cormorant Garamond", Georgia, serif'
 }
 

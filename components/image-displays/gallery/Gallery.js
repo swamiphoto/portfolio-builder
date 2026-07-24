@@ -535,7 +535,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 small:  { fs: 'clamp(0.95rem, 1.5vw, 1.1rem)', lh: 1.4 },
               }[resolveSize(block, themeId)] || { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 }
               const quote = block.text && (
-                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
+                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: block.quoteStyle === 'regular' ? 'normal' : 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
                   &#8220;{block.text}&#8221;
                 </blockquote>
               )

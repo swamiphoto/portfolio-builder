@@ -27,8 +27,12 @@ describe('resolveVariant with shared ids + aliases', () => {
 
 describe('resolveFont', () => {
   it('maps the block font slot to the theme family', () => {
-    const b = { type: 'text', font: 'mono' }
-    expect(resolveFont(b, 'kyoto')).toMatch(/Geist Mono/)
+    const b = { type: 'text', font: 'display' }
+    expect(resolveFont(b, 'kyoto')).toMatch(/Muse/)
+  })
+  it('resets a font slot the theme does not offer back to its default', () => {
+    // 'mono' is a real token family but not a text-block font option → default serif.
+    expect(resolveFont({ type: 'text', font: 'mono' }, 'kyoto')).toMatch(/Cormorant/)
   })
   it('defaults to serif family when no font set', () => {
     expect(resolveFont({ type: 'text' }, 'kyoto')).toMatch(/Cormorant/)

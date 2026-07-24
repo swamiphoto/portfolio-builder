@@ -25,14 +25,14 @@ function renderText(block) {
 }
 
 describe('text block font', () => {
-  it('applies the mono family when font=mono', () => {
+  it('applies the display family when font=display', () => {
     const el = renderText({
       type: 'text',
       content: 'Hello',
-      font: 'mono',
+      font: 'display',
       themeState: { kyoto: { variant: 'body' } },
     })
-    expect(el.style.fontFamily).toMatch(/Geist Mono/)
+    expect(el.style.fontFamily).toMatch(/Muse/)
   })
 
   it('defaults to the serif family', () => {
