@@ -10,7 +10,8 @@ import CheckoutStep from './CheckoutStep'
 import { usePrintStore } from './PrintStoreContext'
 
 const SERIF = '"Cormorant Garamond", Georgia, serif'
-const PANEL_WIDTH = 460
+// Wide enough that the size toggles sit on one row (no ugly wrap).
+const PANEL_WIDTH = 560
 
 function defaultSpec(print) {
   const size = print?.maxSharpSize || (print?.availableSizes || [])[0] || null
@@ -95,11 +96,11 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
           </button>
         </div>
 
-        {/* Wall preview */}
+        {/* Preview — plain neutral ground so the print reads true (no warm tint). */}
         <div
           style={{
-            margin: '0 20px', borderRadius: 8, padding: '26px 24px',
-            background: 'linear-gradient(180deg, #eae2d4 0%, #e5ddce 100%)',
+            margin: '0 20px', borderRadius: 8, padding: '30px 28px',
+            background: '#f2f2f2',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0, overflow: 'hidden',
             minHeight: 180,
