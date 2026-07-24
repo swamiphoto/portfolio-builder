@@ -96,11 +96,24 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
           </button>
         </div>
 
-        {/* Preview — plain neutral ground so the print reads true (no warm tint). */}
+        {/* Intro — a little excitement + how it works. */}
+        <div style={{ padding: '2px 20px 4px' }}>
+          <h3 style={{ margin: '0 0 6px', fontFamily: SERIF, fontSize: 23, fontWeight: 400, color: '#2c2416', lineHeight: 1.12 }}>
+            Bring the photograph home
+          </h3>
+          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: '#7a6b55' }}>
+            Gallery-quality prints made to order by professional labs — color-managed
+            so what you see is what you get, printed on archival lustre or matte paper
+            (or brilliant metal), and packed with care. Shipped worldwide to your door,
+            most orders arriving within about a week.
+          </p>
+        </div>
+
+        {/* Preview — no ground; the print sits directly on the drawer so it reads true. */}
         <div
           style={{
-            margin: '0 20px', borderRadius: 8, padding: '30px 28px',
-            background: '#f2f2f2',
+            margin: '0 20px', padding: '18px 8px 28px',
+            background: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0, overflow: 'hidden',
             minHeight: 180,
@@ -117,7 +130,7 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
         </div>
 
         {/* Controls — only mounted when a print is loaded (avoids pricing a null size while closed) */}
-        <div style={{ padding: '22px 20px 28px' }}>
+        <div style={{ padding: '22px 20px 0' }}>
           {print && spec.size && (
             checkout ? (
               <CheckoutStep
