@@ -43,8 +43,8 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   // Only offer Size for layouts that actually respond to it (e.g. not full-bleed
   // photos). `sizeVariants` on the spec lists the variants where size applies.
   const sizeAllowed = !spec.sizeVariants || spec.sizeVariants.includes(currentVariant)
-  // Manhattan page-links render at one fixed size, so no Size control there.
-  const hideSize = block.type === 'page-gallery' && themeId === 'manhattan'
+  // Manhattan renders page-links and testimonials at a fixed size — no Size control.
+  const hideSize = themeId === 'manhattan' && (block.type === 'page-gallery' || block.type === 'testimonial')
   const sizes = spec.sizes && sizeAllowed && !hideSize ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
   const isPhotoBlock = block.type === 'photos' || block.type === 'photo'
   const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)

@@ -478,9 +478,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const photoUrl = getImageRefUrl(block.image || block.imageUrl)
               const v = resolveVariant(block, themeId) === 'quote-above' ? 2 : 1
               const manhattan = themeId === 'manhattan'
-              const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
               const FR = '"Fraunces", Georgia, serif'
-              const INTER = 'Inter, -apple-system, system-ui, sans-serif'
 
               if (!block.text && !block.name && !photoUrl) {
                 if (!showPlaceholders) return null
@@ -528,8 +526,16 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               )
+              // Quote font follows the block's chosen slot (default serif); size
+              // steps the font size down and tightens line-height progressively.
+              const tFont = resolveFont(block, themeId)
+              const tScale = {
+                large:  { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 },
+                medium: { fs: 'clamp(1.05rem, 2vw, 1.3rem)',   lh: 1.5 },
+                small:  { fs: 'clamp(0.95rem, 1.5vw, 1.1rem)', lh: 1.4 },
+              }[resolveSize(block, themeId)] || { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 }
               const quote = block.text && (
-                <blockquote style={{ fontFamily: CG, fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', fontStyle: 'italic', fontWeight: 400, color: '#2c2416', lineHeight: 1.65, margin: 0, padding: 0 }}>
+                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
                   &#8220;{block.text}&#8221;
                 </blockquote>
               )

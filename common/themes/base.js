@@ -82,6 +82,12 @@ export const baseBlocks = {
       { id: 'photo-above', label: 'Photo above' },
       { id: 'quote-above', label: 'Quote above' },
     ],
+    // Quote font + size. Current design is the 'large' size; medium/small step
+    // down the font size and tighten the line-height progressively.
+    sizes: SIZE_OPTIONS,
+    defaultSize: 'large',
+    fonts: [...FONT_SLOTS],
+    defaultFont: 'serif',
   },
   contact: {
     defaultVariant: 'standard',
