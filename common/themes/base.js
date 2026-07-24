@@ -18,10 +18,12 @@ export const FONT_SLOTS = [
 // for masonry/square, image width for stacked/centered, tile scale for grid),
 // but the ids and labels are common. See resolvePhotoSize in themes/variants.js
 // for the layout-aware default (square/grid → medium, everything else → large).
+// L / M / S — same labels + order as the text block's size variants, so every
+// block's Size control reads consistently.
 export const SIZE_OPTIONS = [
-  { id: 'small', label: 'Small' },
-  { id: 'medium', label: 'Medium' },
-  { id: 'large', label: 'Large' },
+  { id: 'large', label: 'L' },
+  { id: 'medium', label: 'M' },
+  { id: 'small', label: 'S' },
 ]
 
 export const baseBlocks = {
@@ -106,11 +108,7 @@ export const baseBlocks = {
       { id: 'list', label: 'List' },
       { id: 'mosaic', label: 'Mosaic' },
     ],
-    sizes: [
-      { id: 'small', label: 'Small' },
-      { id: 'medium', label: 'Medium' },
-      { id: 'large', label: 'Large' },
-    ],
+    sizes: SIZE_OPTIONS,
     defaultSize: 'medium',
   },
 }
