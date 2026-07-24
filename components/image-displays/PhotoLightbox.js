@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getSizedUrl } from "../../common/imageUtils";
+import { useIsMobile } from "../../common/useIsMobile";
 import BuyPrintButton from "./print/BuyPrintButton";
 import EngagementActions from "./engagement/EngagementActions";
 import WatermarkOverlay from "./engagement/WatermarkOverlay";
@@ -12,6 +13,9 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
   const sellable = !!(printStore?.enabled && image?.print?.sellable);
   const [hovering, setHovering] = useState(false);
   const [peek, setPeek] = useState(true);
+  const isMobile = useIsMobile();
+  // Touch devices have no hover, so keep the CTAs always visible in the lightbox.
+  const showCtas = isMobile || hovering || peek;
 
   // Show the buy button briefly when a new image opens, then let it fade until
   // the viewer hovers the image.
@@ -82,7 +86,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
           {sellable && (
             <div
               className="absolute top-3 right-3 transition-opacity duration-500"
-              style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
+              style={{ opacity: showCtas ? 1 : 0, pointerEvents: showCtas ? 'auto' : 'none' }}
             >
               <BuyPrintButton print={image.print} imageUrl={image.url} />
             </div>
@@ -90,7 +94,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
           <WatermarkOverlay />
           <div
             className="absolute top-3 left-3 transition-opacity duration-500"
-            style={{ opacity: hovering || peek ? 1 : 0, pointerEvents: hovering || peek ? 'auto' : 'none' }}
+            style={{ opacity: showCtas ? 1 : 0, pointerEvents: showCtas ? 'auto' : 'none' }}
           >
             <EngagementActions imageUrl={image.url} />
           </div>

@@ -3,15 +3,17 @@ import { getSizedUrl } from '../../../common/imageUtils'
 import { secondaryButtonStyle } from '../../../common/coverButtons'
 import { useClientEngagement } from '../engagement/ClientEngagementContext'
 import ManhattanHero from './ManhattanHero'
+import { useIsMobile } from '../../../common/useIsMobile'
 
 const BUTTON_STYLE_MAP = {
   solid: 'bg-white text-stone-900 hover:bg-stone-100',
   outline: 'border border-white text-white hover:bg-white/10',
 }
 
-function CtaButton({ label, href, onClick, style }) {
+function CtaButton({ label, href, onClick, style, fullWidth }) {
   if (!label) return null
-  const cls = `inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`
+  const size = fullWidth ? 'w-full justify-center px-5 py-3 text-base' : 'px-5 py-2.5 text-sm'
+  const cls = `inline-flex items-center ${size} font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`
   if (onClick) {
     return <button type="button" onClick={onClick} className={cls}>{label}</button>
   }
@@ -25,6 +27,7 @@ function CtaButton({ label, href, onClick, style }) {
 
 export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [], themeId }) {
   const ctx = useClientEngagement()
+  const isMobile = useIsMobile()
   if (themeId === 'manhattan') {
     return <ManhattanHero title={title} description={description} slideshowHref={slideshowHref} />
   }
@@ -34,12 +37,14 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
   const primaryStyle = cover.buttonStyle === 'outline' ? 'outline' : 'solid'
   const secondaryStyle = secondaryButtonStyle(primaryStyle)
 
+  // Context-driven: live gates on connected payouts; the editor preview supplies
+  // a lightweight PreviewPackagesProvider so this lights up while editing too.
   const showPackages = !!(ctx?.features?.purchase && (ctx.packages || []).length)
 
   const buttons = []
   if (primaryButton?.label) buttons.push(primaryButton)
   if (slideshowHref) buttons.push({ label: 'View Music Show', href: slideshowHref })
-  if (showPackages) buttons.push({ label: 'View Packages', onClick: () => ctx.openPurchase() })
+  if (showPackages) buttons.push({ label: 'View Packages', onClick: () => ctx?.openPurchase?.() })
   if (clientFeaturesEnabled) buttons.push({ label: 'Client Login', href: '#client-login' })
 
   return (
@@ -61,9 +66,9 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
           </nav>
         )}
         {buttons.length > 0 && (
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className={isMobile ? 'flex flex-col items-stretch gap-3 w-full' : 'flex flex-wrap items-center justify-center gap-3'}>
             {buttons.map((btn, i) => (
-              <CtaButton key={i} label={btn.label} href={btn.href} onClick={btn.onClick} style={i === 0 ? primaryStyle : secondaryStyle} />
+              <CtaButton key={i} label={btn.label} href={btn.href} onClick={btn.onClick} style={i === 0 ? primaryStyle : secondaryStyle} fullWidth={isMobile} />
             ))}
           </div>
         )}

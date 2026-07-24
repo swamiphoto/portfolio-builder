@@ -7,6 +7,16 @@
 .scroll-quiet { scrollbar-width: none; }
 .scroll-quiet::-webkit-scrollbar { width: 0; }
 
+/* ── Mobile image CTAs ─────────────────────────────────────────────────────
+   On touch / phone viewports the favorite / comment / download / buy overlays
+   are hidden on the grid (too busy over the photos); the lightbox provides them
+   when an image is opened. Desktop keeps the hover-revealed overlays. The top
+   scrim is disabled entirely. */
+.photo-cta-scrim { display: none; }
+@media (hover: none), (max-width: 768px) {
+  .photo-cta-overlay { display: none !important; }
+}
+
 .scroll-thin { scrollbar-width: none; scrollbar-gutter: stable; }
 .scroll-thin::-webkit-scrollbar { width: 3px; background: transparent; }
 .scroll-thin::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }

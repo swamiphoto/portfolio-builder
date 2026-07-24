@@ -17,17 +17,17 @@ it('shows "Packages", lists grants + prices, and buys via buyPackage — with no
     purchaseCurrency: 'USD',
     packages: [
       { id: 'pkg_a', label: 'Add-on pack', credits: 10, price: 4000 },
-      { id: 'pkg_all', label: 'Entire gallery', credits: 'all', price: 15000 },
+      { id: 'pkg_all', label: 'Full gallery', credits: 'all', price: 15000 },
     ],
     buyPackage,
   })
   render(<PackagesDrawer open onClose={() => {}} />)
   expect(screen.getByText('Packages')).toBeInTheDocument()
-  expect(screen.getByText('10 more photos')).toBeInTheDocument()
-  expect(screen.getByText('Everything in this gallery')).toBeInTheDocument()
+  expect(screen.getByText('10 photos')).toBeInTheDocument()
+  expect(screen.getByText('Entire gallery')).toBeInTheDocument()
   expect(screen.getByText('$150.00')).toBeInTheDocument()
   expect(screen.queryByText(/unlocked/i)).toBeNull()
-  fireEvent.click(screen.getByText('Entire gallery'))
+  fireEvent.click(screen.getByText('Full gallery'))
   expect(buyPackage).toHaveBeenCalledWith('pkg_all')
 })
 
@@ -51,12 +51,12 @@ it('closes the drawer before calling buyPackage when the buyer has no email', ()
     identity: { email: '' },
     purchaseCurrency: 'USD',
     packages: [
-      { id: 'pkg_all', label: 'Entire gallery', credits: 'all', price: 15000 },
+      { id: 'pkg_all', label: 'Full gallery', credits: 'all', price: 15000 },
     ],
     buyPackage,
   })
   render(<PackagesDrawer open onClose={onClose} />)
-  fireEvent.click(screen.getByText('Entire gallery'))
+  fireEvent.click(screen.getByText('Full gallery'))
   expect(onClose).toHaveBeenCalled()
   expect(buyPackage).toHaveBeenCalledWith('pkg_all')
 })

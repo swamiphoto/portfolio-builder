@@ -1,13 +1,13 @@
-import { useMediaQuery } from 'react-responsive'
 import { getImageRefUrl, focalPointToObjectPosition } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
+import { useIsMobile } from '../../../../common/useIsMobile'
 import EngagementActions from '../../engagement/EngagementActions'
 import WatermarkOverlay from '../../engagement/WatermarkOverlay'
 
 // The Size control drives tile size directly via column count (large 2 / medium 3
 // / small 4). Cap at the image count (no empty columns) and at 2 on small screens.
 export default function SquareGallery({ images = [], onImageClick, maxCols = 3, bleed = false }) {
-  const isSmall = useMediaQuery({ maxWidth: 767 })
+  const isSmall = useIsMobile()
   const target = isSmall ? Math.min(2, maxCols) : maxCols
   const cols = Math.max(1, Math.min(target, images.length))
 

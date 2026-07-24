@@ -1,10 +1,12 @@
 // components/image-displays/engagement/DownloadSheet.js
 import { useState } from 'react'
 import { useClientEngagement } from './ClientEngagementContext'
+import { useIsMobile } from '../../../common/useIsMobile'
 
 export default function DownloadSheet({ photoUrl, onClose }) {
   const ctx = useClientEngagement()
   const [loading, setLoading] = useState(null)
+  const isMobile = useIsMobile()
 
   if (!ctx?.identity) return null
 
@@ -64,7 +66,9 @@ export default function DownloadSheet({ photoUrl, onClose }) {
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 80,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex',
+        alignItems: isMobile ? 'flex-end' : 'center',
+        justifyContent: 'center',
         background: 'rgba(20,14,8,0.38)',
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
@@ -74,12 +78,12 @@ export default function DownloadSheet({ photoUrl, onClose }) {
       <div
         style={{
           background: '#fdf9f4',
-          borderRadius: 14,
+          borderRadius: isMobile ? '16px 16px 0 0' : 14,
           border: '1px solid rgba(160,140,110,0.22)',
           boxShadow: '0 12px 48px rgba(20,14,8,0.28)',
           padding: '24px',
-          width: 'calc(100% - 40px)',
-          maxWidth: 320,
+          width: isMobile ? '100%' : 'calc(100% - 40px)',
+          maxWidth: isMobile ? '100%' : 320,
         }}
         onClick={(e) => e.stopPropagation()}
       >

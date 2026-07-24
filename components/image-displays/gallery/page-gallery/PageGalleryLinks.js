@@ -1,5 +1,6 @@
 import React from "react";
 import { pageDisplayThumbnail, focalPointToObjectPosition, pageThumbGradient } from "../../../../common/assetRefs";
+import { useIsMobile } from "../../../../common/useIsMobile";
 
 // Overall image size for the block. `maxW` scales the container (both layouts);
 // `thumbH` scales the list thumbnails (and the stack behind them, which must
@@ -104,8 +105,8 @@ function RowLink({ page, index, linkBase, onChildPageClick, reverse, thumbH }) {
           </div>
         </div>
       </div>
-      <div className="md:w-1/2 lg:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-0 md:px-8">
-        <h2 className="text-4xl font-medium tracking-tight font-serif" style={{ color: "#1a1410", fontWeight: 400 }}>
+      <div className="md:w-1/2 lg:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-3 md:px-8">
+        <h2 className="text-2xl md:text-4xl font-medium tracking-tight font-serif" style={{ color: "#1a1410", fontWeight: 400 }}>
           {page.title}
         </h2>
         {page.description && (
@@ -138,11 +139,12 @@ function mosaicPlan(n) {
   return { cols: 3, heroes: n % 3 === 2 ? [0] : [] };
 }
 
-function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan }) {
+function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan, mobile }) {
   const thumb = pageDisplayThumbnail(page);
   const href = `${linkBase}/${page.slug || page.id}`;
-  const aspect = hero ? "aspect-[2/1]" : "aspect-square";
-  const cellStyle = hero ? { gridColumn: "span 2" } : undefined;
+  // On mobile every tile is a uniform full-width landscape card (no wide-hero span).
+  const aspect = mobile ? "aspect-[3/2]" : (hero ? "aspect-[2/1]" : "aspect-square");
+  const cellStyle = (!mobile && hero) ? { gridColumn: "span 2" } : undefined;
   if (manhattan) {
     // Sharp corners, no decorative stack, sans-serif left-aligned caption.
     return (
@@ -201,20 +203,23 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan }) {
 }
 
 export default function PageGalleryLinks({ pages, variant = "list", imageSide = "one", size = "medium", linkBase, onChildPageClick, manhattan = false }) {
+  const isMobile = useIsMobile();
   const list = pages || [];
   if (list.length === 0) return null;
   const sz = SIZES[size] || SIZES.medium;
   // Manhattan is full-width + left-anchored; other themes are centered + capped.
-  const wrap = manhattan ? "w-full" : `${sz.maxW} mx-auto px-5 sm:px-8 md:px-10`;
+  const wrap = manhattan ? "w-full" : `${sz.maxW} mx-auto px-3 sm:px-8 md:px-10`;
 
   if (variant === "mosaic") {
     const { cols, heroes } = mosaicPlan(list.length);
     const heroSet = new Set(heroes);
+    // Mobile: one column, uniform landscape tiles top-to-bottom (no side-by-side mosaic).
+    const gridCols = isMobile ? 1 : cols;
     return (
       <div className={wrap}>
         <div
           className="grid gap-4 md:gap-6"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, alignItems: "start" }}
+          style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0,1fr))`, alignItems: "start" }}
         >
           {list.map((p, i) => (
             <MosaicCell
@@ -224,6 +229,7 @@ export default function PageGalleryLinks({ pages, variant = "list", imageSide = 
               onChildPageClick={onChildPageClick}
               hero={heroSet.has(i)}
               manhattan={manhattan}
+              mobile={isMobile}
             />
           ))}
         </div>

@@ -3,8 +3,7 @@ import { useRouter } from "next/router";
 import GalleryCover from "./gallery-cover/GalleryCover";
 import MasonryGallery from "./masonry-gallery/MasonryGallery";
 import StackedGallery from "./stacked-gallery/StackedGallery";
-import { useMediaQuery } from "react-responsive";
-import { useAdminViewport } from '../../../contexts/ViewportContext';
+import { useIsMobile } from "../../../common/useIsMobile";
 import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
@@ -59,8 +58,17 @@ function PlaceholderTile({ aspectClass = 'aspect-[4/3]' }) {
 // The empty-state preview shown on the right. It mirrors the block's chosen
 // layout so the photographer sees what a photos block will look like before
 // adding any images.
-function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto' }) {
+function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto', mobile = false }) {
   const sz = sizeKey(size)
+  if (mobile) {
+    // Mobile preview: every layout collapses to a single stacked column of
+    // uniform full-width tiles (10px side margin) — matches the real mobile render.
+    return (
+      <div className="w-full px-[10px] space-y-3" data-photos-placeholder="mobile">
+        {[0, 1, 2].map((i) => <PlaceholderTile key={i} aspectClass="aspect-[3/2]" />)}
+      </div>
+    )
+  }
   if (themeId === 'manhattan') {
     // Mirror the Manhattan gallery-wall: full-width, sharp-cornered masonry
     // columns (via the .manhattan-grid CSS), icon centered in each tile.
@@ -130,8 +138,16 @@ function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto
 // Empty-state preview for a single photo block. Mirrors PhotoBlock's variants:
 // full-bleed spans the content width with square corners, centered is a narrower
 // rounded tile scaled by size, side puts the image next to a caption column.
-function PlaceholderPhoto({ variant = 'full-bleed', size = 'large', themeId = 'kyoto' }) {
+function PlaceholderPhoto({ variant = 'full-bleed', size = 'large', themeId = 'kyoto', mobile = false }) {
   const sz = sizeKey(size)
+  if (mobile) {
+    // Mobile preview: one uniform full-width tile, like a real photo on a phone.
+    return (
+      <div className="w-full px-[10px]" data-photo-placeholder="mobile">
+        <PlaceholderTile aspectClass="aspect-[3/2]" />
+      </div>
+    )
+  }
   if (themeId === 'manhattan') {
     // Manhattan single photo spans the full content width, sharp corners.
     return (
@@ -239,9 +255,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   // Manhattan moves its section divider into the left rail (see SiteNav); the
   // body renders no between-section wiggles. Other themes keep them.
   const Wiggle = () => (themeId === 'manhattan' ? null : <WiggleLine />)
-  const adminViewport = useAdminViewport()
-  const mediaSmall = useMediaQuery({ query: "(max-width: 768px)" })
-  const isSmallScreen = adminViewport != null ? adminViewport === 'mobile' : mediaSmall
+  const isSmallScreen = useIsMobile()
   const router = useRouter();
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
@@ -293,7 +307,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   return (
     <PrintStoreProvider printStore={printStore} username={username}>
     <div className="gallery-container">
-      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} suppressCover={hasCover || themeId === 'manhattan'} coverHeight={coverHeight} buttonStyle={coverButtonStyle} />
+      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} parentPage={(childPages && childPages.length && pages) ? pages.find(p => p.id === childPages[0].parentId) : null} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} suppressCover={hasCover || themeId === 'manhattan'} coverHeight={coverHeight} buttonStyle={coverButtonStyle} />
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {
@@ -308,8 +322,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const size = sizeKey(resolvePhotoSize(block, themeId))
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} size={size} themeId={themeId} /><Wiggle /></div> : null;
-              if (variantId === 'grid') {
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} size={size} themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
+              if (variantId === 'grid' && !isSmallScreen) {
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
                     {themeId === 'manhattan'
@@ -318,7 +332,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   </div>
                 );
               }
-              if (variantId === 'square') {
+              if (variantId === 'square' && !isSmallScreen) {
                 return (
                   <div key={`block-${index}`} className="photos-square-block" data-block-index={index} {...hoverProps}>
                     <SquareGallery images={imageRefs} onImageClick={makeClickHandler(index)} maxCols={SQUARE_COLS[size]} bleed={themeId === 'manhattan'} />
@@ -328,7 +342,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
                     : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={themeId === 'manhattan' ? 100 : STACKED_PCT[size]} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
@@ -337,11 +351,11 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "stacked": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="stacked" themeId={themeId} /><Wiggle /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="stacked" themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} mobile captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
                     : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={themeId === 'manhattan' ? 100 : undefined} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
@@ -350,10 +364,10 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
             case "masonry": {
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
-              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" themeId={themeId} /><Wiggle /></div> : null;
+              if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
-                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
                   <Wiggle />
                 </div>
               );
@@ -367,20 +381,20 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const alignClass = align === 'left' ? 'text-left' : 'text-center';
               // Manhattan text is always sans-serif (line-height tightened via CSS).
               const fontFamily = themeId === 'manhattan' ? 'Inter, -apple-system, system-ui, sans-serif' : resolveFont(block, themeId);
+              // Manhattan: small, description-level sizes. Other themes: size/margins
+              // keyed off the JS mobile flag so the admin Mobile preview scales truthfully.
               const variantClass = themeId === 'manhattan'
                 ? (
-                    // Body + quote read at description size (matches testimonials);
-                    // left-anchored (color/margin via CSS).
                     v === 4 ? `text-[0.9rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
                     : v === 3 ? `text-[0.9rem] ${alignClass} max-w-2xl py-2`
                     : v === 2 ? `text-lg md:text-xl font-medium ${alignClass} max-w-2xl py-3`
                     : `text-2xl md:text-3xl font-light ${alignClass} max-w-3xl py-5`
                   )
                 : (
-                    v === 4 ? `text-lg md:text-xl italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-6 border-l-2 border-stone-300`
-                    : v === 3 ? `text-base md:text-lg text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto px-8 py-4`
-                    : v === 2 ? `text-xl md:text-2xl font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto py-6`
-                    : `text-3xl md:text-4xl font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto py-10`
+                    v === 4 ? `${isSmallScreen ? 'text-base px-6 py-5' : 'text-xl px-8 py-6'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
+                    : v === 3 ? `${isSmallScreen ? 'text-base px-6 py-3' : 'text-lg px-8 py-4'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
+                    : v === 2 ? `${isSmallScreen ? 'text-lg px-6 py-4' : 'text-2xl py-6'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
+                    : `${isSmallScreen ? 'text-2xl px-6 py-6' : 'text-4xl py-10'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
               return (
                 <div
@@ -398,7 +412,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             case "photo": {
               const variantId = resolveVariant(block, themeId)
               const size = sizeKey(resolvePhotoSize(block, themeId))
-              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto variant={variantId} size={size} themeId={themeId} /><Wiggle /></div> : null;
+              if (!getImageRefUrl(block.image || block.imageUrl)) return showPlaceholders ? <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}><PlaceholderPhoto variant={variantId} size={size} themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
               if (themeId === 'manhattan') {
                 return (
                   <div key={`block-${index}`} className="photo-block" data-block-index={index} {...hoverProps}>

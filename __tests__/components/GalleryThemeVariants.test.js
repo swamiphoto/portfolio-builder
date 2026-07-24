@@ -15,14 +15,14 @@ describe('Gallery variant resolution', () => {
     const block = { type: 'text', content: 'Hello world', themeState: { kyoto: { variant: 'body' } } }
     const { container } = renderGallery([block], 'kyoto')
     const el = container.querySelector('.text-block')
-    // body variant => text-base class present, not the 3xl heading
-    expect(el.className).toMatch(/text-base/)
-    expect(el.className).not.toMatch(/text-3xl/)
+    // body variant => desktop text-lg class present, not the heading size
+    expect(el.className).toMatch(/text-lg/)
+    expect(el.className).not.toMatch(/text-4xl/)
   })
 
   it('falls back to theme default when no state for the active theme', () => {
     const block = { type: 'text', content: 'Hi', themeState: { manhattan: { variant: 'body' } } }
     const { container } = renderGallery([block], 'kyoto') // kyoto default = heading
-    expect(container.querySelector('.text-block').className).toMatch(/text-3xl/)
+    expect(container.querySelector('.text-block').className).toMatch(/text-4xl/)
   })
 })
