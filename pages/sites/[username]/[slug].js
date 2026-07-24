@@ -141,6 +141,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             slideshowHref={slideshowHref}
             clientFeaturesEnabled={!!page.clientFeatures?.enabled}
             navLinks={coverNavLinks}
+            themeId={theme.id}
           />
           <Gallery
             name={page.title}

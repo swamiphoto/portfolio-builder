@@ -30,7 +30,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const fonts = spec.fonts
     ? spec.fonts.map(f => ({ value: f.id, label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span> }))
     : null
-  const aligns = spec.aligns ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
+  const aligns = spec.aligns && spec.aligns.length > 1 ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
   const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
   // Caption pills preview their own style so the choice is legible at a glance.
   const captionStyles = spec.captionStyles
@@ -45,7 +45,10 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)
 
   const hasSize = variants.length > 1
-  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes) return null
+  // Manhattan testimonials have no layout choice; instead they offer an
+  // italic/regular quote-style toggle.
+  const isManhattanTestimonial = block.type === 'testimonial' && themeId === 'manhattan'
+  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes && !isManhattanTestimonial) return null
 
   const currentFont = block.font || spec.defaultFont
 
@@ -61,7 +64,16 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
           <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
       )}
-      {block.type === 'page-gallery' && resolveVariant(block, themeId) === 'list' && (
+      {isManhattanTestimonial && (
+        <DesignSection label="Quote">
+          <PillToggle
+            value={block.quoteStyle === 'regular' ? 'regular' : 'italic'}
+            onChange={(v) => onUpdate({ ...block, quoteStyle: v })}
+            options={[{ value: 'italic', label: 'Italic' }, { value: 'regular', label: 'Regular' }]}
+          />
+        </DesignSection>
+      )}
+      {block.type === 'page-gallery' && themeId !== 'manhattan' && resolveVariant(block, themeId) === 'list' && (
         <DesignSection label="Image side">
           <PillToggle
             value={block.imageSide === 'alternating' ? 'alternating' : 'one'}

@@ -6,8 +6,9 @@ import styles from "./MasonryGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
+import HoverCaption from "../HoverCaption";
 
-const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, mobile = false, captionStyle = 'sans' }) => {
+const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans', insideCaption = false, bleed = false, mobile = false }) => {
   const capCss = captionStyleCss(captionStyle);
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   // An explicit `columns` prop always wins (Gallery passes columns=1 on mobile);
@@ -15,9 +16,9 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, mo
   const breakpointColumnsObj = columns != null ? { default: columns } : { default: 2, 700: 1 };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className={`${styles.masonryGallery} w-full max-w-6xl mx-auto`}>
-        <div className={`gallery-content flex-grow md:p-4 overflow-hidden ${mobile ? 'px-[10px]' : ''}`}>
+    <div className={`flex flex-col ${bleed ? 'items-stretch' : 'items-center'}`}>
+      <div className={`${styles.masonryGallery} w-full ${bleed ? '' : 'max-w-6xl mx-auto'}`}>
+        <div className={`gallery-content flex-grow ${bleed ? '' : 'md:p-4'} overflow-hidden ${mobile ? 'px-[10px]' : ''}`}>
           <Masonry breakpointCols={breakpointColumnsObj} className="flex w-auto -ml-5" columnClassName="pl-5">
             {items.length > 0 ? (
               items.map(({ url, caption, print }, index) => {
@@ -43,8 +44,9 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, mo
                       <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                         <EngagementActions imageUrl={url} />
                       </div>
+                      {insideCaption && <HoverCaption caption={caption} captionStyle={captionStyle} />}
                     </div>
-                    {caption && (
+                    {caption && !insideCaption && (
                       <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{caption}</p>
                     )}
                   </div>

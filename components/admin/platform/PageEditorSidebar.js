@@ -184,7 +184,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   if (page.type === 'link') {
     return (
       <div className="flex flex-col h-full p-3">
-        <PageSettingsPanel page={page} onChange={onPageChange} />
+        <PageSettingsPanel page={page} onChange={onPageChange} themeId={siteConfig?.design?.theme || 'kyoto'} />
       </div>
     )
   }
@@ -214,12 +214,14 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         setsByUrl={setsByUrl}
         onToggleSet={handleToggleSet}
         headerLabel="PAGE"
+        infoCardHidden={siteConfig?.design?.theme === 'manhattan'}
         pageSettingsSlot={
           <PageSettingsPanel
             page={page}
             onChange={onPageChange}
             onPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}
             onAddBlockBelow={(rect) => blockBuilderRef?.current?.openAddBlockMenu(0, rect)}
+            themeId={siteConfig?.design?.theme || 'kyoto'}
           />
         }
         onOpenPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}

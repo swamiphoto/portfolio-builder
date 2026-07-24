@@ -29,7 +29,7 @@ describe('theme registry', () => {
   })
 
   it('getBlockSpec returns the spec or null', () => {
-    expect(getBlockSpec('manhattan', 'photo').defaultVariant).toBe('full-bleed')
+    expect(getBlockSpec('manhattan', 'photo').defaultVariant).toBe('single')
     expect(getBlockSpec('kyoto', 'photo').defaultVariant).toBe('full-bleed')
     expect(getBlockSpec('kyoto', 'bogus')).toBeNull()
   })

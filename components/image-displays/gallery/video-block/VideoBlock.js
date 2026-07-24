@@ -18,20 +18,24 @@ export function posterUrl(url) {
 }
 
 // variant: 'full-bleed' (1) | 'centered' (2) | 'side' (3)
-const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
+// bleed: Manhattan — full content width, square corners, left-aligned caption
+// (same treatment as photos), regardless of variant.
+const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans', bleed = false }) => {
   const capCss = captionStyleCss(captionStyle);
   // react-player caches its "can I play this?" decision, so key the player on the
   // URL to force a clean re-init when it changes — otherwise the preview stays blank.
   const cleanUrl = (url || "").trim();
+  const isSide = variant === 3 && !bleed;
 
   const videoContainerStyle = (() => {
+    if (bleed) return "w-full"; // Manhattan: full content width, square corners
     if (variant === 1) return "w-full mx-auto"; // full bleed: full content width, square corners
     if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6"; // side
     return "w-full md:w-[85%] mx-auto"; // centered (default)
   })();
 
   const videoStyle = "relative aspect-[16/9] w-full overflow-hidden"; // standard 16:9
-  const videoWrapperStyle = variant === 1 ? "rounded-none shadow-none" : "rounded-3xl shadow-lg";
+  const videoWrapperStyle = (bleed || variant === 1) ? "rounded-none shadow-none" : "rounded-3xl shadow-lg";
 
   // light mode: shows the real thumbnail with a play button, loads + plays on click.
   // Reliable in every context (no IntersectionObserver autoplay that never fires in
@@ -55,7 +59,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
 
   return (
     <div className={videoContainerStyle}>
-      {variant === 3 ? (
+      {isSide ? (
         // Side: video on the left, caption on the right
         <>
           <div className={`w-full md:w-2/3 ${videoStyle} ${videoWrapperStyle}`}>
@@ -71,7 +75,7 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans' }) => {
           <div className={`${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
           </div>
-          {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={capCss}>{caption}</p>}
+          {caption && <p className={`my-4 font-medium text-sm md:text-xl italic ${bleed ? 'text-left' : 'text-center max-w-3xl mx-auto'}`} style={capCss}>{caption}</p>}
         </>
       )}
     </div>

@@ -9,6 +9,7 @@ export const manhattan = {
     '--theme-bg': '#fafafa',
     '--theme-text': '#141414',
     '--theme-text-muted': '#6b6b6b',
+    '--theme-accent': '#b5502e',
     '--theme-rail-width': '260px',
     fonts: {
       serif: '"Cormorant Garamond", Georgia, serif',
@@ -19,9 +20,18 @@ export const manhattan = {
     },
   },
   overrides: {
-    photo: { labels: { 'full-bleed': 'Full width', centered: 'Framed' }, hide: ['side-by-side'] },
+    // Single photo has no layout choice in Manhattan: collapse all base variants
+    // into one no-option "single" variant. Rendering ignores the id (see Gallery
+    // photo case) and always draws the left-anchored ManhattanPhoto.
+    photo: { hide: ['full-bleed', 'centered', 'side-by-side'], add: [{ id: 'single', label: 'Photo' }], defaultVariant: 'single' },
     photos: { defaultVariant: 'grid' },
-    video: { labels: { 'full-bleed': 'Full width', centered: 'Framed' }, hide: ['side-by-side'] },
-    text: { defaultAlign: 'left' },
+    // Video gets the same treatment as photos: one full-width rendering, no
+    // layout options (collapse to a single 'centered' variant, rendered bleed).
+    video: { hide: ['full-bleed', 'side-by-side'], defaultVariant: 'centered' },
+    text: { defaultAlign: 'left', aligns: ['left'] },
+    contact: { defaultAlign: 'left', aligns: ['left'] },
+    // No photo-above/quote-above layout choice; a fixed quote → photo → name
+    // stack. The editor offers an italic/regular quote-style toggle instead.
+    testimonial: { hide: ['quote-above'], defaultVariant: 'photo-above' },
   },
 }

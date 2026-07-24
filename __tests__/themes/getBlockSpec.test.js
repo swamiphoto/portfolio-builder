@@ -8,11 +8,10 @@ describe('getBlockSpec merges base + theme overrides', () => {
     expect(spec.defaultVariant).toBe('stacked')
   })
 
-  it('manhattan photo renames labels but keeps shared ids', () => {
+  it('manhattan photo has a single locked variant (no layout choice)', () => {
     const spec = getBlockSpec('manhattan', 'photo')
-    expect(spec.variants.map(v => v.id)).toEqual(['full-bleed', 'centered'])
-    expect(spec.variants.find(v => v.id === 'full-bleed').label).toBe('Full width')
-    expect(spec.variants.find(v => v.id === 'centered').label).toBe('Framed')
+    expect(spec.variants.map(v => v.id)).toEqual(['single'])
+    expect(spec.defaultVariant).toBe('single')
   })
 
   it('manhattan photos defaults to grid via override', () => {

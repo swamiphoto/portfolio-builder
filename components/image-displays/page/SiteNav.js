@@ -7,6 +7,7 @@ import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { useIsMobile } from '../../../common/useIsMobile'
 import { logoFontStyle, resolveSubNavStyle, resolveNavMode } from '../../../common/siteDesign'
+import WiggleLine from '../../wiggle-line/WiggleLine'
 
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -301,6 +302,59 @@ function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMo
   )
 }
 
+// A single left-rail top-level item: Fraunces, sentence-case, terracotta when
+// active. Children are collapsed behind a caret and hidden until expanded; the
+// parent auto-expands when one of its children is the current page.
+function RailItem({ item, basePath, onPageClick, ctx }) {
+  const kids = (item.children || []).filter(c => c.showInNav !== false)
+  const childActive = kids.some(c => navItemActive(c, ctx))
+  const [open, setOpen] = useState(childActive)
+  useEffect(() => { if (childActive) setOpen(true) }, [childActive])
+
+  const isLink = item.type === 'link'
+  const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+  const active = navItemActive(item, ctx)
+  const cls = 'font-fraunces text-[15px] tracking-normal transition-colors'
+  const style = { color: active ? 'var(--theme-accent, #b5502e)' : 'var(--theme-text, #141414)', opacity: active ? 1 : 0.55, textDecoration: 'none' }
+
+  return (
+    <li>
+      <div className="flex items-center gap-1.5">
+        {onPageClick && !isLink
+          ? <button onClick={() => onPageClick(item.id)} className={cls} style={style}>{item.title}</button>
+          : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={style}>{item.title}</a>}
+        {kids.length > 0 && (
+          <button
+            onClick={() => setOpen(o => !o)}
+            aria-label={`${item.title} submenu`}
+            aria-expanded={open}
+            className="inline-flex items-center"
+            style={{ color: 'var(--theme-text, #141414)', opacity: 0.45, lineHeight: 1, padding: '0 2px' }}
+          >
+            <Caret open={open} size={10} />
+          </button>
+        )}
+      </div>
+      {kids.length > 0 && open && (
+        <ul className="flex flex-col gap-1.5 mt-1.5 ml-3">
+          {kids.map(child => {
+            const cActive = navItemActive(child, ctx)
+            const cHref = `${basePath}/${child.slug || child.id}`
+            const cStyle = { color: cActive ? 'var(--theme-accent, #b5502e)' : 'var(--theme-text, #141414)', opacity: cActive ? 1 : 0.5, textDecoration: 'none' }
+            return (
+              <li key={child.id}>
+                {onPageClick
+                  ? <button onClick={() => onPageClick(child.id)} className="font-fraunces text-[13px] tracking-normal transition-colors" style={cStyle}>{child.title}</button>
+                  : <a href={cHref} className="font-fraunces text-[13px] tracking-normal transition-colors" style={cStyle}>{child.title}</a>}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </li>
+  )
+}
+
 // One shared mobile menu for every nav variant. Parent links are large; children
 // sit indented under their parent on a hairline rail, generously spaced. The list
 // scrolls when tall, with the close button pinned above it. `overlayStyle` themes
@@ -389,9 +443,9 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
             style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
           >
             {onPageClick ? (
-              <button onClick={() => onPageClick(null)} className="min-w-0 truncate text-base font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-left" style={logoStyle || undefined}>{brand}</button>
+              <button onClick={() => onPageClick(null)} className="min-w-0 truncate font-fraunces text-lg tracking-normal text-left" style={logoStyle || undefined}>{brand}</button>
             ) : (
-              <a href={basePath || '/'} className="min-w-0 truncate text-base font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-left" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
+              <a href={basePath || '/'} className="min-w-0 truncate font-fraunces text-lg tracking-normal text-left" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
             )}
             <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="shrink-0 p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
           </header>
@@ -408,51 +462,31 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
       <nav
         data-testid="left-rail"
         aria-label="Site navigation"
-        className="left-rail hidden md:flex flex-col justify-between sticky top-0 self-start h-screen w-[260px] shrink-0 px-8 py-10 border-r border-black/10"
+        className="left-rail hidden md:flex flex-col justify-between sticky top-0 self-start h-screen w-[260px] shrink-0 px-8 py-10"
         style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
       >
         <div className="flex flex-col gap-10">
           {onPageClick ? (
-            <button onClick={() => onPageClick(null)} className="text-left text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={logoStyle || undefined}>{brand}</button>
+            <button onClick={() => onPageClick(null)} className="text-left font-fraunces text-2xl tracking-normal leading-tight mt-8" style={logoStyle || undefined}>{brand}</button>
           ) : (
-            <a href={basePath || '/'} className="text-lg font-semibold uppercase tracking-[0.18em] leading-tight" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
+            <a href={basePath || '/'} className="font-fraunces text-2xl tracking-normal leading-tight mt-8" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
           )}
           <ul className="flex flex-col gap-2">
-            {tree.map(item => {
-              const isLink = item.type === 'link'
-              const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-              const isActive = navItemActive(item, { currentPageId, currentPath, basePath })
-              const cls = `text-sm uppercase tracking-[0.12em] transition-colors ${isActive ? 'text-black underline' : 'text-black/50 hover:text-black'}`
-              const kids = item.children || []
-              return (
-                <li key={item.id}>
-                  {onPageClick && !isLink
-                    ? <button onClick={() => onPageClick(item.id)} className={cls}>{item.title}</button>
-                    : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }}>{item.title}</a>}
-                  {kids.length > 0 && (
-                    <ul className="flex flex-col gap-1.5 mt-1.5 ml-3">
-                      {kids.map(child => {
-                        const cActive = navItemActive(child, { currentPageId, currentPath, basePath })
-                        const cCls = `text-xs uppercase tracking-[0.10em] transition-colors ${cActive ? 'text-black underline' : 'text-black/40 hover:text-black'}`
-                        const cHref = `${basePath}/${child.slug || child.id}`
-                        return (
-                          <li key={child.id}>
-                            {onPageClick
-                              ? <button onClick={() => onPageClick(child.id)} className={cCls}>{child.title}</button>
-                              : <a href={cHref} className={cCls} style={{ textDecoration: 'none' }}>{child.title}</a>}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  )}
-                </li>
-              )
-            })}
+            {tree.map(item => (
+              <RailItem
+                key={item.id}
+                item={item}
+                basePath={basePath}
+                onPageClick={onPageClick}
+                ctx={{ currentPageId, currentPath, basePath }}
+              />
+            ))}
           </ul>
+          <WiggleLine color="currentColor" className="my-2 ml-0 opacity-30" />
         </div>
-        <div className="flex flex-col gap-4 text-black/40">
+        <div className="flex flex-col gap-4" style={{ color: 'var(--theme-text)', opacity: 0.4 }}>
           {socialKeys.length > 0 && (
-            <div className="flex gap-3 text-xs uppercase tracking-[0.12em]">
+            <div className="flex gap-3 text-xs tracking-[0.12em]">
               {socialKeys.map(k => <span key={k} aria-hidden="true">{k[0].toUpperCase()}</span>)}
             </div>
           )}

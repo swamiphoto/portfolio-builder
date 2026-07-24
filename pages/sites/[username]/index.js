@@ -174,6 +174,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               slideshowHref={slideshowHref}
               clientFeaturesEnabled={!!homePage?.clientFeatures?.enabled}
               primaryButton={null}
+              themeId={theme.id}
             />
             <Gallery
               name={homePage.title}

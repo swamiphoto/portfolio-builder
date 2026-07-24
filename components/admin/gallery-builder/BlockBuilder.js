@@ -88,6 +88,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   infoLabel = 'Gallery Info',
   namePlaceholder = 'Gallery name',
   pageSettingsSlot,
+  infoCardHidden = false,
   onOpenPageSettings,
   onBack,
   sourcePageId,
@@ -339,7 +340,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       )}
 
       {/* All blocks — scrollable */}
-      <div ref={blocksContainerRef} className="flex-1 overflow-y-auto scroll-quiet px-3 py-3">
+      <div ref={blocksContainerRef} className={`flex-1 overflow-y-auto scroll-quiet px-3 pb-3 ${infoCardHidden ? 'pt-1' : 'pt-3'}`}>
 
         {/* Info card */}
         {pageSettingsSlot ? (isValidElement(pageSettingsSlot) ? cloneElement(pageSettingsSlot, { expandedOverride }) : pageSettingsSlot) : (

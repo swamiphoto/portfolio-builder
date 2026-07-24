@@ -3,6 +3,7 @@
 // compact=true → small pill at bottom-right of block card thumbnails
 // compact=false (default) → full-size pill for the preview pane
 import React from 'react'
+import { useTheme } from '../ThemeProvider'
 
 function Heart({ size }) {
   return (
@@ -21,9 +22,11 @@ function Comment({ size }) {
 }
 
 export default function PhotoFeedbackBadge({ favCount = 0, commentCount = 0, onOpen, compact = false }) {
+  const theme = useTheme()
+  const manhattan = theme?.id === 'manhattan'
   if (!favCount && !commentCount) return null
 
-  const iconSize = compact ? 11 : 17
+  const iconSize = compact ? 11 : (manhattan ? 14 : 17)
   const both = favCount > 0 && commentCount > 0
   const posClass = compact ? 'absolute bottom-2 right-2 z-20' : ''
 
@@ -35,7 +38,7 @@ export default function PhotoFeedbackBadge({ favCount = 0, commentCount = 0, onO
     backdropFilter: 'blur(4px)',
     WebkitBackdropFilter: 'blur(4px)',
     border: 'none',
-    borderRadius: 999,
+    borderRadius: manhattan ? 0 : 999,
     boxShadow: '0 1px 4px rgba(20,14,8,0.18)',
     fontSize: 10,
     lineHeight: 1,
@@ -50,14 +53,15 @@ export default function PhotoFeedbackBadge({ favCount = 0, commentCount = 0, onO
     backdropFilter: 'blur(3px)',
     WebkitBackdropFilter: 'blur(3px)',
     border: 'none',
-    borderRadius: 999,
+    borderRadius: manhattan ? 0 : 999,
     boxShadow: '0 1px 5px rgba(20,14,8,0.14)',
-    fontSize: 12,
+    fontSize: manhattan ? 11 : 12,
     lineHeight: 1,
     color: '#2c2416',
     cursor: 'pointer',
     transition: 'background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
   }
+  const segPad = compact ? '3px 5px' : (manhattan ? '5px 8px' : '8px 10px')
 
   return (
     <button
@@ -86,7 +90,7 @@ export default function PhotoFeedbackBadge({ favCount = 0, commentCount = 0, onO
       }}
     >
       {favCount > 0 && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: compact ? 2 : 4, padding: compact ? '3px 5px' : '8px 10px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: compact ? 2 : 4, padding: segPad }}>
           <Heart size={iconSize} />
           {favCount}
         </span>
@@ -95,7 +99,7 @@ export default function PhotoFeedbackBadge({ favCount = 0, commentCount = 0, onO
         <span style={{ width: 1, alignSelf: 'stretch', background: 'rgba(44,36,22,0.09)' }} />
       )}
       {commentCount > 0 && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: compact ? 2 : 4, padding: compact ? '3px 5px' : '8px 10px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: compact ? 2 : 4, padding: segPad }}>
           <Comment size={iconSize} />
           {commentCount}
         </span>

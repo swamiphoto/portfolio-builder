@@ -92,6 +92,7 @@ function PagePreview({
             clientFeaturesEnabled={!!page.clientFeatures?.enabled}
             primaryButton={null}
             navLinks={coverNavLinks}
+            themeId={theme.id}
           />
           <GalleryPreview
             gallery={gallery}

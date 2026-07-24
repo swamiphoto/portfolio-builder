@@ -148,7 +148,66 @@ a {
 @media (min-width: 768px) {
   [data-theme="manhattan"] .theme-shell { display: flex; align-items: flex-start; }
   [data-theme="manhattan"] .theme-content { flex: 1 1 auto; min-width: 0; }
+  /* Left-anchored content with air on the right (widescreens). Left edge sits
+     where the old divider was; right padding grows with viewport. */
+  [data-theme="manhattan"] .theme-content { padding-left: 2.5rem; padding-right: clamp(2.5rem, 8vw, 8rem); }
 }
-[data-theme="manhattan"] .gallery-container { max-width: 1200px; }
-/* Manhattan full-width photo stays inside the content region (no 100vw bleed) */
-[data-theme="manhattan"] .photo-block .w-screen { position: static; left: auto; right: auto; margin-left: 0; margin-right: 0; width: 100%; }
+[data-theme="manhattan"] .gallery-container { max-width: none; }
+
+/* Sharp corners on every image in the content column. */
+[data-theme="manhattan"] .theme-content img { border-radius: 0 !important; }
+/* Square-grid tiles clip via a rounded wrapper (overflow-hidden), so square them too. */
+[data-theme="manhattan"] [data-square-item] { border-radius: 0 !important; }
+
+/* Gallery-wall: 2 columns, 3 on large screens. */
+[data-theme="manhattan"] .manhattan-grid { column-count: 2; }
+@media (min-width: 1280px) { [data-theme="manhattan"] .manhattan-grid { column-count: 3; } }
+
+/* Left-anchor blocks that ship centered (mx-auto / margin:0 auto): kill the
+   right auto-margin so everything shares one left spine; each block's own
+   max-width leaves the right-side air. !important overrides inline margins. */
+[data-theme="manhattan"] .text-block { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; color: var(--theme-text); line-height: 1.4; white-space: pre-line; }
+[data-theme="manhattan"] .testimonial-block figure { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; align-items: flex-start !important; }
+[data-theme="manhattan"] .testimonial-block blockquote { color: var(--theme-text) !important; }
+/* A faint, short rule above text + testimonial blocks — a mild divider, not a
+   full-width line. */
+[data-theme="manhattan"] .text-block::before,
+[data-theme="manhattan"] .testimonial-block::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 1px;
+  background: rgba(20, 20, 20, 0.14);
+  margin-bottom: 1.1rem;
+}
+/* Contact: left-anchor with no left inset, theme sans-serif labels + button,
+   square (not rounded) button. */
+[data-theme="manhattan"] [data-contact-wrap] { margin-left: 0 !important; margin-right: auto !important; text-align: left !important; padding-left: 0 !important; }
+[data-theme="manhattan"] [data-contact-wrap] label,
+[data-theme="manhattan"] [data-contact-wrap] button { font-family: "Inter", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif !important; }
+[data-theme="manhattan"] [data-contact-wrap] button { border-radius: 0 !important; }
+
+/* Image blocks span the full content width (single photo, masonry, square,
+   stacked, gallery-wall all share the same left+right edges — height varies by
+   aspect). This is done deterministically in the components via full-width /
+   bleed / leftAlign props, not by overriding shared centering utilities here —
+   overriding .items-center/.justify-center globally also broke the centered
+   empty-state placeholder icons. */
+
+/* No top hero — the active rail link names the page. The only site actions
+   (View Music / Packages) sit in a slim bar pinned to the bottom of the content
+   column: rail-offset on desktop, full-width on mobile. */
+[data-theme="manhattan"] .manhattan-actionbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  background: rgba(250,250,250,0.92);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(20,20,20,0.08);
+}
+@media (min-width: 768px) {
+  [data-theme="manhattan"] .manhattan-actionbar { left: var(--theme-rail-width, 260px); }
+  /* A small top margin so the first block doesn't touch the roof; keep the tail
+     clear of the fixed action bar. */
+  [data-theme="manhattan"] .theme-content { padding-top: 1.5rem; padding-bottom: 4.5rem; }
+}

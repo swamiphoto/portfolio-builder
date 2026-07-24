@@ -5,8 +5,9 @@ import styles from "./StackedGallery.module.css";
 import BuyPrintButton from "../../print/BuyPrintButton";
 import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
+import HoverCaption from "../HoverCaption";
 
-const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72 }) => {
+const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72, insideCaption = false, leftAlign = false }) => {
   const capCss = captionStyleCss(captionStyle);
   const colWidth = `${widthPct}%`;
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
@@ -52,22 +53,30 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
     });
   }, [imageUrls]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const verticalImages = processedImages.filter((image) => image.aspectRatio < 1);
-  const horizontalImages = processedImages.filter((image) => image.aspectRatio >= 1);
+  // leftAlign (Manhattan): one full-width column, every image in order regardless
+  // of orientation — portraits get the same full span as landscapes, just taller.
+  // Otherwise: interleave full-width landscapes with 48% portrait pairs.
+  let combinedRows;
+  if (leftAlign) {
+    combinedRows = [...processedImages].sort((a, b) => a.id - b.id);
+  } else {
+    const verticalImages = processedImages.filter((image) => image.aspectRatio < 1);
+    const horizontalImages = processedImages.filter((image) => image.aspectRatio >= 1);
 
-  const verticalPairs = [];
-  for (let i = 0; i < verticalImages.length; i += 2) {
-    verticalPairs.push([verticalImages[i], verticalImages[i + 1]]);
-  }
-
-  const combinedRows = [];
-  const maxLength = Math.max(horizontalImages.length, verticalPairs.length);
-  for (let i = 0; i < maxLength; i++) {
-    if (i < horizontalImages.length) {
-      combinedRows.push(horizontalImages[i]);
+    const verticalPairs = [];
+    for (let i = 0; i < verticalImages.length; i += 2) {
+      verticalPairs.push([verticalImages[i], verticalImages[i + 1]]);
     }
-    if (i < verticalPairs.length) {
-      combinedRows.push(verticalPairs[i]);
+
+    combinedRows = [];
+    const maxLength = Math.max(horizontalImages.length, verticalPairs.length);
+    for (let i = 0; i < maxLength; i++) {
+      if (i < horizontalImages.length) {
+        combinedRows.push(horizontalImages[i]);
+      }
+      if (i < verticalPairs.length) {
+        combinedRows.push(verticalPairs[i]);
+      }
     }
   }
 
@@ -77,8 +86,8 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
         {combinedRows.map((entry, index) => (
           <div key={`row-${index}`} className="mb-8">
             {Array.isArray(entry) ? (
-              <div style={{ width: colWidth, margin: "0 auto" }}>
-                <div className="flex flex-row items-start justify-center gap-4">
+              <div style={{ width: colWidth, margin: leftAlign ? 0 : "0 auto" }}>
+                <div className={`flex flex-row items-start ${leftAlign ? 'justify-start' : 'justify-center'} gap-4`}>
                   {entry.map((image, idx) =>
                     image ? (
                       <div
@@ -105,8 +114,9 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                           <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                             <EngagementActions imageUrl={image.src} />
                           </div>
+                          {insideCaption && <HoverCaption caption={getCaptionForUrl(image.src)} captionStyle={captionStyle} />}
                         </div>
-                        {getCaptionForUrl(image.src) && (
+                        {getCaptionForUrl(image.src) && !insideCaption && (
                           <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{getCaptionForUrl(image.src)}</p>
                         )}
                       </div>
@@ -115,13 +125,13 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                 </div>
               </div>
             ) : (
-              <div className="w-full flex flex-col items-center">
+              <div className={`w-full flex flex-col ${leftAlign ? 'items-start' : 'items-center'}`}>
                 <div className="relative group" style={{ width: colWidth }}>
                   <div className="photo-cta-scrim" aria-hidden="true" />
                   <img
                     src={getSizedUrl(entry.src, 'display')}
                     alt=""
-                    className="w-full max-h-[calc(100vw * 0.35)] object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer"
+                    className={`w-full object-cover shadow-lg rounded-3xl transition-opacity duration-500 cursor-pointer ${leftAlign ? 'h-auto' : 'max-h-[calc(100vw * 0.35)]'}`}
                     onClick={() => onImageClick && onImageClick(entry.id)}
                     onError={(e) => {
                       console.error("Failed to load image in StackedGallery:", entry.src);
@@ -135,8 +145,9 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                     <EngagementActions imageUrl={entry.src} />
                   </div>
+                  {insideCaption && <HoverCaption caption={getCaptionForUrl(entry.src)} captionStyle={captionStyle} />}
                 </div>
-                {getCaptionForUrl(entry.src) && (
+                {getCaptionForUrl(entry.src) && !insideCaption && (
                   <p className="mt-2 text-sm italic text-center text-gray-500" style={{ ...capCss, maxWidth: colWidth }}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>

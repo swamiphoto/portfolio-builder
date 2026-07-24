@@ -4,9 +4,12 @@
 // and opens the shared configurator drawer via PrintStoreContext.
 import React from 'react'
 import { usePrintStore } from './PrintStoreContext'
+import { useTheme } from '../ThemeProvider'
 
 export default function BuyPrintButton({ print, imageUrl, className = '', style }) {
   const ctx = usePrintStore()
+  const theme = useTheme()
+  const manhattan = theme?.id === 'manhattan'
   // Hide for images with no printable sizes (e.g. too small for any catalog size).
   if (!ctx?.printStore?.enabled || !print?.sellable || !(print.availableSizes && print.availableSizes.length)) return null
 
@@ -21,17 +24,18 @@ export default function BuyPrintButton({ print, imageUrl, className = '', style 
       onClick={open}
       className={className}
       style={{
-        fontFamily: '"Fraunces", "Cormorant Garamond", Georgia, serif',
-        fontSize: 11.5,
-        letterSpacing: '0.16em',
+        // Manhattan: square, sans-serif, smaller. Otherwise the warm serif pill.
+        fontFamily: manhattan ? 'Inter, -apple-system, system-ui, sans-serif' : '"Fraunces", "Cormorant Garamond", Georgia, serif',
+        fontSize: manhattan ? 10 : 11.5,
+        letterSpacing: manhattan ? '0.08em' : '0.16em',
         textTransform: 'uppercase',
         fontWeight: 500,
         color: '#2c2416',
         background: 'rgba(249,245,238,0.9)',
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
-        padding: '8px 16px',
-        borderRadius: 999,
+        padding: manhattan ? '6px 12px' : '8px 16px',
+        borderRadius: manhattan ? 0 : 999,
         border: 'none',
         boxShadow: '0 1px 5px rgba(20,14,8,0.16)',
         cursor: 'pointer',
