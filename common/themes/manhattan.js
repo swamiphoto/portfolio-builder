@@ -1,6 +1,14 @@
 // common/themes/manhattan.js
 // Manhattan — fixed left rail + gallery-wall grid. Inherits the base menu and
 // expresses its personality purely through label/default overrides + tokens.
+// Curated font choices for Manhattan text/testimonial blocks: Sans (default),
+// Serif, Editorial — no Display. Ids map to tokens.fonts below.
+const MANHATTAN_FONTS = [
+  { id: 'sans', label: 'Sans' },
+  { id: 'serif', label: 'Serif' },
+  { id: 'fraunces', label: 'Editorial' },
+]
+
 export const manhattan = {
   id: 'manhattan',
   name: 'Manhattan',
@@ -28,10 +36,12 @@ export const manhattan = {
     // Video gets the same treatment as photos: one full-width rendering, no
     // layout options (collapse to a single 'centered' variant, rendered bleed).
     video: { hide: ['full-bleed', 'side-by-side'], defaultVariant: 'centered' },
-    text: { defaultAlign: 'left', aligns: ['left'] },
+    // Text/testimonial default to the theme sans; Serif + Editorial are offered
+    // as alternatives (no Display). The render respects block.font (resolveFont).
+    text: { defaultAlign: 'left', aligns: ['left'], defaultFont: 'sans', fonts: MANHATTAN_FONTS },
     contact: { defaultAlign: 'left', aligns: ['left'] },
     // No photo-above/quote-above layout choice; a fixed quote → photo → name
-    // stack. The editor offers an italic/regular quote-style toggle instead.
-    testimonial: { hide: ['quote-above'], defaultVariant: 'photo-above' },
+    // stack. The editor offers an italic/regular quote-style toggle + a font.
+    testimonial: { hide: ['quote-above'], defaultVariant: 'photo-above', defaultFont: 'sans', fonts: MANHATTAN_FONTS },
   },
 }

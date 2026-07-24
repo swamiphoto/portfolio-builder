@@ -33,14 +33,19 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const aligns = spec.aligns && spec.aligns.length > 1 ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
   const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
   // Caption pills preview their own style so the choice is legible at a glance.
+  // Manhattan drops the "accent" caption style (photo + video).
   const captionStyles = spec.captionStyles
-    ? spec.captionStyles.map(c => ({ value: c.id, label: <span style={{ ...captionStyleCss(c.id), fontSize: 12.5 }}>{c.label}</span> }))
+    ? spec.captionStyles
+        .filter(c => !(themeId === 'manhattan' && c.id === 'accent'))
+        .map(c => ({ value: c.id, label: <span style={{ ...captionStyleCss(c.id), fontSize: 12.5 }}>{c.label}</span> }))
     : null
   const currentVariant = resolveVariant(block, themeId)
   // Only offer Size for layouts that actually respond to it (e.g. not full-bleed
   // photos). `sizeVariants` on the spec lists the variants where size applies.
   const sizeAllowed = !spec.sizeVariants || spec.sizeVariants.includes(currentVariant)
-  const sizes = spec.sizes && sizeAllowed ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
+  // Manhattan page-links render at one fixed size, so no Size control there.
+  const hideSize = block.type === 'page-gallery' && themeId === 'manhattan'
+  const sizes = spec.sizes && sizeAllowed && !hideSize ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
   const isPhotoBlock = block.type === 'photos' || block.type === 'photo'
   const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)
 
