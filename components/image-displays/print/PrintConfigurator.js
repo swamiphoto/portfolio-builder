@@ -102,11 +102,10 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
             Bring the photograph home
           </h3>
           <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: '#7a6b55' }}>
-            Order a real print of this photo, made just for you. Professional fine-art
-            labs do the printing and color-manage every file, so it looks the way it
-            does on screen. Choose archival lustre or matte paper, or bright metal. We
-            pack it with care and ship worldwide, usually landing at your door in about
-            a week. And every print supports the photographer directly.
+            Professional fine-art labs do the printing and color-manage every file, so
+            it looks the way it does on screen. Choose archival lustre or matte paper,
+            or bright metal. We pack it with care and ship worldwide, usually landing at
+            your door in about a week. And every print supports the photographer directly.
           </p>
         </div>
 
