@@ -102,9 +102,9 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
             Bring the photograph home
           </h3>
           <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: '#7a6b55' }}>
-            Professional fine-art labs do the printing, color-manage every file, and
-            print on high-quality photo paper. We pack it with care and ship worldwide,
-            usually landing at your door in about a week. And every print supports the
+            Professional fine-art labs color-manage every file and print it on
+            high-quality photo paper. We pack it with care and ship worldwide, usually
+            landing at your door in about a week. Every order also supports the
             photographer directly.
           </p>
         </div>
