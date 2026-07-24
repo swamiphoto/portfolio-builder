@@ -1,6 +1,7 @@
 import React from "react";
 import { getSizedUrl } from "../../../../common/imageUtils";
 import { captionStyleCss } from "../../../../common/captionStyles";
+import { useIsMobile } from "../../../../common/useIsMobile";
 import BuyPrintButton from "../../print/BuyPrintButton";
 import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
@@ -8,6 +9,7 @@ import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 // variant: 1 full-bleed | 2 centered | 3 side (image left, caption right).
 // widthPct scales the centered layout (small/medium/large → 44/56/72).
 const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImageClick, print, captionStyle = 'sans' }) => {
+  const isMobile = useIsMobile();
   const [aspectRatio, setAspectRatio] = React.useState(null);
   const imgRef = React.useRef(null);
 
@@ -26,13 +28,13 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
   };
 
   const buyOverlay = (
-    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+    <div className="photo-cta-overlay absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
       <BuyPrintButton print={print} imageUrl={imageUrl} />
     </div>
   );
 
   const engagementOverlay = (
-    <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+    <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
       <EngagementActions imageUrl={imageUrl} />
     </div>
   );
@@ -42,6 +44,30 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
   };
 
   const renderImage = () => {
+    // Mobile: every full-bleed / centered photo renders as one uniform full-width
+    // image (10px side margin), regardless of the desktop variant, so all images
+    // on a phone are the same width. Side-by-side (3) keeps its own stacking.
+    if (isMobile && variant !== 3) {
+      return (
+        <div className="relative group px-[10px]">
+          <img
+            src={getSizedUrl(imageUrl, 'display')}
+            alt={caption || "Photo"}
+            className="w-full h-auto object-cover shadow-md rounded-2xl cursor-pointer"
+            loading="lazy"
+            onClick={handleClick}
+            onError={(e) => {
+              console.error("Failed to load image in PhotoBlock:", imageUrl);
+              e.target.style.display = 'none';
+            }}
+          />
+          <WatermarkOverlay />
+          {buyOverlay}
+          {engagementOverlay}
+        </div>
+      );
+    }
+
     if (variant === 3) {
       // Side: image on the left, caption on the right (great for About pages).
       return (
@@ -101,7 +127,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
       );
     }
 
-    // variant 1 (default): full-bleed
+    // variant 1 (default): full-bleed on desktop (mobile handled above).
     return (
       <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-hidden group">
         <img

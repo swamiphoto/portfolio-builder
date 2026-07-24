@@ -87,6 +87,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                         style={{ width: "48%" }}
                       >
                         <div className="relative group">
+                          <div className="photo-cta-scrim" aria-hidden="true" />
                           <img
                             src={getSizedUrl(image.src, 'display')}
                             alt=""
@@ -98,10 +99,10 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                             }}
                           />
                           <WatermarkOverlay />
-                          <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="photo-cta-overlay absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <BuyPrintButton print={getPrintForUrl(image.src)} imageUrl={image.src} />
                           </div>
-                          <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                          <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                             <EngagementActions imageUrl={image.src} />
                           </div>
                         </div>
@@ -116,6 +117,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
             ) : (
               <div className="w-full flex flex-col items-center">
                 <div className="relative group" style={{ width: colWidth }}>
+                  <div className="photo-cta-scrim" aria-hidden="true" />
                   <img
                     src={getSizedUrl(entry.src, 'display')}
                     alt=""
@@ -127,10 +129,10 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                     }}
                   />
                   <WatermarkOverlay />
-                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="photo-cta-overlay absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <BuyPrintButton print={getPrintForUrl(entry.src)} imageUrl={entry.src} />
                   </div>
-                  <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                  <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                     <EngagementActions imageUrl={entry.src} />
                   </div>
                 </div>

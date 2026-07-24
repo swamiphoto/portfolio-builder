@@ -7,7 +7,7 @@ import { resolveCaption } from '../../../common/captionResolver'
 import PopoverShell from './PopoverShell'
 import Tip from '../Tip'
 import ToggleSwitch from '../common/ToggleSwitch'
-import { addPackage, updatePackage, removePackage, dollarsToCents, centsToDollars } from './purchasePackages'
+import { addPackage, updatePackage, removePackage, setFeatured, dollarsToCents, centsToDollars } from './purchasePackages'
 
 const BORDER = 'rgba(160,140,110,0.18)'
 const INPUT = 'w-full border-b border-[rgba(160,140,110,0.3)] py-1.5 text-sm text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors placeholder:text-[#c4b49a] bg-transparent leading-snug'
@@ -103,6 +103,8 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const [musicMode, setMusicMode] = useState(isPoolTrack || !slideshow.musicUrl ? 'pool' : 'custom')
   const [customMusicUrl, setCustomMusicUrl] = useState(!isPoolTrack ? (slideshow.musicUrl || '') : '')
   const [copied, setCopied] = useState(false)
+  // Two-step remove for packages: the trash arms it, then an explicit ✓ / ✕ pair confirms or cancels.
+  const [pendingRemove, setPendingRemove] = useState(null)
 
   function update(patch) { onUpdate({ ...page, ...patch }) }
   function updateCf(key, patch) {
@@ -348,14 +350,33 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   // ── Packages drill-in ─────────────────────────────────────────────────────
   if (view === 'packages') {
     const purchase = cf.purchase || {}
-    // One shared field treatment so every control in a package card matches.
-    const fieldCls = 'border-b border-[rgba(160,140,110,0.3)] py-1.5 text-[13px] text-[#2c2416] outline-none focus:border-[#8b6f47] transition-colors bg-transparent placeholder:text-[#c4b49a]'
-    const fieldSelectStyle = { ...selectStyle, fontSize: 13, color: '#2c2416', borderBottom: '1px solid rgba(160,140,110,0.3)', padding: '0 16px 6px 0' }
+    // Inline dropdown that sits inside the "Sell … for …" sentence: sized to its
+    // value, hairline underline, warm caret — reads as an editable word, not a form field.
+    const inlineSelectStyle = {
+      display: 'inline-block',
+      width: 'auto',
+      maxWidth: '100%',
+      background: 'transparent',
+      border: 'none',
+      borderBottom: '1px solid rgba(160,140,110,0.3)',
+      padding: '0 15px 2px 0',
+      fontSize: 13,
+      fontWeight: 500,
+      color: '#2c2416',
+      outline: 'none',
+      appearance: 'none',
+      cursor: 'pointer',
+      transition: 'border-color 0.15s',
+      backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238b6f47' stroke-width='2'><path d='M4 6l4 4 4-4'/></svg>")`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 0 center',
+      backgroundSize: '11px',
+    }
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Packages" onBack={() => setView('client')}>
         <div className="px-3 py-3 space-y-4">
           <p style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-            Create one or more offers your clients can buy. Set how many photos they get free in <strong style={{ color: 'var(--text-secondary)' }}>Free downloads</strong> below; then add packages — a set number of extra photos, or the whole gallery.
+            Create offers your clients can buy. Give them a few photos free, then sell the rest as packages.
           </p>
 
           <div>
@@ -366,81 +387,135 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
               value={purchase.freeAllowance ?? 0}
               onChange={(e) => updateCf('purchase', { freeAllowance: Math.max(0, parseInt(e.target.value, 10) || 0) })}
             />
-            <p className="text-[11.5px] mt-1.5" style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>How many photos each client can download for free before paying.</p>
           </div>
 
           <div className="space-y-3">
             <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Packages</div>
             {(purchase.packages || []).map((pkg) => {
               const isAll = pkg.credits === 'all'
+              const isPending = pendingRemove === pkg.id
               return (
-                <div key={pkg.id} className="rounded-[10px] p-3 relative" style={{ border: '1px solid rgba(160,140,110,0.28)' }}>
-                  <button
-                    type="button" aria-label="Remove package"
-                    className="absolute top-2 right-2 w-[22px] h-[22px] rounded-[5px] flex items-center justify-center"
-                    style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.14)'; e.currentTarget.style.color = '#2c2416' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
-                    onClick={() => updateCf('purchase', { packages: removePackage(purchase.packages, pkg.id) })}
-                  >×</button>
-
-                  <div className="mb-3">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>Package name</div>
-                    <input
-                      type="text" placeholder="e.g. 10 more photos"
-                      className={`${fieldCls} w-[calc(100%-26px)]`}
-                      value={pkg.label}
-                      onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { label: e.target.value }) })}
-                    />
+                <div key={pkg.id} className="rounded-[10px] p-3 pr-8 relative" style={{ border: '1px solid rgba(160,140,110,0.28)', background: 'var(--panel)' }}>
+                  <div className="absolute top-2 right-2 flex items-center">
+                    {isPending ? (
+                      <div className="flex items-center gap-0.5 h-[22px] rounded-[5px] pl-2 pr-0.5" style={{ background: 'rgba(193,74,74,0.10)' }}>
+                        <span className="font-mono uppercase tracking-[0.06em] select-none mr-0.5" style={{ fontSize: 9, color: '#c14a4a' }}>Delete?</span>
+                        <button
+                          type="button" aria-label="Confirm remove package"
+                          className="w-[18px] h-[18px] rounded flex items-center justify-center transition-colors"
+                          style={{ color: '#c14a4a', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(193,74,74,0.20)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                          onClick={() => { updateCf('purchase', { packages: removePackage(purchase.packages, pkg.id) }); setPendingRemove(null) }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                        </button>
+                        <button
+                          type="button" aria-label="Cancel remove"
+                          className="w-[18px] h-[18px] rounded flex items-center justify-center transition-colors"
+                          style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.18)'; e.currentTarget.style.color = '#2c2416' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                          onClick={() => setPendingRemove(null)}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button" aria-label="Remove package"
+                        className="w-[22px] h-[22px] rounded-[5px] flex items-center justify-center transition-colors"
+                        style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.14)'; e.currentTarget.style.color = '#2c2416' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                        onClick={() => setPendingRemove(pkg.id)}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" /></svg>
+                      </button>
+                    )}
                   </div>
 
-                  <div className="mb-3">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>What's the offer?</div>
+                  {/* Name reads as the card's heading — no separate label above it. */}
+                  <input
+                    type="text" placeholder="Name this package"
+                    className="w-full text-[14px] font-medium text-[#2c2416] border-b border-[rgba(160,140,110,0.3)] py-1 outline-none focus:border-[#8b6f47] transition-colors bg-transparent placeholder:text-[#c4b49a] placeholder:font-normal leading-snug"
+                    value={pkg.label}
+                    onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { label: e.target.value }) })}
+                  />
+
+                  {/* The offer reads as a sentence you fill in: "Sell … for …". */}
+                  <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-2 text-[13px] mt-3" style={{ color: 'var(--text-muted)' }}>
+                    <span>Sell</span>
                     <select
-                      style={fieldSelectStyle}
+                      style={inlineSelectStyle}
                       value={isAll ? 'all' : 'number'}
                       onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: e.target.value === 'all' ? 'all' : 10 }) })}
                     >
-                      <option value="number">A set number of photos</option>
-                      <option value="all">The entire gallery</option>
+                      <option value="number">a set number of</option>
+                      <option value="all">the entire gallery</option>
                     </select>
-                  </div>
-
-                  {!isAll && (
-                    <div className="mb-3">
-                      <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>How many photos?</div>
-                      <input
-                        type="number" min="1" step="1"
-                        className={`${fieldCls} w-16 text-center`}
-                        value={pkg.credits}
-                        onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: Math.max(1, parseInt(e.target.value, 10) || 1) }) })}
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: '#8b6f47' }}>Price</div>
-                    <div className="inline-flex items-baseline gap-1 border-b border-[rgba(160,140,110,0.3)] pb-1.5 transition-colors focus-within:border-[#8b6f47]">
+                    {!isAll && (
+                      <>
+                        <input
+                          type="number" min="1" step="1"
+                          className="w-10 text-center text-[13px] font-medium text-[#2c2416] border-b border-[rgba(160,140,110,0.3)] pb-0.5 outline-none focus:border-[#8b6f47] transition-colors bg-transparent"
+                          value={pkg.credits}
+                          onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { credits: Math.max(1, parseInt(e.target.value, 10) || 1) }) })}
+                        />
+                        <span>photos</span>
+                      </>
+                    )}
+                    <span>for</span>
+                    <span className="inline-flex items-baseline gap-1 border-b border-[rgba(160,140,110,0.3)] pb-0.5 transition-colors focus-within:border-[#8b6f47]">
                       <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{siteConfig?.printStore?.currency || 'USD'}</span>
                       <input
                         type="number" min="0" step="0.01" placeholder="0.00"
-                        className="w-24 text-[13px] text-[#2c2416] outline-none bg-transparent placeholder:text-[#c4b49a]"
+                        className="w-16 text-[13px] font-medium text-[#2c2416] outline-none bg-transparent placeholder:text-[#c4b49a] placeholder:font-normal"
                         value={centsToDollars(pkg.price)}
                         onChange={(e) => updateCf('purchase', { packages: updatePackage(purchase.packages, pkg.id, { price: dollarsToCents(e.target.value) }) })}
                       />
-                    </div>
+                    </span>
                   </div>
+
+                  {/* Featured marker — shows a "Best value" badge on this package in the
+                      client drawer. Single-select: marking one clears the others. */}
+                  <button
+                    type="button"
+                    onClick={() => updateCf('purchase', { packages: setFeatured(purchase.packages, pkg.id) })}
+                    className="flex items-center gap-1.5 mt-3 transition-colors"
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: pkg.featured ? '#8b6f47' : 'var(--text-muted)' }}
+                    onMouseEnter={e => { if (!pkg.featured) e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    onMouseLeave={e => { if (!pkg.featured) e.currentTarget.style.color = 'var(--text-muted)' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill={pkg.featured ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01z" />
+                    </svg>
+                    <span className="text-[11px] font-mono uppercase tracking-[0.06em]">Best value</span>
+                  </button>
                 </div>
               )
             })}
+            {/* Matches the canonical add-affordance (Add Page / Add Block): muted mono caps,
+                real plus icon, radius 5, neutral hover — quiet, not accent-loud. */}
             <button
               type="button"
-              className="w-full text-[11px] font-mono uppercase tracking-[0.07em] py-2 rounded-[8px]"
-              style={{ color: '#8b6f47', background: 'none', border: '1px dashed rgba(160,140,110,0.4)', cursor: 'pointer' }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#faf5ee' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
               onClick={() => updateCf('purchase', { packages: addPackage(purchase.packages) })}
-            >+ Add a package</button>
+              className="w-full flex items-center justify-center gap-2 transition-colors"
+              style={{
+                padding: '8px 10px', borderRadius: 5,
+                background: 'transparent', border: '1px dashed rgba(26,18,10,0.14)',
+                fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+                fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', fontWeight: 500,
+                color: 'var(--text-muted)', cursor: 'pointer',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add a package
+            </button>
           </div>
         </div>
       </PopoverShell>
@@ -449,6 +524,11 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
   // ── Client features drill-in ──────────────────────────────────────────────
   if (view === 'client') {
+    const pkgs = cf.purchase?.packages || []
+    const minCents = pkgs.length ? Math.min(...pkgs.map(p => p.price || 0)) : null
+    const packagesSummary = pkgs.length
+      ? `${pkgs.length} package${pkgs.length !== 1 ? 's' : ''}${minCents != null ? ` · from ${siteConfig?.printStore?.currency || 'USD'} ${centsToDollars(minCents)}` : ''}`
+      : 'No packages yet — add one'
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Client Features" onBack={() => setView('main')}>
         <div className="px-3 py-3 space-y-3">
@@ -480,40 +560,37 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             onToggle={(v) => updateCf('watermark', { enabled: v })}
           />
 
-          <div>
-            <div className="flex items-center">
-              <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-secondary)' }}>Packages</span>
-              {cf.purchase?.enabled && (
-                <button
-                  type="button"
-                  onClick={() => setView('packages')}
-                  className="flex items-center gap-0.5 text-xs mr-2"
-                  style={{ color: 'var(--text-muted)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
-                >
-                  Configure
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </button>
-              )}
-              <ToggleSwitch
-                on={cf.purchase?.enabled || false}
-                onChange={(v) => {
-                  // Delivery depends on downloads; enabling Packages enables Downloads too (one atomic write).
-                  const patch = { clientFeatures: { ...cf, purchase: { ...(cf.purchase || {}), enabled: v } } }
-                  if (v) patch.clientFeatures.downloads = { ...(cf.downloads || {}), enabled: true }
-                  update(patch)
-                }}
-                ariaLabel="Packages"
-              />
-            </div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.4, marginTop: 3 }}>
-              Sell downloads in packages. Clients buy from your gallery; checkout is handled for you.
-            </div>
-            {cf.purchase?.enabled && !paymentsReady && (
-              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
+          <FeatureBlock
+            label="Packages"
+            description="Create offers that upsell more of your photos."
+            checked={cf.purchase?.enabled || false}
+            onToggle={(v) => {
+              // Delivery depends on downloads; enabling Packages enables Downloads too (one atomic write).
+              const patch = { clientFeatures: { ...cf, purchase: { ...(cf.purchase || {}), enabled: v } } }
+              if (v) patch.clientFeatures.downloads = { ...(cf.downloads || {}), enabled: true }
+              update(patch)
+            }}
+          >
+            {/* Drill-in lives in the reveal area (like the other features), so "Configure"
+                sits at the row's right edge and never crowds the toggle. */}
+            <button
+              type="button"
+              onClick={() => setView('packages')}
+              className="w-full flex items-center gap-2 transition-colors"
+              style={{ color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <span className="text-xs truncate flex-1 text-left">{packagesSummary}</span>
+              <span className="flex items-center gap-0.5 text-[11px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                Configure
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </span>
+            </button>
+            {!paymentsReady && (
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Connect a payout account in Site Settings → Print store to accept payments.</p>
             )}
-          </div>
+          </FeatureBlock>
         </div>
       </PopoverShell>
     )

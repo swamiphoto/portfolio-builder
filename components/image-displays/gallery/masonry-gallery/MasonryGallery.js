@@ -7,15 +7,17 @@ import BuyPrintButton from "../../print/BuyPrintButton";
 import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 
-const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans' }) => {
+const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, mobile = false, captionStyle = 'sans' }) => {
   const capCss = captionStyleCss(captionStyle);
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
+  // An explicit `columns` prop always wins (Gallery passes columns=1 on mobile);
+  // otherwise fall back to the responsive default.
   const breakpointColumnsObj = columns != null ? { default: columns } : { default: 2, 700: 1 };
 
   return (
     <div className="flex flex-col items-center">
       <div className={`${styles.masonryGallery} w-full max-w-6xl mx-auto`}>
-        <div className="gallery-content flex-grow md:p-4 overflow-hidden">
+        <div className={`gallery-content flex-grow md:p-4 overflow-hidden ${mobile ? 'px-[10px]' : ''}`}>
           <Masonry breakpointCols={breakpointColumnsObj} className="flex w-auto -ml-5" columnClassName="pl-5">
             {items.length > 0 ? (
               items.map(({ url, caption, print }, index) => {
@@ -23,6 +25,7 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
                 return (
                   <div key={index} className="mb-5">
                     <div className="relative group">
+                      <div className="photo-cta-scrim" aria-hidden="true" />
                       <img
                         src={imageUrl}
                         alt={caption || `Image ${index + 1}`}
@@ -34,10 +37,10 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
                         onClick={() => onImageClick && onImageClick(index)}
                       />
                       <WatermarkOverlay />
-                      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="photo-cta-overlay absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <BuyPrintButton print={print} imageUrl={url} />
                       </div>
-                      <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
+                      <div className="photo-cta-overlay absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
                         <EngagementActions imageUrl={url} />
                       </div>
                     </div>

@@ -13,6 +13,8 @@ import SiteFooter from '../../image-displays/page/SiteFooter'
 import ThemeProvider from '../../image-displays/ThemeProvider'
 import GalleryPreview from '../gallery-builder/GalleryPreview'
 import { getTheme } from '../../../common/themes'
+import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientEngagementContext'
+import { getPagePhotos } from '../../../common/assetRefs'
 
 function resolveHomePage(config) {
   const pages = config?.pages || []
@@ -53,6 +55,15 @@ function PagePreview({
     ? `/sites/${username}/${page.slug || page.id}/slideshow`
     : null
 
+  // The covers self-gate the "View Packages" button on the engagement context,
+  // which the preview otherwise never mounts. When packages are configured we wrap
+  // the preview in a lightweight, checkout-less PreviewPackagesProvider so the
+  // photographer sees the button (and can open the drawer) as they edit — no Stripe.
+  const purchaseCfg = page.clientFeatures?.purchase
+  const previewPackages = (page.clientFeatures?.enabled && purchaseCfg?.enabled ? (purchaseCfg?.packages || []) : [])
+  const previewThumb = page.cover?.imageUrl || getPagePhotos(page)[0] || ''
+  const previewCurrency = config?.printStore?.currency || 'USD'
+
   const hasCover = !!page.cover?.imageUrl
   const linkBase = username ? `/sites/${username}` : ''
   const coverNavLinks = hasCover
@@ -69,6 +80,7 @@ function PagePreview({
 
   return (
     <ThemeProvider themeId={theme.id}>
+      <PreviewPackagesProvider packages={previewPackages} currency={previewCurrency} thumb={previewThumb}>
       <div className="theme-shell">
         <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />
         <div className="theme-content">
@@ -104,6 +116,7 @@ function PagePreview({
           <SiteFooter siteConfig={config} />
         </div>
       </div>
+      </PreviewPackagesProvider>
     </ThemeProvider>
   )
 }

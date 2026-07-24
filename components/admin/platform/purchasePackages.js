@@ -17,7 +17,13 @@ export function centsToDollars(cents) {
 }
 
 export function addPackage(list) {
-  return [...(list || []), { id: newId(), label: '', credits: 10, price: 0 }]
+  return [...(list || []), { id: newId(), label: '', credits: 10, price: 0, featured: false }]
+}
+
+// Mark one package as the featured "Best value" and clear the flag on all others
+// (single-select — only one badge shows in the client drawer).
+export function setFeatured(list, id) {
+  return (list || []).map(p => ({ ...p, featured: p.id === id ? !p.featured : false }))
 }
 
 export function updatePackage(list, id, patch) {

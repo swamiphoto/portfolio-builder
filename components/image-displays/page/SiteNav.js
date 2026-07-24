@@ -5,7 +5,7 @@ import { RxHamburgerMenu } from 'react-icons/rx'
 import { TfiClose } from 'react-icons/tfi'
 import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
-import { useAdminViewport } from '../../../contexts/ViewportContext'
+import { useIsMobile } from '../../../common/useIsMobile'
 import { logoFontStyle, resolveSubNavStyle, resolveNavMode } from '../../../common/siteDesign'
 
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
@@ -40,8 +40,8 @@ function Caret({ open = false, size = 11 }) {
 
 function navItemClass(dark, isActive) {
   return dark
-    ? `font-serif text-base font-medium transition-colors ${isActive ? 'text-white underline' : 'text-white/70 hover:text-white'}`
-    : `font-serif text-base font-medium transition-colors ${isActive ? 'text-gray-900 underline' : 'text-gray-500 hover:text-gray-900'}`
+    ? `font-serif text-sm md:text-base font-medium transition-colors ${isActive ? 'text-white underline' : 'text-white/70 hover:text-white'}`
+    : `font-serif text-sm md:text-base font-medium transition-colors ${isActive ? 'text-gray-900 underline' : 'text-gray-500 hover:text-gray-900'}`
 }
 
 function NavLink({ item, basePath, dark, active, onPageClick, onClose }) {
@@ -102,7 +102,7 @@ function NavItem({ item, basePath, dark, currentPath, currentPageId, onPageClick
           {children.map(child => {
             const cActive = navItemActive(child, { currentPageId, currentPath, basePath })
             return (
-              <div key={child.id} className={`px-5 py-1.5 font-serif text-base ${muted} ${cActive ? (dark ? 'text-white underline' : 'text-gray-900 underline') : ''}`}>
+              <div key={child.id} className={`px-5 py-1.5 font-serif text-sm md:text-base ${muted} ${cActive ? (dark ? 'text-white underline' : 'text-gray-900 underline') : ''}`}>
                 <NavLink item={child} basePath={basePath} dark={dark} active={cActive} onPageClick={onPageClick} onClose={() => setOpen(false)} />
               </div>
             )
@@ -213,7 +213,7 @@ function OverflowNav({ items, basePath, dark = false, currentPath = '', currentP
                 style={{ background: '#fffdf9', border: '1px solid rgba(26,18,10,0.12)', boxShadow: '0 8px 28px rgba(26,18,10,0.14)' }}
               >
                 {overflow.map(item => (
-                  <div key={item.id} className={`px-5 py-1.5 font-serif text-base ${muted} ${navItemActive(item, { currentPageId, currentPath, basePath }) ? (dark ? '' : 'text-gray-900 underline') : ''}`}>
+                  <div key={item.id} className={`px-5 py-1.5 font-serif text-sm md:text-base ${muted} ${navItemActive(item, { currentPageId, currentPath, basePath }) ? (dark ? '' : 'text-gray-900 underline') : ''}`}>
                     <NavLink item={item} basePath={basePath} dark={dark}
                       active={navItemActive(item, { currentPageId, currentPath, basePath })}
                       onPageClick={onPageClick} onClose={() => setOpen(false)} />
@@ -250,31 +250,17 @@ function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMo
       : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setOpen(false)} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
   }
 
-  // Admin mobile preview → full-screen overlay.
+  // Phone → full-screen scrollable overlay (shared design).
   if (isMobile) {
     return (
       <>
         <button onClick={() => setOpen(true)} aria-label="Open menu" className={triggerClass}>
           <RxHamburgerMenu className="h-6 w-6" />
         </button>
-        {open && (
-          <nav className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-5" style={overlayStyle} aria-label="Site navigation">
-            <button onClick={() => setOpen(false)} aria-label="Close menu" className="absolute top-5 right-5 p-2"><TfiClose className="h-5 w-5" /></button>
-            {tree.map(item => {
-              const kids = item.children || []
-              return (
-                <div key={item.id} className="flex flex-col items-center gap-2">
-                  {renderLink(item, 'font-serif text-2xl')}
-                  {kids.length > 0 && (
-                    <div className="flex flex-col items-center gap-2">
-                      {kids.map(child => <div key={child.id}>{renderLink(child, 'font-serif text-lg opacity-70')}</div>)}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </nav>
-        )}
+        <MobileNavOverlay
+          open={open} onClose={() => setOpen(false)} tree={tree} basePath={basePath}
+          currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} overlayStyle={overlayStyle}
+        />
       </>
     )
   }
@@ -315,11 +301,66 @@ function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMo
   )
 }
 
+// One shared mobile menu for every nav variant. Parent links are large; children
+// sit indented under their parent on a hairline rail, generously spaced. The list
+// scrolls when tall, with the close button pinned above it. `overlayStyle` themes
+// the background/text per variant.
+function MobileNavOverlay({ open, onClose, tree, basePath, currentPath, currentPageId, onPageClick, overlayStyle }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey) }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const renderItem = (item, cls) => {
+    const isLink = item.type === 'link'
+    const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+    if (onPageClick && !isLink) {
+      return <button onClick={() => { onPageClick(item.id); onClose() }} className={cls}>{item.title}</button>
+    }
+    return <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={onClose} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col" style={overlayStyle} aria-label="Site navigation" role="dialog" aria-modal="true">
+      <div className="flex items-center justify-end h-16 px-5 shrink-0">
+        <button onClick={onClose} aria-label="Close menu" className="p-2 -mr-2 opacity-70 hover:opacity-100 transition-opacity"><TfiClose className="h-5 w-5" /></button>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-7 pb-16">
+        <ul className="flex flex-col">
+          {tree.map(item => {
+            const kids = item.children || []
+            const active = navItemActive(item, { currentPageId, currentPath, basePath })
+            const parentCls = `block py-2.5 font-serif text-[26px] leading-tight transition-opacity ${active ? 'opacity-100 font-medium' : 'opacity-80 hover:opacity-100'}`
+            return (
+              <li key={item.id} className="border-b border-current/10 last:border-b-0 py-1">
+                {renderItem(item, parentCls)}
+                {kids.length > 0 && (
+                  <ul className="mt-1 mb-3 ml-1 pl-4 border-l border-current/20 flex flex-col gap-0.5">
+                    {kids.map(child => {
+                      const cActive = navItemActive(child, { currentPageId, currentPath, basePath })
+                      const childCls = `block py-1.5 font-serif text-lg transition-opacity ${cActive ? 'opacity-100 underline' : 'opacity-60 hover:opacity-90'}`
+                      return <li key={child.id}>{renderItem(child, childCls)}</li>
+                    })}
+                  </ul>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+    </div>
+  )
+}
+
 export default function SiteNav({ siteConfig, username, variant, onPageClick, basePath: basePathProp, currentPageId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
-  const adminViewport = useAdminViewport()
-  const isMobile = adminViewport === 'mobile'
+  const isPhone = useIsMobile()
   const tree = buildNavTree(siteConfig.pages)
   const style = variant || resolveNavStyle(siteConfig.design?.theme)
   const subNavMode = resolveSubNavStyle(siteConfig?.design)
@@ -330,7 +371,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   // Logo: show the uploaded image when logoType is 'image', otherwise the site name.
   const logoImage = siteConfig?.logoType === 'image' && siteConfig?.logo
   const brand = logoImage
-    ? <img src={siteConfig.logo} alt={siteConfig.siteName || username || 'Logo'} style={{ maxHeight: 40, width: 'auto', display: 'block' }} />
+    ? <img src={siteConfig.logo} alt={siteConfig.siteName || username || 'Logo'} className="px-1" style={{ maxHeight: isPhone ? 30 : 40, width: 'auto', display: 'block' }} />
     : (siteConfig.siteName || username)
 
   // Wordmark font only applies to the site-name logo, never an uploaded image.
@@ -340,54 +381,25 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
     const socials = siteConfig.contact || {}
     const socialKeys = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website'].filter(k => socials[k])
 
-    if (isMobile) {
+    if (isPhone) {
       return (
         <>
           <header
-            className="flex md:hidden items-center justify-between px-6 py-4 border-b border-black/10"
+            className="flex items-center justify-between px-6 py-4 border-b border-black/10"
             style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
           >
             {onPageClick ? (
-              <button onClick={() => onPageClick(null)} className="text-base font-semibold uppercase tracking-[0.16em] text-left" style={logoStyle || undefined}>{brand}</button>
+              <button onClick={() => onPageClick(null)} className="min-w-0 truncate text-base font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-left" style={logoStyle || undefined}>{brand}</button>
             ) : (
-              <a href={basePath || '/'} className="text-base font-semibold uppercase tracking-[0.16em] text-left" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
+              <a href={basePath || '/'} className="min-w-0 truncate text-base font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-left" style={{ textDecoration: 'none', color: 'inherit', ...(logoStyle || {}) }}>{brand}</a>
             )}
-            <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
+            <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="shrink-0 p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
           </header>
-          {isMenuOpen && (
-            <nav className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6" style={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }} aria-label="Site navigation">
-              <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu" className="absolute top-5 right-5 p-2"><TfiClose className="h-5 w-5" /></button>
-              {tree.map(item => {
-                const isLink = item.type === 'link'
-                const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-                const cls = 'text-lg uppercase tracking-[0.14em]'
-                const kids = item.children || []
-                return (
-                  <div key={item.id} className="flex flex-col items-center gap-2">
-                    {onPageClick && !isLink ? (
-                      <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className={cls}>{item.title}</button>
-                    ) : (
-                      <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={{ textDecoration: 'none' }} onClick={() => setIsMenuOpen(false)}>{item.title}</a>
-                    )}
-                    {kids.length > 0 && (
-                      <div className="flex flex-col items-center gap-1.5">
-                        {kids.map(child => {
-                          const cIsLink = child.type === 'link'
-                          const cHref = cIsLink ? (child.url || '#') : `${basePath}/${child.slug || child.id}`
-                          const cCls = 'text-sm uppercase tracking-[0.12em] opacity-60'
-                          return onPageClick && !cIsLink ? (
-                            <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className={cCls}>{child.title}</button>
-                          ) : (
-                            <a key={child.id} href={cHref} target={cIsLink ? '_blank' : undefined} rel={cIsLink ? 'noopener noreferrer' : undefined} className={cCls} style={{ textDecoration: 'none' }} onClick={() => setIsMenuOpen(false)}>{child.title}</a>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </nav>
-          )}
+          <MobileNavOverlay
+            open={isMenuOpen} onClose={() => setIsMenuOpen(false)} tree={tree} basePath={basePath}
+            currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick}
+            overlayStyle={{ background: 'var(--theme-bg, #fafafa)', color: 'var(--theme-text, #141414)' }}
+          />
         </>
       )
     }
@@ -451,30 +463,30 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
 
   if (style === 'header-dropdown') {
     return (
-      <header className="px-8 py-5 flex items-center justify-between gap-8">
+      <header className="px-5 md:px-8 py-5 flex items-center justify-between gap-4 md:gap-8">
         {onPageClick ? (
-          <button className="font-serif2 text-2xl text-gray-900 tracking-wide text-left shrink-0 whitespace-nowrap" style={logoStyle || undefined}>{brand}</button>
+          <button className={`font-serif2 ${isPhone ? 'text-xl' : 'text-2xl'} text-gray-900 tracking-wide text-left min-w-0 truncate ${isPhone ? '' : 'shrink-0 whitespace-nowrap'}`} style={logoStyle || undefined}>{brand}</button>
         ) : (
-          <a href={basePath || '/'} className="font-serif2 text-2xl text-gray-900 tracking-wide text-left shrink-0 whitespace-nowrap" style={logoStyle || undefined}>{brand}</a>
+          <a href={basePath || '/'} className={`font-serif2 ${isPhone ? 'text-xl' : 'text-2xl'} text-gray-900 tracking-wide text-left min-w-0 truncate ${isPhone ? '' : 'shrink-0 whitespace-nowrap'}`} style={logoStyle || undefined}>{brand}</a>
         )}
 
-        {/* Desktop nav — hidden in mobile preview or when Menu mode is on */}
+        {/* Desktop nav — hidden on phones (which use the hamburger) or when Menu mode is on */}
         {navMode === 'menu' ? (
           <NavMenu
             tree={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId}
-            onPageClick={onPageClick} isMobile={isMobile}
+            onPageClick={onPageClick} isMobile={isPhone}
             triggerClass="rounded p-2 text-gray-600"
             overlayStyle={{ background: '#f3f4f6', color: '#374151' }}
           />
         ) : (
           <>
             {/* Desktop links */}
-            {!isMobile && (
+            {!isPhone && (
               <OverflowNav items={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
             )}
 
-            {/* Mobile-preview hamburger + full-screen overlay (links mode) */}
-            {isMobile && (
+            {/* Phone: hamburger + shared overlay (even when the desktop mode is Links) */}
+            {isPhone && (
               <button
                 onClick={() => setIsMenuOpen(true)}
                 className="rounded p-2 text-gray-600"
@@ -483,45 +495,11 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
                 <RxHamburgerMenu className="h-5 w-5" />
               </button>
             )}
-            {isMobile && isMenuOpen && (
-              <nav className="fixed inset-0 bg-gray-100 z-30 flex flex-col items-center justify-center">
-                <button
-                  onClick={() => setIsMenuOpen(false)}
-                  className="absolute top-5 right-5"
-                  aria-label="Close menu"
-                >
-                  <TfiClose className="h-5 w-5" />
-                </button>
-                <ul className="flex flex-col items-center space-y-6">
-                  {tree.map(item => {
-                    const isLink = item.type === 'link'
-                    const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
-                    const kids = item.children || []
-                    return (
-                      <li key={item.id} className="flex flex-col items-center gap-2">
-                        {onPageClick && !isLink ? (
-                          <button onClick={() => { onPageClick(item.id); setIsMenuOpen(false) }} className="font-serif text-xl font-medium text-gray-700">{item.title}</button>
-                        ) : (
-                          <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setIsMenuOpen(false)} className="font-serif text-xl font-medium text-gray-700">{item.title}</a>
-                        )}
-                        {kids.length > 0 && (
-                          <div className="flex flex-col items-center gap-1.5">
-                            {kids.map(child => {
-                              const cHref = `${basePath}/${child.slug || child.id}`
-                              return onPageClick ? (
-                                <button key={child.id} onClick={() => { onPageClick(child.id); setIsMenuOpen(false) }} className="font-serif text-base text-gray-500">{child.title}</button>
-                              ) : (
-                                <a key={child.id} href={cHref} onClick={() => setIsMenuOpen(false)} className="font-serif text-base text-gray-500">{child.title}</a>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
-              </nav>
-            )}
+            <MobileNavOverlay
+              open={isPhone && isMenuOpen} onClose={() => setIsMenuOpen(false)} tree={tree} basePath={basePath}
+              currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick}
+              overlayStyle={{ background: '#f3f4f6', color: '#374151' }}
+            />
           </>
         )}
       </header>
@@ -533,7 +511,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
       <nav className="absolute top-6 right-8 z-20" aria-label="Site navigation">
         <NavMenu
           tree={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId}
-          onPageClick={onPageClick} isMobile={isMobile}
+          onPageClick={onPageClick} isMobile={isPhone}
           triggerClass="p-2 text-white"
           overlayStyle={{ background: 'var(--theme-bg, #1a120a)', color: 'var(--theme-text, #f5efe6)' }}
         />
@@ -541,9 +519,21 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
     )
   }
 
+  // Links mode: horizontal links on desktop, hamburger + shared overlay on phones.
   return (
     <nav className="absolute top-6 right-8 z-10">
-      <NavList items={tree} basePath={basePath} dark currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
+      {isPhone ? (
+        <>
+          <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="p-2 text-white"><RxHamburgerMenu className="h-6 w-6" /></button>
+          <MobileNavOverlay
+            open={isMenuOpen} onClose={() => setIsMenuOpen(false)} tree={tree} basePath={basePath}
+            currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick}
+            overlayStyle={{ background: 'var(--theme-bg, #1a120a)', color: 'var(--theme-text, #f5efe6)' }}
+          />
+        </>
+      ) : (
+        <NavList items={tree} basePath={basePath} dark currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick} subNavMode={subNavMode} />
+      )}
     </nav>
   )
 }
