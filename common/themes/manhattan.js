@@ -25,9 +25,13 @@ export const manhattan = {
     // photo case) and always draws the left-anchored ManhattanPhoto.
     photo: { hide: ['full-bleed', 'centered', 'side-by-side'], add: [{ id: 'single', label: 'Photo' }], defaultVariant: 'single' },
     photos: { defaultVariant: 'grid' },
-    // Split pane can't full-bleed; keep Centered + Side for video.
-    video: { hide: ['full-bleed'], defaultVariant: 'centered' },
+    // Video gets the same treatment as photos: one full-width rendering, no
+    // layout options (collapse to a single 'centered' variant, rendered bleed).
+    video: { hide: ['full-bleed', 'side-by-side'], defaultVariant: 'centered' },
     text: { defaultAlign: 'left', aligns: ['left'] },
     contact: { defaultAlign: 'left', aligns: ['left'] },
+    // No photo-above/quote-above layout choice; a fixed quote → photo → name
+    // stack. The editor offers an italic/regular quote-style toggle instead.
+    testimonial: { hide: ['quote-above'], defaultVariant: 'photo-above' },
   },
 }

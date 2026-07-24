@@ -8,15 +8,15 @@ import EngagementActions from "../../engagement/EngagementActions";
 import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 import HoverCaption from "../HoverCaption";
 
-const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans', insideCaption = false }) => {
+const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans', insideCaption = false, bleed = false }) => {
   const capCss = captionStyleCss(captionStyle);
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   const breakpointColumnsObj = columns != null ? { default: columns } : { default: 2, 700: 1 };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className={`${styles.masonryGallery} w-full max-w-6xl mx-auto`}>
-        <div className="gallery-content flex-grow md:p-4 overflow-hidden">
+    <div className={`flex flex-col ${bleed ? 'items-stretch' : 'items-center'}`}>
+      <div className={`${styles.masonryGallery} w-full ${bleed ? '' : 'max-w-6xl mx-auto'}`}>
+        <div className={`gallery-content flex-grow ${bleed ? '' : 'md:p-4'} overflow-hidden`}>
           <Masonry breakpointCols={breakpointColumnsObj} className="flex w-auto -ml-5" columnClassName="pl-5">
             {items.length > 0 ? (
               items.map(({ url, caption, print }, index) => {

@@ -10,6 +10,10 @@ const SIZES = {
   large:  { maxW: "max-w-6xl", thumbH: "h-[280px] md:h-[360px] lg:h-[440px] xl:h-[500px]" },
 };
 
+// Manhattan uses a single compact thumbnail height — the page links are meant to
+// read small and clean, not as a hero showcase.
+const MANHATTAN_THUMB_H = "h-[160px] md:h-[200px]";
+
 // Position + rotation of the two decorative "stack" cards behind a list
 // thumbnail. Height is applied per-size so the stack lines up with the thumb.
 const STACK_POS = [
@@ -25,6 +29,46 @@ function makeClickHandler(onChildPageClick, id) {
     e.preventDefault();
     onChildPageClick(id);
   };
+}
+
+// Manhattan list row: compact, sharp corners, sans-serif, left-aligned, no
+// decorative stack, image always on the left.
+function ManhattanRowLink({ page, linkBase, onChildPageClick }) {
+  const thumb = pageDisplayThumbnail(page);
+  const href = `${linkBase}/${page.slug || page.id}`;
+  return (
+    <a
+      href={href}
+      onClick={makeClickHandler(onChildPageClick, page.id)}
+      className="flex flex-col md:flex-row gap-5 md:gap-6 items-center group hover:opacity-90 transition-opacity"
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+      <div className="w-full md:w-2/5">
+        <div className="relative overflow-hidden">
+          {thumb ? (
+            <img
+              src={thumb}
+              alt={page.title}
+              className={`w-full ${MANHATTAN_THUMB_H} object-cover`}
+              style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
+            />
+          ) : (
+            <div className={`w-full ${MANHATTAN_THUMB_H}`} style={{ background: pageThumbGradient(page.id) }} />
+          )}
+        </div>
+      </div>
+      <div className="w-full md:w-3/5 flex flex-col justify-center text-left">
+        <h2 className="font-sans text-lg font-medium tracking-tight" style={{ color: "var(--theme-text, #141414)" }}>
+          {page.title}
+        </h2>
+        {page.description && (
+          <p className="font-sans text-sm mt-1" style={{ color: "var(--theme-text-muted, #6b6b6b)", lineHeight: 1.5 }}>
+            {page.description}
+          </p>
+        )}
+      </div>
+    </a>
+  );
 }
 
 // list + alternating share the same row markup; `reverse` flips the image/text
@@ -94,11 +138,38 @@ function mosaicPlan(n) {
   return { cols: 3, heroes: n % 3 === 2 ? [0] : [] };
 }
 
-function MosaicCell({ page, linkBase, onChildPageClick, hero }) {
+function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan }) {
   const thumb = pageDisplayThumbnail(page);
   const href = `${linkBase}/${page.slug || page.id}`;
   const aspect = hero ? "aspect-[2/1]" : "aspect-square";
   const cellStyle = hero ? { gridColumn: "span 2" } : undefined;
+  if (manhattan) {
+    // Sharp corners, no decorative stack, sans-serif left-aligned caption.
+    return (
+      <a
+        href={href}
+        onClick={makeClickHandler(onChildPageClick, page.id)}
+        className="block group hover:opacity-90 transition-opacity"
+        style={{ textDecoration: "none", color: "inherit", ...cellStyle }}
+      >
+        <div className="relative overflow-hidden">
+          {thumb ? (
+            <img
+              src={thumb}
+              alt={page.title}
+              className={`w-full ${aspect} object-cover`}
+              style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
+            />
+          ) : (
+            <div className={`w-full ${aspect}`} style={{ background: pageThumbGradient(page.id) }} />
+          )}
+        </div>
+        <h2 className="mt-2 font-sans text-sm text-left" style={{ color: "var(--theme-text, #141414)" }}>
+          {page.title}
+        </h2>
+      </a>
+    );
+  }
   return (
     <a
       href={href}
@@ -129,16 +200,18 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero }) {
   );
 }
 
-export default function PageGalleryLinks({ pages, variant = "list", imageSide = "one", size = "medium", linkBase, onChildPageClick }) {
+export default function PageGalleryLinks({ pages, variant = "list", imageSide = "one", size = "medium", linkBase, onChildPageClick, manhattan = false }) {
   const list = pages || [];
   if (list.length === 0) return null;
   const sz = SIZES[size] || SIZES.medium;
+  // Manhattan is full-width + left-anchored; other themes are centered + capped.
+  const wrap = manhattan ? "w-full" : `${sz.maxW} mx-auto px-5 sm:px-8 md:px-10`;
 
   if (variant === "mosaic") {
     const { cols, heroes } = mosaicPlan(list.length);
     const heroSet = new Set(heroes);
     return (
-      <div className={`${sz.maxW} mx-auto px-5 sm:px-8 md:px-10`}>
+      <div className={wrap}>
         <div
           className="grid gap-4 md:gap-6"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, alignItems: "start" }}
@@ -150,6 +223,7 @@ export default function PageGalleryLinks({ pages, variant = "list", imageSide = 
               linkBase={linkBase}
               onChildPageClick={onChildPageClick}
               hero={heroSet.has(i)}
+              manhattan={manhattan}
             />
           ))}
         </div>
@@ -157,20 +231,29 @@ export default function PageGalleryLinks({ pages, variant = "list", imageSide = 
     );
   }
 
-  const alternating = imageSide === "alternating";
+  const alternating = imageSide === "alternating" && !manhattan;
   return (
-    <div className={`${sz.maxW} mx-auto px-5 sm:px-8 md:px-10`}>
-      <div className="space-y-10 md:space-y-14">
+    <div className={wrap}>
+      <div className={manhattan ? "space-y-8" : "space-y-10 md:space-y-14"}>
         {list.map((p, i) => (
-          <RowLink
-            key={p.id}
-            page={p}
-            index={i}
-            linkBase={linkBase}
-            onChildPageClick={onChildPageClick}
-            reverse={alternating && i % 2 === 1}
-            thumbH={sz.thumbH}
-          />
+          manhattan ? (
+            <ManhattanRowLink
+              key={p.id}
+              page={p}
+              linkBase={linkBase}
+              onChildPageClick={onChildPageClick}
+            />
+          ) : (
+            <RowLink
+              key={p.id}
+              page={p}
+              index={i}
+              linkBase={linkBase}
+              onChildPageClick={onChildPageClick}
+              reverse={alternating && i % 2 === 1}
+              thumbH={sz.thumbH}
+            />
+          )
         ))}
       </div>
     </div>

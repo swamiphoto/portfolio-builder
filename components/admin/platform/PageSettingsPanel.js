@@ -29,7 +29,7 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   );
 }
 
-export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride }) {
+export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto' }) {
   const [expanded, setExpanded] = useState(true)
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride])
   const [designOpen, setDesignOpen] = useState(false)
@@ -102,6 +102,10 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
   }
 
   // ── Page: hero editor ──────────────────────────────────────────────────────
+  // Manhattan renders no page hero, so hide the whole Hero card for it. The page
+  // title stays editable from the page list (rename), so nothing is lost.
+  if (themeId === 'manhattan') return null
+
   return (
     <div className="group/card overflow-hidden block-card-spec" style={{ background: '#f6f3ec', borderRadius: 5, boxShadow: '0 1px 2px rgba(26,18,10,0.05), 0 0 0 1px rgba(26,18,10,0.06)', transition: 'box-shadow 150ms' }}>
       <div className="flex items-center" style={{ gap: 8, padding: '8px 10px 7px' }}>

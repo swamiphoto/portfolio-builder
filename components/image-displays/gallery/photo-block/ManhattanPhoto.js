@@ -1,6 +1,7 @@
 // components/image-displays/gallery/photo-block/ManhattanPhoto.js
-// Manhattan single photo: one rendering, no layout options. Left-anchored,
-// capped width with right-side air, sharp corners, caption inside on hover.
+// Manhattan single photo: one rendering, no layout options. Spans the full
+// content width (same span as every other block — height varies by aspect),
+// sharp corners, caption inside on hover.
 import { getSizedUrl } from '../../../../common/imageUtils'
 import HoverCaption from '../HoverCaption'
 import WatermarkOverlay from '../../engagement/WatermarkOverlay'
@@ -9,7 +10,7 @@ import EngagementActions from '../../engagement/EngagementActions'
 
 export default function ManhattanPhoto({ imageUrl, caption = '', onImageClick, captionStyle = 'sans', print }) {
   return (
-    <figure className="manhattan-photo mr-auto w-full" style={{ maxWidth: 'min(66%, 720px)' }}>
+    <figure className="manhattan-photo w-full">
       <div className="relative group">
         <img
           src={getSizedUrl(imageUrl, 'display')}
