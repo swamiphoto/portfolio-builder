@@ -1,5 +1,6 @@
 import { COVER_FALLBACK_BG } from '../../../common/coverBackground'
 import ToggleSwitch from '../common/ToggleSwitch'
+import Tip from '../Tip'
 
 const SERIF = "'Fraunces', Georgia, serif"
 
@@ -69,11 +70,15 @@ export default function CoverPageRow({ siteConfig, selected, onSelect, onConfigu
         </button>
       )}
 
-      <ToggleSwitch
-        on={coverOn}
-        ariaLabel="Cover page"
-        onChange={(next) => { next ? onEnableCover?.() : onDisableCover?.() }}
-      />
+      <Tip label={coverOn ? 'Hide cover page' : 'Include a cover page'} side="left">
+        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-[120ms]" style={{ display: 'inline-flex', flexShrink: 0 }}>
+          <ToggleSwitch
+            on={coverOn}
+            ariaLabel={coverOn ? 'Hide cover page' : 'Include a cover page'}
+            onChange={(next) => { next ? onEnableCover?.() : onDisableCover?.() }}
+          />
+        </span>
+      </Tip>
     </div>
   )
 }
