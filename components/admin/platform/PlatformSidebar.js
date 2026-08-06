@@ -930,7 +930,10 @@ export default function PlatformSidebar({
             onConfigChange(prev => ({ ...prev, hasCoverPage: true }))
             onSelectCover?.()
           }}
-          onDisableCover={() => onDisableCover?.()}
+          onDisableCover={() => {
+            onConfigChange(prev => ({ ...prev, hasCoverPage: false }))
+            onDisableCover?.()
+          }}
         />
         <SidebarSection
           label=""

@@ -30,19 +30,21 @@ export default function ThemeBar({ siteConfig, onConfigChange, onEditHandles }) 
 
       <div
         style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          border: '1px solid rgba(160,140,110,0.42)', borderRadius: 7,
-          background: '#fffdf8', padding: '0 8px 0 2px', height: 34,
+          position: 'relative', height: 34,
+          border: '1px solid rgba(160,140,110,0.38)', borderRadius: 7,
+          background: 'rgba(120,90,60,0.05)',
         }}
       >
+        {/* The select fills the whole control so clicking anywhere opens it
+            (except over the brush, which paints on top). */}
         <select
           value={siteConfig.design?.theme || 'kyoto'}
           onChange={(e) => update({ design: { ...(siteConfig.design || {}), theme: e.target.value } })}
           style={{
-            flex: 1, minWidth: 0, height: '100%',
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
             appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
             background: 'transparent', border: 'none', outline: 'none',
-            padding: '0 4px 0 10px', fontSize: 13, color: '#2c2416', cursor: 'pointer',
+            padding: '0 54px 0 12px', fontSize: 13, color: '#2c2416', cursor: 'pointer',
           }}
         >
           {themeOptions().map(o => (<option key={o.value} value={o.value}>{o.label}</option>))}
@@ -53,15 +55,22 @@ export default function ThemeBar({ siteConfig, onConfigChange, onEditHandles }) 
           type="button"
           title="Design"
           onClick={() => setDesignOpen(v => !v)}
-          className="flex items-center justify-center rounded transition-colors flex-shrink-0"
-          style={{ width: 24, height: 24, color: '#9e9788', background: designOpen ? 'rgba(26,18,10,0.06)' : 'transparent', border: 'none', cursor: 'pointer' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(26,18,10,0.06)' }}
+          className="flex items-center justify-center rounded transition-colors"
+          style={{
+            position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)',
+            width: 22, height: 22, color: '#9e9788',
+            background: designOpen ? 'rgba(26,18,10,0.08)' : 'transparent',
+            border: 'none', cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(26,18,10,0.08)' }}
           onMouseLeave={(e) => { if (!designOpen) e.currentTarget.style.background = 'transparent' }}
         >
           <BrushIcon />
         </button>
 
-        <Caret />
+        <span style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none' }}>
+          <Caret />
+        </span>
       </div>
 
       {designOpen && (
