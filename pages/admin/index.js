@@ -142,6 +142,15 @@ export default function AdminIndex() {
       .then(config => {
         setSiteConfig(config)
         setLoading(false)
+        const pages = config?.pages || []
+        const firstReal = pages.find(p => p.type !== 'link')
+        if (!firstReal && config?.hasCoverPage !== false) {
+          setCoverSelected(true)
+          setSelectedPageId(null)
+        } else {
+          setCoverSelected(false)
+          setSelectedPageId(firstReal?.id || null)
+        }
       })
       .catch(err => {
         console.error('Failed to load site config:', err)
