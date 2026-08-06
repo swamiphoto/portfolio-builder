@@ -7,7 +7,7 @@ describe('ImportDoneStep', () => {
     render(<ImportDoneStep summary={{ importedCount: 12, failedCount: 0 }} onEnter={onEnter} onImportAnother={() => {}} />)
     expect(screen.getByText(/your photos are in/i)).toBeInTheDocument()
     expect(screen.getByText(/12 photos, ready to use/i)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /enter my portfolio/i }))
+    fireEvent.click(screen.getByRole('button', { name: /go to my studio/i }))
     expect(onEnter).toHaveBeenCalled()
   })
 

@@ -15,20 +15,22 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
           A few couldn't be brought in. You can add those manually.
         </p>
       )}
-      <button onClick={onEnter} style={{ ...primaryBtn(false) }}>
-        Enter my portfolio →
-      </button>
-      <button
-        onClick={onImportAnother}
-        style={{
-          display: 'block', marginTop: 14, background: 'transparent', border: 'none', cursor: 'pointer',
-          color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }}
-        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
-      >
-        Import from another site
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+        <button onClick={onEnter} style={{ ...primaryBtn(false) }}>
+          Go to my studio
+        </button>
+        <button
+          onClick={onImportAnother}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: 'var(--text-secondary)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+        >
+          Import from another site
+        </button>
+      </div>
     </div>
   )
 }

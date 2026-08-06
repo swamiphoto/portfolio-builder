@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import ImportFlow from '../components/admin/import/ImportFlow'
+import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
 
 function goToAdmin(slug, { imported = false } = {}) {
@@ -100,23 +101,25 @@ export default function Onboarding() {
               : `Welcome${firstName ? `, ${firstName}` : ''}.`}
           </h1>
           <p style={{ fontSize: 14.5, color: '#7a6b55', marginBottom: 40, lineHeight: 1.6, maxWidth: 340 }}>
-            Your site is almost ready. Do you have photos on another site you want to bring over?
+            Let's get your site set up. Do you have photos on another site you want to bring over?
           </p>
 
           <button
             onClick={() => setShowImport(true)}
             style={{
               width: '100%',
-              padding: '13px 16px',
+              padding: '14px 16px',
               background: '#2c2416',
-              color: '#f5ecd6',
-              fontSize: 14,
+              color: '#f6f3ec',
+              fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+              fontSize: 12,
               fontWeight: 500,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
               borderRadius: 5,
               border: 'none',
               cursor: 'pointer',
               transition: 'background 0.15s',
-              letterSpacing: '0.01em',
               marginBottom: 14,
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#3d2d18' }}
@@ -129,21 +132,23 @@ export default function Onboarding() {
             onClick={() => goToAdmin(claimedSlug)}
             style={{
               width: '100%',
-              padding: '12px 16px',
+              padding: '13px 16px',
               background: 'transparent',
               color: '#7a6b55',
-              fontSize: 13.5,
-              fontWeight: 400,
+              fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
               borderRadius: 5,
               border: '1px solid rgba(160,140,110,0.35)',
               cursor: 'pointer',
               transition: 'all 0.15s',
-              letterSpacing: '0.01em',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)'; e.currentTarget.style.color = '#2c2416' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7a6b55' }}
           >
-            Skip and start with a blank canvas
+            I'll do this later
           </button>
         </div>
 
@@ -177,127 +182,14 @@ export default function Onboarding() {
 
   // ── Step 1: choose URL ────────────────────────────────────────────────────
   return (
-    <div
-      className="flex flex-col items-center justify-center h-screen font-sans"
-      style={{ background: 'var(--desk, #e8e2d9)' }}
-    >
-      <div style={{ width: '100%', maxWidth: 420, padding: '0 32px' }}>
-        <h1 style={{
-          fontFamily: '"Fraunces", Georgia, serif',
-          fontSize: 30,
-          fontWeight: 300,
-          fontStyle: 'italic',
-          color: '#2c2416',
-          marginBottom: 10,
-          lineHeight: 1.15,
-        }}>
-          Welcome to Sepia.
-        </h1>
-        <p style={{ fontSize: 14.5, color: '#7a6b55', marginBottom: 40, lineHeight: 1.6, maxWidth: 320 }}>
-          Your portfolio is almost ready. Choose the address where your work will live.
-        </p>
-
-        <form onSubmit={handleSubmit}>
-          <label style={{
-            display: 'block',
-            fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
-            fontSize: 10.5,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#a8967a',
-            fontWeight: 500,
-            marginBottom: 8,
-          }}>
-            Your URL
-          </label>
-
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'stretch',
-                border: '1px solid rgba(160,140,110,0.45)',
-                borderRadius: 6,
-                overflow: 'hidden',
-                transition: 'border-color 0.15s',
-                background: '#faf7f2',
-                boxShadow: '0 1px 3px rgba(60,40,15,0.06)',
-              }}
-              onFocusCapture={(e) => e.currentTarget.style.borderColor = 'rgba(120,100,70,0.65)'}
-              onBlurCapture={(e) => e.currentTarget.style.borderColor = 'rgba(160,140,110,0.45)'}
-            >
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); setError('') }}
-                placeholder="yourname"
-                autoFocus
-                style={{
-                  flex: 1,
-                  padding: '12px 14px',
-                  fontSize: 15,
-                  color: '#2c2416',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                }}
-              />
-              <span style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 14px',
-                fontSize: 12.5,
-                fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
-                color: '#a8967a',
-                background: 'rgba(160,140,110,0.10)',
-                borderLeft: '1px solid rgba(160,140,110,0.28)',
-                whiteSpace: 'nowrap',
-              }}>
-                .{rootDomain}
-              </span>
-            </div>
-
-            {slug && slug !== username.toLowerCase() && (
-              <p style={{
-                fontSize: 11.5,
-                color: '#a8967a',
-                marginTop: 6,
-                fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
-              }}>
-                → {slug}.{rootDomain}
-              </p>
-            )}
-            {error && (
-              <p style={{ fontSize: 13, color: '#a0451e', marginTop: 7, lineHeight: 1.4 }}>
-                {error}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={!slug || saving}
-            style={{
-              width: '100%',
-              padding: '13px 16px',
-              background: !slug || saving ? 'rgba(60,40,15,0.18)' : '#2c2416',
-              color: !slug || saving ? 'rgba(245,236,214,0.5)' : '#f5ecd6',
-              fontSize: 14,
-              fontWeight: 500,
-              borderRadius: 5,
-              border: 'none',
-              cursor: !slug || saving ? 'not-allowed' : 'pointer',
-              transition: 'background 0.15s',
-              letterSpacing: '0.01em',
-            }}
-            onMouseEnter={(e) => { if (slug && !saving) e.currentTarget.style.background = '#3d2d18' }}
-            onMouseLeave={(e) => { if (slug && !saving) e.currentTarget.style.background = '#2c2416' }}
-          >
-            {saving ? 'Saving…' : 'Claim your URL'}
-          </button>
-        </form>
-      </div>
-    </div>
+    <UrlClaimStep
+      rootDomain={rootDomain}
+      username={username}
+      setUsername={(v) => { setUsername(v); setError('') }}
+      slug={slug}
+      error={error}
+      saving={saving}
+      onSubmit={handleSubmit}
+    />
   )
 }
