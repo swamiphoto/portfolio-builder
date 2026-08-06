@@ -347,9 +347,9 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   )
 }
 
-export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare, onEditHandles }) {
+export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare, onEditHandles, initialView = 'main' }) {
   const config = siteConfig || {}
-  const [view, setView] = useState('main') // 'main' | 'cover' | 'domain' | 'analytics' | 'print' | 'sharing'
+  const [view, setView] = useState(initialView) // 'main' | 'cover' | 'domain' | 'analytics' | 'print' | 'sharing'
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const [coverDesignOpen, setCoverDesignOpen] = useState(false)
@@ -401,7 +401,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     )
 
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Cover page" onBack={() => setView('main')} headerRight={coverBrushButton}>
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Cover page" onBack={initialView === 'cover' ? undefined : () => setView('main')} headerRight={coverBrushButton}>
         <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
           <AssetField
             label="Background image"

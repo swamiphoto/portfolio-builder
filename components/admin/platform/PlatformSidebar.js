@@ -297,6 +297,10 @@ export default function PlatformSidebar({
   const [draftValue, setDraftValue] = useState('')
   const [siteSettingsOpen, setSiteSettingsOpen] = useState(false)
   const siteSettingsRef = useRef(null)
+  // The cover row's gear opens the cover editor anchored to it (a second
+  // SiteSettingsPopover opened directly at its 'cover' view — reuses the exact
+  // same cover fields + cover-design brush, no duplicate UI).
+  const [coverConfigAnchorEl, setCoverConfigAnchorEl] = useState(null)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountAvatarRef = useRef(null)
   const [pageSettingsId, setPageSettingsId] = useState(null)
@@ -893,18 +897,6 @@ export default function PlatformSidebar({
 
         <ThemeBar siteConfig={siteConfig} onConfigChange={onConfigChange} onEditHandles={undefined} />
 
-        <div style={{ padding: '10px 8px 2px' }}>
-          <CoverPageRow
-            siteConfig={siteConfig}
-            selected={!!coverSelected}
-            onSelect={() => onSelectCover?.()}
-            onEnableCover={() => {
-              onConfigChange(prev => ({ ...prev, hasCoverPage: true }))
-              onSelectCover?.()
-            }}
-          />
-        </div>
-
         {/* Pages section header */}
         <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
@@ -929,6 +921,16 @@ export default function PlatformSidebar({
               </Tip>
             </div>
           </div>
+        <CoverPageRow
+          siteConfig={siteConfig}
+          selected={!!coverSelected}
+          onSelect={() => onSelectCover?.()}
+          onConfigure={(el) => setCoverConfigAnchorEl(el)}
+          onEnableCover={() => {
+            onConfigChange(prev => ({ ...prev, hasCoverPage: true }))
+            onSelectCover?.()
+          }}
+        />
         <SidebarSection
           label=""
           pages={navPages}
@@ -1074,6 +1076,25 @@ export default function PlatformSidebar({
           onViewCover={onViewCover}
           onDisableCover={onDisableCover}
           onEditHandles={() => { setSiteSettingsOpen(false); setAccountOpen(true) }}
+        />
+      )}
+
+      {coverConfigAnchorEl && (
+        <SiteSettingsPopover
+          siteConfig={siteConfig}
+          username={username}
+          anchorEl={coverConfigAnchorEl}
+          initialView="cover"
+          onUpdate={onConfigChange}
+          onClose={() => setCoverConfigAnchorEl(null)}
+          onPickLogo={onPickLogo}
+          onPickFavicon={onPickFavicon}
+          onPickCoverImage={onPickCoverImage}
+          onPickShareLarge={onPickShareLarge}
+          onPickShareSquare={onPickShareSquare}
+          onViewCover={onViewCover}
+          onDisableCover={onDisableCover}
+          onEditHandles={() => { setCoverConfigAnchorEl(null); setAccountOpen(true) }}
         />
       )}
 

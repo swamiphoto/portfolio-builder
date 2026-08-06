@@ -27,4 +27,14 @@ describe('CoverPageRow', () => {
     const { container } = render(<CoverPageRow siteConfig={{ hasCoverPage: true, cover: { imageUrl: 'https://x/y.jpg' } }} selected={false} onSelect={() => {}} onEnableCover={() => {}} />)
     expect(container.querySelector('img')?.getAttribute('src')).toContain('y.jpg')
   })
+
+  it('opens the cover settings via the gear without selecting the row', () => {
+    const onSelect = jest.fn()
+    const onConfigure = jest.fn()
+    render(<CoverPageRow siteConfig={{ hasCoverPage: true, cover: {} }} selected={false} onSelect={onSelect} onConfigure={onConfigure} onEnableCover={() => {}} />)
+    fireEvent.click(screen.getByTitle('Cover settings'))
+    expect(onConfigure).toHaveBeenCalled()
+    // gear click must not also trigger row selection (stopPropagation)
+    expect(onSelect).not.toHaveBeenCalled()
+  })
 })
