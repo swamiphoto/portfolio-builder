@@ -15,17 +15,7 @@ import GalleryPreview from '../gallery-builder/GalleryPreview'
 import { getTheme } from '../../../common/themes'
 import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientEngagementContext'
 import { getPagePhotos } from '../../../common/assetRefs'
-
-function resolveHomePage(config) {
-  const pages = config?.pages || []
-  if (!pages.length) return null
-  return pages.find(p => p.id === config.homePageId)
-    || pages.find(p => p.id === 'home')
-    || pages.find(p => p.showInNav && p.type !== 'link')
-    || pages.find(p => p.type !== 'link')
-    || pages[0]
-    || null
-}
+import { resolveHomePage } from '../../../common/homePage'
 
 function PagePreview({
   config,

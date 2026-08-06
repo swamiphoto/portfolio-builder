@@ -35,7 +35,6 @@ function resolveEditingPage(siteConfig, selectedPageId, showLibrary) {
   }
   if (showLibrary) return null
   return pages.find(p => p.id === siteConfig.homePageId)
-    || pages.find(p => p.id === 'home')
     || pages.find(p => p.showInNav && p.type !== 'link')
     || pages.find(p => p.type !== 'link')
     || pages[0]

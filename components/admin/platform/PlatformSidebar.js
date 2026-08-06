@@ -736,7 +736,7 @@ export default function PlatformSidebar({
   }
 
   const navPages = buildNavTree(pages)
-  const hiddenPages = flattenForOtherPages(pages).filter(p => p.id !== 'home')
+  const hiddenPages = flattenForOtherPages(pages)
 
   return (
     <div className="flex flex-col h-full select-none text-sm">
