@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Head from 'next/head'
 import { lookupUserByUsername } from '../../../common/userProfile'
+import { resolveHomePage } from '../../../common/homePage'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
@@ -83,13 +84,12 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   const ogDescription = siteConfig.tagline || ''
   const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
 
-  const homePage = siteConfig.pages?.find((p) => p.id === 'home') || siteConfig.pages?.[0]
+  const homePage = resolveHomePage(siteConfig)
   const hasCoverPage = siteConfig.hasCoverPage !== false
   const coverConfig = siteConfig.cover || {}
-  const initialPage = hasCoverPage && siteConfig.homePageId
-    ? siteConfig.pages?.find(p => p.id === siteConfig.homePageId)
-    : null
-  const initialPageHref = initialPage ? `${basePath}/${initialPage.slug || initialPage.id}` : null
+  const homeTarget = resolveHomePage(siteConfig)
+  const initialPageHref = homeTarget ? `${basePath}/${homeTarget.slug || homeTarget.id}` : null
+  const [comingSoon, setComingSoon] = useState(false)
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)
   if (!unlocked) {
@@ -121,10 +121,19 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
           }}
           title={coverConfig.heading || siteConfig.siteName || ''}
           description={coverConfig.subheading || siteConfig.tagline || ''}
-          primaryButton={initialPageHref ? { label: coverConfig.buttonText || 'View my portfolio', href: initialPageHref } : null}
+          primaryButton={{
+            label: coverConfig.buttonText || 'View my portfolio',
+            href: initialPageHref || undefined,
+            onClick: initialPageHref ? undefined : () => setComingSoon(true),
+          }}
           slideshowHref={null}
           clientFeaturesEnabled={false}
         />
+        {comingSoon && !initialPageHref && (
+          <div className="absolute inset-x-0 bottom-8 flex justify-center">
+            <span className="px-4 py-2 text-sm text-white/90 bg-black/40 rounded">Coming soon</span>
+          </div>
+        )}
       </div>
     )
   }
@@ -207,8 +216,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             />
           </ClientEngagementProvider>
         ) : (
-          <div className="flex items-center justify-center h-64 text-sm text-gray-400">
-            No content yet.
+          <div className="flex flex-col items-center justify-center h-64 gap-1 text-center text-gray-400">
+            <span className="text-sm">This site is under construction.</span>
           </div>
         )}
         <SiteFooter siteConfig={siteConfig} />
