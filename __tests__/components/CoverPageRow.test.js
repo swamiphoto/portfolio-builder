@@ -14,13 +14,24 @@ describe('CoverPageRow', () => {
     expect(onSelect).toHaveBeenCalled()
   })
 
-  it('shows "Add a cover page" and calls onEnableCover when the cover is off', () => {
+  it('shows the toggle OFF and enables the cover when toggled on', () => {
     const onEnableCover = jest.fn()
-    render(<CoverPageRow siteConfig={{ hasCoverPage: false, cover: {} }} selected={false} onSelect={() => {}} onEnableCover={onEnableCover} />)
-    const el = screen.getByText('Add a cover page')
-    expect(el).toBeInTheDocument()
-    fireEvent.click(el)
+    render(<CoverPageRow siteConfig={{ hasCoverPage: false, cover: {} }} selected={false} onSelect={() => {}} onEnableCover={onEnableCover} onDisableCover={() => {}} />)
+    const toggle = screen.getByRole('switch')
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    // gear only appears when the cover is on
+    expect(screen.queryByTitle('Cover settings')).not.toBeInTheDocument()
+    fireEvent.click(toggle)
     expect(onEnableCover).toHaveBeenCalled()
+  })
+
+  it('disables the cover when the toggle is switched off', () => {
+    const onDisableCover = jest.fn()
+    render(<CoverPageRow siteConfig={{ hasCoverPage: true, cover: {} }} selected={false} onSelect={() => {}} onEnableCover={() => {}} onDisableCover={onDisableCover} />)
+    const toggle = screen.getByRole('switch')
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(toggle)
+    expect(onDisableCover).toHaveBeenCalled()
   })
 
   it('renders the cover image as the thumbnail when present', () => {
