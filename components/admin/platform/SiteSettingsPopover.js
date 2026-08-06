@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import PopoverShell from './PopoverShell'
 import DomainPanel from './DomainPanel'
+import DesignControlsBody from './DesignControlsBody'
 import { DesignSection, PillToggle as DesignPillToggle, DesignSelect } from './designControls'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
 import { THEME_LIST } from '../../../common/themes'
@@ -173,7 +174,7 @@ function DrillRow({ label, hint, onDrillIn }) {
 }
 
 
-const BrushIcon = () => (
+export const BrushIcon = () => (
   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
   </svg>
@@ -750,82 +751,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
 
       {designOpen && (
         <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width="max-content" minWidth={280} maxWidth="calc(100vw - 24px)" title="Design">
-          <DesignSection label="Theme">
-            <DesignSelect
-              value={config.design?.theme || 'kyoto'}
-              onChange={(e) => update({ design: { ...(config.design || {}), theme: e.target.value } })}
-            >
-              {themeOptions().map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </DesignSelect>
-          </DesignSection>
-
-          {(config.logoType || 'sitename') === 'sitename' && (
-            <DesignSection label="Logo font">
-              <DesignPillToggle
-                value={config.logoFont || 'theme'}
-                onChange={(v) => update({ logoFont: v })}
-                options={[
-                  { value: 'theme',     label: <span style={{ fontFamily: 'Muse', fontSize: 15, lineHeight: 1 }}>Signature</span> },
-                  { value: 'modern',    label: <span style={{ fontFamily: 'Inter, -apple-system, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, fontSize: 11 }}>Modern</span> },
-                  { value: 'editorial', label: <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 13 }}>Editorial</span> },
-                  { value: 'cormorant', label: <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 12 }}>Classic</span> },
-                ]}
-              />
-            </DesignSection>
-          )}
-
-          {resolveNavStyle(config.design?.theme || 'kyoto') !== 'left-rail' && (
-            <DesignSection label="Navigation">
-              <DesignPillToggle
-                value={config.design?.navStyle === 'menu' ? 'menu' : 'links'}
-                onChange={(v) => update({ design: { ...(config.design || {}), navStyle: v } })}
-                options={[
-                  { value: 'links', label: 'Links' },
-                  { value: 'menu',  label: 'Menu'  },
-                ]}
-              />
-            </DesignSection>
-          )}
-
-          {config.design?.navStyle !== 'menu' && (
-            <DesignSection label="Nested pages">
-              <DesignPillToggle
-                value={config.design?.subNavStyle === 'inline' ? 'inline' : 'dropdown'}
-                onChange={(v) => update({ design: { ...(config.design || {}), subNavStyle: v } })}
-                options={[
-                  { value: 'dropdown', label: 'Dropdown' },
-                  { value: 'inline',   label: 'Inline'   },
-                ]}
-              />
-            </DesignSection>
-          )}
-
-          <DesignSection
-            label="Social links"
-            description={onEditHandles ? (
-              <>You can add these in your{' '}
-                <button
-                  type="button"
-                  onClick={onEditHandles}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#2c2416' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = 'inherit' }}
-                  style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', transition: 'color 0.15s' }}
-                >profile</button>
-              </>
-            ) : 'You can add these in your profile'}
-          >
-            <DesignPillToggle
-              value={resolveFooterSocial(config)}
-              onChange={(v) => update({ design: { ...(config.design || {}), footerSocial: v } })}
-              options={[
-                { value: 'text',  label: 'Text'  },
-                { value: 'icons', label: 'Icons' },
-                { value: 'off',   label: 'Off'   },
-              ]}
-            />
-          </DesignSection>
+          <DesignControlsBody config={config} onChange={update} onEditHandles={onEditHandles} includeTheme />
         </PopoverShell>
       )}
 
