@@ -24,10 +24,6 @@ export default function ThemeBar({ siteConfig, onConfigChange, onEditHandles }) 
 
   return (
     <div style={{ padding: '12px 14px 4px' }}>
-      <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 6 }}>
-        Theme
-      </div>
-
       <div
         style={{
           position: 'relative', height: 34,
@@ -35,6 +31,18 @@ export default function ThemeBar({ siteConfig, onConfigChange, onEditHandles }) 
           background: 'rgba(120,90,60,0.05)',
         }}
       >
+        {/* "Theme" label lives inside the control, ahead of the selected value.
+            pointer-events:none so clicks still fall through to the select. */}
+        <span
+          style={{
+            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+            fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: '#b0a490', fontWeight: 500, pointerEvents: 'none',
+          }}
+        >
+          Theme
+        </span>
+
         {/* The select fills the whole control so clicking anywhere opens it
             (except over the brush, which paints on top). */}
         <select
@@ -44,7 +52,7 @@ export default function ThemeBar({ siteConfig, onConfigChange, onEditHandles }) 
             position: 'absolute', inset: 0, width: '100%', height: '100%',
             appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
             background: 'transparent', border: 'none', outline: 'none',
-            padding: '0 54px 0 12px', fontSize: 13, color: '#2c2416', cursor: 'pointer',
+            padding: '0 54px 0 62px', fontSize: 13, color: '#2c2416', cursor: 'pointer',
           }}
         >
           {themeOptions().map(o => (<option key={o.value} value={o.value}>{o.label}</option>))}
