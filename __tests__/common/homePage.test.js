@@ -1,4 +1,5 @@
 import { resolveHomePage, assignHomeOnCreate } from '@/common/homePage'
+import { defaultPage } from '@/common/siteConfig'
 
 const page = (over) => ({ type: 'page', showInNav: true, ...over })
 
@@ -34,5 +35,16 @@ describe('assignHomeOnCreate', () => {
     // "unchanged" means unchanged: cfg.homePageId was explicitly null, so it stays null.
     expect(assignHomeOnCreate(cfg, page({ id: 'h', showInNav: false })).homePageId).toBeNull()
     expect(assignHomeOnCreate(cfg, page({ id: 'l', type: 'link' })).homePageId).toBeNull()
+  })
+})
+
+describe('create-first-page assigns home', () => {
+  it('pins the first created visible page as home', () => {
+    let cfg = { homePageId: null, pages: [] }
+    const p = defaultPage({ id: 'gallery', title: 'New Page', showInNav: true })
+    cfg = { ...cfg, pages: [...cfg.pages, p] }
+    cfg = assignHomeOnCreate(cfg, p)
+    expect(cfg.homePageId).toBe('gallery')
+    expect(cfg.pages).toHaveLength(1)
   })
 })

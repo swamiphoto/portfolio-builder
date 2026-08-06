@@ -6,6 +6,7 @@ import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
+import { assignHomeOnCreate } from '../../../common/homePage'
 import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/gcsClient'
@@ -387,7 +388,8 @@ export default function PlatformSidebar({
     onConfigChange(prev => {
       const sectionPeers = prev.pages.filter(p => (p.showInNav !== false) === inNav)
       const sortOrder = Math.max(0, ...sectionPeers.map(p => p.sortOrder ?? 0)) + 1
-      return { ...prev, pages: [...prev.pages, defaultPage({ id, title: trimmed, sortOrder, showInNav: inNav, parentId: null, template: draftRow.template })] }
+      const newPage = defaultPage({ id, title: trimmed, sortOrder, showInNav: inNav, parentId: null, template: draftRow.template })
+      return assignHomeOnCreate({ ...prev, pages: [...prev.pages, newPage] }, newPage)
     })
     onSelectPage?.(id)
     setDraftRow(null)

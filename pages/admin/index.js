@@ -14,6 +14,7 @@ import ClientFeedbackBanner from '../../components/admin/platform/ClientFeedback
 import { EditorFeedbackProvider } from '../../components/admin/gallery-builder/EditorFeedbackContext'
 import { useClientFeedback } from '../../components/admin/platform/useClientFeedback'
 import { defaultPage } from '../../common/siteConfig'
+import { assignHomeOnCreate } from '../../common/homePage'
 import { COVER_FALLBACK_BG } from '../../common/coverBackground'
 import { useRouter } from 'next/router'
 import GuidedTour from '../../components/admin/onboarding/GuidedTour'
@@ -301,10 +302,8 @@ export default function AdminIndex() {
     let id = 'gallery'; let n = 2
     while (existingIds.has(id)) { id = `gallery-${n++}` }
     const sortOrder = Math.max(0, ...(siteConfig?.pages || []).filter(p => p.showInNav !== false).map(p => p.sortOrder ?? 0)) + 1
-    updateConfig(prev => ({
-      ...prev,
-      pages: [...prev.pages, defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null, template: 'gallery' })],
-    }))
+    const newPage = defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null, template: 'gallery' })
+    updateConfig(prev => assignHomeOnCreate({ ...prev, pages: [...prev.pages, newPage] }, newPage))
     setSelectedPageId(id)
     setShowLibrary(false)
   }, [siteConfig, updateConfig])
