@@ -204,6 +204,21 @@ export function normalizePrintStore(config = {}) {
   }
 }
 
+// Legacy configs created before the seeded-page removal still carry a hidden
+// `home` page ({ id:'home', showInNav:false }) that used to be filtered out of
+// the UI. Drop it on read so those sites start clean (pages:[]), matching new
+// sites. Only removes the empty, hidden, unpinned seed — never a page the user
+// pinned as home or filled with content.
+export function dropSeededHomePage(config) {
+  const pages = config?.pages || []
+  const i = pages.findIndex(
+    (p) => p.id === 'home' && p.showInNav === false && (p.blocks?.length || 0) === 0
+  )
+  if (i === -1) return config
+  if (config.homePageId === pages[i].id) return config
+  return { ...config, pages: pages.filter((_, idx) => idx !== i) }
+}
+
 /**
  * Read the site config for a user from R2.
  * Returns null if the config doesn't exist yet.
@@ -213,10 +228,10 @@ export function normalizePrintStore(config = {}) {
 export async function readSiteConfig(userId) {
   try {
     const config = await downloadJSON(getUserSiteConfigPath(userId))
-    return migrateSiteConfigThemes(normalizePrintStore({
+    return migrateSiteConfigThemes(normalizePrintStore(dropSeededHomePage({
       ...config,
       pages: (config.pages || []).map((page) => normalizePageEntity(page)),
-    }))
+    })))
   } catch (err) {
     // Only treat "file doesn't exist yet" as a normal case
     if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return null

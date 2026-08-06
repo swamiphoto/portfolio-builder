@@ -87,8 +87,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   const homePage = resolveHomePage(siteConfig)
   const hasCoverPage = siteConfig.hasCoverPage !== false
   const coverConfig = siteConfig.cover || {}
-  const homeTarget = resolveHomePage(siteConfig)
-  const initialPageHref = homeTarget ? `${basePath}/${homeTarget.slug || homeTarget.id}` : null
+  const initialPageHref = homePage ? `${basePath}/${homePage.slug || homePage.id}` : null
   const [comingSoon, setComingSoon] = useState(false)
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)

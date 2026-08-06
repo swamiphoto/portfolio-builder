@@ -351,7 +351,7 @@ export default function AdminIndex() {
       saveStatus={saveStatus}
       onConfigChange={updateConfig}
       onSignOut={() => signOut({ callbackUrl: '/' })}
-      selectedPageId={showLibrary ? null : (selectedPage?.id ?? null)}
+      selectedPageId={showLibrary || coverSelected ? null : (selectedPage?.id ?? null)}
       coverSelected={coverSelected}
       onSelectPage={handleSelectPage}
       onSelectCover={handleViewCover}

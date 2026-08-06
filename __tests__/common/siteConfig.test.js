@@ -12,6 +12,7 @@ import { getUserSiteConfigPath } from '../../common/gcsUser'
 import {
   createDefaultSiteConfig,
   defaultPage,
+  dropSeededHomePage,
   generatePageId,
   normalizePrintStore,
   readSiteConfig,
@@ -133,6 +134,47 @@ describe('readSiteConfig', () => {
     downloadJSON.mockRejectedValue(err)
 
     await expect(readSiteConfig('user-123')).rejects.toThrow('Network failure')
+  })
+})
+
+describe('dropSeededHomePage', () => {
+  it('drops the empty hidden `home` seed', () => {
+    const config = {
+      pages: [{ id: 'home', showInNav: false, blocks: [] }, { id: 'about', showInNav: true, blocks: [] }],
+    }
+    const result = dropSeededHomePage(config)
+    expect(result.pages.map(p => p.id)).toEqual(['about'])
+  })
+
+  it('keeps a `home`-id page that has blocks', () => {
+    const config = {
+      pages: [{ id: 'home', showInNav: false, blocks: [{ type: 'photo' }] }],
+    }
+    const result = dropSeededHomePage(config)
+    expect(result.pages.map(p => p.id)).toEqual(['home'])
+  })
+
+  it('keeps a `home`-id page that IS homePageId', () => {
+    const config = {
+      homePageId: 'home',
+      pages: [{ id: 'home', showInNav: false, blocks: [] }],
+    }
+    const result = dropSeededHomePage(config)
+    expect(result.pages.map(p => p.id)).toEqual(['home'])
+  })
+
+  it('keeps a visible (`showInNav:true`) page even if id is `home`', () => {
+    const config = {
+      pages: [{ id: 'home', showInNav: true, blocks: [] }],
+    }
+    const result = dropSeededHomePage(config)
+    expect(result.pages.map(p => p.id)).toEqual(['home'])
+  })
+
+  it('returns config unchanged when there is no seed', () => {
+    const config = { pages: [{ id: 'about', showInNav: true, blocks: [] }] }
+    const result = dropSeededHomePage(config)
+    expect(result).toBe(config)
   })
 })
 

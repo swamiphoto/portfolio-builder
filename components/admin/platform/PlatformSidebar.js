@@ -6,7 +6,7 @@ import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink } from '../../../common/siteConfig'
-import { assignHomeOnCreate } from '../../../common/homePage'
+import { assignHomeOnCreate, resolveHomePage } from '../../../common/homePage'
 import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/gcsClient'
@@ -568,7 +568,7 @@ export default function PlatformSidebar({
     const isPageBeforeTarget = pageDropTarget?.type === 'before' && pageDropTarget.pageId === page.id
     const isPageAfterTarget = pageDropTarget?.type === 'after' && pageDropTarget.pageId === page.id
     const isLink = page.type === 'link'
-    const isHome = siteConfig.homePageId === page.id
+    const isHome = resolvedHomeId === page.id
     const isSelected = selectedPageId === page.id
     const count = !isLink ? countPagePhotos(page) : null
     const lineLeft = 8 + 10 + depth * 18 // outer margin + row padding + indent
@@ -741,6 +741,7 @@ export default function PlatformSidebar({
     )
   }
 
+  const resolvedHomeId = resolveHomePage(siteConfig)?.id
   const navPages = buildNavTree(pages)
   const hiddenPages = flattenForOtherPages(pages)
 

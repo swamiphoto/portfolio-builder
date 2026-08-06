@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { DesignSelect } from './designControls'
 import { themeOptions } from './SiteSettingsPopover'
 import { BrushIcon } from './SiteSettingsPopover'
@@ -8,11 +8,10 @@ const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
 
 export default function ThemeBar({ siteConfig, onConfigChange, onEditHandles }) {
   const [designOpen, setDesignOpen] = useState(false)
-  const wrapRef = useRef(null)
   const update = (patch) => onConfigChange(prev => ({ ...prev, ...patch }))
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', padding: '12px 14px 4px' }}>
+    <div style={{ position: 'relative', padding: '12px 14px 4px' }}>
       <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 6 }}>
         Theme
       </div>
