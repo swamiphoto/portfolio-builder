@@ -62,6 +62,8 @@ export default function AdminIndex() {
   const [saveStatus, setSaveStatus] = useState('idle')
   const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false)
   const [selectedPageId, setSelectedPageId] = useState(null)
+  const [coverSelected, setCoverSelected] = useState(false)
+  const [coverCtaHint, setCoverCtaHint] = useState(false)
   const [showLibrary, setShowLibrary] = useState(false)
   const [thumbnailPickerPageId, setThumbnailPickerPageId] = useState(null)
   const [assetPickerTarget, setAssetPickerTarget] = useState(null) // 'logo' | 'favicon' | null
@@ -277,9 +279,11 @@ export default function AdminIndex() {
   }, [assetPickerTarget, updateConfig])
 
   const handleViewCover = useCallback(() => {
-    setSelectedPageId(siteConfig?.pages?.find(p => p.id === 'home')?.id || null)
+    setCoverSelected(true)
+    setSelectedPageId(null)
     setShowLibrary(false)
-  }, [siteConfig])
+    setCoverCtaHint(false)
+  }, [])
 
   const handleDisableCover = useCallback(() => {
     const pages = siteConfig?.pages || []
@@ -288,11 +292,13 @@ export default function AdminIndex() {
     if (!siteConfig?.homePageId && targetId) {
       updateConfig(prev => ({ ...prev, homePageId: targetId }))
     }
+    setCoverSelected(false)
     setSelectedPageId(targetId || null)
     setShowLibrary(false)
   }, [siteConfig, updateConfig])
 
   const handleSelectPage = useCallback((pageId) => {
+    setCoverSelected(false)
     setSelectedPageId(pageId)
     setShowLibrary(false)
   }, [])
@@ -304,6 +310,7 @@ export default function AdminIndex() {
     const sortOrder = Math.max(0, ...(siteConfig?.pages || []).filter(p => p.showInNav !== false).map(p => p.sortOrder ?? 0)) + 1
     const newPage = defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null, template: 'gallery' })
     updateConfig(prev => assignHomeOnCreate({ ...prev, pages: [...prev.pages, newPage] }, newPage))
+    setCoverSelected(false)
     setSelectedPageId(id)
     setShowLibrary(false)
   }, [siteConfig, updateConfig])
@@ -336,8 +343,10 @@ export default function AdminIndex() {
       onConfigChange={updateConfig}
       onSignOut={() => signOut({ callbackUrl: '/' })}
       selectedPageId={showLibrary ? null : (selectedPage?.id ?? null)}
+      coverSelected={coverSelected}
       onSelectPage={handleSelectPage}
-      onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null) }}
+      onSelectCover={handleViewCover}
+      onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null); setCoverSelected(false) }}
       onPublish={() => { setHasUnpublishedChanges(false); setLastPublishedAt(Date.now()) }}
       hasUnpublishedChanges={hasUnpublishedChanges}
       libraryActive={showLibrary}
@@ -361,7 +370,7 @@ export default function AdminIndex() {
     />
   )
 
-  const isCoverPageSelected = selectedPage?.id === 'home' && siteConfig.hasCoverPage !== false
+  const isCoverPageSelected = coverSelected && siteConfig.hasCoverPage !== false
   const panel = (selectedPage && selectedPage.type !== 'link' && !isCoverPageSelected) ? (
     <PageEditorSidebar
       page={selectedPage}
@@ -385,7 +394,40 @@ export default function AdminIndex() {
 
 
   let content
-  if (selectedPage) {
+  if (isCoverPageSelected) {
+    const cover = siteConfig.cover || {}
+    const bgStyle = cover.imageUrl
+      ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+      : { background: COVER_FALLBACK_BG }
+    const homeTarget = siteConfig.homePageId || siteConfig.pages?.find(p => p.showInNav && p.type !== 'link')?.id
+    content = (
+      <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center text-center px-6 relative" style={bgStyle}>
+        {cover.imageUrl && <div className="absolute inset-0 bg-black/30" />}
+        <div className="relative z-10 text-white">
+          {(cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
+            <div className="space-y-3 mb-9">
+              {(cover.heading || siteConfig.siteName) && (
+                <h2 className="text-4xl md:text-6xl font-light tracking-tight">{cover.heading || siteConfig.siteName}</h2>
+              )}
+              {(cover.subheading || siteConfig.tagline) && (
+                <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto">{cover.subheading || siteConfig.tagline}</p>
+              )}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => { if (homeTarget) handleSelectPage(homeTarget); else setCoverCtaHint(true) }}
+            className="inline-flex items-center px-5 py-2.5 text-sm font-medium bg-white text-stone-900 hover:bg-stone-100 transition-colors"
+          >
+            {cover.buttonText || 'View my portfolio'}
+          </button>
+          {coverCtaHint && !homeTarget && (
+            <p className="mt-4 text-xs text-white/70">Coming soon — add a page and it becomes your site’s home.</p>
+          )}
+        </div>
+      </div>
+    )
+  } else if (selectedPage) {
     const username = session?.user?.username
     if (selectedPage.type === 'link') {
       content = (
@@ -402,64 +444,29 @@ export default function AdminIndex() {
         </div>
       )
     } else {
-      const isCoverPage = isCoverPageSelected
-      if (isCoverPage) {
-        const cover = siteConfig.cover || {}
-        const bgStyle = cover.imageUrl
-          ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { background: COVER_FALLBACK_BG }
-        content = (
-          <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center text-center px-6 relative" style={bgStyle}>
-            {cover.imageUrl && <div className="absolute inset-0 bg-black/30" />}
-            <div className="relative z-10 text-white">
-              {(cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
-                <div className="space-y-3 mb-9">
-                  {(cover.heading || siteConfig.siteName) && (
-                    <h2 className="text-4xl md:text-6xl font-light tracking-tight">{cover.heading || siteConfig.siteName}</h2>
-                  )}
-                  {(cover.subheading || siteConfig.tagline) && (
-                    <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto">{cover.subheading || siteConfig.tagline}</p>
-                  )}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  const targetId = siteConfig.homePageId || siteConfig.pages?.find(p => p.showInNav && p.type !== 'link')?.id
-                  if (targetId) handleSelectPage(targetId)
-                }}
-                className="inline-flex items-center px-5 py-2.5 text-sm font-medium bg-white text-stone-900 hover:bg-stone-100 transition-colors"
-              >
-                {cover.buttonText || 'View my portfolio'}
-              </button>
+      content = (
+        <div className="h-full flex flex-col">
+          <ClientFeedbackBanner />
+          {/* Preview frame — driven by the deferred config so it never blocks input */}
+          <div className="flex-1 min-h-0 flex justify-center">
+            <div
+              ref={previewContainerRef}
+              className="overflow-y-auto [overflow-x:clip] w-full scroll-quiet"
+            >
+              <PagePreview
+                config={siteConfig}
+                pageId={selectedPage.id}
+                username={username}
+                assetsByUrl={assetsByUrl}
+                onPageClick={handleSelectPage}
+                onBlockHover={setHoveredBlockIndex}
+                highlightedBlockIndex={hoveredBlockIndex}
+                onBlockClick={handleScrollSidebarToBlock}
+              />
             </div>
           </div>
-        )
-      } else {
-        content = (
-          <div className="h-full flex flex-col">
-            <ClientFeedbackBanner />
-            {/* Preview frame — driven by the deferred config so it never blocks input */}
-            <div className="flex-1 min-h-0 flex justify-center">
-              <div
-                ref={previewContainerRef}
-                className="overflow-y-auto [overflow-x:clip] w-full scroll-quiet"
-              >
-                <PagePreview
-                  config={siteConfig}
-                  pageId={selectedPage.id}
-                  username={username}
-                  assetsByUrl={assetsByUrl}
-                  onPageClick={handleSelectPage}
-                  onBlockHover={setHoveredBlockIndex}
-                  highlightedBlockIndex={hoveredBlockIndex}
-                  onBlockClick={handleScrollSidebarToBlock}
-                />
-              </div>
-            </div>
-          </div>
-        )
-      }
+        </div>
+      )
     }
   } else {
     content = <CanvasEmptyState onAddPage={handleCreateFirstPage} />
