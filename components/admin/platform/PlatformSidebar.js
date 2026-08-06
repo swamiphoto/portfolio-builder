@@ -10,6 +10,7 @@ import { assignHomeOnCreate } from '../../../common/homePage'
 import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/gcsClient'
+import CoverPageRow from './CoverPageRow'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
@@ -257,6 +258,8 @@ export default function PlatformSidebar({
   onPickShareSquare,
   onViewCover,
   onDisableCover,
+  coverSelected,
+  onSelectCover,
   onCollapse,
   lastSavedAt,
   lastPublishedAt,
@@ -885,6 +888,18 @@ export default function PlatformSidebar({
 
       {/* PAGES LIST — scrollbar hidden to match the block sidebar (no layout wiggle) */}
       <div className="flex-1 overflow-y-auto scroll-quiet">
+
+        <div style={{ padding: '10px 8px 2px' }}>
+          <CoverPageRow
+            siteConfig={siteConfig}
+            selected={!!coverSelected}
+            onSelect={() => onSelectCover?.()}
+            onEnableCover={() => {
+              onConfigChange(prev => ({ ...prev, hasCoverPage: true }))
+              onSelectCover?.()
+            }}
+          />
+        </div>
 
         {/* Pages section header */}
         <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
