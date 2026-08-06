@@ -4,10 +4,21 @@
 import { getAdapterForCountry } from './router'
 import { saveOrder } from '../orders'
 import { sendMail } from '../email/mailer'
-import { photographerSaleEmail, fulfillmentFailedEmail } from '../email/templates'
+import { photographerSaleEmail, fulfillmentFailedEmail, buyerOrderConfirmationEmail } from '../email/templates'
 
 export async function placeOrderForPaidOrder(order, { photographerEmail, siteName } = {}) {
   if (order.fulfillment && order.fulfillment.labOrderId) return order // already placed
+
+  // Confirm the purchase to the buyer up front — they've paid, so this should go
+  // out regardless of whether lab placement below succeeds. Best-effort.
+  if (order.buyer?.email) {
+    try {
+      const msg = buyerOrderConfirmationEmail({ order, siteName: siteName || 'the shop' })
+      await sendMail({ to: order.buyer.email, ...msg })
+    } catch (mailErr) {
+      console.error('buyer confirmation email failed', mailErr.message)
+    }
+  }
 
   const adapter = getAdapterForCountry(order.buyer?.address?.country)
   try {

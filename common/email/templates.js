@@ -46,6 +46,20 @@ export function fulfillmentFailedEmail({ order, siteName }) {
   return { subject, html, text }
 }
 
+export function buyerOrderConfirmationEmail({ order, siteName }) {
+  const line = specLine(order.spec)
+  const total = dollars(order.amounts.total, order.amounts.currency)
+  const subject = `Your order from ${siteName} is confirmed`
+  const text = `Thanks for your order from ${siteName}!\n\n` +
+    `Print: ${line}\nTotal: ${total}\nOrder: ${order.id}\n\n` +
+    `Your print is being produced now. We'll email you tracking as soon as it ships.`
+  const html = `<div style="font-family:-apple-system,sans-serif;max-width:560px;color:#1a1410;line-height:1.6;">` +
+    `<p>Thanks for your order from <strong>${esc(siteName)}</strong>!</p>` +
+    `<p><strong>Print:</strong> ${esc(line)}<br><strong>Total:</strong> ${esc(total)}<br><strong>Order:</strong> ${esc(order.id)}</p>` +
+    `<p>Your print is being produced now. We'll email you tracking as soon as it ships.</p></div>`
+  return { subject, html, text }
+}
+
 export function buyerShippedEmail({ order, tracking, siteName }) {
   const line = specLine(order.spec)
   const subject = `Your print has shipped`

@@ -2,7 +2,7 @@
 // unconfigured or the transport fails — email must not break fulfillment.
 import nodemailer from 'nodemailer'
 
-export async function sendMail({ to, subject, html, text }) {
+export async function sendMail({ to, subject, html, text, replyTo, from }) {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
   if (!user || !pass) {
@@ -17,11 +17,12 @@ export async function sendMail({ to, subject, html, text }) {
       auth: { user, pass },
     })
     await transport.sendMail({
-      from: process.env.MAIL_FROM || `"Sepia" <${user}>`,
+      from: from || process.env.MAIL_FROM || `"Sepia" <${user}>`,
       to,
       subject,
       text,
       html,
+      ...(replyTo ? { replyTo } : {}),
     })
     return { sent: true }
   } catch (err) {

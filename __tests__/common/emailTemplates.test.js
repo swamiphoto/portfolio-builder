@@ -1,11 +1,26 @@
-import { photographerSaleEmail, buyerShippedEmail, fulfillmentFailedEmail } from '../../common/email/templates'
+import { photographerSaleEmail, buyerShippedEmail, buyerOrderConfirmationEmail, fulfillmentFailedEmail } from '../../common/email/templates'
 
 const order = {
   id: 'ord_1',
   spec: { size: '16x20', finish: 'lustre', frame: 'wood' },
   buyer: { name: 'Ada <b>', email: 'ada@example.com' },
-  amounts: { profit: 10500, currency: 'USD' },
+  amounts: { profit: 10500, total: 16200, currency: 'USD' },
 }
+
+describe('buyerOrderConfirmationEmail', () => {
+  it('confirms the order with the total paid, print spec, and order id', () => {
+    const m = buyerOrderConfirmationEmail({ order, siteName: 'Ada Photo' })
+    expect(m.subject).toMatch(/confirmed/i)
+    expect(m.text).toMatch(/\$162\.00/)
+    expect(m.text).toMatch(/16x20/)
+    expect(m.text).toMatch(/ord_1/)
+  })
+  it('escapes the site name in HTML', () => {
+    const m = buyerOrderConfirmationEmail({ order, siteName: '<Bad Site>' })
+    expect(m.html).toContain('&lt;Bad Site&gt;')
+    expect(m.html).not.toContain('<Bad Site>')
+  })
+})
 
 describe('photographerSaleEmail', () => {
   it('states the profit in dollars and the print size', () => {

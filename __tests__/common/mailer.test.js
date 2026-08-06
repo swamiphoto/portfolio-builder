@@ -25,6 +25,22 @@ describe('sendMail', () => {
     expect(sendMailInner).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@b.com', subject: 'Hi' }))
   })
 
+  it('passes replyTo and a custom from through to the transport', async () => {
+    process.env.SMTP_USER = 'u@sepia.so'; process.env.SMTP_PASS = 'pw'
+    await sendMail({ to: 'a@b.com', subject: 'Hi', html: 'x', text: 'x', replyTo: '"Ada" <ada@x.com>', from: '"Sepia Portfolio" <u@sepia.so>' })
+    expect(sendMailInner).toHaveBeenCalledWith(expect.objectContaining({
+      replyTo: '"Ada" <ada@x.com>',
+      from: '"Sepia Portfolio" <u@sepia.so>',
+    }))
+  })
+
+  it('omits replyTo when not provided', async () => {
+    process.env.SMTP_USER = 'u@sepia.so'; process.env.SMTP_PASS = 'pw'
+    await sendMail({ to: 'a@b.com', subject: 'Hi', html: 'x', text: 'x' })
+    const arg = sendMailInner.mock.calls[0][0]
+    expect(arg).not.toHaveProperty('replyTo')
+  })
+
   it('swallows transport errors and returns sent:false', async () => {
     process.env.SMTP_USER = 'u@sepia.so'; process.env.SMTP_PASS = 'pw'
     sendMailInner.mockRejectedValueOnce(new Error('smtp down'))
