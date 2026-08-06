@@ -11,6 +11,7 @@ import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../comm
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/gcsClient'
 import CoverPageRow from './CoverPageRow'
+import ThemeBar from './ThemeBar'
 import SiteSettingsPopover from './SiteSettingsPopover'
 import PageSettingsPopover from './PageSettingsPopover'
 import AccountPopover from './AccountPopover'
@@ -888,6 +889,8 @@ export default function PlatformSidebar({
 
       {/* PAGES LIST — scrollbar hidden to match the block sidebar (no layout wiggle) */}
       <div className="flex-1 overflow-y-auto scroll-quiet">
+
+        <ThemeBar siteConfig={siteConfig} onConfigChange={onConfigChange} onEditHandles={undefined} />
 
         <div style={{ padding: '10px 8px 2px' }}>
           <CoverPageRow
