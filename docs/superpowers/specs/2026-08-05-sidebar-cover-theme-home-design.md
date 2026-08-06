@@ -73,8 +73,9 @@ A reserved row at the **top of the Pages list**, styled to match a page item (sa
 It is not draggable and not part of `pages`. Clicking it selects the cover (sets `coverSelected`),
 which opens the existing cover editor. States:
 
-- **Cover on** → label "Cover page"; thumbnail = `cover.imageUrl`, or an empty placeholder thumb
-  when no image is set yet.
+- **Cover on** → label "Cover page"; thumbnail = `cover.imageUrl`, or, when no image is set yet, the
+  same warm gradient the cover itself falls back to (`COVER_FALLBACK_BG` from `common/coverBackground.js`),
+  so the row matches what the cover renders.
 - **Cover off** → muted "Add a cover page" row that re-enables the cover (`hasCoverPage: true`) and
   selects it.
 
@@ -124,6 +125,7 @@ Site Settings → Design is otherwise unchanged.
 - `components/admin/platform/SiteSettingsPopover.js` + `designControls.js` — extract shared design
   controls (minus theme) for reuse in the sidebar brush popover.
 - `components/image-displays/page/PageCover.js` — primary button `onClick` "coming soon" path.
+- `common/coverBackground.js` — reuse `COVER_FALLBACK_BG` for the empty cover-row thumbnail.
 - `pages/sites/[username]/index.js` — published root: render cover-only / under-construction when zero
   pages.
 - Tests: `__tests__/common/siteConfig.test.js`, `__tests__/common/siteConfig.unifiedModel.test.js`
