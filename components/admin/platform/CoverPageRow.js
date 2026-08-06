@@ -60,7 +60,7 @@ export default function CoverPageRow({ siteConfig, selected, onSelect, onConfigu
           type="button"
           title="Cover settings"
           onClick={(e) => { e.stopPropagation(); onConfigure?.(e.currentTarget) }}
-          className="flex items-center justify-center rounded transition-colors flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity duration-[120ms] flex-shrink-0"
           style={{ width: 20, height: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9e9788' }}
           onMouseEnter={(e) => { e.currentTarget.style.color = '#3a362f' }}
           onMouseLeave={(e) => { e.currentTarget.style.color = '#9e9788' }}
