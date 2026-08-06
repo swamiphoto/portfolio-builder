@@ -33,6 +33,26 @@ describe('createDefaultSiteConfig', () => {
     expect(config.pages[0]).not.toHaveProperty('albums')
   })
 
+  it('defaults siteName/tagline to "My Portfolio" with no profile', () => {
+    const config = createDefaultSiteConfig('user-123')
+    expect(config.siteName).toBe('My Portfolio')
+    expect(config.tagline).toBe('')
+    expect(config.footer.customText).toContain('My Portfolio')
+  })
+
+  it('seeds siteName from the profile name and tagline from the bio', () => {
+    const config = createDefaultSiteConfig('user-123', { displayName: 'Jane Rivera', bio: 'Coastal weddings & family.' })
+    expect(config.siteName).toBe('Jane Rivera')
+    expect(config.tagline).toBe('Coastal weddings & family.')
+    expect(config.footer.customText).toContain('Jane Rivera')
+  })
+
+  it('ignores blank profile fields (falls back to defaults)', () => {
+    const config = createDefaultSiteConfig('user-123', { displayName: '   ', bio: '' })
+    expect(config.siteName).toBe('My Portfolio')
+    expect(config.tagline).toBe('')
+  })
+
   it('sets default theme to kyoto', () => {
     const config = createDefaultSiteConfig('user-123')
     expect(config.design.theme).toBe('kyoto')

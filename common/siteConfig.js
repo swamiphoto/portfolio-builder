@@ -17,18 +17,23 @@ export function generatePageId(title, suffix = '') {
 }
 
 /**
- * Create the default site config for a brand-new user.
+ * Create the default site config for a brand-new user. Seeds the site name from
+ * the person's profile name and the tagline from their bio, so a fresh cover reads
+ * as *theirs* ("Jane Rivera") rather than a generic "My Portfolio".
  * @param {string} userId - Google OAuth sub
+ * @param {{ displayName?: string, bio?: string }} [profile]
  * @returns {SiteConfig}
  */
-export function createDefaultSiteConfig(userId) {
+export function createDefaultSiteConfig(userId, { displayName, bio } = {}) {
+  const siteName = (displayName && displayName.trim()) || 'My Portfolio'
+  const tagline = (bio && bio.trim()) || ''
   return {
     userId,
-    siteName: 'My Portfolio',
+    siteName,
     slug: '',
     hasCoverPage: true,
     customDomain: null,
-    tagline: '',
+    tagline,
     logoType: 'sitename',
     logoFont: 'theme',
     logo: '',
@@ -62,7 +67,7 @@ export function createDefaultSiteConfig(userId) {
       website: '',
     },
     footer: {
-      customText: `© ${new Date().getFullYear()} My Portfolio`,
+      customText: `© ${new Date().getFullYear()} ${siteName}`,
     },
     analytics: {
       googleId: '',

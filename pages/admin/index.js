@@ -14,6 +14,7 @@ import ClientFeedbackBanner from '../../components/admin/platform/ClientFeedback
 import { EditorFeedbackProvider } from '../../components/admin/gallery-builder/EditorFeedbackContext'
 import { useClientFeedback } from '../../components/admin/platform/useClientFeedback'
 import { defaultPage } from '../../common/siteConfig'
+import { COVER_FALLBACK_BG } from '../../common/coverBackground'
 import { useRouter } from 'next/router'
 import GuidedTour from '../../components/admin/onboarding/GuidedTour'
 import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
@@ -406,16 +407,22 @@ export default function AdminIndex() {
       const isCoverPage = isCoverPageSelected
       if (isCoverPage) {
         const cover = siteConfig.cover || {}
-        const bgStyle = cover.imageUrl ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}
+        const bgStyle = cover.imageUrl
+          ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { background: COVER_FALLBACK_BG }
         content = (
-          <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center bg-stone-900 text-center px-6 relative" style={bgStyle}>
+          <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center text-center px-6 relative" style={bgStyle}>
             {cover.imageUrl && <div className="absolute inset-0 bg-black/30" />}
             <div className="relative z-10 text-white">
-              {(cover.heading || siteConfig.siteName) && (
-                <h2 className="text-4xl md:text-6xl font-light tracking-tight mb-3">{cover.heading || siteConfig.siteName}</h2>
-              )}
-              {(cover.subheading || siteConfig.tagline) && (
-                <p className="text-base md:text-lg text-white/80 max-w-xl mb-8">{cover.subheading || siteConfig.tagline}</p>
+              {(cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
+                <div className="space-y-3 mb-9">
+                  {(cover.heading || siteConfig.siteName) && (
+                    <h2 className="text-4xl md:text-6xl font-light tracking-tight">{cover.heading || siteConfig.siteName}</h2>
+                  )}
+                  {(cover.subheading || siteConfig.tagline) && (
+                    <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto">{cover.subheading || siteConfig.tagline}</p>
+                  )}
+                </div>
               )}
               <button
                 type="button"

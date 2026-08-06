@@ -4,13 +4,20 @@ import {
   writeSiteConfig,
   createDefaultSiteConfig,
 } from '../../../common/siteConfig'
+import { readUserProfile } from '../../../common/userProfile'
 
 async function handler(req, res, user) {
   if (req.method === 'GET') {
     try {
       let config = await readSiteConfig(user.id)
       if (!config) {
-        config = createDefaultSiteConfig(user.id)
+        // Seed the site name + tagline from the person's profile so a new cover
+        // opens with their own name, not "My Portfolio".
+        const profile = await readUserProfile(user.id).catch(() => null)
+        config = createDefaultSiteConfig(user.id, {
+          displayName: profile?.displayName || user.name,
+          bio: profile?.bio,
+        })
         await writeSiteConfig(user.id, config)
       }
       return res.status(200).json(config)

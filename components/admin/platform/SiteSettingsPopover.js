@@ -9,7 +9,7 @@ import { resolveFooterSocial } from '../../../common/siteDesign'
 import { EditableInput } from './EditableText'
 import ToggleSwitch from '../common/ToggleSwitch'
 
-export const themeOptions = () => THEME_LIST.map(t => ({ value: t.id, label: t.name }))
+export const themeOptions = () => THEME_LIST.filter(t => !t.hidden).map(t => ({ value: t.id, label: t.name }))
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
@@ -621,7 +621,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           <EditableInput className={inputCls} style={inputStyle} placeholder="My Portfolio" value={config.siteName || ''} onChange={(e) => update({ siteName: e.target.value })} />
         </Field>
         <Field label="Tagline">
-          <EditableInput className={inputCls} style={inputStyle} placeholder="Short description shown in search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
+          <EditableInput className={inputCls} style={inputStyle} placeholder="A short line for your cover and search results" value={config.tagline || ''} onChange={(e) => update({ tagline: e.target.value })} />
         </Field>
 
         <Field label="Footer text">

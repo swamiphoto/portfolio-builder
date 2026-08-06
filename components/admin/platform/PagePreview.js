@@ -41,6 +41,9 @@ function PagePreview({
   if (!page) return null
 
   const theme = getTheme(config?.design?.theme)
+  // Provence swaps the standard site nav for its own scroll-sticky header, which is
+  // a live-site behavior (window scroll); the preview just shows cover + gallery.
+  const isProvence = theme.id === 'provence'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (page.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -82,7 +85,7 @@ function PagePreview({
     <ThemeProvider themeId={theme.id}>
       <PreviewPackagesProvider packages={previewPackages} currency={previewCurrency} thumb={previewThumb}>
       <div className="theme-shell">
-        <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />
+        {!isProvence && <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />}
         <div className="theme-content">
           <PageCover
             cover={page.cover}
@@ -93,6 +96,7 @@ function PagePreview({
             primaryButton={null}
             navLinks={coverNavLinks}
             themeId={theme.id}
+            siteName={config?.siteName}
           />
           <GalleryPreview
             gallery={gallery}

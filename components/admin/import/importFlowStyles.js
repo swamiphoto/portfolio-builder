@@ -5,10 +5,13 @@ export const monoLabel = {
   textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 500,
 }
 
+// Matches the studio's primary buttons (Publish, etc.): mono, uppercase, letter-
+// spaced, ink #2c2416, rounded-rectangle. Sized up a little for these CTAs.
 export const primaryBtn = (disabled) => ({
   background: disabled ? 'rgba(60,40,15,0.20)' : '#2c2416',
-  color: '#f5ecd6', fontSize: 12.5, fontWeight: 500,
-  padding: '9px 16px', borderRadius: 4, border: 'none',
+  color: disabled ? 'rgba(246,243,236,0.5)' : '#f6f3ec',
+  fontFamily: MONO, fontSize: 11.5, fontWeight: 500, letterSpacing: '0.10em', textTransform: 'uppercase',
+  padding: '13px 22px', borderRadius: 5, border: 'none',
   cursor: disabled ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
 })
 

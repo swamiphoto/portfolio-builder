@@ -2,12 +2,24 @@ import { useState, useEffect } from 'react'
 import { discoverSource, importSelected, makeImportBatchId } from '@/common/import/importClient'
 import { MONO, monoLabel, primaryBtn, CloseIcon } from './importFlowStyles'
 import ReviewStep from './ReviewStep'
-import ImportProgress from './ImportProgress'
+import ImportShowcase from './ImportShowcase'
 import ImportDoneStep from './ImportDoneStep'
+
+// Warm darkroom backdrop shared by the import takeover + done screens.
+const SHOWCASE_BG = 'radial-gradient(120% 90% at 50% 8%, #efe8dc 0%, #e4dccf 45%, #d8cdba 100%)'
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 function hostOf(input) {
   try {
-    return new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`).hostname
+    return new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`).hostname.replace(/^www\./, '')
   } catch {
     return input
   }
@@ -19,6 +31,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   const [error, setError] = useState(null)
   const [discovery, setDiscovery] = useState(null)
   const [progress, setProgress] = useState(null)
+  const [photoUrls, setPhotoUrls] = useState([])
 
   // Escape closes the modal (except mid-import, to avoid losing an in-progress import).
   useEffect(() => {
@@ -45,10 +58,19 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   }
 
   async function handleImport(selectedCollections) {
+    // The source photos are already in hand from discovery — feed them to the
+    // showcase so it can start dropping prints immediately, shuffled for variety.
+    const srcUrls = []
+    for (const c of selectedCollections || []) {
+      for (const r of c.assetRefs || []) if (r.remoteUrl) srcUrls.push(r.remoteUrl)
+    }
+    setPhotoUrls(shuffle(srcUrls))
     setStep('importing')
     setProgress({ done: 0, total: selectedCollections.reduce((n, c) => n + (c.assetRefs?.length || 0), 0), importedCount: 0, failedCount: 0 })
     try {
-      const label = discovery.site?.title || hostOf(input)
+      // Store the domain (e.g. "swamifoto.com") as the source label, not the site
+      // title — it's what the library + showcase surface as "where it came from".
+      const label = hostOf(input)
       const batchId = makeImportBatchId(discovery.provider, input, Date.now())
       const result = await importSelected({
         provider: discovery.provider,
@@ -123,23 +145,43 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
         />
       )}
 
-      {step === 'importing' && <ImportProgress progress={progress} />}
-
-      {step === 'done' && summary && (
-        <ImportDoneStep
-          summary={summary}
-          onEnter={() => onComplete(summary)}
-          onImportAnother={() => {
-            setSummary(null)
-            setDiscovery(null)
-            setError(null)
-            setInput('')
-            setStep('source')
-          }}
-        />
-      )}
     </>
   )
+
+  // The import wait + the success screen take over the whole viewport on a shared
+  // warm backdrop, so the flow feels like one continuous moment rather than a bar
+  // in a small box.
+  if (step === 'importing') {
+    return (
+      <ImportShowcase
+        progress={progress}
+        photos={photoUrls}
+        sourceLabel={hostOf(input)}
+        onCancel={onClose}
+      />
+    )
+  }
+
+  if (step === 'done' && summary) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: SHOWCASE_BG }}>
+        <div className="rounded-xl overflow-hidden" style={{ width: 460, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))' }}>
+          <ImportDoneStep
+            summary={summary}
+            onEnter={() => onComplete(summary)}
+            onImportAnother={() => {
+              setSummary(null)
+              setDiscovery(null)
+              setError(null)
+              setInput('')
+              setPhotoUrls([])
+              setStep('source')
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
 
   if (variant === 'fullscreen') {
     return (
