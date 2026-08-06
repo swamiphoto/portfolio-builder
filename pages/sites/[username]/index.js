@@ -9,6 +9,7 @@ import { publicSiteConfig, publicPrintForAsset, publicPrintStore } from '../../.
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
+import ProvenceHeader from '../../../components/image-displays/page/ProvenceHeader'
 import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
@@ -97,7 +98,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   if (hasCoverPage) {
     return (
-      <div className="min-h-screen bg-black font-sans relative">
+      <div className="min-h-screen bg-[#33261a] font-sans relative">
         <Head>
           <title>{ogTitle}</title>
           <meta name="description" content={ogDescription} />
@@ -131,6 +132,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
   const theme = getTheme(siteConfig?.design?.theme)
+  const isProvence = theme.id === 'provence'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (homePage?.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -153,7 +155,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />
+      {!isProvence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
       <main className="theme-content">
         {homePage ? (
           <ClientEngagementProvider
@@ -167,6 +169,16 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             heroPresent={!!homePage?.cover?.imageUrl}
             branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
           >
+            {isProvence && (
+              <ProvenceHeader
+                title={homePage?.title || siteConfig.siteName}
+                basePath={basePath}
+                pages={siteConfig.pages}
+                currentPageId={homePage?.id}
+                slideshowHref={slideshowHref}
+                startVisible={!homePage?.cover?.imageUrl}
+              />
+            )}
             <PageCover
               cover={homePage?.cover}
               title={homePage?.title}
@@ -175,6 +187,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               clientFeaturesEnabled={!!homePage?.clientFeatures?.enabled}
               primaryButton={null}
               themeId={theme.id}
+              siteName={siteConfig.siteName}
             />
             <Gallery
               name={homePage.title}

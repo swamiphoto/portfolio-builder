@@ -309,6 +309,12 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
     openLightbox(blockOffsets[blockIdx] + localIndex);
   };
 
+  // Provence and Manhattan both bleed imagery to the full content width so every
+  // layout (masonry, stacked, square, grid) spans edge-to-edge. Provence keeps a
+  // slim symmetric gutter via CSS; the Manhattan-only extras (inside captions,
+  // left-anchoring) stay gated on manhattan alone.
+  const bleedImages = themeId === 'manhattan' || themeId === 'provence'
+
   return (
     <PrintStoreProvider printStore={printStore} username={username}>
     <div className="gallery-container">
@@ -333,22 +339,22 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
                     {themeId === 'manhattan'
                       ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />
-                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} />}
+                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} edgeToEdge={themeId === 'provence'} rounded={themeId !== 'provence'} />}
                   </div>
                 );
               }
               if (variantId === 'square' && !isSmallScreen) {
                 return (
                   <div key={`block-${index}`} className="photos-square-block" data-block-index={index} {...hoverProps}>
-                    <SquareGallery images={imageRefs} onImageClick={makeClickHandler(index)} maxCols={SQUARE_COLS[size]} bleed={themeId === 'manhattan'} />
+                    <SquareGallery images={imageRefs} onImageClick={makeClickHandler(index)} maxCols={SQUARE_COLS[size]} bleed={bleedImages} />
                   </div>
                 );
               }
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={themeId === 'manhattan' ? 100 : STACKED_PCT[size]} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={bleedImages ? 100 : STACKED_PCT[size]} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
               );
@@ -360,8 +366,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} mobile captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={themeId === 'manhattan' ? 100 : undefined} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} mobile captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={bleedImages ? 100 : undefined} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
               );
@@ -372,7 +378,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
-                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={themeId === 'manhattan'} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
                   <Wiggle />
                 </div>
               );

@@ -1,10 +1,11 @@
 import { themeOptions } from '@/components/admin/platform/SiteSettingsPopover'
 
 describe('themeOptions', () => {
-  it('lists registry themes as {value,label}', () => {
+  it('lists selectable (non-hidden) registry themes as {value,label}', () => {
+    // Provence is registered but hidden while it's refined, so it's off the picker.
     expect(themeOptions()).toEqual([
       { value: 'kyoto', label: 'Kyoto' },
-      { value: 'manhattan', label: 'Manhattan' },
+      { value: 'manhattan', label: 'Copenhagen' },
     ])
   })
 })

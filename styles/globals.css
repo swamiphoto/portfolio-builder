@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -220,3 +220,113 @@ a {
      clear of the fixed action bar. */
   [data-theme="manhattan"] .theme-content { padding-top: 1.5rem; padding-bottom: 4.5rem; }
 }
+
+/* Provence theme — warm ivory ground with a romantic serif. The .theme-shell
+   ships bg-white, so paint the cream over it; the split-screen cover + justified
+   galleries otherwise reuse the shared renderers. */
+[data-theme="provence"] { background: var(--theme-bg, #f7f3ea); color: var(--theme-text, #3d372c); }
+[data-theme="provence"] .theme-shell { background: var(--theme-bg, #f7f3ea) !important; }
+/* Client-gallery imagery: sharp corners, no drop shadow, and the justified grid
+   spans the full width (edge-to-edge with a slim gutter, handled in GridGallery). */
+[data-theme="provence"] .gallery-container { max-width: none; }
+/* The in-content gallery title ships in Muse (font-serif2); Provence speaks
+   Cormorant, so retitle it to match the cover + header. */
+[data-theme="provence"] .font-serif2 { font-family: "Cormorant Garamond", Georgia, serif; }
+[data-theme="provence"] .theme-content img { border-radius: 0 !important; }
+/* Edge-to-edge with a slim, even outer gutter: every photo block (masonry,
+   stacked, square) bleeds to full width, inset only by this small margin — so two
+   side-by-side photos together span the screen minus the gutter. The justified
+   grid carries its own matching padding from GridGallery's edgeToEdge mode. */
+[data-theme="provence"] .photos-block,
+[data-theme="provence"] .photos-square-block,
+[data-theme="provence"] .masonry-gallery-block,
+[data-theme="provence"] .stacked-gallery-block {
+  padding-left: clamp(0.5rem, 1.4vw, 0.9rem);
+  padding-right: clamp(0.5rem, 1.4vw, 0.9rem);
+}
+[data-theme="provence"] [data-grid-item],
+[data-theme="provence"] [data-square-item] { border-radius: 0 !important; box-shadow: none !important; }
+
+/* Split-screen cover: cream text panel + full-bleed photo, divided by a hairline.
+   Stacks (photo, then panel) on phones. */
+.provence-cover { display: flex; flex-direction: column-reverse; min-height: 100vh; }
+.provence-cover__panel {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 3rem 1.75rem; background: var(--theme-bg, #f7f3ea);
+}
+.provence-cover__photo { position: relative; width: 100%; height: 48vh; overflow: hidden; }
+.provence-cover__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.provence-cover__eyebrow {
+  font-family: "Inter", system-ui, sans-serif; font-size: 0.7rem; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--theme-text-muted, #a08a66); margin-bottom: 1.5rem;
+}
+.provence-cover__title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 400; line-height: 1.05; color: var(--theme-text, #3d372c);
+  font-size: clamp(2.4rem, 6vw, 4rem); margin-bottom: 1.1rem;
+}
+.provence-cover__meta {
+  font-family: "Inter", system-ui, sans-serif; font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--theme-text-muted, #a08a66); margin-bottom: 2rem;
+}
+.provence-cover__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+.provence-cover__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: "Inter", system-ui, sans-serif; font-size: 0.72rem; letter-spacing: 0.2em;
+  text-transform: uppercase; padding: 0.85rem 2rem; color: #fff;
+  background: var(--theme-accent, #b0925f); transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+  cursor: pointer; border: 1px solid var(--theme-accent, #b0925f); text-decoration: none;
+}
+.provence-cover__btn:hover { opacity: 0.88; }
+.provence-cover__btn--outline { background: transparent; color: var(--theme-accent, #b0925f); }
+.provence-cover__btn--outline:hover { background: var(--theme-accent, #b0925f); color: #fff; opacity: 1; }
+@media (min-width: 768px) {
+  .provence-cover { flex-direction: row; }
+  .provence-cover__panel { flex: 0 0 45%; padding: 3rem clamp(2rem, 5vw, 4.5rem); border-right: 1px solid rgba(61, 55, 44, 0.14); }
+  .provence-cover__photo { flex: 1 1 auto; height: auto; }
+}
+
+/* Sticky client-gallery header — hidden over the cover, materializes on scroll. */
+.provence-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.9rem clamp(1rem, 3vw, 2rem);
+  background: rgba(247, 243, 234, 0.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(61, 55, 44, 0.12);
+  opacity: 0; transform: translateY(-100%); pointer-events: none;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.provence-header.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.provence-header__brand {
+  font-family: "Cormorant Garamond", Georgia, serif; font-size: 1.5rem; line-height: 1;
+  color: var(--theme-text, #3d372c); text-decoration: none; letter-spacing: 0.01em;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.provence-header__actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.provence-header__btn {
+  display: inline-flex; align-items: center; font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 0.55rem 1rem; color: #fff; background: var(--theme-accent, #b0925f);
+  border: 1px solid var(--theme-accent, #b0925f); text-decoration: none; cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease; white-space: nowrap;
+}
+.provence-header__btn:hover { opacity: 0.88; }
+.provence-header__btn--outline { background: transparent; color: var(--theme-accent, #b0925f); }
+.provence-header__btn--outline:hover { background: var(--theme-accent, #b0925f); color: #fff; opacity: 1; }
+.provence-header__btn--ghost { background: transparent; color: var(--theme-text, #3d372c); border-color: rgba(61, 55, 44, 0.28); }
+.provence-header__btn--ghost:hover { background: rgba(61, 55, 44, 0.06); opacity: 1; }
+.provence-header__more { position: relative; }
+.provence-header__scrim { position: fixed; inset: 0; z-index: 41; }
+.provence-header__menu {
+  position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 42; min-width: 12rem;
+  display: flex; flex-direction: column; padding: 0.4rem 0;
+  background: #fff; border: 1px solid rgba(61, 55, 44, 0.12);
+  box-shadow: 0 12px 32px rgba(61, 55, 44, 0.14);
+}
+.provence-header__menu-item {
+  font-family: "Spectral", Georgia, serif; font-size: 0.95rem; color: var(--theme-text, #3d372c);
+  padding: 0.5rem 1.1rem; text-decoration: none; white-space: nowrap;
+}
+.provence-header__menu-item:hover { background: rgba(61, 55, 44, 0.05); }
+.provence-header__menu-item.is-active { color: var(--theme-accent, #b0925f); }

@@ -4,7 +4,10 @@ import { getBlockSpec, getTheme } from './index'
 // themeState entry (older configs). Keyed by block type.
 const LEGACY = {
   photo: (b) => (b.layout === 'Centered' || b.variant === 2 ? 'centered' : 'full-bleed'),
-  photos: (b) => (b.layout === 'masonry' ? 'masonry' : 'stacked'),
+  // Only map an *explicit* legacy layout. With no layout hint, return null so the
+  // theme's own default wins (kyoto→stacked, manhattan/provence→grid). Returning
+  // 'stacked' unconditionally used to shadow those non-stacked theme defaults.
+  photos: (b) => (b.layout === 'masonry' ? 'masonry' : b.layout === 'stacked' ? 'stacked' : null),
   text: (b) => ({ 1: 'heading', 2: 'subheading', 3: 'body', 4: 'quote' }[b.variant || 1] || 'heading'),
   video: (b) => (b.layout === 'Centered' ? 'centered' : { 1: 'full-bleed', 2: 'centered', 3: 'side-by-side' }[b.variant] || 'centered'),
   testimonial: (b) => (b.variant === 2 ? 'quote-above' : 'photo-above'),

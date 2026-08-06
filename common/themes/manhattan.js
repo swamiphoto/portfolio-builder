@@ -11,7 +11,10 @@ const MANHATTAN_FONTS = [
 
 export const manhattan = {
   id: 'manhattan',
-  name: 'Manhattan',
+  // Display name only. The internal id/component/CSS names stay 'manhattan' so no
+  // saved siteConfig (design.theme / block.themeState.manhattan) has to migrate —
+  // users only ever see `name`. A full internal rename can follow if desired.
+  name: 'Copenhagen',
   navStyle: 'left-rail',
   tokens: {
     '--theme-bg': '#fafafa',

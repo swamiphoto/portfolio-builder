@@ -5,9 +5,9 @@ import { manhattan } from '@/common/themes/manhattan'
 const BLOCK_TYPES = ['photo', 'photos', 'text', 'video', 'testimonial', 'page-gallery', 'contact']
 
 describe('theme registry', () => {
-  it('registers kyoto and manhattan', () => {
-    expect(Object.keys(THEMES).sort()).toEqual(['kyoto', 'manhattan'])
-    expect(THEME_LIST.map(t => t.id).sort()).toEqual(['kyoto', 'manhattan'])
+  it('registers kyoto, manhattan and provence', () => {
+    expect(Object.keys(THEMES).sort()).toEqual(['kyoto', 'manhattan', 'provence'])
+    expect(THEME_LIST.map(t => t.id).sort()).toEqual(['kyoto', 'manhattan', 'provence'])
   })
 
   it('getTheme falls back to kyoto for unknown ids', () => {
@@ -37,5 +37,13 @@ describe('theme registry', () => {
   it('manhattan uses the left-rail nav style, kyoto uses cover-embedded', () => {
     expect(manhattan.navStyle).toBe('left-rail')
     expect(kyoto.navStyle).toBe('cover-embedded')
+  })
+
+  it('provence keeps every base block available (strips nothing)', () => {
+    for (const type of BLOCK_TYPES) {
+      const base = getBlockSpec('kyoto', type).variants.map(v => v.id).sort()
+      const prov = getBlockSpec('provence', type).variants.map(v => v.id).sort()
+      expect(prov).toEqual(base)
+    }
   })
 })

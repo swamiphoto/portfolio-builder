@@ -24,7 +24,7 @@ function initialAspect(img) {
   return FALLBACK_ASPECT
 }
 
-export default function GridGallery({ images = [], onImageClick, basis = 220 }) {
+export default function GridGallery({ images = [], onImageClick, basis = 220, edgeToEdge = false, rounded = true }) {
   // aspects: array of floats, one per image, parallel to `images`
   const [aspects, setAspects] = useState(() => images.map(initialAspect))
 
@@ -61,9 +61,15 @@ export default function GridGallery({ images = [], onImageClick, basis = 220 }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [images.map((img) => getImageRefUrl(img) || img.url || '').join('|')])
 
+  // Edge-to-edge (Provence): span the full width with a slim outer margin and a
+  // small, even gutter between tiles; sharp corners, no drop shadow. Otherwise the
+  // classic centered, rounded gallery.
+  const containerCls = edgeToEdge ? 'w-full px-2 md:px-3' : 'w-full max-w-6xl mx-auto px-4 md:px-8'
+  const rowGapCls = edgeToEdge ? 'gap-2 md:gap-2.5' : 'gap-3'
+  const itemCls = rounded ? 'rounded-2xl shadow' : ''
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 md:px-8">
-      <div className="flex flex-wrap gap-3">
+    <div className={containerCls}>
+      <div className={`flex flex-wrap ${rowGapCls}`}>
         {images.map((imgRef, i) => {
           const ar = aspects[i] ?? FALLBACK_ASPECT
           const rawUrl = getImageRefUrl(imgRef) || imgRef.url || ''
@@ -76,7 +82,7 @@ export default function GridGallery({ images = [], onImageClick, basis = 220 }) 
                 flexGrow: ar,
                 flexBasis: `${ar * basis}px`,
               }}
-              className="relative group overflow-hidden rounded-2xl shadow cursor-pointer"
+              className={`relative group overflow-hidden cursor-pointer ${itemCls}`}
               onClick={() => onImageClick?.(i)}
             >
               {/* Intrinsic-ratio spacer so height is driven by flex row settling */}

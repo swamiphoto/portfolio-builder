@@ -10,6 +10,7 @@ import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
+import ProvenceHeader from '../../../components/image-displays/page/ProvenceHeader'
 import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
@@ -89,6 +90,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   const theme = getTheme(siteConfig?.design?.theme)
+  const isProvence = theme.id === 'provence'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (page?.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -121,7 +123,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
-      <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />
+      {!isProvence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />}
       <main className="theme-content">
         <ClientEngagementProvider
           username={username}
@@ -134,6 +136,16 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           heroPresent={hasCover}
           branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
         >
+          {isProvence && (
+            <ProvenceHeader
+              title={page.title || siteConfig.siteName}
+              basePath={basePath}
+              pages={siteConfig.pages}
+              currentPageId={page.id}
+              slideshowHref={slideshowHref}
+              startVisible={!hasCover}
+            />
+          )}
           <PageCover
             cover={page.cover}
             title={page.title}
@@ -142,6 +154,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             clientFeaturesEnabled={!!page.clientFeatures?.enabled}
             navLinks={coverNavLinks}
             themeId={theme.id}
+            siteName={siteConfig.siteName}
           />
           <Gallery
             name={page.title}
