@@ -6,55 +6,19 @@ jest.mock('../../common/gcsUser', () => ({
   getUserSiteConfigPath: jest.fn(userId => `users/${userId}/site-config.json`),
 }))
 
-import { createDefaultSiteConfig } from '../../common/siteConfig'
+import { createDefaultSiteConfig, defaultPage } from '../../common/siteConfig'
 
 describe('createDefaultSiteConfig — unified page model', () => {
-  const home = createDefaultSiteConfig('user-1').pages[0]
-
-  it('home page defaults parentId to null', () => {
-    expect(home.parentId).toBeNull()
+  it('seeds no pages', () => {
+    expect(createDefaultSiteConfig('user-1').pages).toEqual([])
   })
 
-  it('home page defaults sortOrder to 0', () => {
-    expect(home.sortOrder).toBe(0)
-  })
-
-  it('home page defaults password to empty string (no password)', () => {
-    expect(home.password).toBe('')
-  })
-
-  it('home page defaults cover to null', () => {
-    expect(home.cover).toBeNull()
-  })
-
-  it('home page defaults thumbnail.useCover to true', () => {
-    expect(home.thumbnail).toEqual({ imageUrl: '', useCover: true })
-  })
-
-  it('home page defaults slideshow disabled', () => {
-    expect(home.slideshow).toEqual({
-      enabled: false,
-      layout: 'kenburns',
-      musicUrl: '',
-    })
-  })
-
-  it('home page reserves clientFeatures with all flags off', () => {
-    const cf = home.clientFeatures
-    expect(cf.enabled).toBe(false)
-    expect(cf.downloads.enabled).toBe(false)
-    expect(cf.favorites.enabled).toBe(false)
-    expect(cf.comments.enabled).toBe(false)
-    expect(cf.watermark.enabled).toBe(false)
-    expect(cf.purchase.enabled).toBe(false)
-  })
-
-  it('home page is not in main nav by default (existing behavior preserved)', () => {
-    expect(home.showInNav).toBe(false)
+  it('defaultPage carries the unified page shape', () => {
+    const p = defaultPage({ id: 'gallery', title: 'Gallery' })
+    expect(p).toMatchObject({ id: 'gallery', title: 'Gallery', type: 'page', showInNav: true })
+    expect(Array.isArray(p.blocks)).toBe(true)
   })
 })
-
-import { defaultPage } from '../../common/siteConfig'
 
 describe('defaultPage — no overrides', () => {
   const p = defaultPage()

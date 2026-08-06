@@ -1,9 +1,9 @@
 // POST /api/admin/reset  { scope: 'site' | 'library' }
 // Destructive "start over" actions scoped to the signed-in user.
-//  - site:    clears all pages, leaving a single blank home page. Keeps images.
+//  - site:    clears all pages, leaving zero pages. Keeps images.
 //  - library: permanently deletes every uploaded photo object + empties the library config.
 import { withAuth } from '../../../common/withAuth'
-import { readSiteConfig, writeSiteConfig, defaultPage } from '../../../common/siteConfig'
+import { readSiteConfig, writeSiteConfig } from '../../../common/siteConfig'
 import { createEmptyLibraryConfig } from '../../../common/adminConfig'
 import { uploadJSON, listFiles, deleteFile } from '../../../common/gcsClient'
 import { getUserLibraryConfigPath, getUserPhotosPrefix } from '../../../common/gcsUser'
@@ -18,7 +18,7 @@ async function handler(req, res, user) {
       if (!config) return res.status(404).json({ error: 'No site to reset' })
       const reset = {
         ...config,
-        pages: [defaultPage({ id: 'home', title: 'Home', showInNav: false })],
+        pages: [],
         homePageId: null,
       }
       await writeSiteConfig(user.id, reset)

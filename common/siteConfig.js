@@ -88,9 +88,7 @@ export function createDefaultSiteConfig(userId, { displayName, bio } = {}) {
       chargesEnabled: false,
     },
     publishedAt: null,
-    pages: [
-      defaultPage({ id: 'home', title: 'Home', showInNav: false }),
-    ],
+    pages: [],
   }
 }
 

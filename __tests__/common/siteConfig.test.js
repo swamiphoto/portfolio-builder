@@ -20,17 +20,14 @@ import {
 } from '../../common/siteConfig'
 
 describe('createDefaultSiteConfig', () => {
-  it('returns a config with one home page', () => {
+  it('starts with zero pages — no hidden seeded page', () => {
     const config = createDefaultSiteConfig('user-123')
-    expect(config.userId).toBe('user-123')
-    expect(config.pages).toHaveLength(1)
-    expect(config.pages[0].id).toBe('home')
-    expect(config.pages[0].title).toBe('Home')
-    expect(config.pages[0].showInNav).toBe(false)
-    expect(config.pages[0].thumbnail).toEqual({ imageUrl: '', useCover: true })
-    expect(config.pages[0].thumbnailUrl).toBe('')
-    expect(config.pages[0].type).toBe('page')
-    expect(config.pages[0]).not.toHaveProperty('albums')
+    expect(config.pages).toEqual([])
+  })
+
+  it('has the cover page enabled by default', () => {
+    const config = createDefaultSiteConfig('user-123')
+    expect(config.hasCoverPage).toBe(true)
   })
 
   it('defaults siteName/tagline to "My Portfolio" with no profile', () => {
