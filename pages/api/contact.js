@@ -25,9 +25,12 @@ export default async function handler(req, res) {
 
   const safeMessage = esc(message).replace(/\n/g, '<br>')
 
+  // From must be a verified sending address (e.g. no-reply@sepia.photo), NOT
+  // SMTP_USER — with providers like Resend that value is a literal ("resend"),
+  // not an email. Reply-to is the visitor so the photographer can just reply.
   const { sent } = await sendMail({
     to: toEmail,
-    from: `"Sepia Portfolio" <${process.env.SMTP_USER}>`,
+    from: process.env.MAIL_FROM || 'Sepia <no-reply@sepia.photo>',
     replyTo: `"${name}" <${email}>`,
     subject: subject
       ? `${subject}: message from ${name}`
