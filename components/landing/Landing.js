@@ -530,7 +530,7 @@ const COMPARISON = {
 // Founder's note — honest first-person version until real user testimonials land.
 const TESTIMONIAL = {
   quote:
-    'In the 15 years I’ve been a photographer, I’ve tried every platform out there, and not one truly felt like it was made for photographers. Pixieset comes closest, but still lacks a real photographer’s workflow. So I built Sepia, and I sweated the details only another photographer would appreciate.',
+    'In the 15 years I’ve been a photographer, I’ve tried every platform out there, and not one felt like it was truly made for photographers. Pixieset comes closest, but still lacks a real photographer’s workflow. So I built Sepia, and I sweated the details only another photographer would appreciate.',
   attrib: 'Swami Venkat',
   attribHref: 'https://www.swamiphoto.com',
   role: 'Founder of Sepia',
@@ -700,6 +700,9 @@ export default function Landing() {
   return (
     <div style={{ background: T.card, fontFamily: FONT.sans, color: T.ink, lineHeight: 1.5 }}>
       <style>{`
+        html {
+          scroll-behavior: smooth;
+        }
         .sepia-btn-primary {
           transition: background 0.15s ease, opacity 0.15s ease;
         }
@@ -849,7 +852,7 @@ export default function Landing() {
               Try Sepia →
             </button>
             <a
-              href="#magic"
+              href="#features"
               className="sepia-ghost-link"
               style={{
                 cursor: 'pointer',
@@ -938,7 +941,7 @@ export default function Landing() {
       </section>
 
       {/* Features — divider, section heading, then alternating image/text rows */}
-      <section style={{ position: 'relative', padding: '96px 40px 88px' }}>
+      <section id="features" style={{ position: 'relative', padding: '96px 40px 88px', scrollMarginTop: 24 }}>
         {/* Lens gradient divider */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <GradientDivider />
