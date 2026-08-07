@@ -14,6 +14,7 @@ import ProvenceHeader from '../../../components/image-displays/page/ProvenceHead
 import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
+import SiteAnalytics from '../../../components/image-displays/SiteAnalytics'
 import { getTheme } from '../../../common/themes'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
@@ -111,6 +112,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
           <meta name="twitter:description" content={ogDescription} />
           {ogImage && <meta name="twitter:image" content={ogImage} />}
         </Head>
+        <SiteAnalytics analytics={siteConfig.analytics} />
         <PageCover
           cover={{
             imageUrl: coverConfig.imageUrl || '',
@@ -163,6 +165,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         <meta name="twitter:description" content={ogDescription} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
+      <SiteAnalytics analytics={siteConfig.analytics} />
       {!isProvence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
       <main className="theme-content">
         {homePage ? (
