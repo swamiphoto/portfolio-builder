@@ -956,7 +956,7 @@ export default function Landing() {
             letterSpacing: '-0.02em',
             color: T.ink,
             maxWidth: 820,
-            whiteSpace: 'nowrap',
+            textWrap: 'balance',
           }}
         >
           For photographers, by a photographer.
