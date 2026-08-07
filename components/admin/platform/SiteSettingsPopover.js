@@ -471,23 +471,16 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Analytics" onBack={() => setView('main')}>
         <div style={{ padding: '14px' }} className="space-y-5">
           <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--text-secondary, #6b6355)', margin: 0 }}>
-            See how many people visit your site and where they come from. Connect your own{' '}
-            <strong style={{ color: '#2c2416', fontWeight: 500 }}>Google Analytics</strong> or{' '}
-            <strong style={{ color: '#2c2416', fontWeight: 500 }}>Plausible</strong> account below — Sepia adds the
-            tracking to your <strong style={{ color: '#2c2416', fontWeight: 500 }}>published site only</strong> (not the
-            editor). Your stats live in that provider&rsquo;s dashboard, not inside Sepia. Leave blank to skip tracking.
+            Sepia has no built-in analytics — connect your own.{' '}
+            <strong style={{ color: '#2c2416', fontWeight: 500 }}>Google Analytics</strong> and{' '}
+            <strong style={{ color: '#2c2416', fontWeight: 500 }}>Plausible</strong> are two different tools that do the
+            same thing, so add just one. You&rsquo;ll see your stats in that tool&rsquo;s own dashboard.
           </p>
           <Field label="Google Analytics ID">
             <input autoFocus className={inputCls} style={inputStyle} placeholder="G-XXXXXXXXXX" value={config.analytics?.googleId || ''} onChange={(e) => updateAnalytics({ googleId: e.target.value })} />
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted, #9e9788)', margin: '6px 0 0', lineHeight: 1.45 }}>
-              In Google Analytics → Admin → Data Streams. Looks like <span style={{ fontFamily: MONO }}>G-XXXXXXXXXX</span>.
-            </p>
           </Field>
           <Field label="Plausible domain">
             <input className={inputCls} style={inputStyle} placeholder="yourdomain.com" value={config.analytics?.plausibleDomain || ''} onChange={(e) => updateAnalytics({ plausibleDomain: e.target.value })} />
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted, #9e9788)', margin: '6px 0 0', lineHeight: 1.45 }}>
-              The site domain you added in Plausible (privacy-friendly, no cookie banner needed).
-            </p>
           </Field>
         </div>
       </PopoverShell>
