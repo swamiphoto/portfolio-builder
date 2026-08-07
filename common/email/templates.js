@@ -23,11 +23,11 @@ export function photographerSaleEmail({ order, siteName }) {
   const profit = dollars(order.amounts.profit, order.amounts.currency)
   const line = specLine(order.spec)
   const subject = `You sold a print (+${profit})`
-  const text = `Great news — someone bought a print from ${siteName}.\n\n` +
+  const text = `Great news! Someone bought a print from ${siteName}.\n\n` +
     `Print: ${line}\nYour profit: ${profit}\n\n` +
     `Prodigi prints and ships it automatically. Track it in your Orders view.`
   const html = `<div style="font-family:-apple-system,sans-serif;max-width:560px;color:#1a1410;line-height:1.6;">` +
-    `<p>Great news — <strong>${esc(order.buyer.name)}</strong> bought a print from <strong>${esc(siteName)}</strong>.</p>` +
+    `<p>Great news! <strong>${esc(order.buyer.name)}</strong> bought a print from <strong>${esc(siteName)}</strong>.</p>` +
     `<p><strong>Print:</strong> ${esc(line)}<br><strong>Your profit:</strong> ${esc(profit)}</p>` +
     `<p>Prodigi prints and ships it automatically. Track it in your Orders view.</p></div>`
   return { subject, html, text }

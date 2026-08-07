@@ -29,12 +29,12 @@ export default function Privacy() {
       <h2>How we share information</h2>
       <p>We do not sell your personal information. We share it only with service providers that help us run the Service:</p>
       <ul>
-        <li><strong>Stripe</strong> — payment processing and photographer payouts (Stripe Connect).</li>
-        <li><strong>Prodigi</strong> — print production and fulfillment (receives the buyer&rsquo;s shipping details for the order).</li>
-        <li><strong>Google</strong> — authentication (sign-in).</li>
-        <li><strong>Cloudflare</strong> — image storage and delivery.</li>
-        <li><strong>Vercel</strong> — application hosting.</li>
-        <li><strong>Our email provider</strong> — delivery of transactional email.</li>
+        <li><strong>Stripe</strong>: payment processing and photographer payouts (Stripe Connect).</li>
+        <li><strong>Prodigi</strong>: print production and fulfillment (receives the buyer&rsquo;s shipping details for the order).</li>
+        <li><strong>Google</strong>: authentication (sign-in).</li>
+        <li><strong>Cloudflare</strong>: image storage and delivery.</li>
+        <li><strong>Vercel</strong>: application hosting.</li>
+        <li><strong>Our email provider</strong>: delivery of transactional email.</li>
       </ul>
       <p>We may also disclose information if required by law or to protect the rights, property, or safety of Sepia, our users, or the public.</p>
 

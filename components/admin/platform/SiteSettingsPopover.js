@@ -473,7 +473,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--text-secondary, #6b6355)', margin: 0 }}>
             Track your visitors with{' '}
             <strong style={{ color: '#2c2416', fontWeight: 500 }}>Google Analytics</strong> or{' '}
-            <strong style={{ color: '#2c2416', fontWeight: 500 }}>Plausible</strong> — add either one below and check your
+            <strong style={{ color: '#2c2416', fontWeight: 500 }}>Plausible</strong>. Add either one below and check your
             stats in that tool&rsquo;s dashboard.
           </p>
           <Field label="Google Analytics ID">
