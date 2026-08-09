@@ -1,5 +1,21 @@
 # TODOS
 
+## Landing Page
+
+### Responsive + accessibility pass (from /ship review, 2026-08-07)
+**Priority:** P2
+
+Pre-existing issues found during the landing-redesign pre-landing review (PR #33), deferred to a follow-up branch:
+
+- Footer `/privacy` and `/terms` links 404 (no pages exist)
+- Sign-in control is a `<span onClick>` — not keyboard-accessible; make it a button
+- AdminShot mock uses fixed computed height; squashes below ~1160px viewports
+- Footer flex row lacks `flexWrap` — overflows at ~375px
+- `T.muted` on `T.card` ≈ 3.5:1 contrast, below WCAG AA for small text
+- AdminShot fake-UI text should be `aria-hidden`
+
+Noticed by: gstack /ship on branch `swamiphoto/landing-page-redesign`, 2026-08-07.
+
 ## Testing
 
 ### Fix pre-existing test failures (stale tests on main)

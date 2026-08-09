@@ -527,14 +527,171 @@ const COMPARISON = {
   columns: ['Sepia', 'Squarespace', 'Wix', 'Pixieset', 'SmugMug'],
 }
 
+// Founder's note — honest first-person version until real user testimonials land.
 const TESTIMONIAL = {
   quote:
-    "Most platforms (Squarespace, Wix, SmugMug) aren't built with the photographer in mind. Pixieset gets close. Sepia takes it to a whole other level.",
-  attrib: 'Marcus Oliveira',
-  role: 'Landscape photographer',
+    'In the 15 years I’ve been a photographer, I’ve tried every platform out there, and not one felt like it was truly made for photographers. Pixieset comes closest, but still lacks a real photographer’s workflow. So I built Sepia, and I sweated the details only another photographer would appreciate.',
+  attrib: 'Swami Venkat',
+  attribHref: 'https://www.swamiphoto.com',
+  role: 'Founder of Sepia',
 }
 
 const NAV = ['Features', 'Compare', 'Pricing']
+
+// Placeholder feature rows — swap the copy and drop real screenshots into the
+// image slot later. Order roughly by what makes a photographer lean in.
+const FEATURES = [
+  {
+    eyebrow: 'Block Builder',
+    title: 'The most satisfying way to build a site',
+    body: 'Every page is made of blocks you arrange like Lego: photos, videos, text, testimonials, contact forms, and plenty more. Every variant is curated, so whatever you choose looks beautiful, and you can’t make a design mistake.',
+  },
+  {
+    eyebrow: 'Music Slideshows',
+    title: 'Move clients to tears',
+    body: 'Turn any gallery into an immersive, musical slideshow, almost like a Reel made from your photos. Add text wherever you like, and choose from a range of layouts and themes, from sleek and modern to beautifully retro.',
+    link: { label: 'See an example', href: 'https://www.swamiphoto.com/galleries/arizona/slideshow' },
+  },
+  {
+    eyebrow: 'Prints',
+    title: 'Sell prints with one click',
+    body: 'Turn on selling for any photo, on any page, and it’s for sale right where it sits. There’s no separate store to set up and no marketplace to manage. Every order is printed and shipped to your customer’s door automatically.',
+  },
+  {
+    eyebrow: 'Themes',
+    title: 'Change your theme, your content stays put',
+    body: 'Your content lives in the blocks, not the theme. Swap your whole design and every photo and caption stays exactly where you put it. There’s nothing to rework.',
+  },
+  {
+    eyebrow: 'The Library',
+    title: 'Upload once, use it everywhere',
+    body: 'Every photo you upload goes into one library shared across your whole site. Use the same shot on any page without uploading it twice. Search everything by camera, lens, date, or location.',
+  },
+  {
+    eyebrow: 'Client Galleries',
+    title: 'Deliver shoots, collect favorites, and get paid',
+    body: 'Flip a toggle and any gallery becomes a client gallery. You choose what clients can do: pick favorites, download photos, and buy prints and packages. Add watermarks if you like.',
+  },
+]
+
+// Simple hairline divider — a thin line that fades out at both ends, so it's a
+// touch more graceful than a hard rule without being fancy.
+function GradientDivider({ width = 140 }) {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        width,
+        height: 1,
+        background: `linear-gradient(90deg, transparent, ${T.accent}, transparent)`,
+        opacity: 0.55,
+      }}
+    />
+  )
+}
+
+function FeatureRow({ index, eyebrow, title, body, link, flip }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: flip ? 'row-reverse' : 'row',
+        alignItems: 'center',
+        gap: 56,
+        flexWrap: 'wrap',
+      }}
+    >
+      {/* Image placeholder — drop a real screenshot here */}
+      <div style={{ flex: '1 1 380px', minWidth: 300 }}>
+        <div
+          style={{
+            aspectRatio: '4 / 3',
+            borderRadius: 8,
+            background: 'linear-gradient(135deg, #efe7d8, #e3d6bf)',
+            boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 30px 60px -30px rgba(26,18,10,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: FONT.mono,
+              fontSize: 11,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: T.faint,
+            }}
+          >
+            Feature image
+          </span>
+        </div>
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: '1 1 380px', minWidth: 300 }}>
+        <div
+          style={{
+            fontFamily: FONT.sans,
+            fontWeight: 600,
+            fontSize: 12,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: T.accent,
+            marginBottom: 12,
+          }}
+        >
+          {eyebrow}
+        </div>
+        <h3
+          style={{
+            margin: 0,
+            fontFamily: FONT.serif,
+            fontWeight: 400,
+            fontSize: 30,
+            lineHeight: 1.15,
+            letterSpacing: '-0.015em',
+            color: T.ink,
+            textWrap: 'pretty',
+          }}
+        >
+          {title}
+        </h3>
+        <p
+          style={{
+            margin: '14px 0 0',
+            fontFamily: FONT.sans,
+            fontSize: 16,
+            lineHeight: 1.6,
+            color: T.body,
+            maxWidth: 460,
+          }}
+        >
+          {body}
+        </p>
+        {link && (
+          <a
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sepia-link"
+            style={{
+              display: 'inline-block',
+              margin: '12px 0 0',
+              fontFamily: FONT.sans,
+              fontSize: 15,
+              color: T.accent,
+              textDecoration: 'underline',
+              textUnderlineOffset: 3,
+            }}
+          >
+            {link.label}
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function Landing() {
   const COL = 760
@@ -543,6 +700,9 @@ export default function Landing() {
   return (
     <div style={{ background: T.card, fontFamily: FONT.sans, color: T.ink, lineHeight: 1.5 }}>
       <style>{`
+        html {
+          scroll-behavior: smooth;
+        }
         .sepia-btn-primary {
           transition: background 0.15s ease, opacity 0.15s ease;
         }
@@ -566,6 +726,36 @@ export default function Landing() {
         }
         .sepia-footer-link:hover {
           color: ${T.inkSoft} !important;
+        }
+        .sepia-ghost-link {
+          transition: color 0.15s ease;
+        }
+        .sepia-ghost-link:hover {
+          color: ${T.accent} !important;
+        }
+        .sepia-ghost-arrow {
+          display: inline-block;
+          transition: transform 0.15s ease;
+        }
+        .sepia-ghost-link:hover .sepia-ghost-arrow {
+          transform: translateY(2px);
+        }
+        .sepia-margin-note {
+          position: absolute;
+          left: 30px;
+          top: 50%;
+          writing-mode: vertical-rl;
+          transform: translateY(-50%) rotate(180deg);
+          font-family: ${FONT.mono};
+          font-size: 11px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: ${T.faint};
+          white-space: nowrap;
+          pointer-events: none;
+        }
+        @media (max-width: 1180px) {
+          .sepia-margin-note { display: none; }
         }
       `}</style>
       {/* Sign-in link, floats top-right */}
@@ -599,65 +789,46 @@ export default function Landing() {
         }}
       >
         {/* Type stack, centered */}
-        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
-          <div
-            style={{
-              fontFamily: FONT.script,
-              fontSize: 220,
-              lineHeight: 0.82,
-              color: T.ink,
-              letterSpacing: '-0.005em',
-              margin: '0 0 8px',
-            }}
-          >
-            Sepia
+        <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
+          {/* Small wordmark */}
+          <div style={{ marginBottom: 44 }}>
+            <Wordmark size={44} />
           </div>
 
-          <div
-            style={{
-              height: 1,
-              background: T.border,
-              width: 80,
-              margin: '28px auto 32px',
-            }}
-          />
-
+          {/* Sarcastic hook — quote, with attribution on a second line */}
           <h1
             style={{
               margin: '0 auto',
               fontFamily: FONT.serif,
-              fontWeight: 300,
-              fontSize: 44,
-              lineHeight: 1.1,
+              fontWeight: 500,
+              fontSize: 46,
+              lineHeight: 1.16,
               letterSpacing: '-0.018em',
               color: T.ink,
               maxWidth: 680,
             }}
           >
-            The platform photographers have been screaming for.
+            “Building a beautiful site for my photos was actually easy”
           </h1>
-
-          <p
+          <div
             style={{
-              margin: '24px auto 0',
+              margin: '14px auto 0',
               fontFamily: FONT.serif,
+              fontStyle: 'italic',
               fontWeight: 400,
-              fontSize: 17,
-              lineHeight: 1.55,
-              color: T.body,
-              maxWidth: 600,
+              fontSize: 22,
+              color: T.muted,
             }}
           >
-            A portfolio, client galleries, print sales, and slideshows scored to music, all in one
-            place, all built around how photographers actually work. Swap themes without rebuilding
-            your site. Import from your existing platform in under two minutes.
-          </p>
+            — said no photographer, ever.
+          </div>
 
+          {/* CTA row */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 18,
+              gap: 22,
               marginTop: 40,
               justifyContent: 'center',
               flexWrap: 'wrap',
@@ -669,185 +840,215 @@ export default function Landing() {
               style={{
                 background: T.ink,
                 color: T.paper,
-                padding: '14px 24px',
-                borderRadius: 5,
-                fontSize: 14,
+                padding: '18px 38px',
+                borderRadius: 6,
+                fontSize: 19,
                 fontWeight: 500,
                 border: 'none',
                 cursor: 'pointer',
                 fontFamily: FONT.sans,
               }}
             >
-              Get Started →
+              Try Sepia →
             </button>
-            <button
-              onClick={handleSignIn}
-              className="sepia-btn-outline"
+            <a
+              href="#features"
+              className="sepia-ghost-link"
               style={{
-                background: 'transparent',
-                color: T.ink,
-                padding: '13px 22px',
-                borderRadius: 5,
-                fontSize: 14,
-                fontWeight: 500,
-                border: `1px solid ${T.ink}`,
                 cursor: 'pointer',
+                fontSize: 16,
+                color: T.inkSoft,
                 fontFamily: FONT.sans,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
               }}
             >
-              Import your existing site
-            </button>
+              <span style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>Why it’s magical</span>
+              <span aria-hidden="true" className="sepia-ghost-arrow">↓</span>
+            </a>
           </div>
         </div>
 
         {/* Admin shot — centered below */}
-        <div style={{ marginTop: 80, display: 'flex', justifyContent: 'center' }}>
+        <div
+          id="magic"
+          style={{ marginTop: 80, display: 'flex', justifyContent: 'center', scrollMarginTop: 40 }}
+        >
           <AdminShot width={1080} />
         </div>
       </section>
 
-      {/* Testimonial */}
-      <section style={{ padding: '56px 40px 40px' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
-          <p
+      {/* Testimonial — placeholder quote until a real one lands */}
+      <section style={{ padding: '96px 40px 0', display: 'flex', justifyContent: 'center' }}>
+        <figure style={{ margin: 0, maxWidth: 680, textAlign: 'center' }}>
+          <img
+            src="/swami-portrait.jpg"
+            alt="Swami Venkat"
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              objectPosition: 'center 30%',
+              display: 'block',
+              margin: '0 auto 22px',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 10px 24px -12px rgba(26,18,10,0.35)',
+            }}
+          />
+          <blockquote
             style={{
               margin: 0,
               fontFamily: FONT.serif,
-              fontWeight: 300,
-              fontSize: 26,
-              lineHeight: 1.4,
-              color: T.ink,
-              letterSpacing: '-0.005em',
+              fontStyle: 'italic',
+              fontWeight: 400,
+              fontSize: 23,
+              lineHeight: 1.5,
+              letterSpacing: '-0.01em',
+              color: T.inkSoft,
+              textWrap: 'balance',
             }}
           >
             “{TESTIMONIAL.quote}”
-          </p>
-          <div
+          </blockquote>
+          <figcaption
             style={{
-              marginTop: 22,
-              fontFamily: FONT.mono,
-              fontSize: 10.5,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
+              marginTop: 18,
+              fontFamily: FONT.sans,
+              fontSize: 14,
               color: T.muted,
             }}
           >
-            {TESTIMONIAL.attrib} · {TESTIMONIAL.role}
-          </div>
+            <a
+              href={TESTIMONIAL.attribHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sepia-link"
+              style={{
+                color: T.ink,
+                fontWeight: 500,
+                textDecoration: 'underline',
+                textUnderlineOffset: 3,
+              }}
+            >
+              {TESTIMONIAL.attrib}
+            </a>
+            {' · '}
+            {TESTIMONIAL.role}
+          </figcaption>
+        </figure>
+      </section>
+
+      {/* Features — divider, section heading, then alternating image/text rows */}
+      <section id="features" style={{ position: 'relative', padding: '96px 40px 88px', scrollMarginTop: 24 }}>
+        {/* Lens gradient divider */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <GradientDivider />
+        </div>
+
+        {/* Section title */}
+        <h2
+          style={{
+            margin: '0 auto',
+            textAlign: 'center',
+            fontFamily: FONT.serif,
+            fontWeight: 600,
+            fontSize: 34,
+            lineHeight: 1.15,
+            letterSpacing: '-0.02em',
+            color: T.ink,
+            maxWidth: 820,
+            textWrap: 'balance',
+          }}
+        >
+          For photographers, by a photographer.
+        </h2>
+
+        {/* Section subtitle */}
+        <p
+          style={{
+            margin: '16px auto 0',
+            textAlign: 'center',
+            fontFamily: FONT.serif,
+            fontWeight: 400,
+            fontSize: 22,
+            lineHeight: 1.35,
+            letterSpacing: '-0.01em',
+            color: T.inkSoft,
+            maxWidth: 600,
+            textWrap: 'balance',
+          }}
+        >
+          Sepia is a refreshingly simple way to build your portfolio, sell your prints, and
+          delight your clients.
+        </p>
+
+        <div
+          style={{
+            maxWidth: 1000,
+            margin: '72px auto 0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 88,
+          }}
+        >
+          {FEATURES.map((f, i) => (
+            <FeatureRow key={i} index={i + 1} flip={i % 2 === 1} {...f} />
+          ))}
         </div>
       </section>
 
-      {/* Comparison */}
-      <section style={{ padding: '32px 40px 64px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-          <div style={{ width: 64, height: 1, background: T.border }} />
+      {/* Closing CTA — the hero's joke, kept as a promise */}
+      <section style={{ padding: '120px 40px 128px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+          <GradientDivider />
         </div>
-
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-<h2
-              style={{
-                margin: '14px 0 0',
-                fontFamily: FONT.serif,
-                fontWeight: 300,
-                fontSize: 32,
-                color: T.ink,
-                letterSpacing: '-0.015em',
-              }}
-            >
-              What you get, by platform.
-            </h2>
-          </div>
-          <div
+        <h2
+          style={{
+            margin: '0 auto',
+            fontFamily: FONT.serif,
+            fontWeight: 500,
+            fontSize: 34,
+            lineHeight: 1.25,
+            letterSpacing: '-0.015em',
+            color: T.ink,
+            maxWidth: 680,
+            textWrap: 'balance',
+          }}
+        >
+          “Building a beautiful site for my photos was actually easy.”
+        </h2>
+        <div
+          style={{
+            marginTop: 14,
+            fontFamily: FONT.serif,
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 20,
+            color: T.muted,
+          }}
+        >
+          — you, soon.
+        </div>
+        <div style={{ marginTop: 40 }}>
+          <button
+            onClick={handleSignIn}
+            className="sepia-btn-primary"
             style={{
-              background: T.card,
-              borderRadius: 5,
-              boxShadow: '0 1px 3px rgba(26,18,10,0.06), 0 0 0 1px rgba(26,18,10,0.06)',
-              overflow: 'hidden',
+              background: T.ink,
+              color: T.paper,
+              padding: '18px 38px',
+              borderRadius: 6,
+              fontSize: 19,
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: FONT.sans,
             }}
           >
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '14px 20px',
-                      fontFamily: FONT.mono,
-                      fontSize: 10,
-                      letterSpacing: '0.14em',
-                      textTransform: 'uppercase',
-                      color: T.muted,
-                      fontWeight: 500,
-                      borderBottom: `1px solid ${T.border}`,
-                      width: '40%',
-                    }}
-                  >
-                    Capability
-                  </th>
-                  {COMPARISON.columns.map((c, i) => (
-                    <th
-                      key={c}
-                      style={{
-                        padding: '14px 12px',
-                        borderBottom: `1px solid ${T.border}`,
-                        borderLeft: `1px solid ${T.borderSoft}`,
-                        fontFamily: i === 0 ? FONT.script : FONT.sans,
-                        fontSize: i === 0 ? 26 : 12,
-                        fontWeight: i === 0 ? 400 : 500,
-                        color: i === 0 ? T.ink : T.inkSoft,
-                        lineHeight: i === 0 ? 0.7 : 1.2,
-                      }}
-                    >
-                      {c}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.rows.map((row, i) => (
-                  <tr
-                    key={i}
-                    style={{
-                      borderBottom: i === COMPARISON.rows.length - 1 ? 'none' : `1px solid ${T.borderSoft}`,
-                    }}
-                  >
-                    <td style={{ padding: '14px 20px', color: T.inkSoft, fontSize: 14 }}>{row[0]}</td>
-                    {row.slice(1).map((v, j) => (
-                      <td
-                        key={j}
-                        style={{
-                          padding: '14px 12px',
-                          textAlign: 'center',
-                          borderLeft: `1px solid ${T.borderSoft}`,
-                          background: j === 0 ? 'rgba(139,111,71,0.05)' : undefined,
-                        }}
-                      >
-                        {v ? (
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              width: 18,
-                              height: 18,
-                              borderRadius: '50%',
-                              background: j === 0 ? T.accent : 'rgba(26,18,10,0.85)',
-                              color: T.paper,
-                              fontSize: 11,
-                              lineHeight: '18px',
-                            }}
-                          >
-                            ✓
-                          </span>
-                        ) : (
-                          <span style={{ color: T.faint, fontSize: 16 }}>—</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            Try Sepia →
+          </button>
         </div>
       </section>
 
