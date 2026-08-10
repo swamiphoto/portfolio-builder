@@ -98,13 +98,22 @@ function AssetField({ label, value, onChange, fallbackUrl, onPickFromLibrary, co
       )}
       <div className="flex items-center gap-3">
         <div
+          role={onPickFromLibrary ? 'button' : undefined}
+          tabIndex={onPickFromLibrary ? 0 : undefined}
+          aria-label={onPickFromLibrary ? (value ? 'Change image' : 'Select image') : undefined}
+          onClick={onPickFromLibrary || undefined}
+          onKeyDown={onPickFromLibrary ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPickFromLibrary() } } : undefined}
           className="flex-shrink-0 overflow-hidden flex items-center justify-center"
           style={{
             ...dim,
             background: 'rgba(255,253,248,0.6)',
             border: '1px solid rgba(160,140,110,0.22)',
             borderRadius: 4,
+            cursor: onPickFromLibrary ? 'pointer' : 'default',
+            transition: 'border-color 0.15s',
           }}
+          onMouseEnter={onPickFromLibrary ? (e) => { e.currentTarget.style.borderColor = 'rgba(139,111,71,0.5)' } : undefined}
+          onMouseLeave={onPickFromLibrary ? (e) => { e.currentTarget.style.borderColor = 'rgba(160,140,110,0.22)' } : undefined}
         >
           {displayUrl ? (
             <img src={displayUrl} className={`w-full h-full ${imgFit}`} alt="" />
