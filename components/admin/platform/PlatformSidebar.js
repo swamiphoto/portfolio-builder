@@ -937,10 +937,10 @@ export default function PlatformSidebar({
           pages={navPages}
           renderRow={renderPageRow}
           droppableId="main-nav"
+          emptyHint={draftRow?.section !== 'nav'
+            ? <EmptyHint>No pages yet. What you add here becomes your site's navigation.</EmptyHint>
+            : null}
         />
-        {navPages.length === 0 && draftRow?.section !== 'nav' && (
-          <EmptyHint>No pages yet. What you add here becomes your site's navigation.</EmptyHint>
-        )}
         {draftRow?.section === 'nav' && renderDraftRow()}
 
         {/* Hidden section — always rendered so it's a valid drop target and visible default for new pages */}
@@ -954,10 +954,10 @@ export default function PlatformSidebar({
           pages={hiddenPages}
           renderRow={renderPageRow}
           droppableId="other-pages"
+          emptyHint={draftRow?.section !== 'hidden'
+            ? <EmptyHint>Nothing hidden. Pages here work by direct link but stay out of your navigation, good for unlisted or private work.</EmptyHint>
+            : null}
         />
-        {hiddenPages.length === 0 && draftRow?.section !== 'hidden' && (
-          <EmptyHint>Nothing hidden. Pages here work by direct link but stay out of your navigation, good for unlisted or private work.</EmptyHint>
-        )}
         {draftRow?.section === 'hidden' && renderDraftRow()}
 
         {/* Add Page button */}
