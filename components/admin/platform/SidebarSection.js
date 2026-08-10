@@ -1,6 +1,6 @@
 // components/admin/platform/SidebarSection.js
 
-export default function SidebarSection({ label, pages, depth = 0, renderRow, droppableId, emptyHint = null, dragging = false, dropActive = false }) {
+export default function SidebarSection({ label, pages, depth = 0, renderRow, droppableId, emptyHint = null, dropActive = false }) {
   const isEmpty = pages.length === 0 && depth === 0
   return (
     // When empty, keep a min-height so the section is still a hittable drop
@@ -12,21 +12,14 @@ export default function SidebarSection({ label, pages, depth = 0, renderRow, dro
              style={{ color: 'var(--text-muted)' }}>{label}</div>
       )}
       {isEmpty && (
-        // While a page is being dragged, outline the empty area so it reads as a
-        // drop zone (dashed), and highlight it when the drag is over it (solid +
-        // tint). A constant transparent border keeps the layout from shifting.
+        // A soft warm tint when a dragged page is over the empty area — a small
+        // change of state, like the photo block's drop hover, not a heavy border.
         <div
           style={{
             margin: '2px 8px 6px',
             borderRadius: 6,
-            padding: '2px',
-            border: dropActive
-              ? '1.5px solid #8b6f47'
-              : dragging
-                ? '1.5px dashed rgba(139,111,71,0.45)'
-                : '1.5px solid transparent',
             background: dropActive ? 'rgba(139,111,71,0.10)' : 'transparent',
-            transition: 'background 120ms, border-color 120ms',
+            transition: 'background 120ms',
           }}
         >
           {emptyHint}
