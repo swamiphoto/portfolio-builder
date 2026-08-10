@@ -70,7 +70,10 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
           position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 61,
           width: PANEL_WIDTH, maxWidth: '92vw',
           background: '#f4efe8',
-          boxShadow: '-24px 0 60px rgba(20,14,8,0.4)',
+          // Only cast the shadow while open — when closed the drawer sits off-screen
+          // right (translateX(100%)) but its left-cast shadow would otherwise bleed
+          // onto the page's right edge (visible in preview and on the live site).
+          boxShadow: open ? '-24px 0 60px rgba(20,14,8,0.4)' : 'none',
           transform: open ? 'translateX(0)' : `translateX(100%)`,
           transition: 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)',
           display: 'flex', flexDirection: 'column',
