@@ -1,6 +1,6 @@
 // common/gcsClient.js
 // Server-side only — never import from client components.
-import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 
 export const s3 = new S3Client({
@@ -107,6 +107,30 @@ export async function uploadJSON(key, data) {
  */
 export async function deleteFile(key) {
   await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }))
+}
+
+/**
+ * Delete many objects using S3/R2 batch delete (up to 1000 keys per request),
+ * instead of one request per key. Essential for large prefixes (e.g. deleting a
+ * whole account) where sequential single deletes would exceed the function
+ * timeout. Returns { deleted, errors } — errors is an array of { key, message }.
+ * @param {string[]} keys
+ * @returns {Promise<{ deleted: number, errors: {key:string,message:string}[] }>}
+ */
+export async function deleteFiles(keys) {
+  const all = (keys || []).filter(Boolean)
+  let deleted = 0
+  const errors = []
+  for (let i = 0; i < all.length; i += 1000) {
+    const chunk = all.slice(i, i + 1000)
+    const { Deleted = [], Errors = [] } = await s3.send(new DeleteObjectsCommand({
+      Bucket: BUCKET,
+      Delete: { Objects: chunk.map(Key => ({ Key })), Quiet: true },
+    }))
+    deleted += Deleted.length || chunk.length - Errors.length
+    for (const e of Errors) errors.push({ key: e.Key, message: e.Message })
+  }
+  return { deleted, errors }
 }
 
 /**

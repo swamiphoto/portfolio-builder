@@ -5,9 +5,12 @@
 import { withAuth } from '../../../common/withAuth'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readUserProfile } from '../../../common/userProfile'
-import { listFiles, deleteFile } from '../../../common/gcsClient'
+import { listFiles, deleteFile, deleteFiles } from '../../../common/gcsClient'
 import { getUserPrefix, getUsernameLookupPath, getDomainLookupPath } from '../../../common/gcsUser'
 import { normalizeCustomDomain } from '../../../common/domainUtils'
+
+// A large account can hold thousands of objects; give the function headroom.
+export const config = { maxDuration: 60 }
 
 async function handler(req, res, user) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -22,11 +25,11 @@ async function handler(req, res, user) {
     const cd = normalizeCustomDomain(config?.customDomain)
 
     // Delete everything under users/<id>/ (photos, thumbnails, display, configs,
-    // profile, orders, print-masters — the whole tree).
+    // profile, orders, print-masters — the whole tree). Batched (1000/request) so
+    // large accounts don't exceed the function timeout doing one delete per object.
     const keys = await listFiles(getUserPrefix(user.id))
-    for (const key of keys) {
-      try { await deleteFile(key) } catch (e) { console.error('delete-account: delete failed', key, e?.message) }
-    }
+    const { deleted, errors } = await deleteFiles(keys)
+    if (errors.length) console.error(`delete-account: ${errors.length} objects failed to delete`, errors.slice(0, 5))
 
     // Free the username + custom-domain reverse lookups (they live outside the prefix).
     if (username) {
@@ -36,7 +39,7 @@ async function handler(req, res, user) {
       try { await deleteFile(getDomainLookupPath(cd.name)) } catch (e) { console.error('delete-account: domain lookup', e?.message) }
     }
 
-    return res.status(200).json({ ok: true, deleted: keys.length })
+    return res.status(200).json({ ok: true, deleted })
   } catch (err) {
     console.error('POST /api/admin/delete-account error:', err)
     return res.status(500).json({ error: err.message })
