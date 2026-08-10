@@ -894,6 +894,24 @@ export default function PlatformSidebar({
       {/* PAGES LIST — scrollbar hidden to match the block sidebar (no layout wiggle) */}
       <div className="flex-1 overflow-y-auto scroll-quiet">
 
+        {/* Cover — its own row above the Pages section (no heading) */}
+        <div style={{ padding: '10px 0 4px' }}>
+          <CoverPageRow
+            siteConfig={siteConfig}
+            selected={!!coverSelected}
+            onSelect={() => onSelectCover?.()}
+            onConfigure={(el) => setCoverConfigAnchorEl(el)}
+            onEnableCover={() => {
+              onConfigChange(prev => ({ ...prev, hasCoverPage: true }))
+              onSelectCover?.()
+            }}
+            onDisableCover={() => {
+              onConfigChange(prev => ({ ...prev, hasCoverPage: false }))
+              onDisableCover?.()
+            }}
+          />
+        </div>
+
         {/* Pages section header */}
         <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
@@ -918,20 +936,6 @@ export default function PlatformSidebar({
               </Tip>
             </div>
           </div>
-        <CoverPageRow
-          siteConfig={siteConfig}
-          selected={!!coverSelected}
-          onSelect={() => onSelectCover?.()}
-          onConfigure={(el) => setCoverConfigAnchorEl(el)}
-          onEnableCover={() => {
-            onConfigChange(prev => ({ ...prev, hasCoverPage: true }))
-            onSelectCover?.()
-          }}
-          onDisableCover={() => {
-            onConfigChange(prev => ({ ...prev, hasCoverPage: false }))
-            onDisableCover?.()
-          }}
-        />
         <SidebarSection
           label=""
           pages={navPages}
