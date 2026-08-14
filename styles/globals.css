@@ -730,7 +730,7 @@ a {
 [data-theme="amsterdam"] .ams-mosaic__group { display: flex; flex-direction: column; gap: 1.2vh; height: 100%; }
 [data-theme="amsterdam"] .ams-mosaic__group--solo { width: auto; }
 [data-theme="amsterdam"] .ams-mosaic__cell { flex: 1; min-height: 0; position: relative; }
-[data-theme="amsterdam"] .ams-mosaic__cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+[data-theme="amsterdam"] .ams-mosaic__cell img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
 
 /* Text panels */
 [data-theme="amsterdam"] .ams-col--panel { background: var(--ams-ink); color: var(--ams-on-ink); width: clamp(420px, 46vw, 780px); display: flex; align-items: center; padding: 6vh 3vw; }
@@ -753,6 +753,12 @@ a {
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row { flex-direction: column; align-items: stretch; height: auto; gap: 12px; padding: 16px 0; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-frame { height: auto !important; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic { flex-wrap: wrap; height: auto !important; }
+/* Mosaic groups + page links stack full-width on phones (mirrors Florence's
+   .florence-mosaic__group / .florence-pagelink data-mobile normalization). */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__group,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-pagelink { width: 100% !important; height: auto !important; flex: 0 0 auto; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__cell,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-pagelink__frame { flex: 0 0 auto; min-height: 0; overflow: visible; }
 /* Florence's mobile override applies the same contain-fit rule to .florence-fit img
    AND .florence-mosaic__cell img (mosaic cells use a plain <img>, not FitImg) so
    cropped cover images don't break when the mosaic wraps to a vertical stack. */
