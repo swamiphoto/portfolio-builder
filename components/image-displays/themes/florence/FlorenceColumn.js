@@ -8,17 +8,14 @@
 //                  vertical groups of 1/2/3 placed side by side). Size scales height.
 //   text         → Fraunces/Mono/Sans (Font), size from L/M/S, placed by Position.
 //   video/testimonial/contact/page-gallery → their own columns.
-import { useRef, useEffect } from 'react'
 import { getSizedUrl } from '../../../../common/imageUtils'
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../../../common/assetRefs'
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveFlorenceAnchor, resolveButtonStyle, resolveSize } from '../../../../common/themes/variants'
 import { formatCaptureMeta } from '../../../../common/photoMeta'
-import BuyPrintButton from '../../print/BuyPrintButton'
-import EngagementActions from '../../engagement/EngagementActions'
-import WatermarkOverlay from '../../engagement/WatermarkOverlay'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
 import FlorenceCaption from './FlorenceCaption'
+import { FitImg, Overlays } from '../shared/WallFit'
 
 const TID = 'florence'
 const ANCHOR_JUSTIFY = { top: 'flex-start', center: 'center', bottom: 'flex-end' }
@@ -35,52 +32,6 @@ const MOSAIC_PATTERN = [1, 2, 3, 1, 2]
 // Varied widths for multi-photo groups (cycled by group index) so the wall reads
 // as a dynamic mosaic rather than uniform columns. Solo photos keep natural width.
 const MOSAIC_GROUP_WIDTHS = ['clamp(240px, 26vw, 400px)', 'clamp(190px, 20vw, 300px)', 'clamp(280px, 30vw, 440px)', 'clamp(210px, 23vw, 340px)']
-
-function Overlays({ url, print }) {
-  return (
-    <>
-      <WatermarkOverlay />
-      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <BuyPrintButton print={print} imageUrl={url} />
-      </div>
-      <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 [&:has([data-engagement=always-visible])]:opacity-100 transition-opacity duration-300">
-        <EngagementActions imageUrl={url} />
-      </div>
-    </>
-  )
-}
-
-// An image whose box is height-driven: it fills its parent's height and its width
-// follows the image's real aspect ratio (measured on load, with a fallback so the
-// column doesn't collapse before the image loads). This avoids the flexbox
-// intrinsic-width leak that otherwise leaves big gaps between height-sized photos.
-function FitImg({ img, index, onImageClick }) {
-  const boxRef = useRef(null)
-  const imgRef = useRef(null)
-  const url = getImageRefUrl(img) || img.url || img
-  const ar = img?.aspectRatio || (img?.width && img?.height ? img.width / img.height : null)
-  // Set the box's aspect from the image's real dimensions. onLoad covers images that
-  // load after mount (lazy / below-fold); the effect covers ones already complete by
-  // hydration (SSR), where onLoad never fires.
-  const applyAspect = () => {
-    const im = imgRef.current
-    if (boxRef.current && im && im.naturalWidth) boxRef.current.style.aspectRatio = `${im.naturalWidth} / ${im.naturalHeight}`
-  }
-  useEffect(() => { applyAspect() }) // eslint-disable-line react-hooks/exhaustive-deps
-  return (
-    <div className="florence-fit relative group" ref={boxRef} style={{ aspectRatio: ar || '3 / 4' }}>
-      <img
-        ref={imgRef}
-        src={getSizedUrl(url, 'display')}
-        alt={img?.caption || 'Photo'}
-        loading="lazy"
-        onLoad={applyAspect}
-        onClick={() => onImageClick?.(index)}
-      />
-      <Overlays url={url} print={img?.print} />
-    </div>
-  )
-}
 
 function mosaicGroups(refs) {
   const groups = []
