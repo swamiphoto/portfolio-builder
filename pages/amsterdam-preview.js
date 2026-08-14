@@ -30,9 +30,9 @@ const SITE = {
   siteName: 'Van der Meer',
   design: { theme: 'amsterdam' },
   pages: [
-    { id: 'p1', title: 'Canals', slug: 'canals' },
-    { id: 'p2', title: 'Portraits', slug: 'portraits' },
-    { id: 'p3', title: 'About', slug: 'about' },
+    { id: 'p1', title: 'Canals', slug: 'canals', showInNav: true },
+    { id: 'p2', title: 'Portraits', slug: 'portraits', showInNav: true },
+    { id: 'p3', title: 'About', slug: 'about', showInNav: true },
   ],
   contact: { instagram: '@vandermeer' },
 }
