@@ -702,6 +702,10 @@ a {
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu[data-open="false"] { display: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu__inner { width: 100%; height: auto; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-arrows { display: none; }
+/* Height-driven fit boxes flow naturally once columns are height:auto (mirrors the
+   Florence .florence-fit mobile override) so photos don't collapse to zero height. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit { height: auto !important; aspect-ratio: auto !important; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; }
 
 /* Museum caption + fit box (fit rules mirror .florence-fit) */
 [data-theme="amsterdam"] .ams-caption { display: flex; flex-direction: column; gap: 2px; padding: 10px 2px 0; font-family: Inter, sans-serif; }
