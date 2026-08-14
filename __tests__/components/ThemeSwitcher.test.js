@@ -7,6 +7,7 @@ describe('themeOptions', () => {
       { value: 'kyoto', label: 'Kyoto' },
       { value: 'manhattan', label: 'Copenhagen' },
       { value: 'florence', label: 'Florence' },
+      { value: 'amsterdam', label: 'Amsterdam' },
     ])
   })
 })

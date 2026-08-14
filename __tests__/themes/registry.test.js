@@ -5,9 +5,9 @@ import { manhattan } from '@/common/themes/manhattan'
 const BLOCK_TYPES = ['photo', 'photos', 'text', 'video', 'testimonial', 'page-gallery', 'contact']
 
 describe('theme registry', () => {
-  it('registers kyoto, manhattan, provence and florence', () => {
-    expect(Object.keys(THEMES).sort()).toEqual(['florence', 'kyoto', 'manhattan', 'provence'])
-    expect(THEME_LIST.map(t => t.id).sort()).toEqual(['florence', 'kyoto', 'manhattan', 'provence'])
+  it('registers kyoto, manhattan, provence, florence and amsterdam', () => {
+    expect(Object.keys(THEMES).sort()).toEqual(['amsterdam', 'florence', 'kyoto', 'manhattan', 'provence'])
+    expect(THEME_LIST.map(t => t.id).sort()).toEqual(['amsterdam', 'florence', 'kyoto', 'manhattan', 'provence'])
   })
 
   it('getTheme falls back to kyoto for unknown ids', () => {
