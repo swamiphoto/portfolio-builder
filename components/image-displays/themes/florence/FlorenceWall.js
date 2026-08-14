@@ -5,9 +5,10 @@
 // the wall right. Wheel + drag + arrows all pan horizontally, except over a
 // multi-photo column that still has room to scroll vertically. On phones the whole
 // thing collapses to a vertical stack (CSS, via data-mobile).
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { buildNavTree } from '../../../../common/pagesTree'
 import FlorenceColumn from './FlorenceColumn'
+import useWallScroll from '../shared/useWallScroll'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
 
@@ -38,6 +39,8 @@ export default function FlorenceWall({
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const { onPointerDown, onPointerMove, endDrag, page } = useWallScroll({ wallRef, mobile, columnSelector: '.florence-col' })
+
   const tree = buildNavTree(siteConfig.pages || [], { respectHideChildren: true }).filter(i => i.showInNav !== false)
   const socials = siteConfig.contact || {}
   const socialKeys = SOCIAL_KEYS.filter(k => socials[k])
@@ -49,52 +52,6 @@ export default function FlorenceWall({
   // Wordmark orientation on the rail: vertical (default) or horizontal.
   const logoOrient = siteConfig?.design?.florenceLogo === 'horizontal' ? 'horizontal' : 'vertical'
 
-  // Wheel handling: a native horizontal gesture (trackpad two-finger swipe) scrolls
-  // the wall directly — leave it alone so it stays fast + smooth. A vertical wheel
-  // (mouse, or vertical trackpad swipe) is converted to horizontal, unless the
-  // pointer is over a stack column that still has room to scroll vertically.
-  const onWheel = useCallback((e) => {
-    const wall = wallRef.current
-    if (!wall || mobile) return
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return // native horizontal — don't touch
-    const dy = e.deltaY
-    if (!dy) return
-    // deltaMode: 1 = lines, 2 = pages → normalize to px, then scale up for a brisk pan.
-    const px = e.deltaMode === 1 ? dy * 16 : e.deltaMode === 2 ? dy * wall.clientWidth : dy
-    e.preventDefault()
-    wall.scrollLeft += px * 3.2
-  }, [mobile])
-
-  useEffect(() => {
-    const wall = wallRef.current
-    if (!wall || mobile) return
-    wall.addEventListener('wheel', onWheel, { passive: false })
-    return () => wall.removeEventListener('wheel', onWheel)
-  }, [onWheel, mobile])
-
-  // Arrows step to the next/prev column and center it in the viewport (so a click
-  // always lands on a block, never between two). Finds the currently-centered
-  // column, then centers its neighbour.
-  const page = useCallback((dir) => {
-    const wall = wallRef.current
-    if (!wall) return
-    const cols = Array.from(wall.querySelectorAll('.florence-col'))
-    if (!cols.length) return
-    const wallLeft = wall.getBoundingClientRect().left
-    const viewCenter = wall.clientWidth / 2
-    let idx = 0, best = Infinity
-    cols.forEach((c, i) => {
-      const r = c.getBoundingClientRect()
-      const centerInView = (r.left - wallLeft) + r.width / 2
-      const d = Math.abs(centerInView - viewCenter)
-      if (d < best) { best = d; idx = i }
-    })
-    const nextIdx = Math.max(0, Math.min(cols.length - 1, idx + (dir === 'prev' ? -1 : 1)))
-    const r = cols[nextIdx].getBoundingClientRect()
-    const centerInContent = (r.left - wallLeft + wall.scrollLeft) + r.width / 2
-    wall.scrollTo({ left: centerInContent - viewCenter, behavior: 'smooth' })
-  }, [])
-
   const toggleMenu = () => {
     setMenuOpen(o => {
       const next = !o
@@ -102,20 +59,6 @@ export default function FlorenceWall({
       return next
     })
   }
-
-  // Drag-to-pan (desktop): press and drag anywhere on the wall.
-  const drag = useRef({ active: false, x: 0, left: 0, moved: false })
-  const onPointerDown = (e) => {
-    if (mobile || e.target.closest('a,button')) return
-    drag.current = { active: true, x: e.clientX, left: wallRef.current.scrollLeft, moved: false }
-  }
-  const onPointerMove = (e) => {
-    if (!drag.current.active) return
-    const dx = e.clientX - drag.current.x
-    if (Math.abs(dx) > 3) drag.current.moved = true
-    wallRef.current.scrollLeft = drag.current.left - dx
-  }
-  const endDrag = () => { drag.current.active = false }
 
   const renderLink = (item) => {
     const isLink = item.type === 'link'
