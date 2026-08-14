@@ -413,7 +413,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   }, [selectedAlbum, currentConfig, saveConfig, clearSelection]);
 
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
-    // uploadedAssets: [{ url, width, height, hash }], selectedSets: string[]
+    // uploadedAssets: [{ url, width, height, hash, capture }], selectedSets: string[]
     setUploadOpen(false);
     const uploadedUrls = uploadedAssets.map(a => a.url);
 
@@ -423,9 +423,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     const { createAssetIdFromUrl } = await import('../../common/adminConfig');
     const now = new Date().toISOString();
     const assetUpdates = {};
-    for (const { url, width, height, hash } of uploadedAssets) {
+    for (const { url, width, height, hash, capture } of uploadedAssets) {
       const assetId = createAssetIdFromUrl(url);
-      assetUpdates[assetId] = seedUploadedAsset({ url, width, height, hash, now }, { ...(libraryData?.assets?.[assetId] || {}), assetId });
+      assetUpdates[assetId] = seedUploadedAsset({ url, width, height, hash, capture, now }, { ...(libraryData?.assets?.[assetId] || {}), assetId });
     }
 
     const updated = { ...config, assets: { ...config.assets, ...assetUpdates } };
