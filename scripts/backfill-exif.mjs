@@ -5,8 +5,13 @@
  */
 
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import exifr from 'exifr'
 import { readFileSync } from 'fs'
+import { createRequire } from 'module'
+
+// common/exifCapture.js is CommonJS (see its header comment) so this ESM script
+// pulls it in via createRequire rather than `import`.
+const require = createRequire(import.meta.url)
+const { extractCapture } = require('../common/exifCapture.js')
 
 const envRaw = readFileSync(new URL('../.env.local', import.meta.url).pathname, 'utf8')
 const env = {}
@@ -50,47 +55,9 @@ async function r2PutJSON(key, data) {
   }))
 }
 
-function formatShutterSpeed(exposureTime) {
-  if (!exposureTime) return null
-  if (exposureTime >= 1) return `${exposureTime}s`
-  return `1/${Math.round(1 / exposureTime)}s`
-}
-
-function formatAperture(fNumber) {
-  if (!fNumber) return null
-  return `f/${fNumber}`
-}
-
 async function readExif(r2Key) {
-  try {
-    const buf = await r2GetRange(r2Key, 524288)
-    const data = await exifr.parse(buf, {
-      tiff: true,
-      exif: true,
-      gps: true,
-      iptc: false,
-      xmp: false,
-      icc: false,
-      jfif: false,
-      ihdr: false,
-    })
-    if (!data) return null
-
-    return {
-      capturedAt: data.DateTimeOriginal?.toISOString() || data.CreateDate?.toISOString() || null,
-      cameraMake: data.Make?.trim() || null,
-      cameraModel: data.Model?.trim() || null,
-      lens: data.LensModel?.trim() || data.Lens?.trim() || null,
-      focalLengthMm: data.FocalLength || null,
-      aperture: formatAperture(data.FNumber),
-      shutterSpeed: formatShutterSpeed(data.ExposureTime),
-      iso: data.ISO || null,
-      latitude: data.latitude || null,
-      longitude: data.longitude || null,
-    }
-  } catch {
-    return null
-  }
+  const buf = await r2GetRange(r2Key, 524288)
+  return extractCapture(buf)
 }
 
 async function pLimit(tasks, concurrency) {
