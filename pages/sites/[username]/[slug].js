@@ -103,6 +103,8 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   const isProvence = theme.id === 'provence'
   // Florence owns its own rail inside the gallery (FlorenceWall), so no SiteNav.
   const isFlorence = theme.id === 'florence'
+  // Amsterdam owns its own rail inside the gallery (AmsterdamWall), so no SiteNav.
+  const isAmsterdam = theme.id === 'amsterdam'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (page?.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -143,7 +145,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
       <SiteAnalytics analytics={siteConfig.analytics} />
-      {!isProvence && !isFlorence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />}
+      {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />}
       <main className="theme-content">
         <ClientEngagementProvider
           username={username}
@@ -193,6 +195,8 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             coverButtonStyle={page.cover?.buttonStyle || 'solid'}
             themeId={theme.id}
             hasCover={hasCover}
+            cover={page.cover}
+            opener="title"
           />
         </ClientEngagementProvider>
         <SiteFooter siteConfig={siteConfig} />

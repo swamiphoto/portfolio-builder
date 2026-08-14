@@ -43,7 +43,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid' }) {
+export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) {
   const feedbackCtx = useEditorFeedback()
 
   // Debounce the preview so a heavy re-render doesn't fire on every keystroke.
@@ -148,10 +148,12 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
         hasCover={hasCover}
         coverHeight={coverHeight}
         coverButtonStyle={coverButtonStyle}
+        cover={cover}
+        opener={opener}
       />
     </ThemeProvider>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig, hasCover, coverHeight, coverButtonStyle]);
+  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, opener]);
 
   const content = (feedbackCtx?.showFeedback && feedbackCtx.hasFeedback)
     ? <ReviewFeedbackProvider feedbackByPhoto={feedbackCtx.feedbackByPhoto} onOpenPhoto={feedbackCtx.openPhoto}>{inner}</ReviewFeedbackProvider>

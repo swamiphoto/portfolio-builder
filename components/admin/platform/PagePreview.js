@@ -37,6 +37,7 @@ function PagePreview({
   // a live-site behavior (window scroll); the preview just shows cover + gallery.
   const isProvence = theme.id === 'provence'
   const isFlorence = theme.id === 'florence'
+  const isAmsterdam = theme.id === 'amsterdam'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (page.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -78,7 +79,7 @@ function PagePreview({
     <ThemeProvider themeId={theme.id}>
       <PreviewPackagesProvider packages={previewPackages} currency={previewCurrency} thumb={previewThumb}>
       <div className="theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
-        {!isProvence && !isFlorence && <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />}
+        {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />}
         <div className="theme-content">
           <PageCover
             cover={page.cover}
@@ -110,6 +111,8 @@ function PagePreview({
             hasCover={hasCover}
             coverHeight={page.cover?.height || 'partial'}
             coverButtonStyle={page.cover?.buttonStyle || 'solid'}
+            cover={page.cover}
+            opener={page.id === resolveHomePage(config)?.id ? 'hero' : 'title'}
           />
           <SiteFooter siteConfig={config} />
         </div>

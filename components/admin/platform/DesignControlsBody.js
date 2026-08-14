@@ -2,6 +2,7 @@ import { DesignSection, PillToggle as DesignPillToggle, DesignSelect } from './d
 import { THEME_LIST } from '../../../common/themes'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { resolveFooterSocial } from '../../../common/siteDesign'
+import { AMSTERDAM_INKS, resolveAmsterdamInk } from '../../../common/themes/amsterdam'
 
 const themeOptions = () => THEME_LIST.filter(t => !t.hidden).map(t => ({ value: t.id, label: t.name }))
 
@@ -72,6 +73,45 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
               { value: 'colour', label: 'Colour' },
               { value: 'mono', label: 'Mono' },
               { value: 'sepia', label: 'Sepia' },
+            ]}
+          />
+        </DesignSection>
+      )}
+
+      {(config.design?.theme || 'kyoto') === 'amsterdam' && (
+        <DesignSection label="Ink" description="The poster color used for panels, titles and the menu.">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {Object.entries(AMSTERDAM_INKS).map(([id, v]) => {
+              const active = resolveAmsterdamInk(config.design) === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-label={`${id} ink`}
+                  aria-pressed={active}
+                  onClick={() => update({ design: { ...(config.design || {}), amsterdamInk: id } })}
+                  style={{
+                    width: 26, height: 26, borderRadius: 999, cursor: 'pointer',
+                    background: v.ink,
+                    border: active ? '2px solid var(--text-primary)' : '2px solid transparent',
+                    outline: active ? '1px solid #fff' : 'none', outlineOffset: -3,
+                  }}
+                />
+              )
+            })}
+          </div>
+        </DesignSection>
+      )}
+
+      {(config.design?.theme || 'kyoto') === 'amsterdam' && (
+        <DesignSection label="Photo details" description="Show each photo's date or full camera details beneath it.">
+          <DesignPillToggle
+            value={['off', 'date', 'exif'].includes(config.design?.amsterdamPhotoMeta) ? config.design.amsterdamPhotoMeta : 'date'}
+            onChange={(v) => update({ design: { ...(config.design || {}), amsterdamPhotoMeta: v } })}
+            options={[
+              { value: 'off', label: 'Off' },
+              { value: 'date', label: 'Date' },
+              { value: 'exif', label: 'EXIF' },
             ]}
           />
         </DesignSection>
