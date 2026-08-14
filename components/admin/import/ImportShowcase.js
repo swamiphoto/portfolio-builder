@@ -49,16 +49,39 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
   const [cards, setCards] = useState([])
   const [pitch, setPitch] = useState(0)
   const [scale, setScale] = useState(1)
+  const [vh, setVh] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900))
   const nextId = useRef(0)
 
   // Prints grow on wider screens (more room, more immersive) and shrink on small
   // ones, so the show is responsive without ever feeling cramped or overflowing.
+  // We also track viewport height so tall portraits can be kept from riding up
+  // off the top of the screen (see the per-card clamp below).
   useEffect(() => {
-    const onResize = () => setScale(Math.min(1.4, Math.max(0.8, window.innerWidth / 1200)))
+    const onResize = () => {
+      setScale(Math.min(1.4, Math.max(0.8, window.innerWidth / 1200)))
+      setVh(window.innerHeight)
+    }
     onResize()
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  // Animated counter. The backend reports progress in batches (a handful of
+  // photos land at once), which makes the raw "done" number jump and then sit
+  // still — it reads as stuck. So we tick a shown value up toward the real one,
+  // one at a time, giving a continuous sense of motion. It never runs ahead of
+  // the truth, and snaps to total the moment the import completes. We seed it
+  // with the initial "done" so a mid-import mount shows the real number at once,
+  // then only the forward deltas animate.
+  const [shownDone, setShownDone] = useState(() => done)
+  useEffect(() => {
+    if (complete) { setShownDone(total); return }
+    const iv = setInterval(() => {
+      setShownDone((prev) => (prev < done ? prev + 1 : prev))
+    }, 110)
+    return () => clearInterval(iv)
+  }, [done, total, complete])
+  const shownPct = total > 0 ? Math.min(1, shownDone / total) : 0
 
   useEffect(() => {
     if (!pool.length) return
@@ -91,7 +114,7 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
     <div className="fixed inset-0 z-50" style={{ background: 'radial-gradient(125% 100% at 50% 38%, #efe8dc 0%, #e5ddd0 55%, #dad0bd 100%)', overflow: 'hidden' }}>
       {/* top bar */}
       <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 4, padding: '22px 28px' }}>
-        <span className="font-fraunces" style={{ fontSize: 17, fontStyle: 'italic', color: '#2c2416' }}>Sepia</span>
+        <span style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: '#2c2416' }}>Sepia</span>
         {onCancel && (
           <button
             onClick={onCancel}
@@ -110,11 +133,19 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
           const slot = SLOTS[c.slotIdx]
           const fs = frameStyle(c.format)
           const w = Math.round(c.w * scale)
+          const h = Math.round(w * c.aspect)
+          // Keep tall portraits from riding up off the top of the screen. A small
+          // peek above the edge looks intentional; a face sliced in half does not.
+          // Clamp each card's center so its top edge never rises more than
+          // MAX_OVERHANG above the viewport.
+          const MAX_OVERHANG = 40
+          const centerY = (slot.y / 100) * vh
+          const topPx = Math.max(centerY, h / 2 - MAX_OVERHANG)
           return (
             <div
               key={c.id}
               className="showcase-photo"
-              style={{ position: 'absolute', left: `${slot.x}%`, top: `${slot.y}%`, transform: `translate(-50%, -50%) rotate(${c.rot}deg)` }}
+              style={{ position: 'absolute', left: `${slot.x}%`, top: topPx, transform: `translate(-50%, -50%) rotate(${c.rot}deg)` }}
             >
               <div className="showcase-photo__anim">
                 <div style={{ ...fs, boxShadow: '0 16px 34px rgba(60,40,15,0.17), 0 3px 8px rgba(60,40,15,0.11)' }}>
@@ -137,7 +168,7 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
           <h2 className="font-fraunces" style={{ fontSize: 27, fontStyle: 'italic', fontWeight: 300, color: '#2c2416', marginBottom: 12, lineHeight: 1.15 }}>
             {active.title}
           </h2>
-          <p style={{ fontSize: 14.5, color: '#7a6b55', lineHeight: 1.6, maxWidth: 400, margin: '0 auto' }}>
+          <p style={{ fontSize: 16, color: '#7a6b55', lineHeight: 1.6, maxWidth: 400, margin: '0 auto' }}>
             {active.body}
           </p>
         </div>
@@ -147,18 +178,23 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 190, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(to top, rgba(226,217,203,0.92) 0%, rgba(226,217,203,0) 100%)' }} />
 
       {/* importing note + progress */}
-      <div style={{ position: 'absolute', left: '50%', bottom: 38, transform: 'translateX(-50%)', zIndex: 4, width: 'min(360px, 84vw)', textAlign: 'center' }}>
-        <p style={{ fontSize: 13, color: '#6f5f48', marginBottom: 12, letterSpacing: '0.01em' }}>
+      <div style={{ position: 'absolute', left: '50%', bottom: 36, transform: 'translateX(-50%)', zIndex: 4, width: 'min(440px, 88vw)', textAlign: 'center' }}>
+        <p style={{ fontSize: 15, fontWeight: 500, color: '#43371f', marginBottom: 12, letterSpacing: '0.01em' }}>
           {complete
             ? 'All in. Setting up your studio.'
-            : `Importing your photos${sourceLabel ? ` from ${sourceLabel}` : ''}. Hang tight.`}
+            : `Importing your photos${sourceLabel ? ` from ${sourceLabel}` : ''}…`}
         </p>
         <div style={{ height: 3, borderRadius: 3, background: 'rgba(139,111,71,0.16)', overflow: 'hidden' }}>
-          <div data-testid="showcase-progress" style={{ height: '100%', width: `${pct * 100}%`, background: '#8b6f47', borderRadius: 3, transition: 'width 0.7s ease' }} />
+          <div data-testid="showcase-progress" style={{ height: '100%', width: `${shownPct * 100}%`, background: '#8b6f47', borderRadius: 3, transition: 'width 0.4s ease' }} />
         </div>
         {total > 0 && (
           <p style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', color: '#a8967a', marginTop: 10 }}>
-            {done} / {total}
+            {shownDone} / {total}
+          </p>
+        )}
+        {!complete && (
+          <p style={{ fontSize: 12.5, color: '#8a7a62', lineHeight: 1.55, marginTop: 14, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
+            Please keep this tab open. Depending on how many photos you have, this can take a few minutes. Grab a coffee, and everything will be ready when you're back.
           </p>
         )}
       </div>

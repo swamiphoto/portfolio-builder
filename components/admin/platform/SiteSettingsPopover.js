@@ -4,13 +4,22 @@ import DomainPanel from './DomainPanel'
 import DesignControlsBody from './DesignControlsBody'
 import { DesignSection, PillToggle as DesignPillToggle } from './designControls'
 import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtils'
-import { THEME_LIST } from '../../../common/themes'
+import { THEME_LIST, getTheme } from '../../../common/themes'
 import { EditableInput } from './EditableText'
 import ToggleSwitch from '../common/ToggleSwitch'
 
 export const themeOptions = () => THEME_LIST.filter(t => !t.hidden).map(t => ({ value: t.id, label: t.name }))
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
+
+// Cover title/description font choices — mirrors the text block font slots
+// (which map to theme.tokens.fonts), plus Sans. See fontFamilyForSlot.
+const COVER_FONT_OPTIONS = [
+  { id: 'serif', label: 'Serif' },
+  { id: 'display', label: 'Display' },
+  { id: 'fraunces', label: 'Editorial' },
+  { id: 'sans', label: 'Sans' },
+]
 
 // ── Shared tokens ────────────────────────────────────────────────────────────
 const DIVIDER_STRONG = '1px solid rgba(160,140,110,0.20)'
@@ -402,6 +411,11 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   // ── Cover page drill-in ───────────────────────────────────────────────────
   if (view === 'cover') {
     const cover = config.cover || {}
+    const themeFonts = getTheme(config?.design?.theme)?.tokens?.fonts || {}
+    const fontOpts = COVER_FONT_OPTIONS.map(f => ({
+      value: f.id,
+      label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span>,
+    }))
 
     const coverBrushButton = (
       <HeaderIconButton innerRef={coverBrushRef} onClick={() => setCoverDesignOpen(v => !v)} title="Cover design">
@@ -448,6 +462,20 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         </div>
         {coverDesignOpen && (
           <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Cover Design">
+            <DesignSection label="Title Font">
+              <DesignPillToggle
+                value={cover.titleFont || 'serif'}
+                onChange={(v) => updateCover({ titleFont: v })}
+                options={fontOpts}
+              />
+            </DesignSection>
+            <DesignSection label="Description Font">
+              <DesignPillToggle
+                value={cover.descriptionFont || 'serif'}
+                onChange={(v) => updateCover({ descriptionFont: v })}
+                options={fontOpts}
+              />
+            </DesignSection>
             <DesignSection label="Button Style">
               <DesignPillToggle
                 value={cover.buttonStyle || 'solid'}
@@ -455,7 +483,6 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
                 options={[
                   { value: 'solid',   label: 'Solid'   },
                   { value: 'outline', label: 'Outline' },
-                  { value: 'ghost',   label: 'Ghost'   },
                 ]}
               />
             </DesignSection>

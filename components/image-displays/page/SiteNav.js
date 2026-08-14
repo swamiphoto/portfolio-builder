@@ -53,7 +53,7 @@ function NavLink({ item, basePath, dark, active, onPageClick, onClose }) {
     return <button onClick={() => { onPageClick(item.id); onClose?.() }} className={cls}>{item.title}</button>
   }
   return (
-    <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} onClick={onClose}>{item.title}</a>
+    <a href={href} target={isLink ? (item.linkNewTab === false ? '_self' : '_blank') : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} onClick={onClose}>{item.title}</a>
   )
 }
 
@@ -248,7 +248,7 @@ function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMo
     const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
     return (onPageClick && !isLink)
       ? <button onClick={() => { onPageClick(item.id); setOpen(false) }} className={cls}>{item.title}</button>
-      : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setOpen(false)} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
+      : <a href={href} target={isLink ? (item.linkNewTab === false ? '_self' : '_blank') : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={() => setOpen(false)} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
   }
 
   // Phone → full-screen scrollable overlay (shared design).
@@ -322,7 +322,7 @@ function RailItem({ item, basePath, onPageClick, ctx }) {
       <div className="flex items-center gap-1.5">
         {onPageClick && !isLink
           ? <button onClick={() => onPageClick(item.id)} className={cls} style={style}>{item.title}</button>
-          : <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={style}>{item.title}</a>}
+          : <a href={href} target={isLink ? (item.linkNewTab === false ? '_self' : '_blank') : undefined} rel={isLink ? 'noopener noreferrer' : undefined} className={cls} style={style}>{item.title}</a>}
         {kids.length > 0 && (
           <button
             onClick={() => setOpen(o => !o)}
@@ -376,7 +376,7 @@ function MobileNavOverlay({ open, onClose, tree, basePath, currentPath, currentP
     if (onPageClick && !isLink) {
       return <button onClick={() => { onPageClick(item.id); onClose() }} className={cls}>{item.title}</button>
     }
-    return <a href={href} target={isLink ? '_blank' : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={onClose} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
+    return <a href={href} target={isLink ? (item.linkNewTab === false ? '_self' : '_blank') : undefined} rel={isLink ? 'noopener noreferrer' : undefined} onClick={onClose} className={cls} style={{ textDecoration: 'none', color: 'inherit' }}>{item.title}</a>
   }
 
   return (
@@ -415,7 +415,7 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
   const isPhone = useIsMobile()
-  const tree = buildNavTree(siteConfig.pages)
+  const tree = buildNavTree(siteConfig.pages, { respectHideChildren: true })
   const style = variant || resolveNavStyle(siteConfig.design?.theme)
   const subNavMode = resolveSubNavStyle(siteConfig?.design)
   const navMode = resolveNavMode(siteConfig?.design)

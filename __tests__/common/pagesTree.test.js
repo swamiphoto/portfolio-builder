@@ -1,4 +1,4 @@
-import { buildNavTree, flattenForOtherPages, movePage } from '../../common/pagesTree'
+import { buildNavTree, buildHiddenTree, flattenForOtherPages, movePage } from '../../common/pagesTree'
 
 const pages = [
   { id: 'home',  title: 'Home',    parentId: null, showInNav: true,  sortOrder: 0 },
@@ -9,11 +9,51 @@ const pages = [
   { id: 'bts',   title: 'Behind',  parentId: null, showInNav: false, sortOrder: 0 },
 ]
 
+describe('hidden section nesting', () => {
+  const withHidden = [
+    { id: 'h1', title: 'Draft A', parentId: null, showInNav: false, sortOrder: 0 },
+    { id: 'h2', title: 'Draft B', parentId: null, showInNav: false, sortOrder: 1 },
+    ...pages,
+  ]
+
+  it('buildHiddenTree nests hidden pages under a hidden parent', () => {
+    const nested = movePage(withHidden, 'h2', { showInNav: false, parentId: 'h1', position: 'end' })
+    expect(nested.find(p => p.id === 'h2').parentId).toBe('h1') // parentId is kept, not nulled
+    const tree = buildHiddenTree(nested)
+    const h1 = tree.find(n => n.id === 'h1')
+    expect(h1.children.map(c => c.id)).toEqual(['h2'])
+    // the visible nav tree is unaffected
+    expect(buildNavTree(nested).map(n => n.id)).toEqual(['home', 'port', 'about'])
+  })
+
+  it('reordering within Hidden keeps nested children (no orphaning)', () => {
+    const nested = movePage(withHidden, 'h2', { showInNav: false, parentId: 'h1', position: 'end' })
+    // move h1 (already hidden, has child h2) — h2 stays its child
+    const reordered = movePage(nested, 'h1', { showInNav: false, position: 'end' })
+    expect(reordered.find(p => p.id === 'h2').parentId).toBe('h1')
+  })
+})
+
 describe('buildNavTree', () => {
   it('returns roots in sortOrder with nested children', () => {
     const tree = buildNavTree(pages)
     expect(tree.map(n => n.id)).toEqual(['home', 'port', 'about'])
     expect(tree[1].children.map(n => n.id)).toEqual(['land', 'port2'])
+  })
+
+  it('keeps children by default even when hideChildrenInNav is set (editor view)', () => {
+    const withFlag = pages.map(p => p.id === 'port' ? { ...p, hideChildrenInNav: true } : p)
+    const tree = buildNavTree(withFlag)
+    expect(tree[1].children.map(n => n.id)).toEqual(['land', 'port2'])
+  })
+
+  it('prunes children of a hideChildrenInNav page when respectHideChildren', () => {
+    const withFlag = pages.map(p => p.id === 'port' ? { ...p, hideChildrenInNav: true } : p)
+    const tree = buildNavTree(withFlag, { respectHideChildren: true })
+    const port = tree.find(n => n.id === 'port')
+    expect(port.children).toEqual([])
+    // the page itself still appears in the nav
+    expect(tree.map(n => n.id)).toEqual(['home', 'port', 'about'])
   })
 
   it('skips pages with showInNav=false', () => {

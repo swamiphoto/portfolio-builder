@@ -16,6 +16,7 @@ import { getTheme } from '../../../common/themes'
 import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientEngagementContext'
 import { getPagePhotos } from '../../../common/assetRefs'
 import { resolveHomePage } from '../../../common/homePage'
+import { useIsMobile } from '../../../common/useIsMobile'
 
 function PagePreview({
   config,
@@ -27,6 +28,7 @@ function PagePreview({
   highlightedBlockIndex,
   onBlockClick,
 }) {
+  const isMobile = useIsMobile()
   const page = (pageId ? config?.pages?.find(p => p.id === pageId) : null) || resolveHomePage(config)
   if (!page) return null
 
@@ -34,6 +36,7 @@ function PagePreview({
   // Provence swaps the standard site nav for its own scroll-sticky header, which is
   // a live-site behavior (window scroll); the preview just shows cover + gallery.
   const isProvence = theme.id === 'provence'
+  const isFlorence = theme.id === 'florence'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (page.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -74,8 +77,8 @@ function PagePreview({
   return (
     <ThemeProvider themeId={theme.id}>
       <PreviewPackagesProvider packages={previewPackages} currency={previewCurrency} thumb={previewThumb}>
-      <div className="theme-shell">
-        {!isProvence && <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />}
+      <div className="theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
+        {!isProvence && !isFlorence && <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />}
         <div className="theme-content">
           <PageCover
             cover={page.cover}

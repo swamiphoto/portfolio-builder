@@ -4,16 +4,21 @@
  */
 export function defaultBlock(type) {
   switch (type) {
+    // No baked-in variant → a new photo follows the theme's default layout (e.g.
+    // Kyoto → Centered). No baked-in caption → resolveCaption falls through to the
+    // asset's caption instead of an empty-string override that hides it.
     case "photo":
-      return { type: "photo", imageUrl: "", caption: "", variant: 1 };
+      return { type: "photo", imageUrl: "" };
     case "photos":
       return { type: "photos", images: [], imageUrls: [], layout: "stacked" };
     case "stacked":
       return { type: "photos", images: [], imageUrls: [], layout: "stacked" };
     case "masonry":
       return { type: "photos", images: [], imageUrls: [], layout: "masonry" };
+    // No baked-in variant → a new text block follows the theme's default size
+    // (e.g. Kyoto → Medium / subheading).
     case "text":
-      return { type: "text", content: "", variant: 1 };
+      return { type: "text", content: "" };
     case "video":
       return { type: "video", url: "", caption: "" };
     case "page-gallery":

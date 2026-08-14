@@ -1,7 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec, getTheme } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
 
 const IconAlignLeft = () => (
@@ -67,7 +67,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
       {isTestimonial && (
         <DesignSection label="Style">
           <PillToggle
-            value={block.quoteStyle === 'regular' ? 'regular' : 'italic'}
+            value={resolveQuoteStyle(block, themeId)}
             onChange={(v) => onUpdate({ ...block, quoteStyle: v })}
             options={[{ value: 'italic', label: 'Italic' }, { value: 'regular', label: 'Regular' }]}
           />
@@ -97,9 +97,21 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
           <PillToggle value={resolveAlign(block, themeId)} onChange={(v) => onUpdate({ ...block, align: v })} options={aligns} />
         </DesignSection>
       )}
+      {/* Florence: vertical Position of the content within its full-height column.
+          For a single photo it only matters when Centered (Full height fills). */}
+      {themeId === 'florence'
+        && (block.type === 'photos' || block.type === 'text' || (block.type === 'photo' && currentVariant === 'centered')) && (
+        <DesignSection label="Position">
+          <PillToggle
+            value={block.florenceAnchor || 'top'}
+            onChange={(v) => onUpdate({ ...block, florenceAnchor: v })}
+            options={[{ value: 'top', label: 'Top' }, { value: 'center', label: 'Center' }, { value: 'bottom', label: 'Bottom' }]}
+          />
+        </DesignSection>
+      )}
       {captionStyles && (
         <DesignSection label="Caption">
-          <PillToggle value={resolveCaptionStyle(block)} onChange={(v) => onUpdate({ ...block, captionStyle: v })} options={captionStyles} />
+          <PillToggle value={resolveCaptionStyle(block, spec.defaultCaptionStyle)} onChange={(v) => onUpdate({ ...block, captionStyle: v })} options={captionStyles} />
         </DesignSection>
       )}
       {buttonStyles && (

@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom'
 import Tip from '../Tip'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
-import { buildNavTree, flattenForOtherPages, movePage, isDescendantOf } from '../../../common/pagesTree'
-import { defaultPage, defaultLink } from '../../../common/siteConfig'
+import { buildNavTree, buildHiddenTree, movePage, isDescendantOf } from '../../../common/pagesTree'
+import { defaultPage, defaultLink, titleForTemplate, generatePageId } from '../../../common/siteConfig'
 import { assignHomeOnCreate, resolveHomePage } from '../../../common/homePage'
 import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
@@ -241,6 +241,8 @@ export default function PlatformSidebar({
   onSignOut,
   selectedPageId,
   onSelectPage,
+  onRequestTitleFocus,
+  onReplayTour,
   onShowLibrary,
   onPublish,
   hasUnpublishedChanges,
@@ -290,10 +292,11 @@ export default function PlatformSidebar({
   }
   const [navAddMenuOpen, setNavAddMenuOpen] = useState(false)
   const navAddMenuRef = useRef(null)
+  const [hiddenAddMenuOpen, setHiddenAddMenuOpen] = useState(false)
+  const hiddenAddMenuRef = useRef(null)
+  const hiddenAddBtnRef = useRef(null)
   const [linkEditId, setLinkEditId] = useState(null)
   // Draft row for type-first page creation: { section: 'nav' | 'hidden' } or null
-  const [draftRow, setDraftRow] = useState(null)
-  const [draftValue, setDraftValue] = useState('')
   const [siteSettingsOpen, setSiteSettingsOpen] = useState(false)
   const siteSettingsRef = useRef(null)
   // The cover row's gear opens the cover editor anchored to it (a second
@@ -322,15 +325,16 @@ export default function PlatformSidebar({
   const didDragRef = useRef(false)
 
   useEffect(() => {
-    if (!menuOpenId && !addMenuOpen && !navAddMenuOpen) return
+    if (!menuOpenId && !addMenuOpen && !navAddMenuOpen && !hiddenAddMenuOpen) return
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpenId(null)
       if (addMenuRef.current && !addMenuRef.current.contains(e.target) && addBtnRef.current && !addBtnRef.current.contains(e.target)) setAddMenuOpen(false)
       if (navAddMenuRef.current && !navAddMenuRef.current.contains(e.target) && navAddBtnRef.current && !navAddBtnRef.current.contains(e.target)) setNavAddMenuOpen(false)
+      if (hiddenAddMenuRef.current && !hiddenAddMenuRef.current.contains(e.target) && hiddenAddBtnRef.current && !hiddenAddBtnRef.current.contains(e.target)) setHiddenAddMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuOpenId, addMenuOpen, navAddMenuOpen])
+  }, [menuOpenId, addMenuOpen, navAddMenuOpen, hiddenAddMenuOpen])
 
   useEffect(() => {
     if (pageDrag) {
@@ -354,7 +358,14 @@ export default function PlatformSidebar({
     if (!trimmed) { setRenamingId(null); return }
     onConfigChange(prev => ({
       ...prev,
-      pages: prev.pages.map(p => p.id === pageId ? { ...p, title: trimmed } : p),
+      pages: prev.pages.map(p => {
+        if (p.id !== pageId) return p
+        // Slug tracks the name (spaces → dashes) until the user overrides it.
+        // It's "still auto" when it equals the slug derived from the old title.
+        const prevDerived = generatePageId(p.title || '')
+        const slug = (p.slug && p.slug !== prevDerived) ? p.slug : generatePageId(trimmed)
+        return { ...p, title: trimmed, slug }
+      }),
     }))
     setRenamingId(null)
   }
@@ -377,40 +388,34 @@ export default function PlatformSidebar({
     return id
   }
 
-  function startDraft(section, template = 'gallery') {
+  // Create a page immediately and select it, then ask the block sidebar to focus +
+  // select its masthead title so the user can rename it by just typing. The name
+  // defaults to the template ("Story", "About", …); a blank page stays "Untitled"
+  // since it has no template to name it after.
+  function createPage(section, template = 'gallery') {
     setAddMenuOpen(false)
     setNavAddMenuOpen(false)
-    setDraftRow({ section, template })
-    setDraftValue('')
-  }
-
-  function handleDraftCommit() {
-    const trimmed = draftValue.trim()
-    if (!trimmed || !draftRow) { setDraftRow(null); setDraftValue(''); return }
-    const inNav = draftRow.section === 'nav'
-    const base = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'page'
+    setHiddenAddMenuOpen(false)
+    const inNav = section === 'nav'
+    const base = template === 'blank' ? 'page' : template
+    const title = titleForTemplate(template)
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     const id = nextAvailableId(base, existingIds)
     // Append at end of section; user can drag to reorder.
     onConfigChange(prev => {
       const sectionPeers = prev.pages.filter(p => (p.showInNav !== false) === inNav)
       const sortOrder = Math.max(0, ...sectionPeers.map(p => p.sortOrder ?? 0)) + 1
-      const newPage = defaultPage({ id, title: trimmed, sortOrder, showInNav: inNav, parentId: null, template: draftRow.template })
+      const newPage = defaultPage({ id, title, sortOrder, showInNav: inNav, parentId: null, template })
       return assignHomeOnCreate({ ...prev, pages: [...prev.pages, newPage] }, newPage)
     })
     onSelectPage?.(id)
-    setDraftRow(null)
-    setDraftValue('')
-  }
-
-  function handleDraftCancel() {
-    setDraftRow(null)
-    setDraftValue('')
+    onRequestTitleFocus?.(id)
   }
 
   function handleAddLink(section = 'hidden') {
     setAddMenuOpen(false)
     setNavAddMenuOpen(false)
+    setHiddenAddMenuOpen(false)
     const inNav = section === 'nav'
     const base = 'new-link'
     onConfigChange(prev => {
@@ -422,6 +427,27 @@ export default function PlatformSidebar({
     const existingIds = new Set(siteConfig.pages.map(p => p.id))
     const id = nextAvailableId(base, existingIds)
     onSelectPage?.(id); setRenamingId(id); setRenameValue('New Link')
+  }
+
+  // Shared body for the "add page" menus. `section` decides where the new page
+  // lands ('nav' = visible Pages list, 'hidden' = unlisted). Used by the Pages
+  // header "+", the Hidden header "+", and the bottom Add Page button.
+  function templateMenuItems(section, close) {
+    return (
+      <>
+        <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
+          Start from template
+        </div>
+        <PageMenuItem icon={<IconStory />} label="Story" desc="A photo essay — mix text, photos, and video" onClick={() => { close(); createPage(section, 'story') }} />
+        <PageMenuItem icon={<IconGallery />} label="Gallery" desc="A body of work in mixed photo layouts" onClick={() => { close(); createPage(section, 'gallery') }} />
+        <PageMenuItem icon={<IconGrid />} label="Collection" desc="A cover grid linking to your galleries" onClick={() => { close(); createPage(section, 'collection') }} />
+        <PageMenuItem icon={<IconUser />} label="About" desc="A portrait, intro, and short bio" onClick={() => { close(); createPage(section, 'about') }} />
+        <PageMenuItem icon={<IconMail />} label="Contact" desc="A contact form visitors can send from" onClick={() => { close(); createPage(section, 'contact') }} />
+        <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
+        <PageMenuItem icon={<IconDocument />} label="Blank page" desc="Start with no content" onClick={() => { close(); createPage(section, 'blank') }} />
+        <PageMenuItem icon={<IconLink />} label="Link" desc="External URL in the navigation" onClick={() => { close(); handleAddLink(section) }} />
+      </>
+    )
   }
 
   function handlePageDragStart(page, e) {
@@ -459,15 +485,17 @@ export default function PlatformSidebar({
             const rel = (e.clientY - rect.top) / rect.height
             const sectionInNav = inMainNav
 
-            // Top 28% = before, bottom 28% = after, middle 44% = nest
+            // Top 28% = before, bottom 28% = after, middle 44% = nest. Nesting works
+            // in both the Pages and Hidden sections; the child inherits the target's
+            // section (inNav). Links can't be parents.
             if (rel < 0.28) {
               target = { type: 'before', pageId: targetId, parentId: targetPage.parentId ?? null, inNav: sectionInNav }
             } else if (rel > 0.72) {
               target = { type: 'after', pageId: targetId, parentId: targetPage.parentId ?? null, inNav: sectionInNav }
-            } else if (sectionInNav && targetPage.type !== 'link') {
-              target = { type: 'nest', pageId: targetId }
+            } else if (targetPage.type !== 'link') {
+              target = { type: 'nest', pageId: targetId, inNav: sectionInNav }
             } else {
-              // Fallback for hidden or link rows: treat middle as 'after'
+              // Link rows can't be parents → treat middle as 'after'
               target = { type: 'after', pageId: targetId, parentId: targetPage.parentId ?? null, inNav: sectionInNav }
             }
           }
@@ -512,7 +540,9 @@ export default function PlatformSidebar({
       } else if (target.type === 'nest') {
         onConfigChange(prev => ({
           ...prev,
-          pages: movePage(prev.pages, currentDrag.pageId, { showInNav: true, parentId: target.pageId, position: 'end' }),
+          // Inherit the parent row's section so nesting under a Hidden page keeps the
+          // child hidden (and nesting under a visible page keeps it visible).
+          pages: movePage(prev.pages, currentDrag.pageId, { showInNav: target.inNav, parentId: target.pageId, position: 'end' }),
         }))
       } else if (target.type === 'root') {
         onConfigChange(prev => ({
@@ -529,40 +559,6 @@ export default function PlatformSidebar({
 
     document.addEventListener('pointermove', onMove)
     document.addEventListener('pointerup', onUp)
-  }
-
-  function renderDraftRow() {
-    return (
-      <div style={{ position: 'relative' }}>
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            margin: '0 8px', padding: '4px 10px',
-            borderRadius: 5,
-            background: 'transparent',
-            boxShadow: 'inset 0 0 0 1px rgba(139,111,71,0.22)',
-          }}
-        >
-          <div style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, border: '1.5px dashed rgba(139,111,71,0.30)', background: 'transparent' }} />
-          <input
-            autoFocus
-            value={draftValue}
-            onChange={e => setDraftValue(e.target.value)}
-            onBlur={handleDraftCommit}
-            onKeyDown={e => {
-              if (e.key === 'Enter') { e.preventDefault(); handleDraftCommit() }
-              if (e.key === 'Escape') { e.preventDefault(); handleDraftCancel() }
-            }}
-            placeholder="Untitled"
-            style={{
-              flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500,
-              color: '#3a2e1f', background: 'transparent',
-              border: 'none', outline: 'none', padding: 0,
-            }}
-          />
-        </div>
-      </div>
-    )
   }
 
   function renderPageRow(page, depth = 0) {
@@ -746,7 +742,7 @@ export default function PlatformSidebar({
 
   const resolvedHomeId = resolveHomePage(siteConfig)?.id
   const navPages = buildNavTree(pages)
-  const hiddenPages = flattenForOtherPages(pages)
+  const hiddenPages = buildHiddenTree(pages)
 
   return (
     <div className="flex flex-col h-full select-none text-sm">
@@ -895,7 +891,7 @@ export default function PlatformSidebar({
       <div className="flex-1 overflow-y-auto scroll-quiet">
 
         {/* Cover — its own row above the Pages section (no heading) */}
-        <div style={{ padding: '10px 0 4px' }}>
+        <div data-tour="cover" style={{ padding: '10px 0 4px' }}>
           <CoverPageRow
             siteConfig={siteConfig}
             selected={!!coverSelected}
@@ -941,28 +937,40 @@ export default function PlatformSidebar({
           pages={navPages}
           renderRow={renderPageRow}
           droppableId="main-nav"
-          emptyHint={draftRow?.section !== 'nav'
-            ? <EmptyHint active={pageDropTarget?.type === 'root'}>No pages yet. What you add here becomes your site's navigation.</EmptyHint>
-            : null}
+          emptyHint={<EmptyHint active={pageDropTarget?.type === 'root'}>No pages yet. What you add here will appear on your site&rsquo;s menu.</EmptyHint>}
         />
-        {draftRow?.section === 'nav' && renderDraftRow()}
 
-        {/* Hidden section — always rendered so it's a valid drop target and visible default for new pages */}
-        <div style={{ padding: '14px 14px 6px' }}>
+        {/* Hidden section — always rendered so it's a valid drop target, even when empty */}
+        <div data-tour="hidden-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
             Hidden
           </span>
+          <div ref={hiddenAddMenuRef}>
+            <Tip label="Add hidden page" side="left">
+              <button
+                ref={hiddenAddBtnRef}
+                type="button"
+                onClick={() => setHiddenAddMenuOpen(v => !v)}
+                style={{
+                  width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent', border: 'none', borderRadius: 3, cursor: 'pointer', color: C.textFaint,
+                  transition: 'background 120ms, color 120ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)'; e.currentTarget.style.color = C.textBody }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textFaint }}
+              >
+                <IconPlus width={14} height={14} />
+              </button>
+            </Tip>
+          </div>
         </div>
         <SidebarSection
           label=""
           pages={hiddenPages}
           renderRow={renderPageRow}
           droppableId="other-pages"
-          emptyHint={draftRow?.section !== 'hidden'
-            ? <EmptyHint active={pageDropTarget?.type === 'other'}>Nothing hidden. Pages here work by direct link but stay out of your navigation, good for unlisted or private work.</EmptyHint>
-            : null}
+          emptyHint={<EmptyHint active={pageDropTarget?.type === 'other'}>Nothing hidden. Pages here get a direct link you can share, but won&rsquo;t show up on your site&rsquo;s menu.</EmptyHint>}
         />
-        {draftRow?.section === 'hidden' && renderDraftRow()}
 
         {/* Add Page button */}
         <div ref={addMenuRef} style={{ margin: '10px 8px 0' }}>
@@ -1112,6 +1120,7 @@ export default function PlatformSidebar({
           onUpdate={onConfigChange}
           onClose={() => setAccountOpen(false)}
           onSignOut={onSignOut}
+          onReplayTour={onReplayTour}
         />
       )}
 
@@ -1120,6 +1129,13 @@ export default function PlatformSidebar({
         const menuPage = pages.find(p => p.id === menuOpenId)
         if (!menuPage) return null
         const rect = dotsAnchorEl.getBoundingClientRect()
+        const MENU_W = 244
+        // Right-align to the "..." button, but never let the menu run off either edge.
+        const left = Math.max(8, Math.min(rect.right - MENU_W, window.innerWidth - MENU_W - 8))
+        const hasChildren = pages.some(p => p.parentId === menuPage.id)
+        const childrenHidden = menuPage.hideChildrenInNav === true
+        const itemStyle = (color) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color, background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' })
+        const iconProps = { width: 15, height: 15, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flexShrink: 0, opacity: 0.7 } }
         return createPortal(
           <div
             ref={menuRef}
@@ -1127,8 +1143,8 @@ export default function PlatformSidebar({
             style={{
               position: 'fixed',
               top: rect.bottom + 4,
-              right: window.innerWidth - rect.right - 4,
-              minWidth: 128,
+              left,
+              width: MENU_W,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
               padding: '4px 0',
@@ -1142,42 +1158,65 @@ export default function PlatformSidebar({
                 setPageSettingsId(menuPage.id)
                 setPageSettingsAnchorEl(anchor)
               }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+              className="transition-colors"
+              style={itemStyle('var(--text-secondary)')}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              Settings
+              <svg {...iconProps}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
+              <span>Settings</span>
             </button>
             <button
               onClick={() => handleRenameStart(menuPage)}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+              className="transition-colors"
+              style={itemStyle('var(--text-secondary)')}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              Rename
+              <svg {...iconProps}><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
+              <span>Rename</span>
             </button>
             {menuPage.showInNav && menuPage.type !== 'link' && siteConfig.homePageId !== menuPage.id && (
               <button
                 onClick={() => { setMenuOpenId(null); onConfigChange(prev => ({ ...prev, homePageId: menuPage.id })) }}
-                className="w-full text-left transition-colors"
-                style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+                className="transition-colors"
+                style={itemStyle('var(--text-secondary)')}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
               >
-                Set as home
+                <svg {...iconProps}><path d="M3 9.5L12 3l9 6.5" /><path d="M5 10v10h14V10" /></svg>
+                <span>Set as home</span>
+              </button>
+            )}
+            {menuPage.type !== 'link' && hasChildren && (
+              <button
+                onClick={() => onConfigChange(prev => ({
+                  ...prev,
+                  pages: prev.pages.map(p => p.id === menuPage.id ? { ...p, hideChildrenInNav: !childrenHidden } : p),
+                }))}
+                className="transition-colors"
+                style={itemStyle('var(--text-secondary)')}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                {childrenHidden ? (
+                  <svg {...iconProps}><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                ) : (
+                  <svg {...iconProps}><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                )}
+                <span>{childrenHidden ? 'Show nested pages in menu' : 'Hide nested pages from menu'}</span>
               </button>
             )}
             <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
             <button
               onClick={() => { setMenuOpenId(null); handleDelete(menuPage.id) }}
-              className="w-full text-left transition-colors"
-              style={{ padding: '7px 12px', fontSize: 12.5, fontWeight: 500, color: '#c14a4a', background: 'transparent', border: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
+              className="transition-colors"
+              style={itemStyle('#c14a4a')}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(193,74,74,0.08)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              Delete
+              <svg {...iconProps}><path d="M3 6h18" /><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /></svg>
+              <span>Delete</span>
             </button>
           </div>,
           document.body
@@ -1204,52 +1243,33 @@ export default function PlatformSidebar({
               zIndex: 9999,
             }}
           >
-            <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
-              Start from template
-            </div>
-            <PageMenuItem
-              icon={<IconStory />}
-              label="Story"
-              desc="A photo essay — mix text, photos, and video"
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'story') }}
-            />
-            <PageMenuItem
-              icon={<IconGallery />}
-              label="Gallery"
-              desc="A body of work in mixed photo layouts"
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'gallery') }}
-            />
-            <PageMenuItem
-              icon={<IconGrid />}
-              label="Collection"
-              desc="A cover grid linking to your galleries"
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'collection') }}
-            />
-            <PageMenuItem
-              icon={<IconUser />}
-              label="About"
-              desc="A portrait, intro, and short bio"
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'about') }}
-            />
-            <PageMenuItem
-              icon={<IconMail />}
-              label="Contact"
-              desc="A contact form visitors can send from"
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'contact') }}
-            />
-            <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
-            <PageMenuItem
-              icon={<IconDocument />}
-              label="Blank page"
-              desc="Start with no content"
-              onClick={() => { setNavAddMenuOpen(false); startDraft('nav', 'blank') }}
-            />
-            <PageMenuItem
-              icon={<IconLink />}
-              label="Link"
-              desc="External URL in the navigation"
-              onClick={() => { setNavAddMenuOpen(false); handleAddLink('nav') }}
-            />
+            {templateMenuItems('nav', () => setNavAddMenuOpen(false))}
+          </div>,
+          document.body
+        )
+      })()}
+
+      {/* Hidden "+" add menu — portalled */}
+      {hiddenAddMenuOpen && hiddenAddBtnRef.current && typeof document !== 'undefined' && (() => {
+        const rect = hiddenAddBtnRef.current.getBoundingClientRect()
+        const MENU_W = 240
+        const left = Math.min(Math.max(8, rect.left), window.innerWidth - MENU_W - 8)
+        return createPortal(
+          <div
+            ref={hiddenAddMenuRef}
+            className="rounded-md overflow-hidden whitespace-nowrap"
+            style={{
+              position: 'fixed',
+              top: rect.bottom + 4,
+              left,
+              minWidth: MENU_W,
+              background: 'var(--popover)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
+              padding: '4px 0',
+              zIndex: 9999,
+            }}
+          >
+            {templateMenuItems('hidden', () => setHiddenAddMenuOpen(false))}
           </div>,
           document.body
         )
@@ -1275,52 +1295,7 @@ export default function PlatformSidebar({
               zIndex: 9999,
             }}
           >
-            <div style={{ padding: '8px 12px 4px', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
-              Start from template
-            </div>
-            <PageMenuItem
-              icon={<IconStory />}
-              label="Story"
-              desc="A photo essay — mix text, photos, and video"
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'story') }}
-            />
-            <PageMenuItem
-              icon={<IconGallery />}
-              label="Gallery"
-              desc="A body of work in mixed photo layouts"
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'gallery') }}
-            />
-            <PageMenuItem
-              icon={<IconGrid />}
-              label="Collection"
-              desc="A cover grid linking to your galleries"
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'collection') }}
-            />
-            <PageMenuItem
-              icon={<IconUser />}
-              label="About"
-              desc="A portrait, intro, and short bio"
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'about') }}
-            />
-            <PageMenuItem
-              icon={<IconMail />}
-              label="Contact"
-              desc="A contact form visitors can send from"
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'contact') }}
-            />
-            <div style={{ height: 1, background: 'rgba(160,140,110,0.18)', margin: '4px 8px' }} />
-            <PageMenuItem
-              icon={<IconDocument />}
-              label="Blank page"
-              desc="Start with no content"
-              onClick={() => { setAddMenuOpen(false); startDraft('hidden', 'blank') }}
-            />
-            <PageMenuItem
-              icon={<IconLink />}
-              label="Link"
-              desc="External URL in the navigation"
-              onClick={() => { setAddMenuOpen(false); handleAddLink('hidden') }}
-            />
+            {templateMenuItems('nav', () => setAddMenuOpen(false))}
           </div>,
           document.body
         )

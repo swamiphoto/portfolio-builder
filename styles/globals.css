@@ -87,6 +87,16 @@ body {
   overflow-x: clip;
 }
 
+/* Guided tour: keep the spotlighted control visible even when it normally only
+   appears on hover (e.g. the per-block design brush lives in a toolbar that is
+   opacity:0 until the card is hovered). Force the anchor and its direct parent
+   so the spotlight never shows an empty square. */
+[data-tour-highlight],
+:has(> [data-tour-highlight]) {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 a {
   @apply hover:underline;
 }
@@ -220,6 +230,14 @@ a {
      clear of the fixed action bar. */
   [data-theme="manhattan"] .theme-content { padding-top: 1.5rem; padding-bottom: 4.5rem; }
 }
+/* Admin mobile preview: CSS media queries can't see the narrow preview pane, so
+   the desktop rail/offset above would leak into the Mobile preview (content shoved
+   right, off-screen). When the shell is explicitly marked mobile, force Copenhagen
+   back to its true full-width, no-rail stack. Higher specificity than the media
+   rules, so it wins without !important. */
+[data-theme="manhattan"] .theme-shell[data-viewport="mobile"] { display: block; }
+[data-theme="manhattan"] .theme-shell[data-viewport="mobile"] .theme-content { padding-left: 0; padding-right: 0; }
+[data-theme="manhattan"] .theme-shell[data-viewport="mobile"] .manhattan-actionbar { left: 0; }
 
 /* Provence theme — warm ivory ground with a romantic serif. The .theme-shell
    ships bg-white, so paint the cream over it; the split-screen cover + justified
@@ -246,6 +264,16 @@ a {
 }
 [data-theme="provence"] [data-grid-item],
 [data-theme="provence"] [data-square-item] { border-radius: 0 !important; box-shadow: none !important; }
+/* On phones every photo block collapses to the shared single-column stack, which
+   already carries the 10px side margin. Drop Provence's desktop gutter there so
+   its mobile width matches Kyoto and Copenhagen exactly. */
+[data-theme="provence"] .theme-shell[data-viewport="mobile"] .photos-block,
+[data-theme="provence"] .theme-shell[data-viewport="mobile"] .photos-square-block,
+[data-theme="provence"] .theme-shell[data-viewport="mobile"] .masonry-gallery-block,
+[data-theme="provence"] .theme-shell[data-viewport="mobile"] .stacked-gallery-block {
+  padding-left: 0;
+  padding-right: 0;
+}
 
 /* Split-screen cover: cream text panel + full-bleed photo, divided by a hairline.
    Stacks (photo, then panel) on phones. */
@@ -330,3 +358,282 @@ a {
 }
 .provence-header__menu-item:hover { background: rgba(61, 55, 44, 0.05); }
 .provence-header__menu-item.is-active { color: var(--theme-accent, #b0925f); }
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Florence — the museum theme. A fixed-viewport, HORIZONTALLY scrolling museum
+   wall: a thin left rail (logo · hamburger · search), then columns divided by
+   vertical hairlines — an intro column (gallery name, bottom-left), then one
+   column per block. A multi-photo block is a column that scrolls vertically
+   inside. The hamburger slides a menu column in at the front, pushing the wall
+   right. Warm paper, ink type, Fraunces display + Geist Mono wall-labels.
+   On phones it falls back to a vertical stack.
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-theme="florence"] { background: var(--theme-bg, #f4f1ea); color: var(--theme-text, #1c1a17); }
+[data-theme="florence"] .theme-shell { background: var(--theme-bg, #f4f1ea) !important; display: block; }
+[data-theme="florence"] .gallery-container { max-width: none; }
+[data-theme="florence"] img { border-radius: 0 !important; }
+
+/* Desktop/tablet: the stage fills the viewport; no page scroll (the wall scrolls). */
+@media (min-width: 768px) {
+  [data-theme="florence"] .theme-shell { height: 100vh; overflow: hidden; }
+  [data-theme="florence"] .theme-content { height: 100vh; padding: 0; }
+}
+
+/* The horizontal stage: rail + wall side by side, full height (desktop). */
+.florence-stage { --fl-hairline: rgba(28, 26, 23, 0.16); display: flex; height: 100vh; }
+
+/* Thin fixed rail: logo top, hamburger/X middle-ish, search bottom. */
+.florence-rail {
+  flex: 0 0 96px; width: 96px; height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 1.6rem 0; border-right: 1px solid var(--fl-hairline);
+  background: var(--theme-bg, #f4f1ea); z-index: 20;
+}
+/* Wordmark. Vertical (default) reads top-to-bottom on its side — not upside down;
+   horizontal stacks/wraps upright. An uploaded logo image stays upright either way. */
+.florence-rail__logo {
+  font-family: "Fraunces", Georgia, serif; font-size: 1.25rem; letter-spacing: 0.02em;
+  line-height: 1.05; color: var(--theme-text); text-decoration: none;
+}
+.florence-rail__logo[data-orient="vertical"] {
+  writing-mode: vertical-rl; text-orientation: mixed; transform: none;
+  max-height: 62vh; overflow: hidden; white-space: nowrap;
+}
+.florence-rail__logo[data-orient="horizontal"] {
+  writing-mode: horizontal-tb; text-align: center; max-width: 84px; overflow-wrap: anywhere;
+}
+.florence-rail__logo img { writing-mode: initial; transform: none; max-width: 56px; height: auto; display: block; }
+.florence-rail__spacer { width: 34px; height: 18px; }
+.florence-rail__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; color: var(--theme-text); background: none; border: none;
+  cursor: pointer; opacity: 0.85; transition: opacity 0.15s ease;
+}
+.florence-rail__btn:hover { opacity: 1; }
+.florence-rail__mid { display: flex; align-items: center; }
+
+/* The wall: horizontal scroll row of columns. */
+.florence-wall {
+  flex: 1 1 auto; min-width: 0; height: 100vh;
+  display: flex; align-items: stretch;
+  overflow-x: auto; overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+/* Slim horizontal scrollbar. */
+.florence-wall::-webkit-scrollbar { height: 8px; }
+.florence-wall::-webkit-scrollbar-thumb { background: rgba(28,26,23,0.18); }
+.florence-wall::-webkit-scrollbar-track { background: transparent; }
+
+/* A column: full height, hairline on the right, generous vertical padding. */
+.florence-col {
+  flex: 0 0 auto; height: 100%; box-sizing: border-box;
+  border-right: 1px solid var(--fl-hairline);
+  padding: clamp(2.5rem, 6vh, 4.5rem) clamp(1.75rem, 3vw, 3rem);
+  display: flex; flex-direction: column;
+}
+
+/* Intro column — gallery name + description, anchored to the bottom-left. */
+.florence-col--intro { width: clamp(320px, 34vw, 520px); justify-content: flex-end; }
+.florence-intro__title {
+  font-family: "Fraunces", Georgia, serif; font-optical-sizing: auto; font-weight: 400;
+  line-height: 1.02; letter-spacing: -0.01em; color: var(--theme-text);
+  font-size: clamp(2.4rem, 4vw, 3.9rem); margin: 0 0 1.1rem;
+}
+/* Small, bookish IBM Plex Mono under the name — the museum "wall text" voice. */
+.florence-intro__desc {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 400;
+  font-size: clamp(0.82rem, 0.95vw, 0.92rem); line-height: 1.7; letter-spacing: 0.005em;
+  color: var(--theme-text); margin: 0; max-width: 30rem;
+}
+.florence-intro__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.8rem; }
+.florence-intro__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.66rem;
+  letter-spacing: 0.16em; text-transform: uppercase; padding: 0.7rem 1.3rem;
+  color: var(--theme-bg, #f4f1ea); background: var(--theme-text, #1c1a17);
+  border: 1px solid var(--theme-text, #1c1a17); text-decoration: none; cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.florence-intro__btn--outline { background: transparent; color: var(--theme-text, #1c1a17); }
+.florence-intro__btn:hover { opacity: 0.85; }
+
+/* A height-driven image box: fills its parent's height, width follows the image's
+   aspect ratio (set inline / on load by FitImg) so the column shrinks to the
+   rendered width — no flexbox intrinsic-width gaps. */
+/* .florence-frame is a plain block that gets its height from the column's flex (or
+   a fixed height for Centered). .florence-fit is inline-block so its width is driven
+   purely by height × aspect-ratio; the img is absolutely positioned so its intrinsic
+   width never leaks into the box (which would otherwise leave gaps). */
+.florence-frame { position: relative; }
+.florence-fit { display: inline-block; height: 100%; position: relative; vertical-align: top; }
+.florence-fit img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
+
+/* Single-photo column. Fill: the image spans the full viewport height and the
+   section drops all padding so it reaches every edge (block widens to the image);
+   the plaque overlays the bottom-left. Centered: sized by Size, placed by Position. */
+.florence-col--photo { align-items: flex-start; }
+.florence-col--photo[data-fit="full"] { padding: 0; }
+/* The block right after a Fill starts flush (no left padding) so the full-bleed
+   image reads edge-to-edge with no gap on its right. */
+[data-theme="florence"] .florence-col--fill + .florence-col { padding-left: 0; }
+.florence-figure { margin: 0; display: flex; flex-direction: column; height: 100%; }
+.florence-figure--fill { height: 100%; }
+.florence-fill-label {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; flex-direction: column; gap: 0.4rem;
+  padding: 3.5rem 1.5rem 1.25rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.74rem; line-height: 1.55;
+  color: #f6f3ec; background: linear-gradient(to top, rgba(20,16,12,0.62), rgba(20,16,12,0));
+}
+.florence-fill-label .florence-caption__title { color: #f6f3ec; white-space: pre-line; }
+.florence-fill-label .florence-caption__meta { color: rgba(246,243,236,0.82); white-space: pre-line; }
+
+/* Photo Row: all photos side by side, each fills the row height (minus its plaque).
+   The section grows as wide as its photos, extending the horizontal wall. */
+.florence-col--photorow { align-items: flex-start; }
+.florence-row { display: flex; align-items: flex-start; gap: clamp(1.25rem, 2.5vw, 2.75rem); }
+.florence-row__item { display: flex; flex-direction: column; flex: 0 0 auto; }
+
+/* Photo Mosaic: a big solo photo, then varied fixed-width groups of 2/3 cover-
+   cropped photos, side by side. Height is a definite value (set inline) so the
+   solo frame's aspect-ratio drives its width — no collapsed/overlapping boxes. */
+.florence-col--mosaic { align-items: flex-start; }
+.florence-mosaic { display: flex; align-items: flex-start; gap: clamp(0.5rem, 1vw, 1rem); }
+.florence-mosaic__group { display: flex; flex-direction: column; height: 100%; gap: clamp(0.5rem, 1vw, 1rem); flex: 0 0 auto; }
+.florence-mosaic__group--solo { width: auto; }
+.florence-mosaic__cell { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; display: flex; }
+.florence-mosaic__cell img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+
+/* Text column — font family + size come inline (Font + L/M/S controls). */
+.florence-col--text { width: clamp(300px, 26vw, 460px); }
+.florence-col--text .florence-text {
+  line-height: 1.6; color: var(--theme-text); white-space: pre-line; margin: 0;
+}
+
+/* Video / media column. */
+.florence-col--media { align-items: flex-start; }
+
+/* Testimonial column. */
+.florence-col--testimonial { width: clamp(320px, 30vw, 500px); }
+.florence-testimonial { display: flex; flex-direction: column; gap: 1.4rem; }
+.florence-testimonial__quote { margin: 0; font-size: clamp(1.15rem, 1.6vw, 1.5rem); line-height: 1.5; color: var(--theme-text); }
+.florence-testimonial__by { display: flex; align-items: center; gap: 0.7rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.8rem; color: var(--theme-text-muted, #8b8378); }
+.florence-testimonial__avatar { width: 40px; height: 40px; object-fit: cover; }
+
+/* Contact column — restyle ContactDisplay to the theme (Fraunces heading, IBM Plex
+   Mono text/inputs, and a button matching the intro / "View Music Show" button). */
+.florence-col--contact { width: clamp(320px, 34vw, 560px); }
+.florence-col--contact [data-contact-wrap] { padding: 0 !important; margin: 0 !important; }
+[data-theme="florence"] [data-contact-wrap] h2 { font-family: "Fraunces", Georgia, serif !important; font-weight: 400 !important; color: var(--theme-text, #1c1a17) !important; }
+[data-theme="florence"] [data-contact-wrap] p,
+[data-theme="florence"] [data-contact-wrap] label { font-family: "IBM Plex Mono", ui-monospace, monospace !important; color: var(--theme-text-muted, #8b8378) !important; }
+[data-theme="florence"] [data-contact-wrap] input,
+[data-theme="florence"] [data-contact-wrap] textarea { font-family: "IBM Plex Mono", ui-monospace, monospace !important; color: var(--theme-text, #1c1a17) !important; border-bottom-color: rgba(28,26,23,0.22) !important; }
+[data-theme="florence"] [data-contact-wrap] button {
+  font-family: "IBM Plex Mono", ui-monospace, monospace !important;
+  text-transform: uppercase !important; letter-spacing: 0.16em !important;
+  font-size: 0.7rem !important; font-weight: 400 !important; border-radius: 0 !important;
+  padding: 0.8rem 1.6rem !important;
+  background: var(--theme-text, #1c1a17) !important; color: var(--theme-bg, #f4f1ea) !important;
+  border: 1px solid var(--theme-text, #1c1a17) !important;
+}
+[data-theme="florence"] [data-contact-wrap] button[data-btn-style="outline"] {
+  background: transparent !important; color: var(--theme-text, #1c1a17) !important;
+}
+
+/* Page-links: a row of linked-page cards (thumbnail + title). */
+.florence-col--pagelinks { align-items: flex-start; }
+.florence-pagelink { display: flex; flex-direction: column; height: 100%; flex: 0 0 auto; width: clamp(220px, 24vw, 340px); text-decoration: none; color: inherit; }
+.florence-pagelink__frame { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background: rgba(28,26,23,0.05); }
+.florence-pagelink__frame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.2s ease; }
+.florence-pagelink:hover .florence-pagelink__frame img { opacity: 0.85; }
+.florence-pagelink__title { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.82rem; letter-spacing: 0.02em; color: var(--theme-text); margin-top: 0.8rem; }
+
+/* Museum wall-label plaque — warm, bookish IBM Plex Mono. The manual caption
+   (title/medium) sits above the capture metadata (date / EXIF), which is dimmer. */
+.florence-caption {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.74rem; line-height: 1.6; letter-spacing: 0.005em;
+  color: var(--theme-text-muted, #8b8378);
+  text-align: left; margin-top: 0.85rem; max-width: 30rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.florence-caption__title { white-space: pre-line; color: var(--theme-text-muted, #8b8378); }
+.florence-caption__meta { white-space: pre-line; opacity: 0.72; font-size: 0.96em; }
+
+/* Menu column — slides in at the front (width 0 → open), pushing the wall right.
+   Inner has a fixed width so text doesn't reflow mid-transition. */
+.florence-menu { flex: 0 0 auto; width: 0; overflow: hidden; transition: width 0.42s cubic-bezier(0.4, 0, 0.1, 1); }
+.florence-menu[data-open="true"] { width: min(400px, 82vw); border-right: 1px solid var(--fl-hairline); }
+.florence-menu__inner {
+  width: min(400px, 82vw); height: 100%; box-sizing: border-box;
+  padding: clamp(2.5rem, 8vh, 5rem) clamp(1.75rem, 2.4vw, 2.6rem);
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.florence-menu__list { display: flex; flex-direction: column; gap: 1.1rem; list-style: none; margin: 0; padding: 0; }
+.florence-menu__link {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.95rem; letter-spacing: 0.01em;
+  color: var(--theme-text); text-decoration: none; text-transform: lowercase; background: none; border: none;
+  padding: 0; cursor: pointer; text-align: left; transition: opacity 0.15s ease;
+}
+.florence-menu__link:hover { opacity: 0.6; }
+.florence-menu__link.is-active { font-style: italic; text-decoration: underline; text-underline-offset: 3px; }
+.florence-menu__socials { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 1.75rem; }
+.florence-menu__social {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.78rem; letter-spacing: 0.02em;
+  color: var(--theme-text-muted, #8b8378); text-decoration: none; text-transform: lowercase;
+}
+.florence-menu__social:hover { color: var(--theme-text); }
+
+/* Prev / next arrows, bottom-right. */
+.florence-arrows { position: fixed; bottom: 1.5rem; right: 1.75rem; z-index: 20; display: flex; gap: 0.4rem; }
+.florence-arrows__btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+  color: var(--theme-text); background: rgba(244,241,234,0.7); border: 1px solid var(--fl-hairline);
+  cursor: pointer; transition: background 0.15s ease;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.florence-arrows__btn:hover { background: var(--theme-bg, #f4f1ea); }
+
+/* Photo treatment (design panel): colour default; mono / sepia tint gallery imagery. */
+[data-theme="florence"] .gallery-container[data-photo-treatment="mono"] .florence-wall img { filter: grayscale(1) contrast(1.03); }
+[data-theme="florence"] .gallery-container[data-photo-treatment="sepia"] .florence-wall img { filter: sepia(0.5) grayscale(0.2) contrast(0.98) brightness(1.02) saturate(0.9); }
+
+/* ── Mobile / narrow preview: vertical stack fallback ── */
+[data-theme="florence"] .florence-stage[data-mobile="true"] { display: block; height: auto; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail {
+  flex-direction: row; width: 100%; height: auto; justify-content: space-between;
+  padding: 0.9rem 1.1rem; border-right: none; border-bottom: 1px solid var(--fl-hairline);
+  position: sticky; top: 0;
+}
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__search { display: none; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__logo { writing-mode: initial; transform: none; max-height: none; font-size: 1.1rem; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-wall {
+  display: block; height: auto; overflow: visible;
+}
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col {
+  width: auto !important; height: auto; border-right: none; border-bottom: 1px solid var(--fl-hairline);
+  padding: 1.75rem 1.1rem;
+}
+/* On phones every horizontal layout collapses to a full-width vertical stack. */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-figure,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-frame { height: auto !important; flex: 0 0 auto; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-fit { height: auto !important; aspect-ratio: auto !important; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-fit img,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mosaic__cell img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-row,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mosaic { display: flex; flex-direction: column; height: auto !important; width: 100%; gap: 1.75rem; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-row__item,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mosaic__group,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-pagelink { width: 100% !important; height: auto !important; flex: 0 0 auto; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mosaic__cell,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-pagelink__frame { flex: 0 0 auto; min-height: 0; overflow: visible; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--photo[data-fit="full"] { padding-top: 1.75rem; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-menu {
+  width: 100% !important; border-right: none; border-bottom: 1px solid var(--fl-hairline);
+  transition: none;
+}
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-menu[data-open="false"] { display: none; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-menu__inner { width: 100%; height: auto; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-arrows { display: none; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--intro { min-height: 40vh; }

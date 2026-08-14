@@ -367,8 +367,14 @@ export default function SepiaSplash({
     h: typeof window !== 'undefined' ? window.innerHeight : 900,
   }))
   const [phase, setPhase] = useState('flipping')
+  const [isTouch, setIsTouch] = useState(false)
   const fontReady = useFontReady()
   const photoTextures = usePhotoTextures()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsTouch(('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0)
+  }, [])
 
   useEffect(() => {
     function onResize() { setSize({ w: window.innerWidth, h: window.innerHeight }) }
@@ -705,6 +711,32 @@ export default function SepiaSplash({
         ref={canvasRef}
         style={{ display: 'block', width: '100vw', height: '100vh' }}
       />
+      {/* Invitation to click — sits in a top-right tile once the wordmark
+          settles. Fades in on the outer div; the inner span carries a gentle
+          continuous pulse (opacities multiply, so both read at once). */}
+      <style>{`@keyframes sepiaSplashHint { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }`}</style>
+      <div
+        style={{
+          position: 'absolute',
+          top: 'clamp(20px, 4vh, 48px)',
+          right: 'clamp(20px, 4vw, 56px)',
+          fontFamily: PHOTO_FONT,
+          fontSize: 'clamp(10px, 1.05vw, 13px)',
+          fontWeight: 700,
+          letterSpacing: '0.28em',
+          textTransform: 'uppercase',
+          color: 'rgba(240, 216, 166, 0.85)',
+          textShadow: '0 0 14px rgba(255, 200, 130, 0.28)',
+          opacity: phase === 'settled' ? 1 : 0,
+          transition: 'opacity 900ms ease-out',
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+      >
+        <span style={{ display: 'inline-block', animation: 'sepiaSplashHint 2.6s ease-in-out infinite' }}>
+          {isTouch ? 'Tap' : 'Click'} anywhere to begin
+        </span>
+      </div>
       {/* Tagline — anchored under the right tail of the wordmark with
           generous gap, museum-plaque style. The wordmark spans ~50% of
           viewport width centered, so its right edge sits at ~75% horizontally,

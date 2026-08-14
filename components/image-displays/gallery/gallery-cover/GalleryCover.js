@@ -3,7 +3,7 @@ import { HiOutlineArrowLeft } from "react-icons/hi2";
 import { useClientEngagement } from "../../engagement/ClientEngagementContext";
 import { useIsMobile } from "../../../../common/useIsMobile";
 
-const GalleryCover = ({ name, description, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, parentPage = null, username, basePath, onChildPageClick, showChildNav = true, suppressCover = false, coverHeight = 'partial', buttonStyle = 'solid' }) => {
+const GalleryCover = ({ name, description, themeId, enableSlideshow = false, enableClientView = false, onBackClick, onSlideshowClick, onClientLoginClick, childPages, activeChildId, parentPage = null, username, basePath, onChildPageClick, showChildNav = true, suppressCover = false, coverHeight = 'partial', buttonStyle = 'solid' }) => {
   // "View Packages" is context-driven, same as PageCover: live gates on connected
   // payouts; the editor preview supplies a PreviewPackagesProvider so it shows there too.
   const ctx = useClientEngagement()
@@ -48,7 +48,7 @@ const GalleryCover = ({ name, description, enableSlideshow = false, enableClient
     <div className={containerCls}>
       <div className={`text-center ${isMobile ? 'w-full px-4' : 'px-6'}`}>
         {name && <h1 className="text-4xl md:text-5xl font-serif2 mb-4">{name}</h1>}
-        {description && <p className="font-serif text-[20px] md:text-[22px] font-normal leading-8 max-w-3xl mx-auto mb-6 text-gray-900" style={{ letterSpacing: '-0.6px' }}>{description}</p>}
+        {description && <p className="font-serif text-[20px] md:text-[22px] font-normal leading-8 max-w-[38rem] mx-auto mb-6 text-gray-900" style={{ letterSpacing: '-0.6px' }}>{description}</p>}
 
         {hasChildNav && (
           isMobile ? (

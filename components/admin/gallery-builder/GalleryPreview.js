@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Gallery from "../../image-displays/gallery/Gallery";
 import { resolveCaption } from '../../../common/captionResolver'
+import { publicCaptureForAsset } from '../../../common/photoMeta'
 import ThemeProvider from '../../image-displays/ThemeProvider'
 import { useEditorFeedback } from './EditorFeedbackContext'
 import { ReviewFeedbackProvider } from '../../image-displays/engagement/ClientEngagementContext'
@@ -14,9 +15,13 @@ function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
   if (block.type === 'photo') {
     const ref = { url: block.imageUrl, caption: block.caption }
+    const asset = assetsByUrl[block.imageUrl]
     const out = { ...block, caption: resolveCaption(ref, assetsByUrl) }
     const print = printForUrl(assetsByUrl, block.imageUrl)
     if (print) out.print = print
+    const capture = publicCaptureForAsset(asset)
+    if (capture) out.capture = capture
+    if (asset?.createdAt) out.uploadedAt = asset.createdAt
     return out
   }
   if (block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry') {
@@ -24,9 +29,13 @@ function resolveBlock(block, assetsByUrl) {
       ? block.images
       : (block.imageUrls || []).map(url => ({ url }))
     const images = refs.map(r => {
+      const asset = assetsByUrl[r.url]
       const out = { ...r, caption: resolveCaption(r, assetsByUrl) }
       const print = printForUrl(assetsByUrl, r.url)
       if (print) out.print = print
+      const capture = publicCaptureForAsset(asset)
+      if (capture) out.capture = capture
+      if (asset?.createdAt) out.uploadedAt = asset.createdAt
       return out
     })
     return { ...block, images, imageUrls: images.map(i => i.url) }

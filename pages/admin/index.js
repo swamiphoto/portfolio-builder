@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { DragProvider } from '../../common/dragContext'
 import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getPagePhotos } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
+import ThemeToolbarControl from '../../components/admin/platform/ThemeToolbarControl'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
 import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPickerModal'
@@ -13,13 +14,14 @@ import CanvasEmptyState from '../../components/admin/onboarding/CanvasEmptyState
 import ClientFeedbackBanner from '../../components/admin/platform/ClientFeedbackBanner'
 import { EditorFeedbackProvider } from '../../components/admin/gallery-builder/EditorFeedbackContext'
 import { useClientFeedback } from '../../components/admin/platform/useClientFeedback'
-import { defaultPage } from '../../common/siteConfig'
+import { defaultPage, titleForTemplate } from '../../common/siteConfig'
 import { assignHomeOnCreate } from '../../common/homePage'
 import { COVER_FALLBACK_BG } from '../../common/coverBackground'
 import { useRouter } from 'next/router'
 import GuidedTour from '../../components/admin/onboarding/GuidedTour'
 import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
-import { buildTourSteps, WELCOME, BLOCKS_TIP_STEP } from '../../components/admin/onboarding/tourSteps'
+import { buildTourSteps, WELCOME, BLOCKS_TOUR_STEPS } from '../../components/admin/onboarding/tourSteps'
+import { fontFamilyForSlot } from '../../common/themes/variants'
 
 const AUTOSAVE_DELAY = 1500
 
@@ -45,7 +47,7 @@ function resolveEditingPage(siteConfig, selectedPageId, showLibrary) {
 export default function AdminIndex() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { onboarding, loading: onboardingLoading, error: onboardingError, markSeen } = useOnboarding()
+  const { onboarding, loading: onboardingLoading, error: onboardingError, markSeen, resetOnboarding } = useOnboarding()
   const importedJustNow = router.query.imported === '1'
 
   useEffect(() => {
@@ -97,11 +99,14 @@ export default function AdminIndex() {
     fetch('/api/admin/library').then(r => r.json()).then(setLibraryConfig).catch(() => {})
   }, [status])
 
-  const handleUpdateLibraryCaption = useCallback(async (assetId, caption) => {
+  const handleUpdateLibraryCaption = useCallback(async (assetId, caption, url) => {
     if (!assetId) return
     setLibraryConfig(prev => prev ? {
       ...prev,
-      assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), caption } }
+      // Ensure the cached asset carries a publicUrl so assetsByUrl (keyed by url)
+      // surfaces the new caption and the block re-renders — even if this asset
+      // wasn't in the initially-loaded library config.
+      assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), ...(url ? { assetId, publicUrl: url } : {}), caption } }
     } : prev)
     try {
       await fetch('/api/admin/library', {
@@ -112,6 +117,18 @@ export default function AdminIndex() {
     } catch (err) {
       console.error('Library caption update failed:', err)
     }
+  }, [])
+
+  // The photo lightbox (opened from a page block) already persists the sell/print
+  // change to the server via /api/admin/print/sell; this just refreshes the local
+  // library cache so the block re-renders and the toggle survives close/reopen.
+  const handleUpdateLibraryPrint = useCallback((assetId, print) => {
+    if (!assetId) return
+    setLibraryConfig(prev => prev ? {
+      ...prev,
+      assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: !!print?.sellable } },
+      images: (prev.images || []).map(img => img.assetId === assetId ? { ...img, print, forSale: !!print?.sellable } : img),
+    } : prev)
   }, [])
 
   const assetsByUrl = useMemo(() => {
@@ -312,17 +329,24 @@ export default function AdminIndex() {
     setShowLibrary(false)
   }, [])
 
+  // Fires when a page is freshly created: { id, ts }. The block sidebar focuses +
+  // selects that page's masthead title so the user can rename "Untitled" by
+  // typing immediately.
+  const [titleFocus, setTitleFocus] = useState(null)
+  const focusPageTitle = useCallback((id) => setTitleFocus({ id, ts: Date.now() }), [])
+
   const handleCreateFirstPage = useCallback(() => {
     const existingIds = new Set((siteConfig?.pages || []).map(p => p.id))
     let id = 'gallery'; let n = 2
     while (existingIds.has(id)) { id = `gallery-${n++}` }
     const sortOrder = Math.max(0, ...(siteConfig?.pages || []).filter(p => p.showInNav !== false).map(p => p.sortOrder ?? 0)) + 1
-    const newPage = defaultPage({ id, title: 'New Page', sortOrder, showInNav: true, parentId: null, template: 'gallery' })
+    const newPage = defaultPage({ id, title: titleForTemplate('gallery'), sortOrder, showInNav: true, parentId: null, template: 'gallery' })
     updateConfig(prev => assignHomeOnCreate({ ...prev, pages: [...prev.pages, newPage] }, newPage))
     setCoverSelected(false)
     setSelectedPageId(id)
     setShowLibrary(false)
-  }, [siteConfig, updateConfig])
+    focusPageTitle(id)
+  }, [siteConfig, updateConfig, focusPageTitle])
 
   // Client-feedback for the page being edited. Must run before the early returns
   // (rules of hooks); it no-ops until siteConfig loads and the page has features.
@@ -354,6 +378,8 @@ export default function AdminIndex() {
       selectedPageId={showLibrary || coverSelected ? null : (selectedPage?.id ?? null)}
       coverSelected={coverSelected}
       onSelectPage={handleSelectPage}
+      onRequestTitleFocus={focusPageTitle}
+      onReplayTour={resetOnboarding}
       onSelectCover={handleViewCover}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null); setCoverSelected(false) }}
       onPublish={() => { setHasUnpublishedChanges(false); setLastPublishedAt(Date.now()) }}
@@ -391,12 +417,14 @@ export default function AdminIndex() {
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
       onUpdateLibraryCaption={handleUpdateLibraryCaption}
+      onPrintChange={handleUpdateLibraryPrint}
       username={session?.user?.username}
       blockBuilderRef={blockBuilderRef}
       onScrollPreviewToBlock={handleScrollPreviewToBlock}
       highlightedBlockIndex={hoveredBlockIndex}
       onBlockHover={setHoveredBlockIndex}
       onToggleSidebarCollapse={() => setBlockSidebarCollapsed(true)}
+      titleFocusTs={titleFocus?.id === selectedPage.id ? titleFocus.ts : null}
     />
   ) : null
 
@@ -405,6 +433,12 @@ export default function AdminIndex() {
   let content
   if (isCoverPageSelected) {
     const cover = siteConfig.cover || {}
+    const themeId = siteConfig?.design?.theme
+    const titleFF = fontFamilyForSlot(themeId, cover.titleFont || 'serif')
+    const descFF = fontFamilyForSlot(themeId, cover.descriptionFont || 'serif')
+    const coverBtnCls = cover.buttonStyle === 'outline'
+      ? 'border border-white text-white hover:bg-white/10'
+      : 'bg-white text-stone-900 hover:bg-stone-100'
     const bgStyle = cover.imageUrl
       ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
       : { background: COVER_FALLBACK_BG }
@@ -416,17 +450,17 @@ export default function AdminIndex() {
           {(cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
             <div className="space-y-3 mb-9">
               {(cover.heading || siteConfig.siteName) && (
-                <h2 className="text-4xl md:text-6xl font-light tracking-tight">{cover.heading || siteConfig.siteName}</h2>
+                <h2 className="text-4xl md:text-6xl font-light tracking-tight" style={{ fontFamily: titleFF }}>{cover.heading || siteConfig.siteName}</h2>
               )}
               {(cover.subheading || siteConfig.tagline) && (
-                <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto">{cover.subheading || siteConfig.tagline}</p>
+                <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto" style={{ fontFamily: descFF }}>{cover.subheading || siteConfig.tagline}</p>
               )}
             </div>
           )}
           <button
             type="button"
             onClick={() => { if (homeTarget) handleSelectPage(homeTarget); else setCoverCtaHint(true) }}
-            className="inline-flex items-center px-5 py-2.5 text-sm font-medium bg-white text-stone-900 hover:bg-stone-100 transition-colors"
+            className={`inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${coverBtnCls}`}
           >
             {cover.buttonText || 'View my portfolio'}
           </button>
@@ -482,6 +516,10 @@ export default function AdminIndex() {
   }
 
   const showWelcomeTour = !onboardingLoading && !onboardingError && !onboarding.tourDone
+  // The blocks tour fires the first time a real page is open with the block
+  // sidebar showing, after the main tour is done. We no longer gate on an empty
+  // page: a page created from a template already has blocks, and the design
+  // step needs at least one block present to point at (it auto-skips if none).
   const showBlocksTip =
     !onboardingLoading &&
     !onboardingError &&
@@ -490,8 +528,7 @@ export default function AdminIndex() {
     selectedPage &&
     selectedPage.type !== 'link' &&
     !isCoverPageSelected &&
-    !blockSidebarCollapsed &&
-    (selectedPage.blocks?.length || 0) === 0
+    !blockSidebarCollapsed
 
   return (
     <DragProvider>
@@ -508,6 +545,12 @@ export default function AdminIndex() {
         panelLabel={selectedPage ? `${selectedPage.title} Blocks` : 'Blocks'}
         username={session?.user?.username}
         pagePath={selectedPage ? `/${selectedPage.slug || selectedPage.id}` : ''}
+        toolbarExtra={siteConfig ? (
+          <ThemeToolbarControl
+            config={siteConfig}
+            onChange={(patch) => updateConfig(prev => ({ ...prev, ...patch }))}
+          />
+        ) : null}
       >
         {content}
       </AdminLayout>
@@ -572,7 +615,7 @@ export default function AdminIndex() {
       )}
       {showBlocksTip && (
         <GuidedTour
-          steps={[BLOCKS_TIP_STEP]}
+          steps={BLOCKS_TOUR_STEPS}
           onFinish={() => markSeen('blocksTipSeen')}
         />
       )}

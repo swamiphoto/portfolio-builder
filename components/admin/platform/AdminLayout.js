@@ -4,7 +4,7 @@ import Tip from '../Tip'
 import { subdomainHost } from '../../../common/domainUtils'
 
 // components/admin/platform/AdminLayout.js
-export default function AdminLayout({ sidebar, panel, children, panelCollapsed, onTogglePanel, sidebarCollapsed, onToggleSidebar, panelLabel, username, pagePath }) {
+export default function AdminLayout({ sidebar, panel, children, panelCollapsed, onTogglePanel, sidebarCollapsed, onToggleSidebar, panelLabel, username, pagePath, toolbarExtra }) {
   const [viewport, setViewport] = useState('desktop')
   const isMobile = viewport === 'mobile'
 
@@ -198,6 +198,9 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
                 Mobile
               </button>
             </div>
+
+            {/* Theme switcher + per-theme settings pill */}
+            {toolbarExtra}
           </div>
 
           {/* Preview area — padding top/sides only, pane flush to bottom */}

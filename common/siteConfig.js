@@ -103,8 +103,8 @@ export function seedBlocksForTemplate(template) {
       // A photo essay — a scaffold showing the range of blocks a story can mix.
       return [
         defaultBlock('stacked'),
-        defaultBlock('text'),  // heading
-        defaultBlock('photo'),  // full bleed (default)
+        { ...defaultBlock('text'), variant: 1 },  // heading
+        { ...defaultBlock('photo'), variant: 1 },  // full bleed
         defaultBlock('masonry'),
         { ...defaultBlock('photo'), variant: 2 },  // centered
         defaultBlock('video'),  // centered (default)
@@ -120,7 +120,7 @@ export function seedBlocksForTemplate(template) {
     case 'about':
       return [
         { ...defaultBlock('photo'), variant: 2 },  // centered portrait
-        defaultBlock('text'),  // heading
+        { ...defaultBlock('text'), variant: 1 },  // heading
         { ...defaultBlock('text'), variant: 3 },  // body
       ]
     case 'contact':
@@ -128,13 +128,20 @@ export function seedBlocksForTemplate(template) {
     case 'text':
       // Legacy template, no longer offered in the menu; kept for back-compat.
       return [
-        defaultBlock('text'),  // variant 1 (heading)
+        { ...defaultBlock('text'), variant: 1 },  // heading
         { ...defaultBlock('text'), variant: 3 },  // paragraph
       ]
     case 'blank':
     default:
       return []
   }
+}
+
+// Default page name for a template. A blank page (or unknown template) has no
+// natural name, so it stays "Untitled" for the user to fill in.
+const TEMPLATE_TITLES = { story: 'Story', gallery: 'Gallery', collection: 'Collection', about: 'About', contact: 'Contact' }
+export function titleForTemplate(template) {
+  return TEMPLATE_TITLES[template] || 'Untitled'
 }
 
 export function defaultPage(overrides = {}) {

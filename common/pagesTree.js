@@ -1,12 +1,15 @@
 // Pure helpers for the unified-page nav structure.
 // `pages` is the flat array stored on siteConfig; the tree is derived.
 
-export function buildNavTree(pages) {
-  const nav = pages.filter(p => p.showInNav)
-  const navIds = new Set(nav.map(p => p.id))
+// Build a parentId hierarchy from the pages that pass `inSection`. A parentId that
+// points outside the section is treated as a root (so cross-section references
+// never break the tree).
+function buildTree(pages, inSection) {
+  const items = pages.filter(inSection)
+  const ids = new Set(items.map(p => p.id))
   const byParent = new Map()
-  for (const p of nav) {
-    const key = p.parentId && navIds.has(p.parentId) ? p.parentId : null
+  for (const p of items) {
+    const key = p.parentId && ids.has(p.parentId) ? p.parentId : null
     if (!byParent.has(key)) byParent.set(key, [])
     byParent.get(key).push(p)
   }
@@ -14,12 +17,27 @@ export function buildNavTree(pages) {
     arr.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   }
   function build(parentId) {
-    return (byParent.get(parentId) || []).map(p => ({
-      ...p,
-      children: build(p.id),
-    }))
+    return (byParent.get(parentId) || []).map(p => ({ ...p, children: build(p.id) }))
   }
   return build(null)
+}
+
+// `respectHideChildren` prunes the children of any page carrying the
+// `hideChildrenInNav` flag — used by the PUBLISHED nav so a page can list its
+// own galleries elsewhere (e.g. a page-links block) while keeping them out of
+// the sub-nav. The editor omits the flag so the tree stays fully editable.
+export function buildNavTree(pages, { respectHideChildren = false } = {}) {
+  const tree = buildTree(pages, p => p.showInNav)
+  if (!respectHideChildren) return tree
+  const prune = (nodes) => nodes.map(n => (
+    n.hideChildrenInNav ? { ...n, children: [] } : { ...n, children: prune(n.children) }
+  ))
+  return prune(tree)
+}
+
+// The Hidden section is also a nestable tree (pages can be nested under a hidden parent).
+export function buildHiddenTree(pages) {
+  return buildTree(pages, p => !p.showInNav)
 }
 
 export function flattenForOtherPages(pages) {
@@ -46,20 +64,27 @@ export function isDescendantOf(pages, pageId, maybeAncestorId) {
 //   { showInNav, parentId, beforeId | afterId }         — insert relative to a sibling, renumber
 //   { showInNav, parentId, position: 'end' | 'start' }  — append/prepend, renumber
 export function movePage(pages, pageId, patch) {
+  // Was the page hidden before this move? (Used to distinguish a visible→hidden
+  // transition from a move within the Hidden section.)
+  const wasHidden = !pages.find(p => p.id === pageId)?.showInNav
+
   // 1. Apply field updates to the moving page
   const draft = pages.map(p => {
     if (p.id !== pageId) return p
     const merged = { ...p }
     if ('showInNav' in patch) merged.showInNav = patch.showInNav
     if ('parentId' in patch) merged.parentId = patch.parentId
-    if (merged.showInNav === false) merged.parentId = null
+    // A hidden page with no explicit parent goes to the Hidden root; but nesting
+    // under a hidden parent (parentId provided) is allowed.
+    if (merged.showInNav === false && !('parentId' in patch)) merged.parentId = null
     if ('sortOrder' in patch) merged.sortOrder = patch.sortOrder
     return merged
   })
 
-  // 2. If leaving nav, orphan children
+  // 2. When a page TRANSITIONS from visible → hidden, orphan its children (they stay
+  //    in the nav). Moves within Hidden keep their nested children.
   let next = draft
-  if (patch.showInNav === false) {
+  if (patch.showInNav === false && !wasHidden) {
     next = next.map(p => (p.parentId === pageId ? { ...p, parentId: null } : p))
   }
 

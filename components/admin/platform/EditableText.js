@@ -6,7 +6,7 @@
 // is what prevents a lagging round-trip from dropping characters. When the field
 // is not focused, external changes to `value` (e.g. switching pages) are adopted.
 // Every keystroke still calls onChange so upstream autosave works unchanged.
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, forwardRef } from 'react'
 
 function useLocalValue(value) {
   const [local, setLocal] = useState(value ?? '')
@@ -20,18 +20,19 @@ function useLocalValue(value) {
   return { local, onFocus, onBlur, setTyped }
 }
 
-export function EditableInput({ value, onChange, onFocus, onBlur, ...props }) {
+export const EditableInput = forwardRef(function EditableInput({ value, onChange, onFocus, onBlur, ...props }, ref) {
   const local = useLocalValue(value)
   return (
     <input
       {...props}
+      ref={ref}
       value={local.local}
       onFocus={(e) => { local.onFocus(); onFocus?.(e) }}
       onBlur={(e) => { local.onBlur(); onBlur?.(e) }}
       onChange={(e) => { local.setTyped(e.target.value); onChange?.(e) }}
     />
   )
-}
+})
 
 export function EditableTextarea({ value, onChange, onFocus, onBlur, maxHeight, style, ...props }) {
   const local = useLocalValue(value)

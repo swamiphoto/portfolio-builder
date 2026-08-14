@@ -10,6 +10,9 @@ import HoverCaption from "../HoverCaption";
 
 const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans', insideCaption = false, bleed = false, mobile = false }) => {
   const capCss = captionStyleCss(captionStyle);
+  // Serif (Cormorant) has a small x-height, so bump it to a fixed, legible size —
+  // never scales, same for every image in the block.
+  const capSize = captionStyle === 'serif' ? 'text-[17px] leading-snug' : 'text-sm';
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   // An explicit `columns` prop always wins (Gallery passes columns=1 on mobile);
   // otherwise fall back to the responsive default.
@@ -47,7 +50,7 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
                       {insideCaption && <HoverCaption caption={caption} captionStyle={captionStyle} />}
                     </div>
                     {caption && !insideCaption && (
-                      <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{caption}</p>
+                      <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{caption}</p>
                     )}
                   </div>
                 );

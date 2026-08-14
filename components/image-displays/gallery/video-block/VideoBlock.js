@@ -30,9 +30,10 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans', bleed = 
 
   const videoContainerStyle = (() => {
     if (bleed) return "w-full"; // Manhattan: full content width, square corners
-    if (variant === 1) return "w-full mx-auto"; // full bleed: full content width, square corners
-    if (variant === 3) return "w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6"; // side
-    return "w-full md:w-[85%] mx-auto"; // centered (default)
+    if (variant === 1) return "w-full mx-auto"; // full bleed: edge-to-edge, square corners
+    // Non-bleed videos match the photo widths on mobile: uniform 10px side margin.
+    if (variant === 3) return "w-full px-[10px] md:px-0 md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6"; // side
+    return "w-full px-[10px] md:px-0 md:w-[85%] mx-auto"; // centered (default)
   })();
 
   const videoStyle = "relative aspect-[16/9] w-full overflow-hidden"; // standard 16:9

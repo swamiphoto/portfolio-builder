@@ -1,0 +1,208 @@
+// components/image-displays/themes/florence/FlorenceWall.js
+// The Florence horizontal museum wall. A thin fixed rail (logo · hamburger · search)
+// beside a horizontally-scrolling row of columns (intro + one per block), split by
+// vertical hairlines. The hamburger slides a menu column in at the front, pushing
+// the wall right. Wheel + drag + arrows all pan horizontally, except over a
+// multi-photo column that still has room to scroll vertically. On phones the whole
+// thing collapses to a vertical stack (CSS, via data-mobile).
+import { useRef, useState, useCallback, useEffect } from 'react'
+import { buildNavTree } from '../../../../common/pagesTree'
+import FlorenceColumn from './FlorenceColumn'
+
+const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
+
+function IconMenu() {
+  return <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden><path d="M3 6h14M3 12h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+}
+function IconClose() {
+  return <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+}
+function IconArrow({ dir }) {
+  const d = dir === 'prev' ? 'M12 5l-5 5 5 5' : 'M8 5l5 5-5 5'
+  return <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden><path d={d} stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+}
+
+function navItemActive(item, currentPageId, basePath, currentPath) {
+  const selfActive = currentPageId != null
+    ? item.id === currentPageId
+    : currentPath === `${basePath}/${item.slug || item.id}`
+  if (selfActive) return true
+  return (item.children || []).some(c => navItemActive(c, currentPageId, basePath, currentPath))
+}
+
+export default function FlorenceWall({
+  siteConfig = {}, name, description, blocks = [], basePath = '', makeClickHandler,
+  onBlockHover, onBlockClick, mobile = false, actions = [],
+  currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
+}) {
+  const wallRef = useRef(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const tree = buildNavTree(siteConfig.pages || [], { respectHideChildren: true }).filter(i => i.showInNav !== false)
+  const socials = siteConfig.contact || {}
+  const socialKeys = SOCIAL_KEYS.filter(k => socials[k])
+
+  const logoImage = siteConfig?.logoType === 'image' && siteConfig?.logo
+  const brand = logoImage
+    ? <img src={siteConfig.logo} alt={siteConfig.siteName || 'Logo'} />
+    : (siteConfig.siteName || name || '')
+  // Wordmark orientation on the rail: vertical (default) or horizontal.
+  const logoOrient = siteConfig?.design?.florenceLogo === 'horizontal' ? 'horizontal' : 'vertical'
+
+  // Wheel handling: a native horizontal gesture (trackpad two-finger swipe) scrolls
+  // the wall directly — leave it alone so it stays fast + smooth. A vertical wheel
+  // (mouse, or vertical trackpad swipe) is converted to horizontal, unless the
+  // pointer is over a stack column that still has room to scroll vertically.
+  const onWheel = useCallback((e) => {
+    const wall = wallRef.current
+    if (!wall || mobile) return
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return // native horizontal — don't touch
+    const dy = e.deltaY
+    if (!dy) return
+    // deltaMode: 1 = lines, 2 = pages → normalize to px, then scale up for a brisk pan.
+    const px = e.deltaMode === 1 ? dy * 16 : e.deltaMode === 2 ? dy * wall.clientWidth : dy
+    e.preventDefault()
+    wall.scrollLeft += px * 3.2
+  }, [mobile])
+
+  useEffect(() => {
+    const wall = wallRef.current
+    if (!wall || mobile) return
+    wall.addEventListener('wheel', onWheel, { passive: false })
+    return () => wall.removeEventListener('wheel', onWheel)
+  }, [onWheel, mobile])
+
+  // Arrows step to the next/prev column and center it in the viewport (so a click
+  // always lands on a block, never between two). Finds the currently-centered
+  // column, then centers its neighbour.
+  const page = useCallback((dir) => {
+    const wall = wallRef.current
+    if (!wall) return
+    const cols = Array.from(wall.querySelectorAll('.florence-col'))
+    if (!cols.length) return
+    const wallLeft = wall.getBoundingClientRect().left
+    const viewCenter = wall.clientWidth / 2
+    let idx = 0, best = Infinity
+    cols.forEach((c, i) => {
+      const r = c.getBoundingClientRect()
+      const centerInView = (r.left - wallLeft) + r.width / 2
+      const d = Math.abs(centerInView - viewCenter)
+      if (d < best) { best = d; idx = i }
+    })
+    const nextIdx = Math.max(0, Math.min(cols.length - 1, idx + (dir === 'prev' ? -1 : 1)))
+    const r = cols[nextIdx].getBoundingClientRect()
+    const centerInContent = (r.left - wallLeft + wall.scrollLeft) + r.width / 2
+    wall.scrollTo({ left: centerInContent - viewCenter, behavior: 'smooth' })
+  }, [])
+
+  const toggleMenu = () => {
+    setMenuOpen(o => {
+      const next = !o
+      if (next && wallRef.current) wallRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+      return next
+    })
+  }
+
+  // Drag-to-pan (desktop): press and drag anywhere on the wall.
+  const drag = useRef({ active: false, x: 0, left: 0, moved: false })
+  const onPointerDown = (e) => {
+    if (mobile || e.target.closest('a,button')) return
+    drag.current = { active: true, x: e.clientX, left: wallRef.current.scrollLeft, moved: false }
+  }
+  const onPointerMove = (e) => {
+    if (!drag.current.active) return
+    const dx = e.clientX - drag.current.x
+    if (Math.abs(dx) > 3) drag.current.moved = true
+    wallRef.current.scrollLeft = drag.current.left - dx
+  }
+  const endDrag = () => { drag.current.active = false }
+
+  const renderLink = (item) => {
+    const isLink = item.type === 'link'
+    const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
+    const active = navItemActive(item, currentPageId, basePath, currentPath)
+    const cls = `florence-menu__link${active ? ' is-active' : ''}`
+    if (onPageClick && !isLink) {
+      return <button className={cls} onClick={() => { onPageClick(item.id); setMenuOpen(false) }}>{item.title}</button>
+    }
+    return <a className={cls} href={href} {...(isLink ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{item.title}</a>
+  }
+
+  return (
+    <div className="florence-stage" data-mobile={mobile ? 'true' : 'false'}>
+      <nav className="florence-rail" aria-label="Site navigation">
+        {onPageClick
+          ? <button className="florence-rail__logo" data-orient={logoOrient} onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
+          : <a className="florence-rail__logo" data-orient={logoOrient} href={basePath || '/'}>{brand}</a>}
+        <div className="florence-rail__mid">
+          <button className="florence-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
+            {menuOpen ? <IconClose /> : <IconMenu />}
+          </button>
+        </div>
+        <span className="florence-rail__spacer" aria-hidden />
+      </nav>
+
+      <div
+        className="florence-wall"
+        ref={wallRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerLeave={endDrag}
+      >
+        <section className="florence-menu" data-open={menuOpen ? 'true' : 'false'} aria-hidden={!menuOpen}>
+          <div className="florence-menu__inner">
+            <ul className="florence-menu__list">
+              {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
+            </ul>
+            {socialKeys.length > 0 && (
+              <div className="florence-menu__socials">
+                {socialKeys.map(k => {
+                  const v = socials[k]
+                  const href = v?.startsWith?.('http') ? v : `https://${k}.com/${String(v).replace(/^@/, '')}`
+                  return <a key={k} className="florence-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="florence-col florence-col--intro">
+          {name && <h1 className="florence-intro__title">{name}</h1>}
+          {description && <p className="florence-intro__desc">{description}</p>}
+          {actions.length > 0 && (
+            <div className="florence-intro__actions">
+              {actions.map((a, i) => (
+                <button key={i} type="button" onClick={a.onClick} className={`florence-intro__btn${a.style === 'outline' ? ' florence-intro__btn--outline' : ''}`}>{a.label}</button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {blocks.map((block, index) => (
+          <FlorenceColumn
+            key={`col-${index}`}
+            block={block}
+            blockIndex={index}
+            photoMeta={photoMeta}
+            siteConfig={siteConfig}
+            pages={pages}
+            basePath={basePath}
+            onImageClick={makeClickHandler ? makeClickHandler(index) : undefined}
+            hoverProps={{
+              ...(onBlockHover ? { onMouseEnter: () => onBlockHover(index), onMouseLeave: () => onBlockHover(null) } : {}),
+              ...(onBlockClick ? { onClick: () => onBlockClick(index), style: { cursor: 'pointer' } } : {}),
+            }}
+          />
+        ))}
+      </div>
+
+      {!mobile && (
+        <div className="florence-arrows">
+          <button className="florence-arrows__btn" onClick={() => page('prev')} aria-label="Previous"><IconArrow dir="prev" /></button>
+          <button className="florence-arrows__btn" onClick={() => page('next')} aria-label="Next"><IconArrow dir="next" /></button>
+        </div>
+      )}
+    </div>
+  )
+}

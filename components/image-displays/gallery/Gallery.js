@@ -11,7 +11,8 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize, resolvePhotoSize } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize, resolvePhotoSize, resolveQuoteStyle } from "../../../common/themes/variants";
+import { getBlockSpec } from "../../../common/themes";
 import { resolveCaptionStyle, captionStyleCss } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
 import ManhattanGrid from "../themes/manhattan/ManhattanGrid";
@@ -19,6 +20,7 @@ import GridGallery from "./grid-gallery/GridGallery";
 import SquareGallery from "./square-gallery/SquareGallery";
 import FramedPhoto from "./photo-block/FramedPhoto";
 import ManhattanPhoto from "./photo-block/ManhattanPhoto";
+import FlorenceWall from "../themes/florence/FlorenceWall";
 import PageGalleryLinks from "./page-gallery/PageGalleryLinks";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -52,12 +54,20 @@ function PlaceholderIcon({ color = '#d3c6b2' }) {
   )
 }
 
-function PlaceholderTile({ aspectClass = 'aspect-[4/3]' }) {
+function PlaceholderTile({ aspectClass = 'aspect-[4/3]', square = false, bg = '#ede7dc', iconColor }) {
   return (
-    <div className={`${aspectClass} w-full rounded-3xl flex items-center justify-center select-none mb-5`} style={{ background: '#ede7dc' }}>
-      <PlaceholderIcon />
+    <div className={`${aspectClass} w-full ${square ? '' : 'rounded-3xl'} flex items-center justify-center select-none mb-5`} style={{ background: bg }}>
+      <PlaceholderIcon color={iconColor} />
     </div>
   )
+}
+
+// Per-theme look for the mobile placeholder tiles, so an empty block previews the
+// same corners/tint the real image gets on a phone (Copenhagen/Provence square
+// with Copenhagen's cooler tile; Kyoto warm + rounded).
+function mobilePlaceholderSkin(themeId) {
+  const mh = themeId === 'manhattan'
+  return { square: mh || themeId === 'provence', bg: mh ? MH_TILE : '#ede7dc', iconColor: mh ? MH_ICON : undefined }
 }
 
 // The empty-state preview shown on the right. It mirrors the block's chosen
@@ -67,10 +77,12 @@ function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto
   const sz = sizeKey(size)
   if (mobile) {
     // Mobile preview: every layout collapses to a single stacked column of
-    // uniform full-width tiles (10px side margin) — matches the real mobile render.
+    // uniform full-width tiles (10px side margin) — matches the real mobile render,
+    // including the theme's corners/tint.
+    const skin = mobilePlaceholderSkin(themeId)
     return (
-      <div className="w-full px-[10px] space-y-3" data-photos-placeholder="mobile">
-        {[0, 1, 2].map((i) => <PlaceholderTile key={i} aspectClass="aspect-[3/2]" />)}
+      <div className="w-full px-[10px]" data-photos-placeholder="mobile">
+        {[0, 1, 2].map((i) => <PlaceholderTile key={i} aspectClass="aspect-[3/2]" {...skin} />)}
       </div>
     )
   }
@@ -146,10 +158,22 @@ function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto
 function PlaceholderPhoto({ variant = 'full-bleed', size = 'large', themeId = 'kyoto', mobile = false }) {
   const sz = sizeKey(size)
   if (mobile) {
-    // Mobile preview: one uniform full-width tile, like a real photo on a phone.
+    // Mobile preview: mirror the real photo. Full-bleed spans edge-to-edge (no
+    // margin, square); everything else is a uniform 10px-margin tile. Corners and
+    // tint follow the theme.
+    const skin = mobilePlaceholderSkin(themeId)
+    if (variant === 'full-bleed' || themeId === 'manhattan') {
+      return (
+        <div className="w-full" data-photo-placeholder="mobile-bleed">
+          <div className="w-full aspect-[3/2] flex items-center justify-center select-none" style={{ background: skin.bg }}>
+            <PlaceholderIcon color={skin.iconColor} />
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="w-full px-[10px]" data-photo-placeholder="mobile">
-        <PlaceholderTile aspectClass="aspect-[3/2]" />
+        <PlaceholderTile aspectClass="aspect-[3/2]" {...skin} />
       </div>
     )
   }
@@ -260,6 +284,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   // Manhattan moves its section divider into the left rail (see SiteNav); the
   // body renders no between-section wiggles. Other themes keep them.
   const Wiggle = () => (themeId === 'manhattan' ? null : <WiggleLine />)
+  // Caption style: the block's own choice, else the theme's default (Kyoto → serif).
+  const capStyle = (block) => resolveCaptionStyle(block, getBlockSpec(themeId, block.type)?.defaultCaptionStyle)
   const isSmallScreen = useIsMobile()
   const router = useRouter();
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -314,11 +340,50 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   // slim symmetric gutter via CSS; the Manhattan-only extras (inside captions,
   // left-anchoring) stay gated on manhattan alone.
   const bleedImages = themeId === 'manhattan' || themeId === 'provence'
+  const isFlorence = themeId === 'florence'
+  // Florence photo treatment (design panel): colour default; mono/sepia tint the
+  // gallery imagery via [data-theme="florence"] .gallery-container[data-photo-treatment].
+  const photoTreatment = isFlorence ? (siteConfig?.design?.photoTreatment || 'colour') : undefined
+  const suppressCover = hasCover || themeId === 'manhattan'
+
+  // Florence is a bespoke, fixed-viewport horizontal museum wall: the rail, the
+  // sliding menu column, the intro column and every block-column live in
+  // FlorenceWall. It owns its own nav (SiteNav is suppressed for florence in the
+  // page files), so short-circuit the vertical block flow entirely.
+  if (isFlorence) {
+    const florenceActions = []
+    if (enableSlideshow) florenceActions.push({ label: 'View Music Show', onClick: onSlideshowClick })
+    if (enableClientView) florenceActions.push({ label: 'Client Login', onClick: onClientLoginClick, style: 'outline' })
+    return (
+      <PrintStoreProvider printStore={printStore} username={username}>
+        <div className="gallery-container" data-photo-treatment={photoTreatment}>
+          <FlorenceWall
+            siteConfig={siteConfig}
+            name={name}
+            description={description}
+            blocks={blocks || []}
+            basePath={linkBase}
+            makeClickHandler={makeClickHandler}
+            onBlockHover={onBlockHover}
+            onBlockClick={onBlockClick}
+            mobile={isSmallScreen}
+            actions={florenceActions}
+            currentPath={(router.asPath || '').split('?')[0]}
+            photoMeta={siteConfig?.design?.florencePhotoMeta || 'date'}
+            pages={pages}
+          />
+        </div>
+        {lightboxIndex !== null && (
+          <PhotoLightbox images={allImages} index={lightboxIndex} onClose={closeLightbox} onNavigate={navigateLightbox} printStore={printStore} />
+        )}
+      </PrintStoreProvider>
+    )
+  }
 
   return (
     <PrintStoreProvider printStore={printStore} username={username}>
-    <div className="gallery-container">
-      <GalleryCover name={name} description={description} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} parentPage={(childPages && childPages.length && pages) ? pages.find(p => p.id === childPages[0].parentId) : null} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} suppressCover={hasCover || themeId === 'manhattan'} coverHeight={coverHeight} buttonStyle={coverButtonStyle} />
+    <div className="gallery-container" data-photo-treatment={photoTreatment}>
+      <GalleryCover name={name} description={description} themeId={themeId} enableSlideshow={enableSlideshow} enableClientView={enableClientView} onBackClick={onBackClick} onSlideshowClick={onSlideshowClick} onClientLoginClick={onClientLoginClick} childPages={childPages} activeChildId={activeChildId} parentPage={(childPages && childPages.length && pages) ? pages.find(p => p.id === childPages[0].parentId) : null} username={username} basePath={basePath} onChildPageClick={onChildPageClick} showChildNav={resolveSubNavStyle(siteConfig?.design) === 'inline'} suppressCover={suppressCover} coverHeight={coverHeight} buttonStyle={coverButtonStyle} />
 
       <div className="space-y-10">
         {(blocks || []).map((block, index) => {
@@ -338,7 +403,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
                     {themeId === 'manhattan'
-                      ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} />
+                      ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={capStyle(block)} />
                       : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} edgeToEdge={themeId === 'provence'} rounded={themeId !== 'provence'} />}
                   </div>
                 );
@@ -353,8 +418,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
                   {usemasonry
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={bleedImages ? 100 : STACKED_PCT[size]} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : MASONRY_COLS[size]} mobile={isSmallScreen} captionStyle={capStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={capStyle(block)} widthPct={bleedImages ? 100 : STACKED_PCT[size]} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
               );
@@ -366,8 +431,8 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               return (
                 <div key={`block-${index}`} className="stacked-gallery-block" data-block-index={index} {...hoverProps}>
                   {isSmallScreen
-                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} mobile captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
-                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={resolveCaptionStyle(block)} widthPct={bleedImages ? 100 : undefined} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
+                    ? <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={1} mobile captionStyle={capStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
+                    : <StackedGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={capStyle(block)} widthPct={bleedImages ? 100 : undefined} insideCaption={themeId === 'manhattan'} leftAlign={themeId === 'manhattan'} />}
                   <Wiggle />
                 </div>
               );
@@ -378,7 +443,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant="masonry" themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="masonry-gallery-block" data-block-index={index} {...hoverProps}>
-                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} mobile={isSmallScreen} captionStyle={resolveCaptionStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
+                  <MasonryGallery images={imageRefs} onImageClick={makeClickHandler(index)} columns={isSmallScreen ? 1 : 2} mobile={isSmallScreen} captionStyle={capStyle(block)} insideCaption={themeId === 'manhattan'} bleed={bleedImages} />
                   <Wiggle />
                 </div>
               );
@@ -404,7 +469,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   )
                 : (
                     v === 4 ? `${isSmallScreen ? 'text-base px-6 py-5' : 'text-xl px-8 py-6'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
-                    : v === 3 ? `${isSmallScreen ? 'text-base px-6 py-3' : 'text-lg px-8 py-4'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
+                    : v === 3 ? `${isSmallScreen ? 'text-base px-6 py-3' : 'text-lg py-4'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
                     : v === 2 ? `${isSmallScreen ? 'text-lg px-6 py-4' : 'text-2xl py-6'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
                     : `${isSmallScreen ? 'text-2xl px-6 py-6' : 'text-4xl py-10'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
@@ -432,7 +497,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                       imageUrl={getImageRefUrl(block.image || block.imageUrl)}
                       caption={block.caption}
                       onImageClick={makeClickHandler(index)}
-                      captionStyle={resolveCaptionStyle(block)}
+                      captionStyle={capStyle(block)}
                       print={block.print}
                     />
                   </div>
@@ -448,7 +513,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     widthPct={PHOTO_CENTERED_PCT[size]}
                     onImageClick={makeClickHandler(index)}
                     print={block.print}
-                    captionStyle={resolveCaptionStyle(block)}
+                    captionStyle={capStyle(block)}
                   />
                   <Wiggle />
                 </div>
@@ -458,10 +523,10 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             case "video": {
               const variantId = resolveVariant(block, themeId)
               const videoVariant = { 'full-bleed': 1, centered: 2, 'side-by-side': 3 }[variantId] || 2
-              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo variant={videoVariant} caption={block.caption} captionStyle={resolveCaptionStyle(block)} themeId={themeId} /><Wiggle /></div> : null;
+              if (!(block.url || '').trim()) return showPlaceholders ? <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}><PlaceholderVideo variant={videoVariant} caption={block.caption} captionStyle={capStyle(block)} themeId={themeId} /><Wiggle /></div> : null;
               return (
                 <div key={`block-${index}`} className="video-block" data-block-index={index} {...hoverProps}>
-                  <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} captionStyle={resolveCaptionStyle(block)} bleed={themeId === 'manhattan'} />
+                  <VideoBlock url={block.url} caption={block.caption} variant={videoVariant} captionStyle={capStyle(block)} bleed={themeId === 'manhattan'} />
                   <Wiggle />
                 </div>
               );
@@ -541,7 +606,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 small:  { fs: 'clamp(0.95rem, 1.5vw, 1.1rem)', lh: 1.4 },
               }[resolveSize(block, themeId)] || { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 }
               const quote = block.text && (
-                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: block.quoteStyle === 'regular' ? 'normal' : 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
+                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: resolveQuoteStyle(block, themeId) === 'regular' ? 'normal' : 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
                   &#8220;{block.text}&#8221;
                 </blockquote>
               )
@@ -555,7 +620,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 // Fixed layout: quote, then square photo, then name below it.
                 // Left-aligned, sans-serif, small, tight line-height. The quote's
                 // italic/regular style is chosen in the editor (block.quoteStyle).
-                const italic = block.quoteStyle !== 'regular'
+                const italic = resolveQuoteStyle(block, themeId) !== 'regular'
                 const mFont = resolveFont(block, themeId)
                 const mAvatar = photoUrl && (
                   <div style={{ width: 38, height: 38, overflow: 'hidden', flexShrink: 0 }}>

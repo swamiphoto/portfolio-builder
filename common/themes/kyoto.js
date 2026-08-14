@@ -17,5 +17,16 @@ export const kyoto = {
       mono: '"Geist Mono", monospace',
     },
   },
-  overrides: {},
+  overrides: {
+    // Kyoto: a single photo defaults to the Centered layout, and captions default
+    // to Serif (Cormorant italic) — the warm editorial voice.
+    photo: { defaultVariant: 'centered', defaultCaptionStyle: 'serif' },
+    photos: { defaultCaptionStyle: 'serif' },
+    video: { defaultCaptionStyle: 'serif' },
+    // Text blocks default to Medium (subheading).
+    text: { defaultVariant: 'subheading' },
+    // Testimonials default to Editorial (Fraunces), Regular (not italic), Medium
+    // size, and Photo-above.
+    testimonial: { defaultVariant: 'photo-above', defaultSize: 'medium', defaultFont: 'fraunces', defaultQuoteStyle: 'regular' },
+  },
 }

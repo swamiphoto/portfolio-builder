@@ -22,7 +22,8 @@ describe('Gallery variant resolution', () => {
 
   it('falls back to theme default when no state for the active theme', () => {
     const block = { type: 'text', content: 'Hi', themeState: { manhattan: { variant: 'body' } } }
-    const { container } = renderGallery([block], 'kyoto') // kyoto default = heading
-    expect(container.querySelector('.text-block').className).toMatch(/text-4xl/)
+    const { container } = renderGallery([block], 'kyoto') // kyoto default = subheading (medium)
+    expect(container.querySelector('.text-block').className).toMatch(/text-2xl/)
+    expect(container.querySelector('.text-block').className).not.toMatch(/text-4xl/)
   })
 })

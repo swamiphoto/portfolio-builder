@@ -4,13 +4,17 @@ import BlockBuilder from '../gallery-builder/BlockBuilder'
 import GalleryPreview from '../gallery-builder/GalleryPreview'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
 import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail } from '../../../common/assetRefs'
+import { heroTitleFor } from '../../../common/pageUtils'
 import { useClientFeedback } from './useClientFeedback'
 import { EditorFeedbackProvider } from '../gallery-builder/EditorFeedbackContext'
 import ClientFeedbackBanner from './ClientFeedbackBanner'
 
 function pageToGallery(page) {
   return {
-    name: page.title,
+    // The on-canvas title edits the page's HERO title, which defaults to (and
+    // tracks) the page name until the user diverges it. The nav name is edited
+    // separately in the sidebar.
+    name: heroTitleFor(page),
     description: '',
     blocks: page.blocks || [],
     thumbnail: page.thumbnail || null,
@@ -21,9 +25,14 @@ function pageToGallery(page) {
 }
 
 function galleryToPage(page, gallery) {
+  // The canvas title edits the hero title. While it matches the page name it's
+  // "still tracking" (store nothing, so renames keep flowing through); once it
+  // diverges we persist `heroTitle` and it stays independent of the nav name.
+  const nextHero = gallery.name || ''
+  const heroTitle = nextHero === (page.title || '') ? undefined : nextHero
   return {
     ...page,
-    title: gallery.name || page.title,
+    heroTitle,
     blocks: gallery.blocks || [],
     thumbnail: gallery.thumbnail || page.thumbnail || null,
     thumbnailUrl: gallery.thumbnailUrl || pageDisplayThumbnail(page),

@@ -92,428 +92,6 @@ function WarmPhoto({ src, style, overlay = 0.08, children }) {
   )
 }
 
-function AdminShot({ width = 1080 }) {
-  const panel = '#efeae1'
-  const desk = '#e8e2d9'
-  const cardBg = '#f6f3ec'
-  const ink = T.ink
-  const faint = '#b0a490'
-  return (
-    <div
-      style={{
-        width,
-        height: width * 0.59,
-        background: desk,
-        borderRadius: 10,
-        boxShadow:
-          '0 0 0 1px rgba(26,18,10,0.08), 0 60px 100px -40px rgba(26,18,10,0.30), 0 30px 60px -20px rgba(26,18,10,0.15)',
-        overflow: 'hidden',
-        display: 'flex',
-        padding: 12,
-        gap: 0,
-        maxWidth: '100%',
-      }}
-    >
-      {/* Page sidebar */}
-      <div
-        style={{
-          width: 188,
-          background: panel,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 0 0 1px rgba(26,18,10,0.06)',
-          borderRadius: 2,
-        }}
-      >
-        <div style={{ padding: '14px 12px 10px', borderBottom: `1px solid ${T.borderSoft}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontFamily: FONT.script, fontSize: 22, color: ink, lineHeight: 0.85 }}>Sepia</span>
-            <div style={{ display: 'flex', gap: 3 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(26,18,10,0.10)' }} />
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(26,18,10,0.10)' }} />
-            </div>
-          </div>
-          <div style={{ fontFamily: FONT.serif, fontSize: 14, lineHeight: 1.05, color: ink }}>
-            Swami
-            <br />
-            Venkataramani
-          </div>
-          <div
-            style={{
-              fontFamily: FONT.mono,
-              fontSize: 7.5,
-              color: faint,
-              letterSpacing: '0.06em',
-              marginTop: 5,
-            }}
-          >
-            swamiphoto.sepia.photo
-          </div>
-          <div style={{ display: 'flex', gap: 4, marginTop: 9 }}>
-            <div
-              style={{
-                flex: 1,
-                height: 18,
-                borderRadius: 3,
-                border: `1px solid ${T.border}`,
-                fontFamily: FONT.mono,
-                fontSize: 7.5,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
-                color: T.inkSoft,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              Preview
-            </div>
-            <div
-              style={{
-                flex: 1,
-                height: 18,
-                borderRadius: 3,
-                background: T.ink900,
-                color: T.paper,
-                fontFamily: FONT.mono,
-                fontSize: 7.5,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              Publish
-            </div>
-          </div>
-        </div>
-        <div style={{ flex: 1, padding: '8px 0' }}>
-          <div
-            style={{
-              fontFamily: FONT.mono,
-              fontSize: 7,
-              letterSpacing: '0.12em',
-              color: faint,
-              padding: '4px 12px 6px',
-            }}
-          >
-            PAGES
-          </div>
-          {[
-            ['Home', 12, false],
-            ['About', null, false],
-            ['Redwoods', 48, true],
-            ['Street Photography', 124, false],
-            ['Iceland 2025', 86, false],
-            ['Instagram', null, false],
-            ['Contact', null, false],
-          ].map(([title, count, sel], i) => (
-            <div
-              key={i}
-              style={{
-                margin: '0 6px',
-                padding: '4px 8px',
-                borderRadius: 3,
-                background: sel ? '#f6f3ec' : 'transparent',
-                boxShadow: sel ? 'inset 0 0 0 1px rgba(139,111,71,0.12)' : undefined,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                marginBottom: 1,
-              }}
-            >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 1,
-                  background: sel ? T.accent : 'rgba(26,18,10,0.20)',
-                }}
-              />
-              <span
-                style={{
-                  flex: 1,
-                  fontSize: 9.5,
-                  color: sel ? ink : T.inkSoft,
-                  fontWeight: sel ? 500 : 400,
-                }}
-              >
-                {title}
-              </span>
-              {count != null && (
-                <span style={{ fontFamily: FONT.mono, fontSize: 7.5, color: faint }}>{count}</span>
-              )}
-            </div>
-          ))}
-        </div>
-        <div style={{ borderTop: `1px solid ${T.borderSoft}`, padding: 6, display: 'flex', alignItems: 'center', gap: 3 }}>
-          <div
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              background: T.ink,
-              color: T.paper,
-              fontFamily: FONT.serif,
-              fontSize: 9,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            S
-          </div>
-          <div
-            style={{
-              flex: 1,
-              height: 22,
-              borderRadius: 3,
-              fontFamily: FONT.mono,
-              fontSize: 7.5,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: T.inkSoft,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            Library
-          </div>
-          <div
-            style={{
-              flex: 1,
-              height: 22,
-              borderRadius: 3,
-              fontFamily: FONT.mono,
-              fontSize: 7.5,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: T.inkSoft,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            Settings
-          </div>
-        </div>
-      </div>
-
-      {/* Block sidebar */}
-      <div
-        style={{
-          width: 200,
-          background: panel,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 0 0 1px rgba(26,18,10,0.06)',
-          borderLeft: `1px solid ${T.borderSoft}`,
-          marginLeft: 1,
-        }}
-      >
-        <div style={{ padding: '14px 12px 10px', borderBottom: `1px solid ${T.borderSoft}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 7, letterSpacing: '0.14em', color: faint }}>EDITING</span>
-            <div style={{ display: 'flex', gap: 2 }}>
-              {[0, 1, 2].map((i) => (
-                <div key={i} style={{ width: 9, height: 9, borderRadius: 1.5, background: 'rgba(26,18,10,0.08)' }} />
-              ))}
-            </div>
-          </div>
-          <div style={{ fontFamily: FONT.serif, fontSize: 17, color: ink, lineHeight: 1, fontWeight: 400 }}>Redwoods</div>
-        </div>
-        <div style={{ flex: 1, padding: 8 }}>
-          <div
-            style={{
-              background: cardBg,
-              borderRadius: 3,
-              padding: '6px 8px',
-              marginBottom: 4,
-              boxShadow: '0 0 0 1px rgba(26,18,10,0.05)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-              <div style={{ width: 5, height: 8, background: 'rgba(26,18,10,0.18)', borderRadius: 1 }} />
-              <span style={{ fontFamily: FONT.mono, fontSize: 6.5, letterSpacing: '0.12em', color: T.inkSoft, flex: 1 }}>HERO</span>
-              <span style={{ fontFamily: FONT.mono, fontSize: 6.5, color: faint }}>Full Bleed</span>
-            </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 6, letterSpacing: '0.10em', color: faint, marginBottom: 2 }}>TITLE</div>
-            <div
-              style={{
-                fontSize: 9,
-                color: ink,
-                paddingBottom: 3,
-                borderBottom: '1px solid rgba(26,18,10,0.12)',
-                marginBottom: 6,
-              }}
-            >
-              Redwoods
-            </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 6, letterSpacing: '0.10em', color: faint, marginBottom: 2 }}>
-              DESCRIPTION
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: ink,
-                paddingBottom: 3,
-                borderBottom: '1px solid rgba(26,18,10,0.12)',
-                marginBottom: 6,
-                lineHeight: 1.3,
-              }}
-            >
-              A walk through Muir Woods, December 2024.
-            </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg,#7a6244,#a08a68)',
-                }}
-              />
-              <span style={{ fontSize: 8, color: T.inkSoft, textDecoration: 'underline' }}>Replace from library</span>
-            </div>
-          </div>
-          <div
-            style={{
-              background: cardBg,
-              borderRadius: 3,
-              padding: '6px 8px',
-              marginBottom: 4,
-              boxShadow: '0 0 0 1px rgba(26,18,10,0.05)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-              <div style={{ width: 5, height: 8, background: 'rgba(26,18,10,0.18)', borderRadius: 1 }} />
-              <span style={{ fontFamily: FONT.mono, fontSize: 6.5, letterSpacing: '0.12em', color: T.inkSoft, flex: 1 }}>TEXT</span>
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: ink,
-                paddingBottom: 3,
-                borderBottom: '1px solid rgba(26,18,10,0.12)',
-                lineHeight: 1.4,
-              }}
-            >
-              Among the giants, light arrives in slow vertical shafts.
-            </div>
-          </div>
-          <div
-            style={{
-              background: cardBg,
-              borderRadius: 3,
-              padding: '6px 8px',
-              marginBottom: 4,
-              boxShadow: '0 0 0 1px rgba(26,18,10,0.05)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-              <div style={{ width: 5, height: 8, background: 'rgba(26,18,10,0.18)', borderRadius: 1 }} />
-              <span style={{ fontFamily: FONT.mono, fontSize: 6.5, letterSpacing: '0.12em', color: T.inkSoft, flex: 1 }}>PHOTOS</span>
-              <span style={{ fontFamily: FONT.mono, fontSize: 6.5, color: faint }}>Stacked</span>
-            </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 1,
-                background: '#e8dfcd',
-              }}
-            >
-              {['#3a2e1e', '#5a4a36', '#7a6244', '#9a8466', '#c4a987', '#7a6244', '#5a4a36', '#a08a68', '#8a7252'].map(
-                (c, i) => (
-                  <div key={i} style={{ aspectRatio: '1/1', background: c }} />
-                ),
-              )}
-            </div>
-          </div>
-          <div
-            style={{
-              marginTop: 6,
-              height: 22,
-              border: `1px dashed ${T.border}`,
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: FONT.mono,
-              fontSize: 7,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: faint,
-            }}
-          >
-            + Add Block
-          </div>
-        </div>
-      </div>
-
-      {/* Preview pane */}
-      <div style={{ flex: 1, marginLeft: 16, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <div
-            style={{
-              height: 14,
-              padding: '0 6px',
-              borderRadius: 2,
-              background: '#e8e2d9',
-              border: `1px solid ${T.border}`,
-              fontFamily: FONT.mono,
-              fontSize: 7,
-              color: '#8a8276',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <span style={{ color: T.faint }}>swamiphoto.sepia.photo</span>
-            <span style={{ color: T.inkSoft }}>/redwoods</span>
-          </div>
-        </div>
-        <div
-          style={{
-            flex: 1,
-            background: '#fbf9f4',
-            borderRadius: 4,
-            boxShadow: '0 0 0 1px rgba(26,18,10,0.08)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <WarmPhoto src={PHOTOS.cta} style={{ height: '48%', position: 'relative' }} overlay={0.18} />
-          <div
-            style={{
-              flex: 1,
-              padding: 16,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 10,
-            }}
-          >
-            {PHOTOS.trio.concat(PHOTOS.trio).map((src, i) => (
-              <div
-                key={i}
-                style={{
-                  backgroundImage: `url(${src})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  borderRadius: 2,
-                  aspectRatio: '4/3',
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const COMPARISON = {
   rows: [
     ['Slideshows scored to music', true, false, false, false, false],
@@ -551,6 +129,7 @@ const FEATURES = [
     title: 'Move clients to tears',
     body: 'Turn any gallery into an immersive, musical slideshow, almost like a Reel made from your photos. Add text wherever you like, and choose from a range of layouts and themes, from sleek and modern to beautifully retro.',
     link: { label: 'See an example', href: 'https://www.swamiphoto.com/galleries/arizona/slideshow' },
+    image: '/feature-slideshow.jpg',
   },
   {
     eyebrow: 'Prints',
@@ -590,7 +169,7 @@ function GradientDivider({ width = 140 }) {
   )
 }
 
-function FeatureRow({ index, eyebrow, title, body, link, flip }) {
+function FeatureRow({ index, eyebrow, title, body, link, flip, image }) {
   return (
     <div
       style={{
@@ -601,31 +180,46 @@ function FeatureRow({ index, eyebrow, title, body, link, flip }) {
         flexWrap: 'wrap',
       }}
     >
-      {/* Image placeholder — drop a real screenshot here */}
+      {/* Image — a real screenshot when provided, else a labeled placeholder */}
       <div style={{ flex: '1 1 380px', minWidth: 300 }}>
-        <div
-          style={{
-            aspectRatio: '4 / 3',
-            borderRadius: 8,
-            background: 'linear-gradient(135deg, #efe7d8, #e3d6bf)',
-            boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 30px 60px -30px rgba(26,18,10,0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
+        {image ? (
+          <img
+            src={image}
+            alt={title}
             style={{
-              fontFamily: FONT.mono,
-              fontSize: 11,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: T.faint,
+              width: '100%',
+              aspectRatio: '4 / 3',
+              objectFit: 'cover',
+              display: 'block',
+              borderRadius: 8,
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 30px 60px -30px rgba(26,18,10,0.25)',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              aspectRatio: '4 / 3',
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #efe7d8, #e3d6bf)',
+              boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 30px 60px -30px rgba(26,18,10,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            Feature image
-          </span>
-        </div>
+            <span
+              style={{
+                fontFamily: FONT.mono,
+                fontSize: 11,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: T.faint,
+              }}
+            >
+              Feature image
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Text */}
@@ -871,12 +465,24 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Admin shot — centered below */}
+        {/* Admin shot — a real screenshot of the editor, centered below */}
         <div
           id="magic"
           style={{ marginTop: 80, display: 'flex', justifyContent: 'center', scrollMarginTop: 40 }}
         >
-          <AdminShot width={1080} />
+          <img
+            src="/home-editor-shot.jpg"
+            alt="Building a photography portfolio in Sepia, with one-click print sales"
+            style={{
+              width: 1080,
+              maxWidth: '100%',
+              height: 'auto',
+              display: 'block',
+              borderRadius: 10,
+              boxShadow:
+                '0 0 0 1px rgba(26,18,10,0.08), 0 60px 100px -40px rgba(26,18,10,0.30), 0 30px 60px -20px rgba(26,18,10,0.15)',
+            }}
+          />
         </div>
       </section>
 

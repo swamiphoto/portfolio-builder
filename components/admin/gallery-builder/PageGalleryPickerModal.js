@@ -317,6 +317,9 @@ function ParentDropdownRow({ page, current, onClick }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, color: C.text, fontWeight: current ? 500 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {page.title}
+          {page._isSelf && (
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.10em', textTransform: 'uppercase', color: C.accent, fontWeight: 600, marginLeft: 8 }}>This page</span>
+          )}
         </div>
         <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.10em', color: C.textFaint, textTransform: 'uppercase', fontWeight: 500, marginTop: 2 }}>
           /{page.slug || page.id} · {page._childCount} {page._childCount === 1 ? 'page' : 'pages'}
@@ -498,10 +501,25 @@ export default function PageGalleryPickerModal({ block, pages, currentPageId, on
       }
     })
     const topLevel = all.filter(p => !p.parentId || !byId[p.parentId])
+    // The current page can itself be a rule parent — it may host its own nested
+    // galleries that we want to surface as page links (typically while those
+    // pages are hidden from the sub-nav). Register it as a candidate without
+    // letting it appear as a selectable child in the manual tree above.
+    const currentPage = (frozenPages.current || []).find(p => p.id === currentPageId)
+    const currentPageChildren = (frozenPages.current || []).filter(p => p.parentId === currentPageId && p.type !== 'link')
+    if (currentPage && currentPageChildren.length > 0) {
+      byId[currentPageId] = currentPage
+      childrenOf[currentPageId] = currentPageChildren
+    }
     const allParentIds = Object.keys(childrenOf)
-    const candidates = all
-      .filter(p => childrenOf[p.id]?.length > 0)
-      .map(p => ({ ...p, _childCount: childrenOf[p.id].length }))
+    const candidates = [
+      ...(currentPage && currentPageChildren.length > 0
+        ? [{ ...currentPage, _childCount: currentPageChildren.length, _isSelf: true }]
+        : []),
+      ...all
+        .filter(p => childrenOf[p.id]?.length > 0)
+        .map(p => ({ ...p, _childCount: childrenOf[p.id].length })),
+    ]
 
     return {
       byId,

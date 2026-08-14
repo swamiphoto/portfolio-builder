@@ -36,9 +36,9 @@ export const baseBlocks = {
     ],
     sizes: SIZE_OPTIONS,
     defaultSize: 'large',
-    // Full bleed spans the viewport and Side has fixed proportions, so size only
-    // applies to the centered layout.
-    sizeVariants: ['centered'],
+    // Full bleed spans the viewport, so size doesn't apply there; Centered and Side
+    // both scale with it.
+    sizeVariants: ['centered', 'side-by-side'],
     captionStyles: CAPTION_STYLE_OPTIONS,
     defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
@@ -140,6 +140,10 @@ export function mergeBlockSpec(baseSpec, override) {
     ...baseSpec,
     variants,
     ...(override && override.defaultVariant ? { defaultVariant: override.defaultVariant } : {}),
+    ...(override && override.sizeVariants ? { sizeVariants: override.sizeVariants } : {}),
+    ...(override && override.defaultSize ? { defaultSize: override.defaultSize } : {}),
+    ...(override && override.defaultCaptionStyle ? { defaultCaptionStyle: override.defaultCaptionStyle } : {}),
+    ...(override && override.defaultQuoteStyle ? { defaultQuoteStyle: override.defaultQuoteStyle } : {}),
     ...(override && override.defaultAlign ? { defaultAlign: override.defaultAlign } : {}),
     ...(override && override.aligns ? { aligns: override.aligns } : {}),
     ...(override && override.fonts ? { fonts: override.fonts } : {}),

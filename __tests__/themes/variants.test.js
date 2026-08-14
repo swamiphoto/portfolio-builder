@@ -7,7 +7,7 @@ describe('resolveVariant', () => {
   })
 
   it('falls back to the theme default when no state exists', () => {
-    expect(resolveVariant({ type: 'photo' }, 'kyoto')).toBe('full-bleed')
+    expect(resolveVariant({ type: 'photo' }, 'kyoto')).toBe('centered') // Kyoto defaults photos to Centered
     expect(resolveVariant({ type: 'photo' }, 'manhattan')).toBe('single')
   })
 
@@ -33,7 +33,7 @@ describe('resolveVariant', () => {
     expect(resolveVariant({ type: 'text', variant: 2 }, 'kyoto')).toBe('subheading')
     expect(resolveVariant({ type: 'text', variant: 3 }, 'kyoto')).toBe('body')
     // Quote was removed; legacy quote blocks (variant 4) fall back to the default.
-    expect(resolveVariant({ type: 'text', variant: 4 }, 'kyoto')).toBe('heading')
+    expect(resolveVariant({ type: 'text', variant: 4 }, 'kyoto')).toBe('subheading')
   })
 })
 

@@ -5,6 +5,8 @@ import { resolveHomePage } from '../../../common/homePage'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
+import { heroTitleFor } from '../../../common/pageUtils'
+import { publicCaptureForAsset } from '../../../common/photoMeta'
 import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import { publicSiteConfig, publicPrintForAsset, publicPrintStore } from '../../../common/print/publicPrint'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
@@ -16,8 +18,10 @@ import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import SiteAnalytics from '../../../components/image-displays/SiteAnalytics'
 import { getTheme } from '../../../common/themes'
+import { fontFamilyForSlot } from '../../../common/themes/variants'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
+import { useIsMobile } from '../../../common/useIsMobile'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -26,6 +30,8 @@ function resolveBlock(block, assetsByUrl) {
     const entry = assetsByUrl[block.imageUrl]
     const resolved = { ...block, caption: resolveCaption(ref, assetsByUrl) }
     if (entry?.print) resolved.print = entry.print
+    if (entry?.capture) resolved.capture = entry.capture
+    if (entry?.uploadedAt) resolved.uploadedAt = entry.uploadedAt
     return resolved
   }
   if (block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry') {
@@ -36,6 +42,8 @@ function resolveBlock(block, assetsByUrl) {
       const entry = assetsByUrl[r.url]
       const out = { ...r, caption: resolveCaption(r, assetsByUrl) }
       if (entry?.print) out.print = entry.print
+      if (entry?.capture) out.capture = entry.capture
+      if (entry?.uploadedAt) out.uploadedAt = entry.uploadedAt
       return out
     })
     return { ...block, images, imageUrls: images.map(i => i.url) }
@@ -62,6 +70,9 @@ export async function getServerSideProps({ params, req }) {
     const entry = { assetId: a.assetId, caption: a.caption }
     const print = publicPrintForAsset(a)
     if (print) entry.print = print
+    const capture = publicCaptureForAsset(a)
+    if (capture) entry.capture = capture
+    if (a.createdAt) entry.uploadedAt = a.createdAt
     assetsByUrl[a.publicUrl] = entry
   }
   const printStore = publicPrintStore(siteConfig)
@@ -92,6 +103,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   const [comingSoon, setComingSoon] = useState(false)
 
   const [unlocked, setUnlocked] = useState(!homePage?.password)
+  const isMobile = useIsMobile()
   if (!unlocked) {
     return <PasswordGate pageTitle={homePage?.title || 'Protected'} message={homePage?.passwordGateMessage} onUnlock={(v) => { if (v === homePage.password) { setUnlocked(true); return true } return false }} />
   }
@@ -122,6 +134,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
           }}
           title={coverConfig.heading || siteConfig.siteName || ''}
           description={coverConfig.subheading || siteConfig.tagline || ''}
+          titleFontFamily={fontFamilyForSlot(siteConfig?.design?.theme, coverConfig.titleFont || 'serif')}
+          descriptionFontFamily={fontFamilyForSlot(siteConfig?.design?.theme, coverConfig.descriptionFont || 'serif')}
           primaryButton={{
             label: coverConfig.buttonText || 'View my portfolio',
             href: initialPageHref || undefined,
@@ -143,6 +157,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   const theme = getTheme(siteConfig?.design?.theme)
   const isProvence = theme.id === 'provence'
+  // Florence owns its own rail inside the gallery (FlorenceWall), so no SiteNav.
+  const isFlorence = theme.id === 'florence'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (homePage?.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -150,7 +166,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   return (
     <ThemeProvider themeId={theme.id}>
-    <div className="min-h-screen bg-white font-sans relative theme-shell">
+    <div className="min-h-screen bg-white font-sans relative theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
       <Head>
         <title>{ogTitle}</title>
         {siteConfig.favicon && <link rel="icon" href={siteConfig.favicon} />}
@@ -166,7 +182,9 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
       <SiteAnalytics analytics={siteConfig.analytics} />
-      {!isProvence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
+      {/* On mobile every theme uses the shared hamburger nav. Provence keeps its
+          bespoke split-cover header only on desktop. */}
+      {!isFlorence && (!isProvence || isMobile) && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
       <main className="theme-content">
         {homePage ? (
           <ClientEngagementProvider
@@ -180,7 +198,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             heroPresent={!!homePage?.cover?.imageUrl}
             branding={{ siteName: siteConfig.siteName, logo: siteConfig.logoType === 'image' ? siteConfig.logo : '', logoFont: siteConfig.logoFont || 'theme' }}
           >
-            {isProvence && (
+            {isProvence && !isMobile && (
               <ProvenceHeader
                 title={homePage?.title || siteConfig.siteName}
                 basePath={basePath}
@@ -192,7 +210,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
             )}
             <PageCover
               cover={homePage?.cover}
-              title={homePage?.title}
+              title={heroTitleFor(homePage)}
               description={homePage?.description}
               slideshowHref={slideshowHref}
               clientFeaturesEnabled={!!homePage?.clientFeatures?.enabled}
@@ -201,7 +219,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               siteName={siteConfig.siteName}
             />
             <Gallery
-              name={homePage.title}
+              name={heroTitleFor(homePage)}
               description={homePage.description}
               blocks={resolvedBlocks}
               pages={siteConfig.pages}

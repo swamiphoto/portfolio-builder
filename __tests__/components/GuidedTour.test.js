@@ -1,5 +1,5 @@
 // __tests__/components/GuidedTour.test.js
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import GuidedTour from '@/components/admin/onboarding/GuidedTour'
 
 const steps = [
@@ -38,9 +38,18 @@ describe('GuidedTour', () => {
     expect(onFinish).toHaveBeenCalledWith('done')
   })
 
-  it('finishes done immediately when no anchors resolve', () => {
-    const onFinish = jest.fn()
-    render(<GuidedTour steps={[{ selector: '[data-tour="missing"]', title: 'x', body: 'y' }]} onFinish={onFinish} />)
-    expect(onFinish).toHaveBeenCalledWith('done')
+  it('does not finish right away when anchors are missing, but gives up after the retry window', () => {
+    jest.useFakeTimers()
+    try {
+      const onFinish = jest.fn()
+      render(<GuidedTour steps={[{ selector: '[data-tour="missing"]', title: 'x', body: 'y' }]} onFinish={onFinish} />)
+      // It waits (anchors may still be mounting) rather than marking the tour seen.
+      expect(onFinish).not.toHaveBeenCalled()
+      // After the polling window (~2.5s) with no anchor, it gives up.
+      act(() => { jest.advanceTimersByTime(3000) })
+      expect(onFinish).toHaveBeenCalledWith('done')
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

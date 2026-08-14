@@ -1,7 +1,6 @@
 // common/gcsClient.js
 // Server-side only — never import from client components.
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
-import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 
 export const s3 = new S3Client({
   region: 'auto',
@@ -131,25 +130,4 @@ export async function deleteFiles(keys) {
     for (const e of Errors) errors.push({ key: e.Key, message: e.Message })
   }
   return { deleted, errors }
-}
-
-/**
- * Create a presigned POST URL for direct browser uploads.
- * Returns { url, fields } — client POSTs a multipart form to url with fields + file.
- * @param {string} key - destination object key
- * @param {string} contentType - e.g. 'image/jpeg'
- * @param {number} maxBytes - max upload size in bytes (default 50MB)
- * @returns {Promise<{ url: string, fields: Record<string,string> }>}
- */
-export async function createUploadPost(key, contentType, maxBytes = 50 * 1024 * 1024) {
-  return createPresignedPost(s3, {
-    Bucket: BUCKET,
-    Key: key,
-    Conditions: [
-      ['content-length-range', 0, maxBytes],
-      ['eq', '$Content-Type', contentType],
-    ],
-    Fields: { 'Content-Type': contentType },
-    Expires: 900, // 15 minutes
-  })
 }

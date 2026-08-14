@@ -101,6 +101,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   highlightedBlockIndex,
   onBlockHover,
   themeId = 'kyoto',
+  autoFocusTitle,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -115,6 +116,34 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const blocksContainerRef = useRef(null);
 
   const { startDrag, endDrag, dropTargetPageId } = useDrag()
+
+  // BlockCard is memoized and its comparator ignores these callback props, so a
+  // card can hold a handler closed over a STALE gallery/onChange (e.g. the drop
+  // target rendered while a sibling block was still empty, then didn't re-render
+  // when photos were added to that sibling). Reading through refs makes every
+  // mutation operate on the CURRENT gallery, so a cross-block move can't wipe a
+  // block whose images were added after the target last rendered.
+  const galleryRef = useRef(gallery); galleryRef.current = gallery;
+  const onChangeRef = useRef(onChange); onChangeRef.current = onChange;
+
+  // Masthead title input — focused + selected when a page is freshly created so
+  // the user can rename "Untitled" by just typing. `autoFocusTitle` is a token
+  // (timestamp) that changes on each creation.
+  const titleInputRef = useRef(null);
+  useEffect(() => {
+    if (!autoFocusTitle) return;
+    // Defer to the next frame so the "Untitled" value is committed to the input
+    // before we select it — otherwise the caret lands at the end instead of the
+    // text being highlighted.
+    const raf = requestAnimationFrame(() => {
+      const el = titleInputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(0, el.value.length);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [autoFocusTitle]);
+  const emit = (next) => onChangeRef.current(next);
 
   const scrollSidebarToBlock = (index) => {
     const el = blocksContainerRef.current;
@@ -135,13 +164,13 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     }
   }), []);
 
-  const updateField = (key, value) => onChange({ ...gallery, [key]: value });
+  const updateField = (key, value) => emit({ ...galleryRef.current, [key]: value });
 
   const addBlock = (block) => {
-    const blocks = [...(gallery.blocks || [])];
+    const blocks = [...(galleryRef.current.blocks || [])];
     const insertIndex = insertAtIndex !== null ? insertAtIndex : blocks.length;
     blocks.splice(insertIndex, 0, block);
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
     setInsertAtIndex(null);
     // Scroll both the block sidebar and the live preview to the new block so its
     // placeholder is visible, wherever it was inserted. The preview scroll waits a
@@ -151,37 +180,37 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   };
 
   const updateBlock = (index, updated) => {
-    const blocks = [...(gallery.blocks || [])];
+    const blocks = [...(galleryRef.current.blocks || [])];
     blocks[index] = updated;
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
   };
 
   const removeBlock = (index) => {
-    const blocks = (gallery.blocks || []).filter((_, i) => i !== index);
-    onChange({ ...gallery, blocks });
+    const blocks = (galleryRef.current.blocks || []).filter((_, i) => i !== index);
+    emit({ ...galleryRef.current, blocks });
   };
 
   const moveBlock = (index, direction) => {
-    const blocks = [...(gallery.blocks || [])];
+    const blocks = [...(galleryRef.current.blocks || [])];
     const target = index + direction;
     if (target < 0 || target >= blocks.length) return;
     [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
   };
 
   const removePhotoFromBlock = (blockIndex, imageRef) => {
-    const blocks = [...(gallery.blocks || [])];
+    const blocks = [...(galleryRef.current.blocks || [])];
     blocks[blockIndex] = {
       ...blocks[blockIndex],
       ...buildMultiImageFields(
         removeImageRef(blocks[blockIndex].images || blocks[blockIndex].imageUrls || [], imageRef)
       ),
     };
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
   };
 
   const removeImagesFromBlock = (blockIndex, imageRefs) => {
-    const blocks = [...(gallery.blocks || [])];
+    const blocks = [...(galleryRef.current.blocks || [])];
     const block = blocks[blockIndex];
     if (!block) return;
     const urls = new Set(imageRefs.map(r => r.url));
@@ -191,11 +220,11 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       const remaining = normalizeImageRefs(block.images || block.imageUrls || []).filter(r => !urls.has(r.url));
       blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
     }
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
   };
 
   const moveImagesBetweenBlocks = (sourceBlockIndex, imageRefs, targetBlockIndex, updatedTargetBlock) => {
-    const blocks = [...(gallery.blocks || [])];
+    const blocks = [...(galleryRef.current.blocks || [])];
     blocks[targetBlockIndex] = updatedTargetBlock;
     const src = blocks[sourceBlockIndex];
     if (src) {
@@ -207,15 +236,15 @@ const BlockBuilder = forwardRef(function BlockBuilder({
         blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(remaining) };
       }
     }
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const blocks = Array.from(gallery.blocks || []);
+    const blocks = Array.from(galleryRef.current.blocks || []);
     const [moved] = blocks.splice(result.source.index, 1);
     blocks.splice(result.destination.index, 0, moved);
-    onChange({ ...gallery, blocks });
+    emit({ ...galleryRef.current, blocks });
   };
 
   return (
@@ -249,6 +278,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
               {onOpenPageSettings && (
                 <Tip label="Page settings" side="bottom">
                   <button
+                    data-tour="page-settings"
                     onClick={(e) => onOpenPageSettings(e.currentTarget)}
                     style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: '#9e9788', transition: 'background 120ms' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,18,10,0.05)' }}
@@ -319,8 +349,16 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             </div>
           </div>
 
-          {/* Page title — Fraunces 22px */}
-          <div
+          {/* Hero title — editable, Fraunces 22px. This is the big title shown on
+              the page itself; it defaults to (and tracks) the page name until
+              edited here, then diverges. The nav name is renamed in the sidebar. */}
+          <EditableInput
+            ref={titleInputRef}
+            value={gallery.name || ''}
+            onChange={(e) => updateField('name', e.target.value)}
+            placeholder="Untitled"
+            spellCheck={false}
+            className="w-full bg-transparent border-none outline-none p-0 placeholder:text-[#b8ab97]"
             style={{
               fontFamily: "'Fraunces', Georgia, serif",
               fontSize: 22,
@@ -328,14 +366,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
               lineHeight: 1.2,
               fontWeight: 500,
               letterSpacing: '-0.01em',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
               paddingBottom: 2,
             }}
-          >
-            {gallery.name || 'Untitled'}
-          </div>
+          />
         </div>
       )}
 

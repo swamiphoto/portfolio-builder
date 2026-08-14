@@ -21,7 +21,11 @@ export function captionStyleCss(id) {
   return {}
 }
 
-export function resolveCaptionStyle(block) {
+// `fallback` is the theme's default caption style (from the block spec's
+// defaultCaptionStyle) — used when the block hasn't picked one. Defaults to the
+// global DEFAULT_CAPTION_STYLE ('sans') when no theme fallback is supplied.
+export function resolveCaptionStyle(block, fallback = DEFAULT_CAPTION_STYLE) {
   const valid = CAPTION_STYLE_OPTIONS.map((c) => c.id)
-  return valid.includes(block?.captionStyle) ? block.captionStyle : DEFAULT_CAPTION_STYLE
+  if (valid.includes(block?.captionStyle)) return block.captionStyle
+  return valid.includes(fallback) ? fallback : DEFAULT_CAPTION_STYLE
 }

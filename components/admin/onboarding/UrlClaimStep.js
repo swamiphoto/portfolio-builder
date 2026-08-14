@@ -64,7 +64,7 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
           </p>
         )}
 
-        <p style={{ fontSize: 13.5, color: '#8a7a62', marginTop: showSlugHint ? 14 : 26, lineHeight: 1.6, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance' }}>
+        <p style={{ fontSize: 16, color: '#8a7a62', marginTop: showSlugHint ? 14 : 26, lineHeight: 1.6, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance' }}>
           Lowercase letters, numbers, and hyphens. You can change it anytime.
         </p>
 

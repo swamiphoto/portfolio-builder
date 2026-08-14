@@ -6,6 +6,7 @@ describe('themeOptions', () => {
     expect(themeOptions()).toEqual([
       { value: 'kyoto', label: 'Kyoto' },
       { value: 'manhattan', label: 'Copenhagen' },
+      { value: 'florence', label: 'Florence' },
     ])
   })
 })

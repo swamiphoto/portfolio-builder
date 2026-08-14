@@ -72,43 +72,40 @@ export default function Onboarding() {
     return (
       <div
         className="flex flex-col items-center justify-center h-screen font-sans"
-        style={{ background: 'var(--desk, #e8e2d9)' }}
+        style={{ background: 'var(--desk, #e8e2d9)', position: 'relative', padding: '0 24px' }}
       >
-        <div style={{ width: '100%', maxWidth: 420, padding: '0 32px' }}>
-          <p style={{
-            fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
-            fontSize: 10.5,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#a8967a',
-            fontWeight: 500,
-            marginBottom: 20,
-          }}>
-            {claimedSlug}.{rootDomain}
-          </p>
+        {/* Sepia logo, top-left — same script wordmark as the home page */}
+        <div style={{ position: 'absolute', top: 0, left: 0, padding: '22px 28px' }}>
+          <span style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: '#2c2416' }}>Sepia</span>
+        </div>
 
-          <h1 style={{
-            fontFamily: '"Fraunces", Georgia, serif',
-            fontSize: 30,
-            fontWeight: 300,
-            fontStyle: 'italic',
-            color: '#2c2416',
-            marginBottom: 10,
-            lineHeight: 1.15,
-          }}>
+        <div style={{ width: '100%', maxWidth: 860, textAlign: 'center' }}>
+          <p className="font-fraunces" style={{ fontSize: 21, fontStyle: 'italic', color: '#5a4a36', marginBottom: 22 }}>
             {isReturning
               ? `Welcome back${firstName ? `, ${firstName}` : ''}.`
               : `Welcome${firstName ? `, ${firstName}` : ''}.`}
-          </h1>
-          <p style={{ fontSize: 14.5, color: '#7a6b55', marginBottom: 40, lineHeight: 1.6, maxWidth: 340 }}>
+          </p>
+
+          {/* the hero: the studio address, big — the way it'll read on a card */}
+          <div
+            className="font-fraunces"
+            style={{
+              fontSize: 'clamp(34px, 7vw, 68px)', fontWeight: 400, lineHeight: 1.05, color: '#2c2416',
+              wordBreak: 'break-word',
+            }}
+          >
+            <span>{claimedSlug}</span>
+            <span style={{ color: '#b0a084', fontWeight: 300 }}>.{rootDomain}</span>
+          </div>
+
+          <p style={{ fontSize: 16, color: '#7a6b55', marginTop: 26, lineHeight: 1.6, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance' }}>
             Let's get your site set up. Do you have photos on another site you want to bring over?
           </p>
 
           <button
             onClick={() => setShowImport(true)}
             style={{
-              width: '100%',
-              padding: '14px 16px',
+              marginTop: 34, padding: '14px 30px',
               background: '#2c2416',
               color: '#f6f3ec',
               fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
@@ -116,11 +113,10 @@ export default function Onboarding() {
               fontWeight: 500,
               letterSpacing: '0.10em',
               textTransform: 'uppercase',
-              borderRadius: 5,
+              borderRadius: 6,
               border: 'none',
               cursor: 'pointer',
               transition: 'background 0.15s',
-              marginBottom: 14,
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#3d2d18' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = '#2c2416' }}
@@ -128,28 +124,28 @@ export default function Onboarding() {
             Import from an existing site
           </button>
 
-          <button
-            onClick={() => goToAdmin(claimedSlug)}
-            style={{
-              width: '100%',
-              padding: '13px 16px',
-              background: 'transparent',
-              color: '#7a6b55',
-              fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              borderRadius: 5,
-              border: '1px solid rgba(160,140,110,0.35)',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)'; e.currentTarget.style.color = '#2c2416' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7a6b55' }}
-          >
-            I'll do this later
-          </button>
+          <div style={{ marginTop: 18 }}>
+            <button
+              onClick={() => goToAdmin(claimedSlug)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#9a876b',
+                fontFamily: '"SF Mono", Menlo, Monaco, Consolas, monospace',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                padding: '8px 10px',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#2c2416' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#9a876b' }}
+            >
+              I'll set this up later
+            </button>
+          </div>
         </div>
 
         {showImport && (

@@ -3,12 +3,22 @@ import { getBlockSpec, getTheme } from './index'
 // Legacy → theme-local variant id mapping, used only when a block has no
 // themeState entry (older configs). Keyed by block type.
 const LEGACY = {
-  photo: (b) => (b.layout === 'Centered' || b.variant === 2 ? 'centered' : 'full-bleed'),
+  // Only map an *explicit* legacy layout/variant. With no hint, return null so the
+  // theme's own default wins (kyoto→centered, provence→full-bleed). Mapping hint-less
+  // photos to 'full-bleed' shadowed non-full-bleed theme defaults.
+  photo: (b) =>
+    b.layout === 'Centered' || b.variant === 2
+      ? 'centered'
+      : b.layout || b.variant
+        ? 'full-bleed'
+        : null,
   // Only map an *explicit* legacy layout. With no layout hint, return null so the
   // theme's own default wins (kyoto→stacked, manhattan/provence→grid). Returning
   // 'stacked' unconditionally used to shadow those non-stacked theme defaults.
   photos: (b) => (b.layout === 'masonry' ? 'masonry' : b.layout === 'stacked' ? 'stacked' : null),
-  text: (b) => ({ 1: 'heading', 2: 'subheading', 3: 'body', 4: 'quote' }[b.variant || 1] || 'heading'),
+  // Map an explicit legacy variant; with none, return null so the theme default
+  // wins (kyoto → subheading / medium).
+  text: (b) => (b.variant ? ({ 1: 'heading', 2: 'subheading', 3: 'body', 4: 'quote' }[b.variant] || 'heading') : null),
   video: (b) => (b.layout === 'Centered' ? 'centered' : { 1: 'full-bleed', 2: 'centered', 3: 'side-by-side' }[b.variant] || 'centered'),
   testimonial: (b) => (b.variant === 2 ? 'quote-above' : 'photo-above'),
 }
@@ -67,6 +77,29 @@ export function resolveFont(block, themeId) {
     ? block.font
     : (spec?.defaultFont || 'serif')
   return fonts[slot] || fonts.serif || '"Cormorant Garamond", Georgia, serif'
+}
+
+// Resolve a bare font-slot id (e.g. 'serif' | 'display' | 'fraunces' | 'sans')
+// to a CSS font-family for the given theme. Used outside the block system, e.g.
+// the cover page's title/description font toggles.
+export function fontFamilyForSlot(themeId, slot) {
+  const fonts = getTheme(themeId).tokens?.fonts || {}
+  return fonts[slot] || fonts.serif || '"Cormorant Garamond", Georgia, serif'
+}
+
+// Florence-only vertical Position of a block's content within its full-height
+// column: top | center | bottom (→ flex justify-content). Default top.
+const FLORENCE_ANCHORS = ['top', 'center', 'bottom']
+export function resolveFlorenceAnchor(block) {
+  return FLORENCE_ANCHORS.includes(block?.florenceAnchor) ? block.florenceAnchor : 'top'
+}
+
+// Testimonial quote style (italic | regular). The block's choice wins; otherwise
+// the theme's default (from the block spec's defaultQuoteStyle), else italic.
+export function resolveQuoteStyle(block, themeId) {
+  if (block?.quoteStyle === 'regular' || block?.quoteStyle === 'italic') return block.quoteStyle
+  const def = getBlockSpec(themeId, 'testimonial')?.defaultQuoteStyle
+  return def === 'regular' ? 'regular' : 'italic'
 }
 
 export function resolveButtonStyle(block, themeId) {

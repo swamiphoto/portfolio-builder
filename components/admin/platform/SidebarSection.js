@@ -1,7 +1,10 @@
 // components/admin/platform/SidebarSection.js
 
-export default function SidebarSection({ label, pages, depth = 0, renderRow, droppableId, emptyHint = null }) {
-  const isEmpty = pages.length === 0 && depth === 0
+export default function SidebarSection({ label, pages, depth = 0, renderRow, droppableId, emptyHint = null, draftingHere = false }) {
+  // When a new-page draft row is being rendered right after this section, don't
+  // treat it as empty: the draft already fills the space, so reserving the
+  // drop-target min-height would leave a blank gap above the draft row.
+  const isEmpty = pages.length === 0 && depth === 0 && !draftingHere
   return (
     // When empty, keep a min-height so the section is still a hittable drop
     // target (you can drag a page into an empty Pages/Hidden section), and render

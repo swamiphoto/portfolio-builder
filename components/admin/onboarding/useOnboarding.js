@@ -24,5 +24,16 @@ export function useOnboarding() {
     }).catch(() => {})
   }, [])
 
-  return { onboarding, loading, error, markSeen }
+  // Clear the "seen" flags so the guided tours run again from the top.
+  const resetOnboarding = useCallback(() => {
+    const cleared = { tourDone: false, blocksTipSeen: false }
+    setOnboarding(prev => ({ ...prev, ...cleared }))
+    fetch('/api/admin/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onboarding: cleared }),
+    }).catch(() => {})
+  }, [])
+
+  return { onboarding, loading, error, markSeen, resetOnboarding }
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { normalizeImageRef } from "../../../common/assetRefs";
+import { uploadFile } from "../UploadModal";
 import { getSizedUrl } from "../../../common/imageUtils";
 import { applyFilters, computeFilterCounts, placeholderColor } from "../../../common/libraryFilters";
 import PickerFilterRail from "./PickerFilterRail";
@@ -135,8 +136,10 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
       className="group relative cursor-pointer overflow-hidden transition-all h-full"
       style={{
         background: placeholderColor(asset.assetId),
+        // White inner ring + brown outer ring so selection reads on any photo
+        // (a plain brown ring camouflages against sepia-toned images).
         boxShadow: isSelected
-          ? '0 0 0 2px #8b6f47, 0 4px 12px rgba(60,40,15,0.16)'
+          ? '0 0 0 2px #fff, 0 0 0 4.5px #8b6f47, 0 4px 14px rgba(60,40,15,0.24)'
           : '0 0 0 1px rgba(26,18,10,0.06), 0 1px 3px rgba(26,18,10,0.05)',
         borderRadius: 4,
       }}
@@ -175,16 +178,23 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
       </button>
       </Tip>
 
-      {/* Selection check — top-right */}
-      {isSelected && (
+      {/* Selection indicator — top-right. Selected: filled badge with a white
+          border + shadow so it stays visible on any photo. Unselected: a faint
+          hollow circle on hover, so it's clear where to click to select. */}
+      {isSelected ? (
         <div
-          className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
-          style={{ background: '#8b6f47', boxShadow: '0 1px 2px rgba(0,0,0,0.18)' }}
+          className="absolute top-1.5 right-1.5 rounded-full flex items-center justify-center"
+          style={{ width: 22, height: 22, background: '#8b6f47', border: '2px solid #fff', boxShadow: '0 1px 5px rgba(0,0,0,0.4)' }}
         >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8.5L7 12l6-7" />
           </svg>
         </div>
+      ) : (
+        <div
+          className="absolute top-1.5 right-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ width: 22, height: 22, border: '2px solid rgba(255,255,255,0.9)', background: 'rgba(20,12,4,0.22)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', boxShadow: '0 1px 4px rgba(0,0,0,0.28)' }}
+        />
       )}
 
       {/* Hover overlay — caption + EXIF */}
@@ -610,20 +620,13 @@ function UploadTab({ onUploaded, libraryConfig }) {
     for (const file of files) {
       setProgress((p) => ({ ...p, [file.name]: "pending" }));
       try {
-        const res = await fetch("/api/admin/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, contentType: file.type, folder, sets }),
-        });
-        const { signedUrl, gcsUrl } = await res.json();
-        const formData = new FormData();
-        Object.entries(signedUrl.fields).forEach(([k, v]) => formData.append(k, v));
-        formData.append("file", file);
-        const uploadRes = await fetch(signedUrl.url, { method: "POST", body: formData });
-        if (!uploadRes.ok) throw new Error("Upload failed");
+        // Server-proxied upload (R2 PutObject + thumbnails). We can't use a
+        // presigned POST here — R2 returns 501 NotImplemented for POST policies.
+        const { gcsUrl } = await uploadFile(file, { folder });
         setProgress((p) => ({ ...p, [file.name]: "done" }));
         uploadedUrls.push(gcsUrl);
-      } catch {
+      } catch (err) {
+        console.error("Photo upload failed:", file.name, err);
         setProgress((p) => ({ ...p, [file.name]: "error" }));
       }
     }

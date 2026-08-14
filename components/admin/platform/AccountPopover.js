@@ -140,7 +140,7 @@ const SOCIAL_LINKS = [
   { key: 'website',   label: 'Website',     placeholder: 'https://…' },
 ]
 
-export default function AccountPopover({ siteConfig, username, email, anchorEl, onUpdate, onClose, onSignOut }) {
+export default function AccountPopover({ siteConfig, username, email, anchorEl, onUpdate, onClose, onSignOut, onReplayTour }) {
   const [tab, setTab] = useState('profile')
   const [showBetaNote, setShowBetaNote] = useState(false)
   const [danger, setDanger] = useState(null) // 'site' | 'library' | 'account'
@@ -493,7 +493,20 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
         </Section>
       </>}
 
-      <div style={{ padding: '11px 14px', borderTop: DIVIDER_STRONG }}>
+      <div style={{ padding: '11px 14px', borderTop: DIVIDER_STRONG, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {onReplayTour ? (
+          <button
+            onClick={() => { onReplayTour(); onClose?.() }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text-secondary)', transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" />
+            </svg>
+            Replay tour
+          </button>
+        ) : <span />}
         <button
           onClick={onSignOut}
           style={{ fontSize: 12.5, color: 'var(--text-secondary)', transition: 'color 0.15s' }}

@@ -4,13 +4,13 @@ const SERIF = "'Fraunces', Georgia, serif"
 
 export default function CanvasEmptyState({ onAddPage }) {
   return (
-    <div className="flex-1 h-full min-w-0 flex items-center justify-center" style={{ background: '#fff' }}>
+    <div className="flex-1 h-full min-w-0 flex items-center justify-center" style={{ background: 'radial-gradient(120% 80% at 50% 35%, #fbf9f4 0%, #f2ece2 100%)' }}>
       <div style={{ maxWidth: 360, textAlign: 'center', padding: '0 24px' }}>
         <h2 style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 400, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.2 }}>
           Create your first page
         </h2>
         <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 22 }}>
-          A page is simply a mix of photos, videos, text, or other blocks like testimonials.
+          A page is a stack of blocks: photos, video, text, testimonials, and more.
         </p>
         <button
           type="button"

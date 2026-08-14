@@ -4,7 +4,7 @@ import EmptyHint from '@/components/admin/onboarding/EmptyHint'
 
 describe('EmptyHint', () => {
   it('renders its message', () => {
-    render(<EmptyHint>No pages yet. What you add here becomes your site's navigation.</EmptyHint>)
-    expect(screen.getByText(/becomes your site's navigation/)).toBeInTheDocument()
+    render(<EmptyHint>No pages yet. What you add here will appear on your site&rsquo;s menu.</EmptyHint>)
+    expect(screen.getByText(/will appear on your site/)).toBeInTheDocument()
   })
 })

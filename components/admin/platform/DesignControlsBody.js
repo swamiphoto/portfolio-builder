@@ -39,6 +39,44 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
         </DesignSection>
       )}
 
+      {(config.design?.theme || 'kyoto') === 'florence' && (config.logoType || 'sitename') === 'sitename' && (
+        <DesignSection label="Logo on rail">
+          <DesignPillToggle
+            value={config.design?.florenceLogo === 'horizontal' ? 'horizontal' : 'vertical'}
+            onChange={(v) => update({ design: { ...(config.design || {}), florenceLogo: v } })}
+            options={[{ value: 'vertical', label: 'Vertical' }, { value: 'horizontal', label: 'Horizontal' }]}
+          />
+        </DesignSection>
+      )}
+
+      {(config.design?.theme || 'kyoto') === 'florence' && (
+        <DesignSection label="Photo details" description="Show each photo's date or full camera details beneath it.">
+          <DesignPillToggle
+            value={['off', 'date', 'exif'].includes(config.design?.florencePhotoMeta) ? config.design.florencePhotoMeta : 'date'}
+            onChange={(v) => update({ design: { ...(config.design || {}), florencePhotoMeta: v } })}
+            options={[
+              { value: 'off', label: 'Off' },
+              { value: 'date', label: 'Date' },
+              { value: 'exif', label: 'EXIF' },
+            ]}
+          />
+        </DesignSection>
+      )}
+
+      {(config.design?.theme || 'kyoto') === 'florence' && (
+        <DesignSection label="Photo treatment">
+          <DesignPillToggle
+            value={config.design?.photoTreatment || 'colour'}
+            onChange={(v) => update({ design: { ...(config.design || {}), photoTreatment: v } })}
+            options={[
+              { value: 'colour', label: 'Colour' },
+              { value: 'mono', label: 'Mono' },
+              { value: 'sepia', label: 'Sepia' },
+            ]}
+          />
+        </DesignSection>
+      )}
+
       {resolveNavStyle(config.design?.theme || 'kyoto') !== 'left-rail' && (
         <DesignSection label="Navigation">
           <DesignPillToggle

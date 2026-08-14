@@ -9,6 +9,9 @@ import HoverCaption from "../HoverCaption";
 
 const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72, insideCaption = false, leftAlign = false }) => {
   const capCss = captionStyleCss(captionStyle);
+  // Serif (Cormorant) has a small x-height, so bump it to a fixed, legible size —
+  // never scales, same for every image in the block.
+  const capSize = captionStyle === 'serif' ? 'text-[17px] leading-snug' : 'text-sm';
   const colWidth = `${widthPct}%`;
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,29 +56,24 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
     });
   }, [imageUrls]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // leftAlign (Manhattan): one full-width column, every image in order regardless
-  // of orientation — portraits get the same full span as landscapes, just taller.
-  // Otherwise: interleave full-width landscapes with 48% portrait pairs.
+  // Always render in the block's order (by id). leftAlign (Manhattan) puts every
+  // image full width. Otherwise, keep the order but pair two ADJACENT portraits
+  // side by side (48% each); a lone portrait renders narrower and a landscape full
+  // width — so the sequence is never rearranged by orientation.
+  const ordered = [...processedImages].sort((a, b) => a.id - b.id);
   let combinedRows;
   if (leftAlign) {
-    combinedRows = [...processedImages].sort((a, b) => a.id - b.id);
+    combinedRows = ordered;
   } else {
-    const verticalImages = processedImages.filter((image) => image.aspectRatio < 1);
-    const horizontalImages = processedImages.filter((image) => image.aspectRatio >= 1);
-
-    const verticalPairs = [];
-    for (let i = 0; i < verticalImages.length; i += 2) {
-      verticalPairs.push([verticalImages[i], verticalImages[i + 1]]);
-    }
-
     combinedRows = [];
-    const maxLength = Math.max(horizontalImages.length, verticalPairs.length);
-    for (let i = 0; i < maxLength; i++) {
-      if (i < horizontalImages.length) {
-        combinedRows.push(horizontalImages[i]);
-      }
-      if (i < verticalPairs.length) {
-        combinedRows.push(verticalPairs[i]);
+    for (let i = 0; i < ordered.length; ) {
+      const cur = ordered[i];
+      const next = ordered[i + 1];
+      if (cur.aspectRatio < 1) {
+        if (next && next.aspectRatio < 1) { combinedRows.push([cur, next]); i += 2; }
+        else { combinedRows.push([cur]); i += 1; } // lone portrait → 48%, still in place
+      } else {
+        combinedRows.push(cur); i += 1;
       }
     }
   }
@@ -117,7 +115,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                           {insideCaption && <HoverCaption caption={getCaptionForUrl(image.src)} captionStyle={captionStyle} />}
                         </div>
                         {getCaptionForUrl(image.src) && !insideCaption && (
-                          <p className="mt-2 text-sm italic text-center text-gray-500" style={capCss}>{getCaptionForUrl(image.src)}</p>
+                          <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{getCaptionForUrl(image.src)}</p>
                         )}
                       </div>
                     ) : null
@@ -148,7 +146,7 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   {insideCaption && <HoverCaption caption={getCaptionForUrl(entry.src)} captionStyle={captionStyle} />}
                 </div>
                 {getCaptionForUrl(entry.src) && !insideCaption && (
-                  <p className="mt-2 text-sm italic text-center text-gray-500" style={{ ...capCss, maxWidth: colWidth }}>{getCaptionForUrl(entry.src)}</p>
+                  <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={{ ...capCss, maxWidth: colWidth }}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>
             )}

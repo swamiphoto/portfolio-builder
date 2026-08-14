@@ -27,11 +27,16 @@ function CtaButton({ label, href, onClick, style, fullWidth }) {
   )
 }
 
-export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [], themeId, siteName }) {
+export default function PageCover({ cover, title, description, slideshowHref, clientFeaturesEnabled, primaryButton, navLinks = [], themeId, siteName, titleFontFamily, descriptionFontFamily }) {
   const ctx = useClientEngagement()
   const isMobile = useIsMobile()
   if (themeId === 'manhattan') {
     return <ManhattanHero title={title} description={description} slideshowHref={slideshowHref} />
+  }
+  // Florence renders its museum header (name on paper) via GalleryCover, so it
+  // never shows an image hero — the works themselves lead.
+  if (themeId === 'florence') {
+    return null
   }
   if (themeId === 'provence') {
     if (!cover || !cover.imageUrl) return null
@@ -92,8 +97,8 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
             the button never hugs the name when there's no description. */}
         {(title || description) && (
           <div className="space-y-3 mb-9">
-            {title && <h2 className="text-4xl md:text-6xl font-light tracking-tight">{title}</h2>}
-            {description && <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto">{description}</p>}
+            {title && <h2 className="text-4xl md:text-6xl font-light tracking-tight" style={titleFontFamily ? { fontFamily: titleFontFamily } : undefined}>{title}</h2>}
+            {description && <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto" style={descriptionFontFamily ? { fontFamily: descriptionFontFamily } : undefined}>{description}</p>}
           </div>
         )}
         {navLinks.length > 0 && (

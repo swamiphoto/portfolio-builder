@@ -44,16 +44,17 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
   };
 
   const renderImage = () => {
-    // Mobile: every full-bleed / centered photo renders as one uniform full-width
-    // image (10px side margin), regardless of the desktop variant, so all images
-    // on a phone are the same width. Side-by-side (3) keeps its own stacking.
-    if (isMobile && variant !== 3) {
+    // Mobile: a centered photo renders as one uniform full-width image with the
+    // shared 10px side margin, so all non-bleed images on a phone are the same
+    // width. Full-bleed (variant 1) falls through to its edge-to-edge path below;
+    // side-by-side (3) keeps its own stacking.
+    if (isMobile && variant === 2) {
       return (
         <div className="relative group px-[10px]">
           <img
             src={getSizedUrl(imageUrl, 'display')}
             alt={caption || "Photo"}
-            className="w-full h-auto object-cover shadow-md rounded-2xl cursor-pointer"
+            className="w-full h-auto object-cover shadow-lg rounded-3xl cursor-pointer"
             loading="lazy"
             onClick={handleClick}
             onError={(e) => {
@@ -70,8 +71,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
 
     if (variant === 3) {
       // Side: image on the left, caption on the right (great for About pages).
+      // Overall width scales with the Size control (widthPct); Large ≈ the old 5xl.
       return (
-        <div className="w-full md:w-[90%] max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-6">
+        <div className="w-full px-[10px] md:px-0 mx-auto flex flex-col md:flex-row md:items-center gap-6" style={{ maxWidth: `${Math.round((widthPct / 72) * 1024)}px` }}>
           <div className="w-full md:w-2/3">
             <div className="relative group">
               <img

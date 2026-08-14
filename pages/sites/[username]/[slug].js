@@ -5,6 +5,8 @@ import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
+import { heroTitleFor } from '../../../common/pageUtils'
+import { publicCaptureForAsset } from '../../../common/photoMeta'
 import { publicPrintForAsset, publicPrintStore, publicSiteConfig } from '../../../common/print/publicPrint'
 import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
@@ -26,6 +28,8 @@ function resolveBlock(block, assetsByUrl) {
     const entry = assetsByUrl[block.imageUrl]
     const resolved = { ...block, caption: resolveCaption(ref, assetsByUrl) }
     if (entry?.print) resolved.print = entry.print
+    if (entry?.capture) resolved.capture = entry.capture
+    if (entry?.uploadedAt) resolved.uploadedAt = entry.uploadedAt
     return resolved
   }
   if (block.type === 'photos' || block.type === 'stacked' || block.type === 'masonry') {
@@ -36,6 +40,8 @@ function resolveBlock(block, assetsByUrl) {
       const entry = assetsByUrl[r.url]
       const out = { ...r, caption: resolveCaption(r, assetsByUrl) }
       if (entry?.print) out.print = entry.print
+      if (entry?.capture) out.capture = entry.capture
+      if (entry?.uploadedAt) out.uploadedAt = entry.uploadedAt
       return out
     })
     return { ...block, images, imageUrls: images.map(i => i.url) }
@@ -60,6 +66,9 @@ export async function getServerSideProps({ params, req }) {
     const entry = { assetId: a.assetId, caption: a.caption }
     const print = publicPrintForAsset(a)
     if (print) entry.print = print
+    const capture = publicCaptureForAsset(a)
+    if (capture) entry.capture = capture
+    if (a.createdAt) entry.uploadedAt = a.createdAt
     assetsByUrl[a.publicUrl] = entry
   }
   const printStore = publicPrintStore(siteConfig)
@@ -92,6 +101,8 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
   const theme = getTheme(siteConfig?.design?.theme)
   const isProvence = theme.id === 'provence'
+  // Florence owns its own rail inside the gallery (FlorenceWall), so no SiteNav.
+  const isFlorence = theme.id === 'florence'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (page?.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -99,7 +110,14 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   // Sub-nav: if this page has a parent, show siblings. If it has children, show children.
   const allPages = siteConfig.pages || []
   const isChildPage = !!page.parentId
-  const subNavPages = isChildPage
+  // A page can hide its own nested pages from the sub-nav (they may be surfaced
+  // elsewhere, e.g. a page-links block). When on a child of such a parent, its
+  // sibling sub-nav is suppressed too.
+  const subNavParent = isChildPage ? allPages.find(p => p.id === page.parentId) : page
+  const childrenHidden = !!subNavParent?.hideChildrenInNav
+  const subNavPages = childrenHidden
+    ? []
+    : isChildPage
     ? allPages.filter(p => p.parentId === page.parentId && p.showInNav !== false)
     : allPages.filter(p => p.parentId === page.id && p.showInNav !== false)
   const activeSubNavId = isChildPage ? page.id : null
@@ -125,7 +143,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
       <SiteAnalytics analytics={siteConfig.analytics} />
-      {!isProvence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />}
+      {!isProvence && !isFlorence && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />}
       <main className="theme-content">
         <ClientEngagementProvider
           username={username}
@@ -150,7 +168,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
           )}
           <PageCover
             cover={page.cover}
-            title={page.title}
+            title={heroTitleFor(page)}
             description={page.description}
             slideshowHref={slideshowHref}
             clientFeaturesEnabled={!!page.clientFeatures?.enabled}
@@ -159,7 +177,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             siteName={siteConfig.siteName}
           />
           <Gallery
-            name={page.title}
+            name={heroTitleFor(page)}
             description={page.description}
             blocks={resolvedBlocks}
             pages={siteConfig.pages}

@@ -196,9 +196,9 @@ describe('seedBlocksForTemplate', () => {
     expect(blocks).toEqual([
       { type: 'photos', images: [], imageUrls: [], layout: 'stacked' },
       { type: 'text', content: '', variant: 1 },
-      { type: 'photo', imageUrl: '', caption: '', variant: 1 },  // full bleed
+      { type: 'photo', imageUrl: '', variant: 1 },  // full bleed
       { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
-      { type: 'photo', imageUrl: '', caption: '', variant: 2 },  // centered
+      { type: 'photo', imageUrl: '', variant: 2 },  // centered
       { type: 'video', url: '', caption: '' },  // centered
     ])
   })
@@ -207,7 +207,7 @@ describe('seedBlocksForTemplate', () => {
     const blocks = seedBlocksForTemplate('gallery')
     expect(blocks).toEqual([
       { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
-      { type: 'photo', imageUrl: '', caption: '', variant: 2 },  // single centered
+      { type: 'photo', imageUrl: '', variant: 2 },  // single centered
       { type: 'photos', images: [], imageUrls: [], layout: 'stacked' },
     ])
   })
@@ -222,7 +222,7 @@ describe('seedBlocksForTemplate', () => {
   it('seeds a centered portrait, heading, and body for "about"', () => {
     const blocks = seedBlocksForTemplate('about')
     expect(blocks).toEqual([
-      { type: 'photo', imageUrl: '', caption: '', variant: 2 },  // centered portrait
+      { type: 'photo', imageUrl: '', variant: 2 },  // centered portrait
       { type: 'text', content: '', variant: 1 },  // heading
       { type: 'text', content: '', variant: 3 },  // body
     ])
@@ -252,7 +252,7 @@ describe('defaultPage with template', () => {
     const page = defaultPage({ id: 'travel', title: 'Travel', template: 'gallery' })
     expect(page.blocks).toEqual([
       { type: 'photos', images: [], imageUrls: [], layout: 'masonry' },
-      { type: 'photo', imageUrl: '', caption: '', variant: 2 },
+      { type: 'photo', imageUrl: '', variant: 2 },
       { type: 'photos', images: [], imageUrls: [], layout: 'stacked' },
     ])
   })

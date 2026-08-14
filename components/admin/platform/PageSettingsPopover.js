@@ -165,6 +165,29 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const protocol = isLocalhost ? 'http' : 'https'
   const slideshowUrl = `${protocol}://${username}.${rootDomain}/${displaySlug}/slideshow`
 
+  // ── Link page: a link is just an external URL — no hero / slideshow / client
+  // features. Only its label, the URL, and whether it opens in a new tab. ────────
+  if (page.type === 'link') {
+    return (
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Link">
+        <div className="px-3 py-3 space-y-4">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1.5" style={{ color: 'var(--text-muted)' }}>Label</div>
+            <input className={INPUT} placeholder="Link label" value={page.title || ''} onChange={(e) => update({ title: e.target.value })} />
+          </div>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1.5" style={{ color: 'var(--text-muted)' }}>URL</div>
+            <input className={INPUT} type="url" autoFocus={!page.url} placeholder="https://…" value={page.url || ''} onChange={(e) => update({ url: e.target.value })} />
+          </div>
+          <div className="flex items-center justify-between pt-0.5">
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Open in new tab</span>
+            <ToggleSwitch on={page.linkNewTab !== false} onChange={(v) => update({ linkNewTab: v })} ariaLabel="Open in new tab" />
+          </div>
+        </div>
+      </PopoverShell>
+    )
+  }
+
   // ── Password drill-in ─────────────────────────────────────────────────────
   if (view === 'password') {
     return (

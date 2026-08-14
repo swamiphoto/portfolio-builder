@@ -6,6 +6,7 @@ import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
 import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail, getPagePhotos } from '../../../common/assetRefs'
 import PageSettingsPanel from './PageSettingsPanel'
 import PageSettingsPopover from './PageSettingsPopover'
+import { generatePageId } from '../../../common/siteConfig'
 
 function pageToGallery(page) {
   return {
@@ -34,7 +35,7 @@ function galleryToPage(page, gallery) {
   }
 }
 
-export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onUpdatePage, onBack, onMoveBlockToPage, onUpdateLibraryCaption, username, blockBuilderRef, onScrollPreviewToBlock, highlightedBlockIndex, onBlockHover, onToggleSidebarCollapse }) {
+export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onUpdatePage, onBack, onMoveBlockToPage, onUpdateLibraryCaption, onPrintChange, username, blockBuilderRef, onScrollPreviewToBlock, highlightedBlockIndex, onBlockHover, onToggleSidebarCollapse, titleFocusTs }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
@@ -81,7 +82,15 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   const getAssetByUrl = useCallback(url => assetsByUrl[url] || null, [assetsByUrl])
 
   const handleGalleryChange = useCallback((updatedGallery) => {
-    onPageChange(galleryToPage(page, updatedGallery))
+    const nextPage = galleryToPage(page, updatedGallery)
+    // When the title changed (e.g. from the editable masthead), keep the slug in
+    // sync the same way the Title field does: re-derive it unless the user set a
+    // custom slug.
+    if (updatedGallery.name !== page.title) {
+      const prevDerived = generatePageId(page.title || '')
+      nextPage.slug = (page.slug && page.slug !== prevDerived) ? page.slug : generatePageId(updatedGallery.name || '')
+    }
+    onPageChange(nextPage)
   }, [page, onPageChange])
 
   const fetchLibrary = useCallback(() => {
@@ -214,6 +223,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         setsByUrl={setsByUrl}
         onToggleSet={handleToggleSet}
         headerLabel="PAGE"
+        autoFocusTitle={titleFocusTs}
         infoCardHidden={siteConfig?.design?.theme === 'manhattan'}
         pageSettingsSlot={
           <PageSettingsPanel
@@ -229,6 +239,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         sourcePageId={page.id}
         onMoveBlockToPage={onMoveBlockToPage}
         onUpdateLibraryCaption={onUpdateLibraryCaption}
+        onPrintChange={onPrintChange}
         assetsByUrl={assetsByUrl}
         className="flex flex-col h-full bg-stone-50 text-left font-sans"
         themeId={siteConfig?.design?.theme || 'kyoto'}

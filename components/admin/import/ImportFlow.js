@@ -104,7 +104,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
           <h2 className="font-fraunces" style={{ fontSize: 22, color: 'var(--text-primary)', marginBottom: 6 }}>
             Bring in your existing photos
           </h2>
-          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
             Paste a link to your photos: your website, SmugMug, Squarespace, and more.
           </p>
           <input

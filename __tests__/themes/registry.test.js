@@ -5,9 +5,9 @@ import { manhattan } from '@/common/themes/manhattan'
 const BLOCK_TYPES = ['photo', 'photos', 'text', 'video', 'testimonial', 'page-gallery', 'contact']
 
 describe('theme registry', () => {
-  it('registers kyoto, manhattan and provence', () => {
-    expect(Object.keys(THEMES).sort()).toEqual(['kyoto', 'manhattan', 'provence'])
-    expect(THEME_LIST.map(t => t.id).sort()).toEqual(['kyoto', 'manhattan', 'provence'])
+  it('registers kyoto, manhattan, provence and florence', () => {
+    expect(Object.keys(THEMES).sort()).toEqual(['florence', 'kyoto', 'manhattan', 'provence'])
+    expect(THEME_LIST.map(t => t.id).sort()).toEqual(['florence', 'kyoto', 'manhattan', 'provence'])
   })
 
   it('getTheme falls back to kyoto for unknown ids', () => {
@@ -30,7 +30,7 @@ describe('theme registry', () => {
 
   it('getBlockSpec returns the spec or null', () => {
     expect(getBlockSpec('manhattan', 'photo').defaultVariant).toBe('single')
-    expect(getBlockSpec('kyoto', 'photo').defaultVariant).toBe('full-bleed')
+    expect(getBlockSpec('kyoto', 'photo').defaultVariant).toBe('centered')
     expect(getBlockSpec('kyoto', 'bogus')).toBeNull()
   })
 

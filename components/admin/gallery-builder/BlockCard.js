@@ -543,6 +543,7 @@ function BlockCard({
                 <Tip label="Design">
                   <button
                     ref={designBtnRef}
+                    data-tour="block-design"
                     onClick={() => { onTitleClick?.(); setShowDesign((v) => !v); }}
                     className="flex items-center justify-center rounded transition-colors flex-shrink-0"
                     style={{ width: 24, height: 24, color: showDesign ? '#1d1b17' : '#9e9788', background: showDesign ? 'rgba(26,18,10,0.06)' : 'transparent', border: 'none', cursor: 'pointer' }}
@@ -906,13 +907,18 @@ function BlockCard({
                                 e.preventDefault(); e.stopPropagation();
                                 setGridDropHover(false);
                                 const raw = e.dataTransfer.getData('application/x-photo-drag');
+                                let withinBlock = false;
                                 if (raw) {
-                                  try {
-                                    const parsed = JSON.parse(raw);
-                                    if (parsed.sourceBlockKey !== blockKeyRef.current) {
-                                      setLiveRefs(null); draggedUrlRef.current = null; dragPhotoIndex.current = null; return;
-                                    }
-                                  } catch { setLiveRefs(null); draggedUrlRef.current = null; return; }
+                                  try { withinBlock = JSON.parse(raw).sourceBlockKey === blockKeyRef.current; } catch {}
+                                }
+                                // A drop landing on an existing thumbnail from ANOTHER block or the
+                                // library is an ADD, not a reorder. stopPropagation above keeps the
+                                // card's onDrop from firing, so delegate to it explicitly — otherwise
+                                // the photo is silently swallowed.
+                                if (!withinBlock) {
+                                  setLiveRefs(null); draggedUrlRef.current = null; dragPhotoIndex.current = null;
+                                  handleDrop(e);
+                                  return;
                                 }
                                 const finalRefs = liveRefsRef.current;
                                 if (finalRefs) onUpdate({ ...block, ...buildMultiImageFields(finalRefs) });
@@ -1299,6 +1305,17 @@ function BlockCard({
             sets: setsByUrl?.[ref.url] || [],
           } : { ...ref, caption: effectiveCaption, sets: setsByUrl?.[ref.url] || [] };
         });
+        // Write a caption as a per-block override on the ref (reliable — persists via
+        // config autosave, shows immediately regardless of library state).
+        const writeRefCaption = (i, newCaption) => {
+          if (isPhotoBlock) {
+            const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+            const updated = refs.map((r, j) => j === i ? { ...r, caption: newCaption } : r);
+            onUpdate({ ...block, ...buildMultiImageFields(updated) });
+          } else {
+            onUpdate({ ...block, caption: newCaption });
+          }
+        };
         return (
           <AdminPhotoLightbox
             images={enriched}
@@ -1351,20 +1368,17 @@ function BlockCard({
                 onUpdate(rest);
               }
             }}
-            onCaptionChange={(i, newCaption) => {
-              // override path: write to block ref
-              if (isPhotoBlock) {
-                const refs = normalizeImageRefs(block.images || block.imageUrls || []);
-                const updated = refs.map((r, j) => j === i ? { ...r, caption: newCaption } : r);
-                onUpdate({ ...block, ...buildMultiImageFields(updated) });
-              } else {
-                onUpdate({ ...block, caption: newCaption });
-              }
-            }}
+            onCaptionChange={(i, newCaption) => writeRefCaption(i, newCaption)}
             onCaptionChangeToLibrary={(i, newCaption) => {
               const img = enriched[i];
               if (img?.assetId && onUpdateLibraryCaption) {
-                onUpdateLibraryCaption(img.assetId, newCaption);
+                // Pass the url so the library cache entry carries a publicUrl and the
+                // block re-renders (resolveCaption is keyed by url).
+                onUpdateLibraryCaption(img.assetId, newCaption, img.url);
+              } else {
+                // No library asset to write to → keep it as a per-photo override so
+                // the caption isn't silently lost.
+                writeRefCaption(i, newCaption);
               }
             }}
             onToggleSet={(slug, type, add) => {

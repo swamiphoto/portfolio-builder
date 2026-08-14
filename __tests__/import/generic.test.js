@@ -29,6 +29,22 @@ describe('generic.discover', () => {
     expect(ids).toEqual(['food', 'home', 'travel'])
   })
 
+  it('a specific page URL imports ONLY that page as one collection (no whole-site crawl)', async () => {
+    const result = await generic.discover('joe.com/travel', { fetchPage: fakeSite(), maxPages: 10 })
+    // one collection (the page), named from the last path segment
+    expect(result.collections).toHaveLength(1)
+    expect(result.collections[0].name).toBe('Travel')
+    const images = result.collections.flatMap((c) => c.assetRefs.map((r) => r.remoteUrl))
+    expect(images).toEqual(expect.arrayContaining(['https://joe.com/t1.jpg', 'https://joe.com/t2.jpg']))
+    // did NOT crawl into /food or the home page
+    expect(images.some((u) => u.includes('/f1.jpg') || u.includes('home-hero'))).toBe(false)
+  })
+
+  it('a bare domain still crawls the whole site into per-page albums', async () => {
+    const result = await generic.discover('joe.com', { fetchPage: fakeSite(), maxPages: 10 })
+    expect(result.collections.length).toBeGreaterThan(1)
+  })
+
   it('stays on the same domain', async () => {
     const fetchPage = (url) =>
       url === 'https://joe.com/'
