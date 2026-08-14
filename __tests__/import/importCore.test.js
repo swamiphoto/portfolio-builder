@@ -49,6 +49,31 @@ describe('buildImportedAsset hash', () => {
   })
 })
 
+describe('buildImportedAsset capture', () => {
+  it('persists a provided capture object onto the asset record', () => {
+    const capture = {
+      capturedAt: '2024-06-15T21:30:00.000Z',
+      timezone: null,
+      cameraMake: 'Canon',
+      cameraModel: 'EOS R5',
+      lens: 'RF 24-70mm F2.8',
+      focalLengthMm: 50,
+      aperture: 'f/2.8',
+      shutterSpeed: '1/200s',
+      iso: 400,
+      locationName: null,
+      latitude: null,
+      longitude: null,
+    }
+    const a = buildImportedAsset({ url: 'https://cdn/z.jpg', provider: 'generic', capture, now: '2026-07-09T00:00:00Z' })
+    expect(a.capture).toEqual(capture)
+  })
+  it('omits the capture key when extraction returned null', () => {
+    const a = buildImportedAsset({ url: 'https://cdn/z.jpg', provider: 'generic', capture: null, now: '2026-07-09T00:00:00Z' })
+    expect(a).not.toHaveProperty('capture')
+  })
+})
+
 describe('dedupe', () => {
   it('collects existing source urls and partitions incoming refs', () => {
     const config = {

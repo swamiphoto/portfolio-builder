@@ -28,6 +28,9 @@ jest.mock('@/common/storeImage', () => ({
 const mockSafeFetch = jest.fn()
 jest.mock('@/common/import/safeFetch', () => ({ safeFetch: (...a) => mockSafeFetch(...a) }))
 
+const mockExtractCapture = jest.fn()
+jest.mock('@/common/exifCapture', () => ({ extractCapture: (...a) => mockExtractCapture(...a) }))
+
 import handler from '@/pages/api/admin/import/fetch-batch'
 
 function mockRes() {
@@ -48,6 +51,8 @@ describe('POST /api/admin/import/fetch-batch', () => {
     mockSafeFetch.mockReset()
     mockDownload.mockReset()
     mockDownload.mockResolvedValue({ assets: {} })
+    mockExtractCapture.mockReset()
+    mockExtractCapture.mockResolvedValue(null)
   })
 
   it('downloads, stores, and returns imported assets; isolates failures', async () => {
@@ -76,6 +81,45 @@ describe('POST /api/admin/import/fetch-batch', () => {
     expect(payload.imported).toHaveLength(1)
     expect(payload.imported[0].source.provider).toBe('generic')
     expect(payload.failed).toEqual([{ remoteUrl: 'https://remote/b.jpg', reason: 'boom' }])
+  })
+
+  it('extracts EXIF capture from the downloaded bytes and persists it on the imported asset', async () => {
+    const capture = {
+      capturedAt: '2024-06-15T21:30:00.000Z',
+      timezone: null,
+      cameraMake: 'Canon',
+      cameraModel: 'EOS R5',
+      lens: 'RF 24-70mm F2.8',
+      focalLengthMm: 50,
+      aperture: 'f/2.8',
+      shutterSpeed: '1/200s',
+      iso: 400,
+      locationName: null,
+      latitude: null,
+      longitude: null,
+    }
+    mockExtractCapture.mockResolvedValue(capture)
+    mockSafeFetch.mockResolvedValue(okImage())
+    mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/exif.jpg', width: 100, height: 50 })
+
+    const res = mockRes()
+    await handler(
+      {
+        method: 'POST',
+        body: {
+          provider: 'generic',
+          assetRefs: [{ remoteUrl: 'https://remote/exif.jpg' }],
+        },
+      },
+      res
+    )
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(mockExtractCapture).toHaveBeenCalledTimes(1)
+    expect(Buffer.isBuffer(mockExtractCapture.mock.calls[0][0])).toBe(true)
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.imported).toHaveLength(1)
+    expect(payload.imported[0].capture).toEqual(capture)
   })
 
   it('skips refs whose remoteUrl already exists in the library config', async () => {
