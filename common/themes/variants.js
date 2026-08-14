@@ -94,6 +94,13 @@ export function resolveFlorenceAnchor(block) {
   return FLORENCE_ANCHORS.includes(block?.florenceAnchor) ? block.florenceAnchor : 'top'
 }
 
+// Amsterdam-only text Style: a text block renders as a full-height solid-ink
+// Panel (default) or a Quiet cream museum-label column. Stored flat on the
+// block (like florenceAnchor); ignored by every other theme.
+export function resolveAmsterdamStyle(block) {
+  return block?.amsterdamStyle === 'quiet' ? 'quiet' : 'panel'
+}
+
 // Testimonial quote style (italic | regular). The block's choice wins; otherwise
 // the theme's default (from the block spec's defaultQuoteStyle), else italic.
 export function resolveQuoteStyle(block, themeId) {
