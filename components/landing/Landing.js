@@ -1,4 +1,6 @@
 import { signIn } from 'next-auth/react'
+import SlideshowStack from './SlideshowStack'
+import ThemeShowcase from './ThemeShowcase'
 
 const T = {
   ink: '#1d1b17',
@@ -120,6 +122,12 @@ const NAV = ['Features', 'Compare', 'Pricing']
 // image slot later. Order roughly by what makes a photographer lean in.
 const FEATURES = [
   {
+    eyebrow: 'Themes',
+    title: 'The best-looking galleries on the internet',
+    body: 'Toggle through a range of stunning, museum-grade themes and find the one that fits. Your content stays put as you switch, so there’s nothing to rework.',
+    themes: ['/slideshow/slide-1.jpg', '/slideshow/slide-3.jpg', '/slideshow/slide-4.jpg', '/slideshow/slide-5.jpg', '/slideshow/slide-2.jpg', '/splash/photo-3.jpg', '/splash/photo-8.jpg', '/splash/photo-12.jpg', '/splash/photo-19.jpg'],
+  },
+  {
     eyebrow: 'Block Builder',
     title: 'The most satisfying way to build a site',
     body: 'Every page is made of blocks you arrange like Lego: photos, videos, text, testimonials, contact forms, and plenty more. Every variant is curated, so whatever you choose looks beautiful, and you can’t make a design mistake.',
@@ -129,17 +137,12 @@ const FEATURES = [
     title: 'Move clients to tears',
     body: 'Turn any gallery into an immersive, musical slideshow, almost like a Reel made from your photos. Add text wherever you like, and choose from a range of layouts and themes, from sleek and modern to beautifully retro.',
     link: { label: 'See an example', href: 'https://www.swamiphoto.com/galleries/arizona/slideshow' },
-    image: '/feature-slideshow.jpg',
+    stack: ['/slideshow/slide-1.jpg', '/slideshow/slide-4.jpg', '/slideshow/slide-3.jpg', '/slideshow/slide-5.jpg', '/slideshow/slide-2.jpg'],
   },
   {
     eyebrow: 'Prints',
     title: 'Sell prints with one click',
     body: 'Turn on selling for any photo, on any page, and it’s for sale right where it sits. There’s no separate store to set up and no marketplace to manage. Every order is printed and shipped to your customer’s door automatically.',
-  },
-  {
-    eyebrow: 'Themes',
-    title: 'Change your theme, your content stays put',
-    body: 'Your content lives in the blocks, not the theme. Swap your whole design and every photo and caption stays exactly where you put it. There’s nothing to rework.',
   },
   {
     eyebrow: 'The Library',
@@ -169,7 +172,7 @@ function GradientDivider({ width = 140 }) {
   )
 }
 
-function FeatureRow({ index, eyebrow, title, body, link, flip, image }) {
+function FeatureRow({ index, eyebrow, title, body, link, flip, image, stack, themes }) {
   return (
     <div
       style={{
@@ -180,16 +183,19 @@ function FeatureRow({ index, eyebrow, title, body, link, flip, image }) {
         flexWrap: 'wrap',
       }}
     >
-      {/* Image — a real screenshot when provided, else a labeled placeholder */}
-      <div style={{ flex: '1 1 380px', minWidth: 300 }}>
-        {image ? (
+      {/* Image — an animated slideshow stack, a real screenshot, else a labeled placeholder */}
+      <div style={themes ? { flex: '1.55 1 460px', minWidth: 320 } : { flex: '1 1 380px', minWidth: 300 }}>
+        {stack ? (
+          <SlideshowStack images={stack} />
+        ) : themes ? (
+          <ThemeShowcase images={themes} />
+        ) : image ? (
           <img
             src={image}
             alt={title}
             style={{
               width: '100%',
-              aspectRatio: '4 / 3',
-              objectFit: 'cover',
+              height: 'auto',
               display: 'block',
               borderRadius: 8,
               boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 30px 60px -30px rgba(26,18,10,0.25)',
@@ -198,7 +204,7 @@ function FeatureRow({ index, eyebrow, title, body, link, flip, image }) {
         ) : (
           <div
             style={{
-              aspectRatio: '4 / 3',
+              aspectRatio: '2 / 1',
               borderRadius: 8,
               background: 'linear-gradient(135deg, #efe7d8, #e3d6bf)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.08), 0 30px 60px -30px rgba(26,18,10,0.25)',
@@ -223,7 +229,7 @@ function FeatureRow({ index, eyebrow, title, body, link, flip, image }) {
       </div>
 
       {/* Text */}
-      <div style={{ flex: '1 1 380px', minWidth: 300 }}>
+      <div style={themes ? { flex: '1 1 300px', minWidth: 260 } : { flex: '1 1 380px', minWidth: 300 }}>
         <div
           style={{
             fontFamily: FONT.sans,
