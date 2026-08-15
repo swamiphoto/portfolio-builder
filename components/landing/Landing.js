@@ -54,7 +54,6 @@ const ITEMS = [
   ['emotional slideshows', 'reel-like music slideshows that move clients to tears'],
   ['one-click print store', 'sell prints from any photo, no store to run'],
   ['client galleries', 'deliver shoots, collect favorites, get paid'],
-  ['everything in one place', 'your photos and pages, always within reach'],
 ]
 
 function Eyebrow({ children }) {
