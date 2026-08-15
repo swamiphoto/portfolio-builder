@@ -119,7 +119,7 @@ export default function Landing() {
             textWrap: 'balance',
           }}
         >
-          Your beautiful portfolio, built in minutes.
+          Your beautiful photography portfolio, built in minutes.
         </h1>
 
         {/* One plain line saying who made it */}
