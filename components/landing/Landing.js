@@ -203,7 +203,7 @@ export default function Landing() {
         {/* Founder note — frank about being early */}
         <div style={{ width: '100%', marginTop: 'clamp(34px, 7vh, 58px)', textAlign: 'left' }}>
           <p style={{ fontFamily: FONT.serif, fontSize: 17, lineHeight: 1.62, color: T.body, margin: 0, textWrap: 'pretty' }}>
-            In the 15 years I’ve been a photographer, I’ve tried every platform out there, and not one felt like it was truly
+            In the 15 years I’ve been a photographer, I’ve tried every portfolio builder, and not one felt like it was truly
             made for photographers. Pixieset came close. I sweated the details on Sepia only another photographer would
             appreciate.
           </p>
