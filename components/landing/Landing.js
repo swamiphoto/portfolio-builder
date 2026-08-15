@@ -134,15 +134,16 @@ export default function Landing() {
             onMouseEnter={() => setBtnHover(true)}
             onMouseLeave={() => setBtnHover(false)}
             style={{
-              padding: '12px 22px',
+              padding: '15px 32px',
               borderRadius: 0,
               border: 'none',
               cursor: 'pointer',
               background: btnHover ? T.btnBgHover : T.btnBg,
               color: T.btnText,
               fontFamily: FONT.mono,
-              fontSize: 13,
-              letterSpacing: '0.02em',
+              fontSize: 15,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               transition: 'background 0.15s ease',
             }}
           >
