@@ -82,6 +82,7 @@ function FooterLink({ href, children }) {
 export default function Landing() {
   const [btnHover, setBtnHover] = useState(false)
   const [linkHover, setLinkHover] = useState(false)
+  const [nameHover, setNameHover] = useState(false)
   const handleSignIn = () => signIn('google', { callbackUrl: '/auth/post-login' })
 
   return (
@@ -212,7 +213,9 @@ export default function Landing() {
               href="https://www.swamiphoto.com"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: T.ink, textDecoration: 'underline', textUnderlineOffset: 3 }}
+              onMouseEnter={() => setNameHover(true)}
+              onMouseLeave={() => setNameHover(false)}
+              style={{ color: nameHover ? T.ink : T.accent, textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.15s ease' }}
             >
               Swami Venkat
             </a>
