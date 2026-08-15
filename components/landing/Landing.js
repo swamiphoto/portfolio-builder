@@ -51,7 +51,7 @@ const FONT = {
 const ITEMS = [
   ['gorgeous galleries', 'clean, museum-style displays for your photos'],
   ['fast to build', 'assemble blocks of photos, video, and text, like Lego'],
-  ['emotional slideshows', 'music slideshows that move clients to tears'],
+  ['emotional slideshows', 'reel-like music slideshows that move clients to tears'],
   ['one-click print store', 'sell prints from any photo, no store to run'],
   ['unified library', 'upload once, use every photo anywhere'],
   ['client galleries', 'deliver shoots, collect favorites, get paid'],
