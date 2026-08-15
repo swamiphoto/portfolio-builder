@@ -40,8 +40,10 @@ function mosaicGroups(refs) {
 
 export default function AmsterdamColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '' }) {
   const metaFor = (o) => formatCaptureMeta(o?.capture, photoMeta, o?.uploadedAt)
-  const wrap = (cls, style, children, extra = {}) => (
-    <section className={`ams-col ${cls}`} data-block-index={blockIndex} style={style} {...extra} {...hoverProps}>{children}</section>
+  // surface feeds the adaptive-chrome scroll handler (useWallChrome): 'ink' for
+  // ink panels, 'image' for full-bleed photos, 'paper' for everything else.
+  const wrap = (cls, style, children, surface = 'paper', extra = {}) => (
+    <section className={`ams-col ${cls}`} data-block-index={blockIndex} data-surface={surface} style={style} {...extra} {...hoverProps}>{children}</section>
   )
 
   switch (block.type) {
@@ -64,7 +66,7 @@ export default function AmsterdamColumn({ block, blockIndex, onImageClick, hover
               )}
             </div>
           </figure>
-        ))
+        ), 'image')
       }
       const size = resolvePhotoSize(block, TID)
       return wrap('ams-col--photo', null, (
@@ -142,7 +144,7 @@ export default function AmsterdamColumn({ block, blockIndex, onImageClick, hover
       }
       return wrap('ams-col--panel', null, (
         <p className="ams-panel__text" style={{ fontFamily, fontSize: PANEL_SIZE[variant] || PANEL_SIZE.body }}>{block.content}</p>
-      ))
+      ), 'ink')
     }
 
     case 'video': {

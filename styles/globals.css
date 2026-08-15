@@ -645,12 +645,21 @@ a {
 [data-theme="amsterdam"] img { border-radius: 0 !important; }
 
 [data-theme="amsterdam"] .ams-stage { display: flex; height: 100vh; overflow: hidden; }
-[data-theme="amsterdam"] .ams-rail { width: var(--theme-rail-width, 96px); flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding: 20px 0 24px; border-right: 1px solid rgba(20, 18, 16, 0.16); position: relative; z-index: 30; background: var(--theme-bg, #f6efe4); }
-[data-theme="amsterdam"] .ams-rail__logo { writing-mode: vertical-rl; text-orientation: mixed; font-family: "Abril Fatface", Georgia, serif; font-size: 17px; letter-spacing: 0.06em; color: var(--theme-text); text-decoration: none; max-height: 46vh; overflow: hidden; }
+[data-theme="amsterdam"] .ams-rail { width: var(--theme-rail-width, 96px); flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding: 20px 0 24px; border-right: 1px solid rgba(20, 18, 16, 0.16); position: relative; z-index: 30; background: var(--theme-bg, #f6efe4); transition: background-color 350ms ease, border-color 350ms ease; }
+[data-theme="amsterdam"] .ams-rail__logo { writing-mode: vertical-rl; text-orientation: mixed; font-family: "Abril Fatface", Georgia, serif; font-size: 17px; letter-spacing: 0.06em; color: var(--theme-text); text-decoration: none; max-height: 46vh; overflow: hidden; transition: color 350ms ease; }
 [data-theme="amsterdam"] .ams-rail__logo img { max-width: 56px; height: auto; }
 [data-theme="amsterdam"] .ams-rail__mid { margin: auto 0; }
-[data-theme="amsterdam"] .ams-rail__btn { background: none; border: none; cursor: pointer; color: var(--theme-text); padding: 10px; }
-[data-theme="amsterdam"] .ams-rail__rule { width: 3px; height: 44px; background: var(--ams-ink); margin-top: auto; }
+[data-theme="amsterdam"] .ams-rail__btn { background: none; border: none; cursor: pointer; color: var(--theme-text); padding: 10px; transition: color 350ms ease; }
+[data-theme="amsterdam"] .ams-rail__rule { width: 3px; height: 44px; background: var(--ams-ink); margin-top: auto; transition: background-color 350ms ease; }
+
+/* Adaptive chrome: the whole rail floods to ink when the dominant column under
+   the viewport's center is an ink surface (title/panel/menu); it stays translucent
+   light over photos so the arrows read; default (paper) is the look above.
+   Driven by data-chrome on .ams-stage, set by useWallChrome. */
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail { background: var(--ams-ink); border-right-color: transparent; }
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail__logo,
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail__btn { color: var(--ams-on-ink); }
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail__rule { background: var(--ams-on-ink); }
 
 [data-theme="amsterdam"] .ams-wall { flex: 1; display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
 [data-theme="amsterdam"] .ams-wall::-webkit-scrollbar { display: none; }
@@ -686,8 +695,13 @@ a {
 
 /* Arrows */
 [data-theme="amsterdam"] .ams-arrows { position: fixed; right: 22px; bottom: 20px; display: flex; gap: 6px; z-index: 40; }
-[data-theme="amsterdam"] .ams-arrows__btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px; border: 1px solid rgba(20, 18, 16, 0.25); background: var(--theme-bg, #f6efe4); color: var(--theme-text); cursor: pointer; }
+[data-theme="amsterdam"] .ams-arrows__btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px; border: 1px solid rgba(20, 18, 16, 0.25); background: var(--theme-bg, #f6efe4); color: var(--theme-text); cursor: pointer; transition: background-color 350ms ease, color 350ms ease, border-color 350ms ease; }
 [data-theme="amsterdam"] .ams-arrows__btn:hover { background: var(--ams-ink); color: var(--ams-on-ink); border-color: var(--ams-ink); }
+
+/* Adaptive chrome for the arrows: flood ink over ink columns, go translucent
+   light over photos so they stay legible, default (paper) is the look above. */
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-arrows__btn { background: var(--ams-ink); color: var(--ams-on-ink); border-color: transparent; }
+[data-theme="amsterdam"] .ams-stage[data-chrome="image"] .ams-arrows__btn { background: rgba(255, 255, 255, 0.85); color: #141210; border-color: transparent; }
 
 /* Mobile: vertical stack (mirrors the Florence data-mobile collapse) */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] { display: block; height: auto; overflow: visible; }
@@ -705,7 +719,7 @@ a {
 /* Height-driven fit boxes flow naturally once columns are height:auto (mirrors the
    Florence .florence-fit mobile override) so photos don't collapse to zero height. */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit { height: auto !important; aspect-ratio: auto !important; }
-[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; transform: none !important; }
 
 /* Museum caption + fit box (fit rules mirror .florence-fit) */
 [data-theme="amsterdam"] .ams-caption { display: flex; flex-direction: column; gap: 2px; padding: 10px 2px 0; font-family: Inter, sans-serif; }
@@ -713,9 +727,14 @@ a {
 [data-theme="amsterdam"] .ams-caption__meta { font-size: 10px; letter-spacing: 0.1em; color: var(--theme-text-muted, #8a8175); white-space: pre-line; }
 
 /* .ams-fit mirrors .florence-fit: a height-driven image box whose width follows
-   the image's real aspect ratio (set inline / on load by FitImg). */
-[data-theme="amsterdam"] .ams-fit { display: inline-block; height: 100%; position: relative; vertical-align: top; }
-[data-theme="amsterdam"] .ams-fit img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
+   the image's real aspect ratio (set inline / on load by FitImg). overflow:
+   hidden clips the parallax scale below so a drifting image never exposes its
+   edges. */
+[data-theme="amsterdam"] .ams-fit { display: inline-block; height: 100%; position: relative; vertical-align: top; overflow: hidden; }
+/* Base scale(1.08) gives translateX(--par) room to drift without exposing an
+   edge; --par is a px offset written by useWallChrome (scroll-linked parallax,
+   proportional to the box's distance from the viewport center, clamped ±40px). */
+[data-theme="amsterdam"] .ams-fit img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; transform: translateX(var(--par, 0px)) scale(1.08); will-change: transform; }
 
 /* Amsterdam block columns */
 [data-theme="amsterdam"] .ams-col--photo, [data-theme="amsterdam"] .ams-col--photorow, [data-theme="amsterdam"] .ams-col--mosaic, [data-theme="amsterdam"] .ams-col--media, [data-theme="amsterdam"] .ams-col--pagelinks { display: flex; flex-direction: column; justify-content: center; padding: 0 2vw; }

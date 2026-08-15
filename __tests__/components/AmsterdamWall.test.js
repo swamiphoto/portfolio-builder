@@ -46,4 +46,18 @@ describe('AmsterdamWall shell', () => {
     expect(getByText('Iceland')).toBeTruthy()
     expect(container.textContent).not.toContain('About')
   })
+
+  it('stage defaults to data-chrome="paper" and tags the opener/menu columns for adaptive chrome', () => {
+    const { container } = render(<AmsterdamWall name="V" description="D" siteConfig={{}} />)
+    expect(container.querySelector('.ams-stage').getAttribute('data-chrome')).toBe('paper')
+    expect(container.querySelector('.ams-col--title').getAttribute('data-surface')).toBe('ink')
+    expect(container.querySelector('.ams-menu').getAttribute('data-surface')).toBe('ink')
+  })
+
+  it('tags the poster hero opener as an image surface', () => {
+    const { container } = render(
+      <AmsterdamWall name="V" siteConfig={{}} opener="hero" cover={{ imageUrl: 'https://x/cover.jpg' }} />
+    )
+    expect(container.querySelector('.ams-col--hero').getAttribute('data-surface')).toBe('image')
+  })
 })

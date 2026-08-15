@@ -51,6 +51,30 @@ describe('AmsterdamColumn block treatments', () => {
     expect(container.querySelector('.ams-col--media')).toBeTruthy()
   })
 
+  it('tags each column type with the right data-surface for adaptive chrome', () => {
+    const imgs = Array.from({ length: 2 }, (_, i) => ({ url: `https://x/${i}.jpg` }))
+    const { container } = renderWall([
+      { type: 'photo', image: 'https://x/fill.jpg' },
+      { type: 'photo', image: 'https://x/centered.jpg', themeState: { amsterdam: { variant: 'centered' } } },
+      { type: 'photos', images: imgs },
+      { type: 'photos', images: imgs, themeState: { amsterdam: { variant: 'mosaic' } } },
+      { type: 'text', content: 'Panel text' },
+      { type: 'text', content: 'Quiet text', amsterdamStyle: 'quiet' },
+      { type: 'testimonial', text: 'Wonderful work', name: 'A. Client' },
+      { type: 'contact', heading: 'Get in touch' },
+    ])
+    expect(container.querySelector('.ams-col--fill').getAttribute('data-surface')).toBe('image')
+    const photoCols = container.querySelectorAll('.ams-col--photo:not(.ams-col--fill)')
+    expect(photoCols.length).toBeGreaterThanOrEqual(1)
+    expect(photoCols[0].getAttribute('data-surface')).toBe('paper')
+    expect(container.querySelector('.ams-col--photorow').getAttribute('data-surface')).toBe('paper')
+    expect(container.querySelector('.ams-col--mosaic').getAttribute('data-surface')).toBe('paper')
+    expect(container.querySelector('.ams-col--panel').getAttribute('data-surface')).toBe('ink')
+    expect(container.querySelector('.ams-col--quiet').getAttribute('data-surface')).toBe('paper')
+    expect(container.querySelector('.ams-col--testimonial').getAttribute('data-surface')).toBe('paper')
+    expect(container.querySelector('.ams-col--contact').getAttribute('data-surface')).toBe('paper')
+  })
+
   it('photo captions honor photoMeta', () => {
     const { container: withMeta } = renderWall(
       [{ type: 'photo', image: 'https://x/1.jpg', caption: 'T', capture: CAPTURE, themeState: { amsterdam: { variant: 'centered' } } }],

@@ -10,6 +10,7 @@ import { amsterdamInkColors } from '../../../../common/themes/amsterdam'
 import { getImageRefUrl } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
 import useWallScroll from '../shared/useWallScroll'
+import useWallChrome from './useWallChrome'
 import AmsterdamColumn from './AmsterdamColumn'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
@@ -42,6 +43,7 @@ export default function AmsterdamWall({
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const { onPointerDown, onPointerMove, endDrag, page } = useWallScroll({ wallRef, mobile, columnSelector: '.ams-col' })
+  useWallChrome({ wallRef, mobile })
 
   const tree = buildNavTree(siteConfig.pages || [], { respectHideChildren: true }).filter(i => i.showInNav !== false)
   const socials = siteConfig.contact || {}
@@ -84,7 +86,7 @@ export default function AmsterdamWall({
   )
 
   return (
-    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk }}>
+    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome="paper" style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk }}>
       <nav className="ams-rail" aria-label="Site navigation">
         {onPageClick
           ? <button className="ams-rail__logo" onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
@@ -105,7 +107,7 @@ export default function AmsterdamWall({
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
       >
-        <section className="ams-menu" data-open={menuOpen ? 'true' : 'false'} aria-hidden={!menuOpen}>
+        <section className="ams-menu" data-open={menuOpen ? 'true' : 'false'} data-surface="ink" aria-hidden={!menuOpen}>
           <div className="ams-menu__inner">
             <ul className="ams-menu__list">
               {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
@@ -123,7 +125,7 @@ export default function AmsterdamWall({
         </section>
 
         {heroOpener ? (
-          <section className="ams-col ams-col--hero">
+          <section className="ams-col ams-col--hero" data-surface="image">
             <img className="ams-hero__img" src={getSizedUrl(coverUrl, 'display')} alt="" />
             <h1 className="ams-hero__title">{name}</h1>
             <div className="ams-hero__foot">
@@ -132,7 +134,7 @@ export default function AmsterdamWall({
             </div>
           </section>
         ) : (
-          <section className="ams-col ams-col--title">
+          <section className="ams-col ams-col--title" data-surface="ink">
             {name && <h1 className="ams-title__name">{name}</h1>}
             {description && <p className="ams-title__desc">{description}</p>}
             {actionButtons}
