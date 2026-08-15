@@ -142,12 +142,11 @@ export default function Landing() {
               color: T.btnText,
               fontFamily: FONT.mono,
               fontSize: 15,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
               transition: 'background 0.15s ease',
             }}
           >
-            Try Sepia →
+            Try Sepia <span style={{ fontSize: 20, lineHeight: 0, verticalAlign: 'middle', marginLeft: 3 }}>→</span>
           </button>
           <button
             onClick={handleSignIn}
