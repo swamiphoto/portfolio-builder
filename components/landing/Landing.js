@@ -53,8 +53,8 @@ const ITEMS = [
   ['fast to build', 'assemble blocks of photos, video, and text, like Lego'],
   ['emotional slideshows', 'reel-like music slideshows that move clients to tears'],
   ['one-click print store', 'sell prints from any photo, no store to run'],
-  ['upload once', 'use every photo anywhere across your site'],
   ['client galleries', 'deliver shoots, collect favorites, get paid'],
+  ['everything in one place', 'your photos and pages, always within reach'],
 ]
 
 function Eyebrow({ children }) {
