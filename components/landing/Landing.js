@@ -215,7 +215,7 @@ export default function Landing() {
               rel="noopener noreferrer"
               onMouseEnter={() => setNameHover(true)}
               onMouseLeave={() => setNameHover(false)}
-              style={{ color: nameHover ? T.ink : T.accent, textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.15s ease' }}
+              style={{ color: nameHover ? T.accent : T.ink, textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.15s ease' }}
             >
               Swami Venkat
             </a>
