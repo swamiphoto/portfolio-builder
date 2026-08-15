@@ -65,6 +65,20 @@ function Eyebrow({ children }) {
   )
 }
 
+function FooterLink({ href, children }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <a
+      href={href}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ color: hover ? T.body : T.faint, textDecoration: 'none', transition: 'color 0.15s ease' }}
+    >
+      {children}
+    </a>
+  )
+}
+
 export default function Landing() {
   const [btnHover, setBtnHover] = useState(false)
   const [linkHover, setLinkHover] = useState(false)
@@ -135,6 +149,9 @@ export default function Landing() {
             onMouseEnter={() => setBtnHover(true)}
             onMouseLeave={() => setBtnHover(false)}
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '15px 32px',
               borderRadius: 0,
               border: 'none',
@@ -147,7 +164,8 @@ export default function Landing() {
               transition: 'background 0.15s ease',
             }}
           >
-            Try Sepia <span style={{ fontSize: 20, lineHeight: 0, verticalAlign: 'middle', marginLeft: 3 }}>→</span>
+            Try Sepia
+            <span style={{ fontSize: 20, lineHeight: 1, marginLeft: 8 }}>→</span>
           </button>
           <button
             onClick={handleSignIn}
@@ -183,15 +201,13 @@ export default function Landing() {
         </div>
 
         {/* Founder note — frank about being early */}
-        <div style={{ width: '100%', marginTop: 'clamp(44px, 9vh, 76px)', textAlign: 'left' }}>
-          <Eyebrow>a note from the founder</Eyebrow>
-          <p style={{ fontFamily: FONT.serif, fontSize: 17, lineHeight: 1.62, color: T.body, margin: '18px 0 0', textWrap: 'pretty' }}>
+        <div style={{ width: '100%', marginTop: 'clamp(34px, 7vh, 58px)', textAlign: 'left' }}>
+          <p style={{ fontFamily: FONT.serif, fontSize: 17, lineHeight: 1.62, color: T.body, margin: 0, textWrap: 'pretty' }}>
             In the 15 years I’ve been a photographer, I’ve tried every platform out there, and not one felt like it was truly
-            made for photographers. Pixieset comes closest, but still lacks a real photographer’s workflow. So I built Sepia,
-            and I sweated the details only another photographer would appreciate.
+            made for photographers. Pixieset came close. I sweated the details on Sepia only another photographer would
+            appreciate.
           </p>
           <p style={{ fontFamily: FONT.mono, fontSize: 12.5, letterSpacing: '0.02em', color: T.muted, margin: '18px 0 0' }}>
-            —{' '}
             <a
               href="https://www.swamiphoto.com"
               target="_blank"
@@ -199,8 +215,8 @@ export default function Landing() {
               style={{ color: T.ink, textDecoration: 'underline', textUnderlineOffset: 3 }}
             >
               Swami Venkat
-            </a>{' '}
-            · San Francisco
+            </a>
+            , Founder of Sepia
           </p>
         </div>
 
@@ -221,9 +237,9 @@ export default function Landing() {
         >
           <span>© 2026 Sepia</span>
           <span aria-hidden="true">·</span>
-          <a href="/terms" style={{ color: T.faint, textDecoration: 'none' }}>Terms</a>
+          <FooterLink href="/terms">Terms</FooterLink>
           <span aria-hidden="true">·</span>
-          <a href="/privacy" style={{ color: T.faint, textDecoration: 'none' }}>Privacy</a>
+          <FooterLink href="/privacy">Privacy</FooterLink>
           <span aria-hidden="true">·</span>
           <span>Made in San Francisco</span>
         </div>
