@@ -21,6 +21,7 @@ import SquareGallery from "./square-gallery/SquareGallery";
 import FramedPhoto from "./photo-block/FramedPhoto";
 import ManhattanPhoto from "./photo-block/ManhattanPhoto";
 import FlorenceWall from "../themes/florence/FlorenceWall";
+import AmsterdamWall from "../themes/amsterdam/AmsterdamWall";
 import PageGalleryLinks from "./page-gallery/PageGalleryLinks";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -279,7 +280,7 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans', themeId
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid' }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   // Manhattan moves its section divider into the left rail (see SiteNav); the
   // body renders no between-section wiggles. Other themes keep them.
@@ -341,6 +342,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
   // left-anchoring) stay gated on manhattan alone.
   const bleedImages = themeId === 'manhattan' || themeId === 'provence'
   const isFlorence = themeId === 'florence'
+  const isAmsterdam = themeId === 'amsterdam'
   // Florence photo treatment (design panel): colour default; mono/sepia tint the
   // gallery imagery via [data-theme="florence"] .gallery-container[data-photo-treatment].
   const photoTreatment = isFlorence ? (siteConfig?.design?.photoTreatment || 'colour') : undefined
@@ -371,6 +373,41 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             currentPath={(router.asPath || '').split('?')[0]}
             photoMeta={siteConfig?.design?.florencePhotoMeta || 'date'}
             pages={pages}
+          />
+        </div>
+        {lightboxIndex !== null && (
+          <PhotoLightbox images={allImages} index={lightboxIndex} onClose={closeLightbox} onNavigate={navigateLightbox} printStore={printStore} />
+        )}
+      </PrintStoreProvider>
+    )
+  }
+
+  // Amsterdam is a bespoke, fixed-viewport horizontal poster wall: the rail, the
+  // sliding ink menu, the opener column and every block-column live in
+  // AmsterdamWall. It owns its own nav (SiteNav suppressed in the page files).
+  if (isAmsterdam) {
+    const amsActions = []
+    if (enableSlideshow) amsActions.push({ label: 'View Music Show', onClick: onSlideshowClick })
+    if (enableClientView) amsActions.push({ label: 'Client Login', onClick: onClientLoginClick, style: 'outline' })
+    return (
+      <PrintStoreProvider printStore={printStore} username={username}>
+        <div className="gallery-container">
+          <AmsterdamWall
+            siteConfig={siteConfig}
+            name={name}
+            description={description}
+            blocks={blocks || []}
+            basePath={linkBase}
+            makeClickHandler={makeClickHandler}
+            onBlockHover={onBlockHover}
+            onBlockClick={onBlockClick}
+            mobile={isSmallScreen}
+            actions={amsActions}
+            currentPath={(router.asPath || '').split('?')[0]}
+            photoMeta={siteConfig?.design?.amsterdamPhotoMeta || 'date'}
+            pages={pages}
+            cover={cover}
+            opener={opener}
           />
         </div>
         {lightboxIndex !== null && (

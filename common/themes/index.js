@@ -5,10 +5,11 @@ import { kyoto } from './kyoto'
 import { manhattan } from './manhattan'
 import { provence } from './provence'
 import { florence } from './florence'
+import { amsterdam } from './amsterdam'
 import { baseBlocks, mergeBlockSpec } from './base'
 
-export const THEMES = { kyoto, manhattan, provence, florence }
-export const THEME_LIST = [kyoto, manhattan, provence, florence]
+export const THEMES = { kyoto, manhattan, provence, florence, amsterdam }
+export const THEME_LIST = [kyoto, manhattan, provence, florence, amsterdam]
 export const DEFAULT_THEME_ID = 'kyoto'
 
 export function getTheme(id) {
@@ -22,5 +23,5 @@ export function getBlockSpec(themeId, blockType) {
   return mergeBlockSpec(base, theme.overrides?.[blockType])
 }
 
-export { kyoto, manhattan, provence, florence }
+export { kyoto, manhattan, provence, florence, amsterdam }
 export { baseBlocks, baseCover, FONT_SLOTS, mergeBlockSpec } from './base'

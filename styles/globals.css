@@ -637,3 +637,148 @@ a {
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-menu__inner { width: 100%; height: auto; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-arrows { display: none; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--intro { min-height: 40vh; }
+
+/* ---------- Amsterdam: Dutch-poster horizontal wall ---------- */
+[data-theme="amsterdam"] { background: var(--theme-bg, #f6efe4); color: var(--theme-text, #141210); }
+[data-theme="amsterdam"] .theme-shell { background: var(--theme-bg, #f6efe4) !important; display: block; }
+[data-theme="amsterdam"] .gallery-container { max-width: none; }
+[data-theme="amsterdam"] img { border-radius: 0 !important; }
+
+[data-theme="amsterdam"] .ams-stage { display: flex; height: 100vh; overflow: hidden; }
+[data-theme="amsterdam"] .ams-rail { width: var(--theme-rail-width, 96px); flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding: 20px 0 24px; border-right: 1px solid rgba(20, 18, 16, 0.16); position: relative; z-index: 30; background: var(--theme-bg, #f6efe4); transition: background-color 350ms ease, border-color 350ms ease; }
+[data-theme="amsterdam"] .ams-rail__logo { writing-mode: vertical-rl; text-orientation: mixed; font-family: "Abril Fatface", Georgia, serif; font-size: 17px; letter-spacing: 0.06em; color: var(--theme-text); text-decoration: none; max-height: 46vh; overflow: hidden; transition: color 350ms ease; }
+[data-theme="amsterdam"] .ams-rail__logo img { max-width: 56px; height: auto; }
+[data-theme="amsterdam"] .ams-rail__mid { margin: auto 0; }
+[data-theme="amsterdam"] .ams-rail__btn { background: none; border: none; cursor: pointer; color: var(--theme-text); padding: 10px; transition: color 350ms ease; }
+[data-theme="amsterdam"] .ams-rail__rule { width: 3px; height: 44px; background: var(--ams-ink); margin-top: auto; transition: background-color 350ms ease; }
+
+/* Adaptive chrome: the whole rail floods to ink when the dominant column under
+   the viewport's center is an ink surface (title/panel/menu); it stays translucent
+   light over photos so the arrows read; default (paper) is the look above.
+   Driven by data-chrome on .ams-stage, set by useWallChrome. */
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail { background: var(--ams-ink); border-right-color: transparent; }
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail__logo,
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail__btn { color: var(--ams-on-ink); }
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-rail__rule { background: var(--ams-on-ink); }
+
+[data-theme="amsterdam"] .ams-wall { flex: 1; display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
+[data-theme="amsterdam"] .ams-wall::-webkit-scrollbar { display: none; }
+[data-theme="amsterdam"] .ams-col { flex: 0 0 auto; height: 100%; box-sizing: border-box; border-right: 1px solid rgba(20, 18, 16, 0.12); position: relative; }
+
+/* Opener: poster hero (home) */
+[data-theme="amsterdam"] .ams-col--hero { width: calc(100vw - var(--theme-rail-width, 96px)); overflow: hidden; }
+[data-theme="amsterdam"] .ams-hero__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+[data-theme="amsterdam"] .ams-hero__title { position: absolute; top: 2vh; left: 3vw; right: 3vw; margin: 0; font-family: "Abril Fatface", Georgia, serif; font-weight: 400; text-transform: uppercase; color: var(--ams-ink); font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; overflow-wrap: break-word; }
+[data-theme="amsterdam"] .ams-hero__foot { position: absolute; left: 3vw; bottom: 6vh; max-width: 40ch; }
+[data-theme="amsterdam"] .ams-hero__desc { margin: 0 0 14px; font-family: "Playfair Display", Georgia, serif; font-size: clamp(17px, 1.5vw, 23px); line-height: 1.35; color: #fff; text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45); }
+
+/* Opener: condensed title panel (gallery pages / hero fallback) */
+[data-theme="amsterdam"] .ams-col--title { width: min(74vw, 920px); background: var(--ams-ink); color: var(--ams-on-ink); display: flex; flex-direction: column; justify-content: flex-end; padding: 5vh 2.5vw; overflow: hidden; }
+[data-theme="amsterdam"] .ams-title__name { margin: 0 0 2vh -0.04em; font-family: "Anton", "Arial Narrow", sans-serif; font-weight: 400; text-transform: uppercase; font-size: clamp(110px, 24vh, 260px); line-height: 0.86; letter-spacing: 0.005em; white-space: nowrap; }
+[data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: clamp(15px, 1.3vw, 19px); line-height: 1.45; opacity: 0.92; }
+
+/* Opener actions (Music Show / Client Login) */
+[data-theme="amsterdam"] .ams-opener__actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+[data-theme="amsterdam"] .ams-opener__btn { font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; padding: 10px 18px; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
+[data-theme="amsterdam"] .ams-col--hero .ams-opener__btn { color: #fff; }
+
+/* Sliding ink menu */
+[data-theme="amsterdam"] .ams-menu { flex: 0 0 auto; width: 0; overflow: hidden; transition: width 300ms ease; background: var(--ams-ink); color: var(--ams-on-ink); border-right: none; }
+[data-theme="amsterdam"] .ams-menu[data-open="true"] { width: min(44vw, 480px); border-right: 1px solid rgba(20, 18, 16, 0.12); }
+[data-theme="amsterdam"] .ams-menu__inner { width: min(44vw, 480px); height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 5vh 2.5vw; box-sizing: border-box; }
+[data-theme="amsterdam"] .ams-menu__list { list-style: none; margin: 0; padding: 0; }
+[data-theme="amsterdam"] .ams-menu__link { display: block; background: none; border: none; padding: 4px 0; cursor: pointer; text-decoration: none; font-family: "Anton", "Arial Narrow", sans-serif; text-transform: uppercase; font-size: clamp(30px, 4.6vh, 52px); line-height: 1.06; color: var(--ams-on-ink); opacity: 0.82; }
+[data-theme="amsterdam"] .ams-menu__link:hover, [data-theme="amsterdam"] .ams-menu__link.is-active { opacity: 1; }
+[data-theme="amsterdam"] .ams-menu__socials { display: flex; gap: 14px; margin-top: 4vh; flex-wrap: wrap; }
+[data-theme="amsterdam"] .ams-menu__social { font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ams-on-ink); text-decoration: none; opacity: 0.75; }
+[data-theme="amsterdam"] .ams-menu__social:hover { opacity: 1; }
+
+/* Arrows */
+[data-theme="amsterdam"] .ams-arrows { position: fixed; right: 22px; bottom: 20px; display: flex; gap: 6px; z-index: 40; }
+[data-theme="amsterdam"] .ams-arrows__btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px; border: 1px solid rgba(20, 18, 16, 0.25); background: var(--theme-bg, #f6efe4); color: var(--theme-text); cursor: pointer; transition: background-color 350ms ease, color 350ms ease, border-color 350ms ease; }
+[data-theme="amsterdam"] .ams-arrows__btn:hover { background: var(--ams-ink); color: var(--ams-on-ink); border-color: var(--ams-ink); }
+
+/* Adaptive chrome for the arrows: flood ink over ink columns, go translucent
+   light over photos so they stay legible, default (paper) is the look above. */
+[data-theme="amsterdam"] .ams-stage[data-chrome="ink"] .ams-arrows__btn { background: var(--ams-ink); color: var(--ams-on-ink); border-color: transparent; }
+[data-theme="amsterdam"] .ams-stage[data-chrome="image"] .ams-arrows__btn { background: rgba(255, 255, 255, 0.85); color: #141210; border-color: transparent; }
+
+/* Mobile: vertical stack (mirrors the Florence data-mobile collapse) */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] { display: block; height: auto; overflow: visible; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail { flex-direction: row; width: 100%; height: 56px; padding: 0 16px; border-right: none; border-bottom: 1px solid rgba(20, 18, 16, 0.16); position: sticky; top: 0; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__logo { writing-mode: horizontal-tb; max-height: none; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__rule { width: 28px; height: 3px; margin: 0 0 0 auto; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-wall { display: block; overflow: visible; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col { width: 100% !important; height: auto; min-height: 40vh; border-right: none; border-bottom: 1px solid rgba(20, 18, 16, 0.12); }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--hero { height: 72vh; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-title__name { white-space: normal; font-size: clamp(64px, 18vw, 120px); overflow-wrap: break-word; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu { width: 100%; transition: none; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu[data-open="false"] { display: none; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu__inner { width: 100%; height: auto; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-arrows { display: none; }
+/* Height-driven fit boxes flow naturally once columns are height:auto (mirrors the
+   Florence .florence-fit mobile override) so photos don't collapse to zero height. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit { height: auto !important; aspect-ratio: auto !important; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fit img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; transform: none !important; }
+
+/* Museum caption + fit box (fit rules mirror .florence-fit) */
+[data-theme="amsterdam"] .ams-caption { display: flex; flex-direction: column; gap: 2px; padding: 10px 2px 0; font-family: Inter, sans-serif; }
+[data-theme="amsterdam"] .ams-caption__title { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--theme-text); white-space: pre-line; }
+[data-theme="amsterdam"] .ams-caption__meta { font-size: 10px; letter-spacing: 0.1em; color: var(--theme-text-muted, #8a8175); white-space: pre-line; }
+
+/* .ams-fit mirrors .florence-fit: a height-driven image box whose width follows
+   the image's real aspect ratio (set inline / on load by FitImg). overflow:
+   hidden clips the parallax scale below so a drifting image never exposes its
+   edges. */
+[data-theme="amsterdam"] .ams-fit { display: inline-block; height: 100%; position: relative; vertical-align: top; overflow: hidden; }
+/* Base scale(1.08) gives translateX(--par) room to drift without exposing an
+   edge; --par is a px offset written by useWallChrome (scroll-linked parallax,
+   proportional to the box's distance from the viewport center, clamped ±40px). */
+[data-theme="amsterdam"] .ams-fit img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; transform: translateX(var(--par, 0px)) scale(1.08); will-change: transform; }
+
+/* Amsterdam block columns */
+[data-theme="amsterdam"] .ams-col--photo, [data-theme="amsterdam"] .ams-col--photorow, [data-theme="amsterdam"] .ams-col--mosaic, [data-theme="amsterdam"] .ams-col--media, [data-theme="amsterdam"] .ams-col--pagelinks { display: flex; flex-direction: column; justify-content: center; padding: 0 2vw; }
+[data-theme="amsterdam"] .ams-col--fill { padding: 0; justify-content: flex-start; }
+[data-theme="amsterdam"] .ams-figure { margin: 0; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+[data-theme="amsterdam"] .ams-figure--fill { height: 100%; }
+[data-theme="amsterdam"] .ams-frame { position: relative; }
+[data-theme="amsterdam"] .ams-fill-label { position: absolute; left: 14px; bottom: 12px; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: rgba(246, 239, 228, 0.92); font-family: Inter, sans-serif; }
+[data-theme="amsterdam"] .ams-row { display: flex; align-items: center; gap: 2vw; height: 100%; }
+[data-theme="amsterdam"] .ams-row__item { display: flex; flex-direction: column; }
+[data-theme="amsterdam"] .ams-mosaic { display: flex; align-items: center; gap: 1.2vw; }
+[data-theme="amsterdam"] .ams-mosaic__group { display: flex; flex-direction: column; gap: 1.2vh; height: 100%; }
+[data-theme="amsterdam"] .ams-mosaic__group--solo { width: auto; }
+[data-theme="amsterdam"] .ams-mosaic__cell { flex: 1; min-height: 0; position: relative; }
+[data-theme="amsterdam"] .ams-mosaic__cell img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+
+/* Text panels */
+[data-theme="amsterdam"] .ams-col--panel { background: var(--ams-ink); color: var(--ams-on-ink); width: clamp(420px, 46vw, 780px); display: flex; align-items: center; padding: 6vh 3vw; }
+[data-theme="amsterdam"] .ams-panel__text { margin: 0; max-width: 24ch; line-height: 1.08; overflow-wrap: break-word; }
+[data-theme="amsterdam"] .ams-col--quiet { width: clamp(300px, 30vw, 480px); display: flex; align-items: center; padding: 6vh 2.5vw; }
+[data-theme="amsterdam"] .ams-quiet__text { margin: 0; line-height: 1.5; white-space: pre-line; color: var(--theme-text); }
+
+/* Testimonial / contact / page links */
+[data-theme="amsterdam"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-col--contact { width: clamp(340px, 34vw, 560px); display: flex; align-items: center; padding: 6vh 2.5vw; }
+[data-theme="amsterdam"] .ams-testimonial__quote { margin: 0 0 16px; line-height: 1.3; }
+[data-theme="amsterdam"] .ams-testimonial__by { display: flex; align-items: center; gap: 10px; font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--theme-text-muted); }
+[data-theme="amsterdam"] .ams-testimonial__avatar { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; }
+[data-theme="amsterdam"] .ams-pagelink { display: flex; flex-direction: column; gap: 8px; height: 100%; text-decoration: none; color: var(--theme-text); }
+[data-theme="amsterdam"] .ams-pagelink__frame { flex: 1; min-height: 0; width: clamp(220px, 24vw, 380px); background: rgba(20, 18, 16, 0.06); }
+[data-theme="amsterdam"] .ams-pagelink__frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+[data-theme="amsterdam"] .ams-pagelink__title { font-family: "Anton", "Arial Narrow", sans-serif; text-transform: uppercase; font-size: 18px; letter-spacing: 0.02em; }
+
+/* Mobile column adjustments */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--panel, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--quiet, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--contact { width: 100%; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row { flex-direction: column; align-items: stretch; height: auto; gap: 12px; padding: 16px 0; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-frame { height: auto !important; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic { flex-wrap: wrap; height: auto !important; }
+/* Mosaic groups + page links stack full-width on phones (mirrors Florence's
+   .florence-mosaic__group / .florence-pagelink data-mobile normalization). */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__group,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-pagelink { width: 100% !important; height: auto !important; flex: 0 0 auto; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__cell,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-pagelink__frame { flex: 0 0 auto; min-height: 0; overflow: visible; }
+/* Florence's mobile override applies the same contain-fit rule to .florence-fit img
+   AND .florence-mosaic__cell img (mosaic cells use a plain <img>, not FitImg) so
+   cropped cover images don't break when the mosaic wraps to a vertical stack. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__cell img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; }

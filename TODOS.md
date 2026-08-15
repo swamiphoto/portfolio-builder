@@ -30,4 +30,13 @@ Four tests were already failing on `main` before the multi-theme branch (unrelat
 
 Noticed by: gstack /ship on branch `swamiphoto/web-import`, 2026-07-14.
 
+## Library
+
+### Harden /api/admin/library PUT against stale-snapshot clobbers
+**Priority:** P2
+
+Every library mutator (AdminLibrary handlers, PhotoPickerModal `registerCaptures`) PUTs a full `{portfolios, galleries, assets}` built from a client-cached snapshot; the API replaces `assets` wholesale (last writer wins). Two tabs or a long multi-file upload racing a caption edit can silently drop server-side changes. Options: refetch-before-PUT, server-side merge by assetId, or move capture registration fully server-side into upload-file.js. Pattern is app-wide — fix consistently, not per call site.
+
+Noticed by: pre-landing review on branch `swamiphoto/pending-go-live`, 2026-08-14 (also flagged by two prior reviews the same day).
+
 ## Completed

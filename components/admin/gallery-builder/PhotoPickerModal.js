@@ -611,28 +611,63 @@ function UploadTab({ onUploaded, libraryConfig }) {
     setSelectedSets((prev) => prev.filter((s) => s !== slug));
   };
 
+  // Persist extracted EXIF capture onto the new assets' library records.
+  // This flow has no other registration hook — the records are created lazily
+  // by GET /api/admin/library from the R2 listing, which never sees the upload
+  // response — so we seed them here, mirroring AdminLibrary.handleUploaded's
+  // seedUploadedAsset + full-config PUT (the same PUT shape handleToggleSet in
+  // BlockPageEditor/GalleryBuilder already uses). Guarded on a complete assets
+  // map (PUT replaces `assets` wholesale) and best-effort: a failure only loses
+  // the capture metadata, never the upload.
+  const registerCaptures = async (uploaded) => {
+    const withCapture = uploaded.filter((u) => u.capture);
+    if (withCapture.length === 0 || !libraryConfig?.assets) return;
+    try {
+      const { createAssetIdFromUrl } = await import("../../../common/adminConfig");
+      const { seedUploadedAsset } = await import("../../../common/import/uploadedAsset");
+      const now = new Date().toISOString();
+      const assets = { ...libraryConfig.assets };
+      for (const { url, capture } of withCapture) {
+        const assetId = createAssetIdFromUrl(url);
+        assets[assetId] = seedUploadedAsset({ url, capture, now }, { ...(libraryConfig.assets[assetId] || {}), assetId });
+      }
+      await fetch("/api/admin/library", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          portfolios: libraryConfig.portfolios || {},
+          galleries: libraryConfig.galleries || {},
+          assets,
+        }),
+      });
+    } catch (err) {
+      console.error("Photo upload: capture registration failed", err);
+    }
+  };
+
   const handleUpload = async () => {
     if (files.length === 0) return;
     setUploading(true);
     const sets = selectedSets;
     const folder = sets[0] ? `photos/${sets[0]}` : undefined;
-    const uploadedUrls = [];
+    const uploaded = [];
     for (const file of files) {
       setProgress((p) => ({ ...p, [file.name]: "pending" }));
       try {
         // Server-proxied upload (R2 PutObject + thumbnails). We can't use a
         // presigned POST here — R2 returns 501 NotImplemented for POST policies.
-        const { gcsUrl } = await uploadFile(file, { folder });
+        const { gcsUrl, capture } = await uploadFile(file, { folder });
         setProgress((p) => ({ ...p, [file.name]: "done" }));
-        uploadedUrls.push(gcsUrl);
+        uploaded.push({ url: gcsUrl, capture });
       } catch (err) {
         console.error("Photo upload failed:", file.name, err);
         setProgress((p) => ({ ...p, [file.name]: "error" }));
       }
     }
+    await registerCaptures(uploaded);
     setUploading(false);
-    if (uploadedUrls.length > 0) {
-      onUploaded(uploadedUrls.map((url) => normalizeImageRef(url)).filter(Boolean));
+    if (uploaded.length > 0) {
+      onUploaded(uploaded.map(({ url }) => normalizeImageRef(url)).filter(Boolean));
     }
   };
 

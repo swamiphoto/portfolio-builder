@@ -159,6 +159,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   const isProvence = theme.id === 'provence'
   // Florence owns its own rail inside the gallery (FlorenceWall), so no SiteNav.
   const isFlorence = theme.id === 'florence'
+  // Amsterdam owns its own rail inside the gallery (AmsterdamWall), so no SiteNav.
+  const isAmsterdam = theme.id === 'amsterdam'
   const navVariant = theme.navStyle === 'left-rail'
     ? 'left-rail'
     : (homePage?.cover?.imageUrl ? undefined : 'header-dropdown')
@@ -184,7 +186,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
       <SiteAnalytics analytics={siteConfig.analytics} />
       {/* On mobile every theme uses the shared hamburger nav. Provence keeps its
           bespoke split-cover header only on desktop. */}
-      {!isFlorence && (!isProvence || isMobile) && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
+      {!isFlorence && !isAmsterdam && (!isProvence || isMobile) && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
       <main className="theme-content">
         {homePage ? (
           <ClientEngagementProvider
@@ -233,6 +235,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               hasCover={!!homePage?.cover?.imageUrl}
               coverHeight={homePage?.cover?.height || 'partial'}
               coverButtonStyle={homePage?.cover?.buttonStyle || 'solid'}
+              cover={homePage?.cover}
+              opener="hero"
             />
           </ClientEngagementProvider>
         ) : (

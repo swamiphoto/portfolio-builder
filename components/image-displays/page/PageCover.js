@@ -38,6 +38,11 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
   if (themeId === 'florence') {
     return null
   }
+  // Amsterdam renders its own opener inside AmsterdamWall (poster hero / title
+  // panel), so the page-level cover never shows.
+  if (themeId === 'amsterdam') {
+    return null
+  }
   if (themeId === 'provence') {
     if (!cover || !cover.imageUrl) return null
     const showPackages = !!(ctx?.features?.purchase && (ctx.packages || []).length)

@@ -1,14 +1,17 @@
-// components/image-displays/themes/florence/FlorenceWall.js
-// The Florence horizontal museum wall. A thin fixed rail (logo · hamburger · search)
-// beside a horizontally-scrolling row of columns (intro + one per block), split by
-// vertical hairlines. The hamburger slides a menu column in at the front, pushing
-// the wall right. Wheel + drag + arrows all pan horizontally, except over a
-// multi-photo column that still has room to scroll vertically. On phones the whole
-// thing collapses to a vertical stack (CSS, via data-mobile).
+// The Amsterdam horizontal poster wall. A thin fixed rail (wordmark · hamburger ·
+// ink rule) beside a horizontally-scrolling row of columns: an opener (poster
+// hero on the home page, Anton title panel on gallery pages), then one column
+// per block. The hamburger slides an ink menu column in at the front. Wheel +
+// drag + arrows pan horizontally via useWallScroll; on phones the wall collapses
+// to a vertical stack (CSS, via data-mobile). Read-only: edits stay in the sidebar.
 import { useRef, useState } from 'react'
 import { buildNavTree } from '../../../../common/pagesTree'
-import FlorenceColumn from './FlorenceColumn'
+import { amsterdamInkColors } from '../../../../common/themes/amsterdam'
+import { getImageRefUrl } from '../../../../common/assetRefs'
+import { getSizedUrl } from '../../../../common/imageUtils'
 import useWallScroll from '../shared/useWallScroll'
+import useWallChrome from './useWallChrome'
+import AmsterdamColumn from './AmsterdamColumn'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
 
@@ -31,26 +34,26 @@ function navItemActive(item, currentPageId, basePath, currentPath) {
   return (item.children || []).some(c => navItemActive(c, currentPageId, basePath, currentPath))
 }
 
-export default function FlorenceWall({
+export default function AmsterdamWall({
   siteConfig = {}, name, description, blocks = [], basePath = '', makeClickHandler,
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
+  cover = null, opener = 'title',
 }) {
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
-
-  const { onPointerDown, onPointerMove, endDrag, page } = useWallScroll({ wallRef, mobile, columnSelector: '.florence-col' })
+  const { onPointerDown, onPointerMove, endDrag, page } = useWallScroll({ wallRef, mobile, columnSelector: '.ams-col' })
+  useWallChrome({ wallRef, mobile })
 
   const tree = buildNavTree(siteConfig.pages || [], { respectHideChildren: true }).filter(i => i.showInNav !== false)
   const socials = siteConfig.contact || {}
   const socialKeys = SOCIAL_KEYS.filter(k => socials[k])
+  const inks = amsterdamInkColors(siteConfig?.design)
 
   const logoImage = siteConfig?.logoType === 'image' && siteConfig?.logo
   const brand = logoImage
     ? <img src={siteConfig.logo} alt={siteConfig.siteName || 'Logo'} />
     : (siteConfig.siteName || name || '')
-  // Wordmark orientation on the rail: vertical (default) or horizontal.
-  const logoOrient = siteConfig?.design?.florenceLogo === 'horizontal' ? 'horizontal' : 'vertical'
 
   const toggleMenu = () => {
     setMenuOpen(o => {
@@ -64,66 +67,82 @@ export default function FlorenceWall({
     const isLink = item.type === 'link'
     const href = isLink ? (item.url || '#') : `${basePath}/${item.slug || item.id}`
     const active = navItemActive(item, currentPageId, basePath, currentPath)
-    const cls = `florence-menu__link${active ? ' is-active' : ''}`
+    const cls = `ams-menu__link${active ? ' is-active' : ''}`
     if (onPageClick && !isLink) {
       return <button className={cls} onClick={() => { onPageClick(item.id); setMenuOpen(false) }}>{item.title}</button>
     }
     return <a className={cls} href={href} {...(isLink ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{item.title}</a>
   }
 
+  const coverUrl = getImageRefUrl(cover) || cover?.imageUrl
+  const heroOpener = opener === 'hero' && !!coverUrl
+
+  const actionButtons = actions.length > 0 && (
+    <div className="ams-opener__actions">
+      {actions.map((a, i) => (
+        <button key={i} type="button" onClick={a.onClick} className={`ams-opener__btn${a.style === 'outline' ? ' ams-opener__btn--outline' : ''}`}>{a.label}</button>
+      ))}
+    </div>
+  )
+
   return (
-    <div className="florence-stage" data-mobile={mobile ? 'true' : 'false'}>
-      <nav className="florence-rail" aria-label="Site navigation">
+    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome="paper" style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk }}>
+      <nav className="ams-rail" aria-label="Site navigation">
         {onPageClick
-          ? <button className="florence-rail__logo" data-orient={logoOrient} onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
-          : <a className="florence-rail__logo" data-orient={logoOrient} href={basePath || '/'}>{brand}</a>}
-        <div className="florence-rail__mid">
-          <button className="florence-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
+          ? <button className="ams-rail__logo" onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
+          : <a className="ams-rail__logo" href={basePath || '/'}>{brand}</a>}
+        <div className="ams-rail__mid">
+          <button className="ams-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
             {menuOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
-        <span className="florence-rail__spacer" aria-hidden />
+        <span className="ams-rail__rule" aria-hidden />
       </nav>
 
       <div
-        className="florence-wall"
+        className="ams-wall"
         ref={wallRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
       >
-        <section className="florence-menu" data-open={menuOpen ? 'true' : 'false'} aria-hidden={!menuOpen}>
-          <div className="florence-menu__inner">
-            <ul className="florence-menu__list">
+        <section className="ams-menu" data-open={menuOpen ? 'true' : 'false'} data-surface="ink" aria-hidden={!menuOpen}>
+          <div className="ams-menu__inner">
+            <ul className="ams-menu__list">
               {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
             </ul>
             {socialKeys.length > 0 && (
-              <div className="florence-menu__socials">
+              <div className="ams-menu__socials">
                 {socialKeys.map(k => {
                   const v = socials[k]
                   const href = v?.startsWith?.('http') ? v : `https://${k}.com/${String(v).replace(/^@/, '')}`
-                  return <a key={k} className="florence-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
+                  return <a key={k} className="ams-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
                 })}
               </div>
             )}
           </div>
         </section>
 
-        <section className="florence-col florence-col--intro">
-          {name && <h1 className="florence-intro__title">{name}</h1>}
-          {description && <p className="florence-intro__desc">{description}</p>}
-          {actions.length > 0 && (
-            <div className="florence-intro__actions">
-              {actions.map((a, i) => (
-                <button key={i} type="button" onClick={a.onClick} className={`florence-intro__btn${a.style === 'outline' ? ' florence-intro__btn--outline' : ''}`}>{a.label}</button>
-              ))}
+        {heroOpener ? (
+          <section className="ams-col ams-col--hero" data-surface="image">
+            <img className="ams-hero__img" src={getSizedUrl(coverUrl, 'display')} alt="" />
+            <h1 className="ams-hero__title">{name}</h1>
+            <div className="ams-hero__foot">
+              {description && <p className="ams-hero__desc">{description}</p>}
+              {actionButtons}
             </div>
-          )}
-        </section>
+          </section>
+        ) : (
+          <section className="ams-col ams-col--title" data-surface="ink">
+            {name && <h1 className="ams-title__name">{name}</h1>}
+            {description && <p className="ams-title__desc">{description}</p>}
+            {actionButtons}
+          </section>
+        )}
 
         {blocks.map((block, index) => (
-          <FlorenceColumn
+          <AmsterdamColumn
             key={`col-${index}`}
             block={block}
             blockIndex={index}
@@ -141,9 +160,9 @@ export default function FlorenceWall({
       </div>
 
       {!mobile && (
-        <div className="florence-arrows">
-          <button className="florence-arrows__btn" onClick={() => page('prev')} aria-label="Previous"><IconArrow dir="prev" /></button>
-          <button className="florence-arrows__btn" onClick={() => page('next')} aria-label="Next"><IconArrow dir="next" /></button>
+        <div className="ams-arrows">
+          <button className="ams-arrows__btn" onClick={() => page('prev')} aria-label="Previous"><IconArrow dir="prev" /></button>
+          <button className="ams-arrows__btn" onClick={() => page('next')} aria-label="Next"><IconArrow dir="next" /></button>
         </div>
       )}
     </div>

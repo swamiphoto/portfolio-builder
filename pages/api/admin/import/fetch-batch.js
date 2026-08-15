@@ -11,6 +11,7 @@ import { safeFetch } from '@/common/import/safeFetch'
 import { withAuth } from '@/common/withAuth'
 import { downloadJSON } from '@/common/gcsClient'
 import { storeImageBuffer } from '@/common/storeImage'
+import { extractCapture } from '@/common/exifCapture'
 import { buildImportedAsset, existingSourceUrls, dedupeRefs } from '@/common/import/importCore'
 import { getUserLibraryConfigPath } from '@/common/gcsUser'
 
@@ -68,6 +69,9 @@ async function handler(req, res, user) {
 
       const buffer = Buffer.from(await resp.arrayBuffer())
 
+      // Best-effort — extractCapture never throws — must never fail the import.
+      const capture = await extractCapture(buffer)
+
       const stored = await storeImageBuffer(user.id, {
         buffer,
         filename: filenameFromUrl(ref.remoteUrl),
@@ -87,6 +91,7 @@ async function handler(req, res, user) {
           importBatchId: importBatchId ?? null,
           caption: ref.caption ?? '',
           hash: stored.hash,
+          capture,
           now,
         })
       )

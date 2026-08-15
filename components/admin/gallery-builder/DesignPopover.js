@@ -1,7 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec, getTheme } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamStyle } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
 
 const IconAlignLeft = () => (
@@ -106,6 +106,16 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
             value={block.florenceAnchor || 'top'}
             onChange={(v) => onUpdate({ ...block, florenceAnchor: v })}
             options={[{ value: 'top', label: 'Top' }, { value: 'center', label: 'Center' }, { value: 'bottom', label: 'Bottom' }]}
+          />
+        </DesignSection>
+      )}
+      {/* Amsterdam: a text block is a solid ink Panel (default) or Quiet museum text. */}
+      {themeId === 'amsterdam' && block.type === 'text' && (
+        <DesignSection label="Style">
+          <PillToggle
+            value={resolveAmsterdamStyle(block)}
+            onChange={(v) => onUpdate({ ...block, amsterdamStyle: v })}
+            options={[{ value: 'panel', label: 'Panel' }, { value: 'quiet', label: 'Quiet' }]}
           />
         </DesignSection>
       )}

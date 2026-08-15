@@ -25,6 +25,7 @@ export function buildImportedAsset({
   importBatchId,
   caption,
   hash,
+  capture,
   now,
 }) {
   const ratio = width && height ? width / height : null
@@ -43,6 +44,7 @@ export function buildImportedAsset({
         }
       : {}),
     hashes: { exact: hash ?? null, perceptual: null },
+    ...(capture ? { capture } : {}),
     source: {
       type: 'import',
       provider,

@@ -1,9 +1,10 @@
 import { withAuth } from '../../../common/withAuth'
 import { storeImageBuffer } from '../../../common/storeImage'
+import { extractCapture } from '../../../common/exifCapture'
 
 export const config = { api: { bodyParser: false } }
 
-async function handler(req, res, user) {
+export async function handler(req, res, user) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { filename, contentType, folder } = req.query
@@ -15,7 +16,10 @@ async function handler(req, res, user) {
 
   try {
     const result = await storeImageBuffer(user.id, { buffer, filename, contentType, folder })
-    return res.status(200).json(result)
+    // EXIF extraction is best-effort — extractCapture never throws — and must
+    // never fail the upload itself.
+    const capture = contentType.startsWith('image/') ? await extractCapture(buffer) : null
+    return res.status(200).json({ ...result, capture })
   } catch (err) {
     console.error('upload-file: original upload failed', err)
     return res.status(500).json({ error: err.message })
