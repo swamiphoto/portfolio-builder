@@ -182,22 +182,49 @@ export default function Landing() {
         </div>
 
         {/* Founder note — frank about being early */}
-        <div style={{ width: '100%', maxWidth: 500, marginTop: 'clamp(44px, 9vh, 76px)', textAlign: 'left' }}>
+        <div style={{ width: '100%', marginTop: 'clamp(44px, 9vh, 76px)', textAlign: 'left' }}>
           <Eyebrow>a note from the founder</Eyebrow>
           <p style={{ fontFamily: FONT.serif, fontSize: 17, lineHeight: 1.62, color: T.body, margin: '18px 0 0', textWrap: 'pretty' }}>
-            I'm a photographer of fifteen years, and the engineer who built Sepia. I got tired of tools that were either
-            beautiful or flexible but never both, so I made the one I always wanted. It's early: no big team, no glossy
-            marketing, and the screenshots aren't here yet. You have to sign in to see the real thing. If you make sites for
-            your photos, I'd love for you to try it and tell me where it falls short.
+            In the 15 years I’ve been a photographer, I’ve tried every platform out there, and not one felt like it was truly
+            made for photographers. Pixieset comes closest, but still lacks a real photographer’s workflow. So I built Sepia,
+            and I sweated the details only another photographer would appreciate.
           </p>
           <p style={{ fontFamily: FONT.mono, fontSize: 12.5, letterSpacing: '0.02em', color: T.muted, margin: '18px 0 0' }}>
-            — Swami · San Francisco
+            —{' '}
+            <a
+              href="https://www.swamiphoto.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: T.ink, textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
+              Swami Venkat
+            </a>{' '}
+            · San Francisco
           </p>
         </div>
 
         {/* Minimal footer */}
-        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: '0.04em', color: T.faint, marginTop: 'clamp(44px, 9vh, 72px)' }}>
-          © 2026 Sepia
+        <div
+          style={{
+            fontFamily: FONT.mono,
+            fontSize: 11,
+            letterSpacing: '0.04em',
+            color: T.faint,
+            marginTop: 'clamp(44px, 9vh, 72px)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 9,
+          }}
+        >
+          <span>© 2026 Sepia</span>
+          <span aria-hidden="true">·</span>
+          <a href="/terms" style={{ color: T.faint, textDecoration: 'none' }}>Terms</a>
+          <span aria-hidden="true">·</span>
+          <a href="/privacy" style={{ color: T.faint, textDecoration: 'none' }}>Privacy</a>
+          <span aria-hidden="true">·</span>
+          <span>Made in San Francisco</span>
         </div>
       </div>
     </div>
