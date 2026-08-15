@@ -2,6 +2,7 @@ const THEME_NAV_STYLES = {
   'kyoto': 'cover-embedded',
   'manhattan': 'left-rail',
   'florence': 'left-rail',
+  'amsterdam': 'left-rail',
   // Provence's cover page is a bespoke split-screen (PageCover renders it); the
   // running nav on every page is the top header bar (dark serif on cream).
   'provence': 'header-dropdown',
