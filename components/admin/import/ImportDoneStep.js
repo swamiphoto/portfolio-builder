@@ -50,8 +50,13 @@ function describeFoundPages(summary) {
 
 export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
   const n = summary?.importedCount || 0
-  const canReplicate = (summary?.siteMap?.pages?.length || 0) > 0
-  const found = canReplicate ? describeFoundPages(summary) : ''
+  const hasSiteMapPages = (summary?.siteMap?.pages?.length || 0) > 0
+  const found = hasSiteMapPages ? describeFoundPages(summary) : ''
+  // Only offer the rebuild choice when there's something to describe — a
+  // siteMap whose pages are all `kind: 'other'` (or otherwise produce no
+  // describable gallery/about/contact pages) would rebuild nothing, so the
+  // "Rebuild these pages for me" button would be a no-op.
+  const canReplicate = found !== ''
 
   return (
     <div style={{ padding: '32px 28px 28px' }}>

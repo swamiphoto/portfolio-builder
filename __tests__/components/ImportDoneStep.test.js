@@ -53,4 +53,15 @@ describe('ImportDoneStep', () => {
     render(<ImportDoneStep summary={{ importedCount: 3, siteMap: null }} onEnter={jest.fn()} />)
     expect(screen.queryByRole('button', { name: /rebuild/i })).toBeNull()
   })
+
+  it('shows no rebuild choice when the site map has pages but none are describable (all "other")', () => {
+    render(<ImportDoneStep summary={{
+      importedCount: 3,
+      imported: [{ assetId: 'a1', source: { externalCollectionId: 'c1' } }],
+      collections: [{ id: 'c1', name: 'Misc', assetRefs: [{ remoteUrl: 'u' }] }],
+      siteMap: { pages: [{ kind: 'other', title: 'Blog', collectionId: 'c1' }] },
+    }} onEnter={jest.fn()} />)
+    expect(screen.queryByRole('button', { name: /rebuild/i })).toBeNull()
+    expect(screen.getByRole('button', { name: /go to my studio/i })).toBeInTheDocument()
+  })
 })
