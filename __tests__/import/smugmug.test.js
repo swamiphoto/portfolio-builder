@@ -33,4 +33,22 @@ describe('smugmug.discover', () => {
       { remoteUrl: 'https://photos.smugmug.com/AAA/beach-O.jpg', caption: null },
     ])
   })
+
+  it('derives a gallery site map from the album tree', async () => {
+    const fetchJson = async (path) => {
+      if (path.includes('!albums')) {
+        return { Response: { Album: [
+          { AlbumKey: 'K1', Name: 'Landscapes', Uris: { AlbumImages: { Uri: '/img/K1' } } },
+          { AlbumKey: 'K2', Name: 'City Nights', Uris: { AlbumImages: { Uri: '/img/K2' } } },
+        ] } }
+      }
+      return { Response: { AlbumImage: [{ ArchivedUri: `https://smu.gs${path}/a.jpg`, Caption: '' }] } }
+    }
+
+    const result = await smugmug.discover('https://jane.smugmug.com', { fetchJson })
+    expect(result.siteMap.pages).toEqual([
+      { kind: 'gallery', title: 'Landscapes', slug: 'landscapes', navOrder: 0, sourceUrl: '/img/K1', textContent: '', collectionId: 'K1' },
+      { kind: 'gallery', title: 'City Nights', slug: 'city-nights', navOrder: 1, sourceUrl: '/img/K2', textContent: '', collectionId: 'K2' },
+    ])
+  })
 })

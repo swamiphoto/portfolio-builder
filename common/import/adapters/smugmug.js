@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import { slugify } from '../importCore'
 
 export const PROVIDER_ID = 'smugmug'
 
@@ -51,6 +52,17 @@ async function discover(input, { fetchJson = httpFetchJson } = {}) {
   return {
     site: { title: nickname, url: normalize(input) },
     collections,
+    siteMap: {
+      pages: collections.map((c, i) => ({
+        kind: 'gallery',
+        title: c.name,
+        slug: slugify(c.name) || c.id.toLowerCase(),
+        navOrder: i,
+        sourceUrl: c.remoteUrl,
+        textContent: '',
+        collectionId: c.id,
+      })),
+    },
   }
 }
 
