@@ -38,7 +38,7 @@ describe('ImportDoneStep', () => {
   it('offers the rebuild choice when site structure was found', () => {
     const onEnter = jest.fn()
     render(<ImportDoneStep summary={siteMapSummary} onEnter={onEnter} />)
-    fireEvent.click(screen.getByRole('button', { name: /rebuild these pages/i }))
+    fireEvent.click(screen.getByRole('button', { name: /build these pages for me on sepia/i }))
     expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ replicate: true }))
   })
 
@@ -51,7 +51,7 @@ describe('ImportDoneStep', () => {
 
   it('shows no rebuild choice without a site map', () => {
     render(<ImportDoneStep summary={{ importedCount: 3, siteMap: null }} onEnter={jest.fn()} />)
-    expect(screen.queryByRole('button', { name: /rebuild/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /build these pages for me/i })).toBeNull()
   })
 
   it('offers the rebuild choice when every photo in a gallery was dedupe-skipped (already in the library)', () => {
@@ -65,7 +65,7 @@ describe('ImportDoneStep', () => {
     }
     render(<ImportDoneStep summary={summary} onEnter={onEnter} />)
     expect(screen.getByText(/gallery/i)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /rebuild these pages/i }))
+    fireEvent.click(screen.getByRole('button', { name: /build these pages for me on sepia/i }))
     expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ replicate: true }))
   })
 
@@ -76,7 +76,7 @@ describe('ImportDoneStep', () => {
       collections: [{ id: 'c1', name: 'Misc', assetRefs: [{ remoteUrl: 'u' }] }],
       siteMap: { pages: [{ kind: 'other', title: 'Blog', collectionId: 'c1' }] },
     }} onEnter={jest.fn()} />)
-    expect(screen.queryByRole('button', { name: /rebuild/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /build these pages for me/i })).toBeNull()
     expect(screen.getByRole('button', { name: /go to my studio/i })).toBeInTheDocument()
   })
 })

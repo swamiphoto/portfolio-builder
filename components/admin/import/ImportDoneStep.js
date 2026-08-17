@@ -63,7 +63,7 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
   // Only offer the rebuild choice when there's something to describe — a
   // siteMap whose pages are all `kind: 'other'` (or otherwise produce no
   // describable gallery/about/contact pages) would rebuild nothing, so the
-  // "Rebuild these pages for me" button would be a no-op.
+  // "Build these pages for me on Sepia" button would be a no-op.
   const canReplicate = found !== ''
 
   return (
@@ -88,7 +88,7 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
         {canReplicate ? (
           <>
             <button onClick={() => onEnter({ replicate: true })} style={{ ...primaryBtn(false) }}>
-              Rebuild these pages for me
+              Build these pages for me on Sepia
             </button>
             <button onClick={() => onEnter({ replicate: false })} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
               Just keep the photos in my library
