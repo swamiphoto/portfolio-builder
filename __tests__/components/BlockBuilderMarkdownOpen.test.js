@@ -25,12 +25,14 @@ it('opening the markdown editor fires onMarkdownEditorOpen (so hosts can lazy-fe
   render(<BlockBuilder gallery={gallery} onChange={jest.fn()} pages={[]} onMarkdownEditorOpen={onOpen} />)
   fireEvent.click(screen.getByRole('button', { name: /open markdown editor/i }))
   expect(onOpen).toHaveBeenCalledTimes(1)
-  // and the panel actually opened on that block
-  expect(screen.getByText('Markdown editor')).toBeTruthy()
+  // and the panel actually opened on that block — the panel has no title
+  // (the header only holds the formatting toolbar + Done), so assert via a
+  // toolbar control instead.
+  expect(screen.getByRole('button', { name: /^bold$/i })).toBeTruthy()
 })
 
 it('onMarkdownEditorOpen defaults to a no-op when not provided', () => {
   render(<BlockBuilder gallery={gallery} onChange={jest.fn()} pages={[]} />)
   expect(() => fireEvent.click(screen.getByRole('button', { name: /open markdown editor/i }))).not.toThrow()
-  expect(screen.getByText('Markdown editor')).toBeTruthy()
+  expect(screen.getByRole('button', { name: /^bold$/i })).toBeTruthy()
 })

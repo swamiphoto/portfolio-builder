@@ -3,6 +3,37 @@ import PhotoPickerModal from '@/components/admin/gallery-builder/PhotoPickerModa
 
 const PANEL_WIDTH = 440
 
+// Warm hover state for the toolbar buttons. Kept as a handler (rather than a
+// Tailwind `hover:` class) because these buttons sit next to others that carry
+// inline `background` — Tailwind's `hover:` utilities silently lose to any
+// inline background on the same element, so onMouseEnter/Leave is the only
+// reliable way to get a visible hover here.
+function ToolbarButton({ name, label, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-label={name}
+      title={name}
+      onClick={onClick}
+      style={{
+        borderRadius: 4,
+        padding: '4px 9px',
+        fontSize: 13,
+        lineHeight: 1,
+        color: 'var(--text-secondary)',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'background 0.15s, color 0.15s',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.14)'; e.currentTarget.style.color = '#2c2416' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+    >
+      {label}
+    </button>
+  )
+}
+
 // Essay-style markdown editor for a text block. Layout-agnostic on purpose:
 // the themed preview in the center is the live rendering; this panel only
 // handles structure and emphasis. Any edit stamps format:'markdown'.
@@ -79,24 +110,38 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
       <div
         style={{
           position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 81,
-          width: PANEL_WIDTH, maxWidth: '92vw', background: '#fff',
+          width: PANEL_WIDTH, maxWidth: '92vw', background: 'var(--panel)',
           boxShadow: open ? '-24px 0 60px rgba(20,14,8,0.4)' : 'none',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)',
           display: 'flex', flexDirection: 'column',
         }}
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
-          <div className="text-sm font-medium">Markdown editor</div>
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{ borderBottom: '1px solid rgba(160,140,110,0.22)' }}
+        >
           <div className="flex items-center gap-1">
             {TOOLBAR.map((t) => (
-              <button key={t.name} type="button" aria-label={t.name} title={t.name} onClick={t.act}
-                className="rounded px-2 py-1 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900">
-                {t.label}
-              </button>
+              <ToolbarButton key={t.name} name={t.name} label={t.label} onClick={t.act} />
             ))}
-            <button type="button" onClick={onClose} className="ml-2 rounded px-2 py-1 text-sm text-neutral-500 hover:bg-neutral-100">Done</button>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: '#2c2416',
+              color: '#f5ecd6',
+              borderRadius: 4,
+              padding: '6px 14px',
+              fontSize: 12,
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Done
+          </button>
         </div>
         <textarea
           ref={taRef}
@@ -105,8 +150,12 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           onKeyDown={onKeyDown}
           placeholder={'Write your story…\n\nUse **bold**, *italics*, # headings — or type / on an empty line to add a photo.'}
           className="scroll-thin flex-1 resize-none p-4 text-sm leading-relaxed outline-none"
+          style={{ background: 'transparent', color: 'var(--text-primary)' }}
         />
-        <div className="border-t border-neutral-100 px-4 py-2 text-[11px] text-neutral-400">
+        <div
+          className="px-4 py-2 text-[11px]"
+          style={{ borderTop: '1px solid rgba(160,140,110,0.18)', color: 'var(--text-muted)' }}
+        >
           Formatting appears live in the preview. The theme decides the final look.
         </div>
       </div>
