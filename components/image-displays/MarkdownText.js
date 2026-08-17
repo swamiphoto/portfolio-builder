@@ -2,8 +2,11 @@ import React from 'react'
 import { parseMarkdown } from '@/common/markdown'
 
 // Imported markdown can come from arbitrary external sites; never let a
-// javascript:/data: url become a clickable href on a published page.
-const SAFE_HREF = /^(https?:|mailto:|\/|#)/i
+// javascript:/data: url become a clickable href on a published page. A
+// leading "//" is protocol-relative (e.g. //evil.com resolves to whatever
+// scheme the page is served over) and must be rejected too, not just
+// scheme-prefixed URLs — only single-slash relative paths are safe.
+const SAFE_HREF = /^(https?:|mailto:|#|\/(?!\/))/i
 
 export function renderInline(nodes, keyPrefix = 'i') {
   return (nodes || []).map((n, i) => {

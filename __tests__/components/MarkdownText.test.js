@@ -27,3 +27,9 @@ it('refuses javascript: links, rendering their text without an anchor', () => {
   // literal ")" beside the link text, so the element's text is "click me)".
   expect(screen.getByText(/click me/)).toBeTruthy()
 })
+
+it('refuses protocol-relative links, rendering their text without an anchor', () => {
+  const { container } = render(<MarkdownText content={'[x](//evil.com)'} variantClasses={classes} />)
+  expect(container.querySelector('a')).toBeNull()
+  expect(screen.getByText('x')).toBeTruthy()
+})
