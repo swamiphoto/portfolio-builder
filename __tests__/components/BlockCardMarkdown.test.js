@@ -19,3 +19,11 @@ it('markdown block shows a formatted read-only snippet that opens the editor', (
   fireEvent.click(screen.getByText(/markdown/i).closest('button'))
   expect(open).toHaveBeenCalled()
 })
+
+it('shows the Markdown badge below the snippet, not above it', () => {
+  render(<TextBlockField block={{ type: 'text', format: 'markdown', content: 'I shoot **film**' }} onUpdate={jest.fn()} onOpenMarkdownEditor={jest.fn()} AutoGrowTextarea={Textarea} inputClass="" />)
+  const badge = screen.getByText(/markdown/i)
+  const snippet = screen.getByText('film').closest('span').parentElement
+  // badge should come after the snippet block in DOM order
+  expect(snippet.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})

@@ -69,6 +69,22 @@ function RepositionIcon() {
   )
 }
 
+function MarkdownIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 2l3 3-8 8H3v-3l8-8z" />
+    </svg>
+  )
+}
+
+function PlainTextIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3h10M8 3v10" />
+    </svg>
+  )
+}
+
 // The "…" action menu that lives on an image thumbnail. Items are passed in so a
 // photo thumb can offer just Remove while a croppable one also offers Reposition.
 // Each item's onClick receives the trigger element, so Reposition can anchor its
@@ -664,6 +680,33 @@ function BlockCard({
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
                     Move down
                   </button>
+                  {block.type === 'text' && (
+                    <>
+                      <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
+                      <button
+                        onClick={() => { setShowMenu(false); onOpenMarkdownEditor?.(); }}
+                        className="w-full text-left flex items-center gap-2 transition-colors"
+                        style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <MarkdownIcon />
+                        Open markdown editor
+                      </button>
+                      {block.format === 'markdown' && (
+                        <button
+                          onClick={() => { setShowMenu(false); onUpdate({ ...block, format: undefined }); }}
+                          className="w-full text-left flex items-center gap-2 transition-colors"
+                          style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        >
+                          <PlainTextIcon />
+                          Convert to plain text
+                        </button>
+                      )}
+                    </>
+                  )}
                   <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
                   <button
                     onClick={() => { setShowMenu(false); onRemove(); }}

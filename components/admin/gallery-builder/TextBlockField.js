@@ -13,13 +13,13 @@ export default function TextBlockField({ block, onUpdate, onOpenMarkdownEditor, 
         className="w-full text-left text-sm leading-snug text-neutral-600 hover:text-neutral-900"
         title="Edit in markdown editor"
       >
-        <span className="mb-1 inline-block rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-600">
-          Markdown
-        </span>
         <span className="block max-h-24 overflow-hidden">
           {ast.length
             ? ast.map((b, i) => <span key={i} className="block truncate">{renderInline(b.children || [])}</span>)
             : <span className="italic opacity-60">Empty — click to write</span>}
+        </span>
+        <span className="mt-1.5 inline-block rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-600">
+          Markdown
         </span>
       </button>
     )
