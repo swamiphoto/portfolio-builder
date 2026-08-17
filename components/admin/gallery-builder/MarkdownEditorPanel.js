@@ -118,6 +118,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           blockType="photo"
           onConfirm={insertImages}
           onClose={() => setPickerOpen(false)}
+          anchorRight={PANEL_WIDTH}
         />
       )}
     </>

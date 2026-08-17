@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import MarkdownEditorPanel from '@/components/admin/gallery-builder/MarkdownEditorPanel'
 
 jest.mock('@/components/admin/gallery-builder/PhotoPickerModal', () => (props) => (
-  <button data-testid="picker" onClick={() => props.onConfirm([{ url: 'https://gcs/pic.jpg', assetId: 'a9' }])}>pick</button>
+  <button data-testid="picker" data-anchor-right={props.anchorRight} onClick={() => props.onConfirm([{ url: 'https://gcs/pic.jpg', assetId: 'a9' }])}>pick</button>
 ))
 
 const block = { type: 'text', content: 'Hello world' }
@@ -31,6 +31,13 @@ it('inserts a picked image as markdown and tracks it on block.images', () => {
   const call = onChange.mock.calls.at(-1)[0]
   expect(call.content).toContain('![](https://gcs/pic.jpg)')
   expect(call.images).toEqual([{ assetId: 'a9', url: 'https://gcs/pic.jpg' }])
+})
+
+it('opens the picker anchored to the left of the panel, not centered over it', () => {
+  const onChange = jest.fn()
+  render(<MarkdownEditorPanel open block={block} onChange={onChange} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
+  fireEvent.click(screen.getByRole('button', { name: /image/i }))
+  expect(screen.getByTestId('picker').dataset.anchorRight).toBe('440')
 })
 
 it('escape closes', () => {
