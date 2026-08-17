@@ -163,9 +163,15 @@ export default function Onboarding() {
               // Captured outside the try so the compose step below can resolve
               // dedupe-skipped photos (summary.skipped) against the merged config
               // that now includes both newly-written and pre-existing assets.
+              // libraryGetOk gates composition: if the GET failed, the {} fallback
+              // would make resolveComposableAssets match nothing in the all-skipped
+              // case — the user who was just promised a rebuild would silently get
+              // no pages. Better to skip composing than compose from a blind spot.
               let mergedLibraryConfig = null
+              let libraryGetOk = false
               try {
                 const res = await fetch('/api/admin/library')
+                libraryGetOk = res.ok
                 const currentConfig = res.ok ? await res.json() : {}
                 mergedLibraryConfig = applyImportToConfig(currentConfig, summary)
                 await fetch('/api/admin/library', {
@@ -181,7 +187,9 @@ export default function Onboarding() {
               // below, since composeSite can still come back empty.
               let rebuilt = false
               try {
-                if (summary.replicate && summary.siteMap?.pages?.length) {
+                if (summary.replicate && summary.siteMap?.pages?.length && !libraryGetOk) {
+                  console.error('import page composition skipped: library fetch failed')
+                } else if (summary.replicate && summary.siteMap?.pages?.length) {
                   const scRes = await fetch('/api/admin/site-config')
                   const siteConfig = scRes.ok ? await scRes.json() : { pages: [] }
                   const { pages } = composeSite({
