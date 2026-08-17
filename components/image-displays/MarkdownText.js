@@ -1,17 +1,23 @@
 import React from 'react'
 import { parseMarkdown } from '@/common/markdown'
 
+// Imported markdown can come from arbitrary external sites; never let a
+// javascript:/data: url become a clickable href on a published page.
+const SAFE_HREF = /^(https?:|mailto:|\/|#)/i
+
 export function renderInline(nodes, keyPrefix = 'i') {
   return (nodes || []).map((n, i) => {
     const key = `${keyPrefix}-${i}`
     if (n.type === 'bold') return <strong key={key}>{renderInline(n.children, key)}</strong>
     if (n.type === 'italic') return <em key={key}>{renderInline(n.children, key)}</em>
-    if (n.type === 'link')
+    if (n.type === 'link') {
+      if (!SAFE_HREF.test(n.url || '')) return <React.Fragment key={key}>{renderInline(n.children, key)}</React.Fragment>
       return (
         <a key={key} href={n.url} target="_blank" rel="noreferrer" className="underline underline-offset-2">
           {renderInline(n.children, key)}
         </a>
       )
+    }
     return <React.Fragment key={key}>{n.value}</React.Fragment>
   })
 }
