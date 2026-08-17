@@ -31,6 +31,12 @@ it('plain text round-trips as a single paragraph per blank-line group', () => {
   expect(ast[0].children[0].value).toBe('First para line one.\nStill first para.')
 })
 
+it('keeps content that follows a heading with only a single newline', () => {
+  const ast = parseMarkdown('# Title\nBody text')
+  expect(ast.map((b) => b.type)).toEqual(['heading', 'paragraph'])
+  expect(ast[1].children[0].value).toBe('Body text')
+})
+
 it('handles empty input', () => {
   expect(parseMarkdown('')).toEqual([])
   expect(parseMarkdown(null)).toEqual([])
