@@ -15,6 +15,7 @@ import { captionStyleCss, resolveCaptionStyle } from '../../../../common/caption
 import { FitImg, FitPlaceholder, Overlays } from '../shared/WallFit'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
+import MarkdownText from '../../MarkdownText'
 import AmsterdamCaption from './AmsterdamCaption'
 
 const TID = 'amsterdam'
@@ -233,6 +234,22 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
           <div className="wall-text-placeholder" aria-hidden>
             <span style={{ width: '82%' }} /><span style={{ width: '94%' }} /><span style={{ width: '58%' }} />
           </div>
+        ))
+      }
+      // Markdown blocks carry their own structure (headings, lists, images), so
+      // the drop-cap and column tricks below stay plain-text-only. Amsterdam has
+      // no distinct heading/quote treatment beyond Panel vs Quiet — formatting
+      // (bold, links, lists) is what matters here, not new art direction.
+      if (block.format === 'markdown') {
+        if (resolveAmsterdamStyle(block) === 'quiet') {
+          const mdStyle = { fontFamily, fontSize: QUIET_SIZE[variant] || QUIET_SIZE.body }
+          return wrap('ams-col--quiet', null, (
+            <div className="ams-quiet__text" style={mdStyle}><MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} /></div>
+          ))
+        }
+        const mdStyle = { fontFamily, fontSize: PANEL_SIZE[variant] || PANEL_SIZE.body }
+        return wrap('ams-col--panel', null, (
+          <div className="ams-panel__text" style={mdStyle}><MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} /></div>
         ))
       }
       // Split a leading capital off so it can be set as an oversized drop cap;

@@ -57,6 +57,22 @@ describe('ImportFlow review + import', () => {
     expect(arg.selectedCollections.map((c) => c.id)).toEqual(['c1'])
   })
 
+  it('carries the skipped (dedupe-matched) remoteUrls into the summary passed to onComplete', async () => {
+    client.importSelected.mockImplementation(async ({ onProgress }) => {
+      onProgress?.({ done: 3, total: 3, importedCount: 0, failedCount: 0 })
+      return { imported: [], failed: [], skipped: ['u1', 'u2', 'u3'], total: 3 }
+    })
+    const onComplete = jest.fn()
+    client.discoverSource.mockResolvedValue(discovery)
+    render(<ImportFlow variant="modal" onClose={() => {}} onComplete={onComplete} />)
+    fireEvent.change(screen.getByPlaceholderText(/yourwebsite/i), { target: { value: 'joe.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /find my photos/i }))
+    await screen.findByText(/import all 3 photos/i)
+    fireEvent.click(screen.getByRole('button', { name: /import all 3 photos/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /go to my studio/i }))
+    expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ skipped: ['u1', 'u2', 'u3'] }))
+  })
+
   it('for a single gallery, drops the "across" phrasing and the select-all row', async () => {
     client.discoverSource.mockResolvedValue({
       provider: 'generic',

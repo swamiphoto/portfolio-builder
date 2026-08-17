@@ -1,6 +1,6 @@
 import { createAssetIdFromUrl } from '@/common/adminConfig'
 
-function stableHash(input) {
+export function stableHash(input) {
   let hash = 2166136261
   const s = String(input || '')
   for (let i = 0; i < s.length; i += 1) {
@@ -8,6 +8,15 @@ function stableHash(input) {
     hash = Math.imul(hash, 16777619)
   }
   return (hash >>> 0).toString(36).padStart(7, '0')
+}
+
+export function slugify(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
 }
 
 export function newImportBatchId(seed) {

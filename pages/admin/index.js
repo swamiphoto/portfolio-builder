@@ -15,6 +15,7 @@ import ClientFeedbackBanner from '../../components/admin/platform/ClientFeedback
 import { EditorFeedbackProvider } from '../../components/admin/gallery-builder/EditorFeedbackContext'
 import { useClientFeedback } from '../../components/admin/platform/useClientFeedback'
 import { defaultPage, titleForTemplate } from '../../common/siteConfig'
+import { composeSite, applyComposedPages } from '../../common/import/composer'
 import { assignHomeOnCreate } from '../../common/homePage'
 import { COVER_FALLBACK_BG } from '../../common/coverBackground'
 import { useRouter } from 'next/router'
@@ -51,10 +52,11 @@ export default function AdminIndex() {
   const router = useRouter()
   const { onboarding, loading: onboardingLoading, error: onboardingError, markSeen, resetOnboarding } = useOnboarding()
   const importedJustNow = router.query.imported === '1'
+  const rebuiltJustNow = router.query.rebuilt === '1'
 
   useEffect(() => {
-    if (router.query.imported) {
-      const { imported, ...rest } = router.query
+    if (router.query.imported || router.query.rebuilt) {
+      const { imported, rebuilt, ...rest } = router.query
       router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -300,6 +302,21 @@ export default function AdminIndex() {
         return p
       })
       return { ...prev, pages }
+    })
+  }, [updateConfig])
+
+  // Rebuild-from-import: called by AdminLibrary once photos are imported and the
+  // user chose to have their old site's pages recreated. Composes against the
+  // *latest* siteConfig (via updateConfig's functional updater, not a stale
+  // fetch) so the new pages land in this component's own state — they show up
+  // in the sidebar immediately and ride the normal debounced autosave, instead
+  // of AdminLibrary issuing its own site-config PUT that a moment later gets
+  // overwritten by this component's next autosave of its (stale) in-memory config.
+  const handleComposedPagesFromImport = useCallback((composeArgs) => {
+    updateConfig(prev => {
+      const { pages } = composeSite({ ...composeArgs, existingPages: prev?.pages || [] })
+      if (!pages.length) return prev
+      return applyComposedPages(prev, pages)
     })
   }, [updateConfig])
 
@@ -626,7 +643,7 @@ export default function AdminIndex() {
               boxShadow: '0 0 0 1px rgba(26,18,10,0.1), 0 32px 80px rgba(26,18,10,0.35)',
             }}
           >
-            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} />
+            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} onComposedPages={handleComposedPagesFromImport} />
           </div>
 
         </div>
@@ -662,7 +679,7 @@ export default function AdminIndex() {
       )}
       {showWelcomeTour && (
         <GuidedTour
-          steps={buildTourSteps({ imported: importedJustNow })}
+          steps={buildTourSteps({ imported: importedJustNow, rebuilt: rebuiltJustNow })}
           welcome={WELCOME}
           onFinish={() => markSeen('tourDone')}
         />

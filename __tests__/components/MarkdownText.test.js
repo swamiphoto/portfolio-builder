@@ -1,0 +1,35 @@
+import { render, screen } from '@testing-library/react'
+import MarkdownText from '@/components/image-displays/MarkdownText'
+
+const classes = { heading: 'h-cls', body: 'b-cls', quote: 'q-cls' }
+
+it('renders headings, emphasis, images and quotes with the given classes', () => {
+  const { container } = render(
+    <MarkdownText content={'# About Me\n\nI shoot **film** mostly.\n\n> light is everything\n\n![On location](https://gcs/x.jpg)'} variantClasses={classes} />
+  )
+  expect(screen.getByText('About Me').className).toContain('h-cls')
+  expect(screen.getByText('film').tagName).toBe('STRONG')
+  expect(screen.getByText('light is everything').className).toContain('q-cls')
+  const img = container.querySelector('img')
+  expect(img.getAttribute('src')).toBe('https://gcs/x.jpg')
+  expect(screen.getByText('On location')).toBeTruthy() // caption
+})
+
+it('never renders raw HTML from content', () => {
+  const { container } = render(<MarkdownText content={'<img src=x onerror=alert(1)> hi'} variantClasses={classes} />)
+  expect(container.querySelector('img')).toBeNull()
+})
+
+it('refuses javascript: links, rendering their text without an anchor', () => {
+  const { container } = render(<MarkdownText content={'[click me](javascript:alert(1))'} variantClasses={classes} />)
+  expect(container.querySelector('a')).toBeNull()
+  // Regex matcher: the parser's url token stops at the first ")", leaving a
+  // literal ")" beside the link text, so the element's text is "click me)".
+  expect(screen.getByText(/click me/)).toBeTruthy()
+})
+
+it('refuses protocol-relative links, rendering their text without an anchor', () => {
+  const { container } = render(<MarkdownText content={'[x](//evil.com)'} variantClasses={classes} />)
+  expect(container.querySelector('a')).toBeNull()
+  expect(screen.getByText('x')).toBeTruthy()
+})

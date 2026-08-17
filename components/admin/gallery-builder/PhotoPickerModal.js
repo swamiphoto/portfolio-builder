@@ -785,8 +785,12 @@ function UploadTab({ onUploaded, libraryConfig }) {
   );
 }
 
+// Gap kept between the picker and whatever it's anchored beside (e.g. the
+// markdown editor panel), so it doesn't butt right up against it.
+const ANCHOR_GAP = 16;
+
 // ── Modal shell ─────────────────────────────────────────────────────────────
-export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, libraryConfig, pages, defaultPageId }) {
+export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, libraryConfig, pages, defaultPageId, anchorRight }) {
   const [tab, setTab] = useState("library");
   const [railCollapsed, setRailCollapsed] = useState(true);
   const [previewAsset, setPreviewAsset] = useState(null);
@@ -794,7 +798,16 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
   const dragState = useRef(null);
   // Default position: right of site sidebar (256) + block sidebar (260) = 516, with a
   // small gap so the picker opens beside the block being edited, not over it.
-  const [pos, setPos] = useState({ x: 526, y: 80 });
+  // Callers that dock a panel of their own on the right edge (e.g. the markdown
+  // editor) can pass `anchorRight` (that panel's width in px) so the picker opens
+  // to its left instead, sized against the picker's initial (rail-collapsed) width.
+  const [pos, setPos] = useState(() => {
+    if (typeof anchorRight === "number" && typeof window !== "undefined") {
+      const initialWidth = PICKER_BASE_W + RAIL_COLLAPSED_W;
+      return { x: Math.max(16, window.innerWidth - anchorRight - ANCHOR_GAP - initialWidth), y: 80 };
+    }
+    return { x: 526, y: 80 };
+  });
 
   // ESC closes preview
   useEffect(() => {
@@ -831,7 +844,11 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
     <div
       ref={panelRef}
       data-photo-picker
-      className="fixed z-50 flex flex-col rounded-xl overflow-hidden"
+      // z-[90]: must render above any panel it can be opened from — notably the
+      // markdown editor panel (zIndex 81 + its zIndex 80 backdrop). At z-50 the
+      // picker rendered (and received clicks) *behind* that panel wherever the
+      // two overlapped, which on common laptop widths silently ate photo picks.
+      className="fixed z-[90] flex flex-col rounded-xl overflow-hidden"
       style={{
         left: pos.x,
         top: pos.y,

@@ -18,6 +18,7 @@ const FL_MOUNT_HEIGHT = { large: '58vh', medium: '48vh', small: '38vh' }
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
+import MarkdownText from '../../MarkdownText'
 import FlorenceCaption from './FlorenceCaption'
 import { FitImg, FitPlaceholder, Overlays } from '../shared/WallFit'
 
@@ -230,6 +231,17 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       // Long copy would overflow the fixed-height wall column, so it flows into a
       // second column instead of running past the viewport.
       const cols = String(content).length > 280
+      // Florence has no distinct heading/quote treatment for text blocks — every
+      // markdown node reuses the same "florence-text" look; formatting (bold,
+      // links, lists) is what matters here, not new art direction. Markdown keeps
+      // the same long-copy column flow as plain text.
+      if (block.format === 'markdown') {
+        return wrap(`florence-col--text${cols ? ' florence-col--text-cols' : ''}`, cols ? null : { justifyContent: justify }, (
+          <div className={`florence-text${cols ? ' florence-text--cols' : ''}`} style={{ fontFamily, fontSize }}>
+            <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} />
+          </div>
+        ))
+      }
       return wrap(`florence-col--text${cols ? ' florence-col--text-cols' : ''}`, cols ? null : { justifyContent: justify }, (
         <p className={`florence-text${cols ? ' florence-text--cols' : ''}`} style={{ fontFamily, fontSize }}>{content}</p>
       ))

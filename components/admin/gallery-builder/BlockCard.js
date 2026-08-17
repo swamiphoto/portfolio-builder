@@ -14,6 +14,7 @@ import { resolveVariant } from "../../../common/themes/variants";
 import { getBlockSpec } from "../../../common/themes";
 import Tip from "../Tip";
 import { EditableInput, EditableTextarea } from "../platform/EditableText";
+import TextBlockField from "./TextBlockField";
 
 const TYPE_LABELS = {
   page: "Hero",
@@ -64,6 +65,22 @@ function RepositionIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M8 2v12M2 8h12M8 2L6 4M8 2l2 2M8 14l-2-2M8 14l2-2M2 8l2-2M2 8l2 2M14 8l-2-2M14 8l-2 2" />
+    </svg>
+  )
+}
+
+function MarkdownIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 2l3 3-8 8H3v-3l8-8z" />
+    </svg>
+  )
+}
+
+function PlainTextIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3h10M8 3v10" />
     </svg>
   )
 }
@@ -249,6 +266,7 @@ function BlockCard({
   onAddBlockAbove,
   onAddBlockBelow,
   themeId = 'kyoto',
+  onOpenMarkdownEditor,
   defaultGround,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
@@ -664,6 +682,35 @@ function BlockCard({
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
                     Move down
                   </button>
+                  {block.type === 'text' && (
+                    <>
+                      <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
+                      {block.format !== 'markdown' && (
+                        <button
+                          onClick={() => { setShowMenu(false); onOpenMarkdownEditor?.(); }}
+                          className="w-full text-left flex items-center gap-2 transition-colors"
+                          style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        >
+                          <MarkdownIcon />
+                          Open markdown editor
+                        </button>
+                      )}
+                      {block.format === 'markdown' && (
+                        <button
+                          onClick={() => { setShowMenu(false); onUpdate({ ...block, format: undefined }); }}
+                          className="w-full text-left flex items-center gap-2 transition-colors"
+                          style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        >
+                          <PlainTextIcon />
+                          Convert to plain text
+                        </button>
+                      )}
+                    </>
+                  )}
                   <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
                   <button
                     onClick={() => { setShowMenu(false); onRemove(); }}
@@ -981,12 +1028,12 @@ function BlockCard({
 
           {/* Text */}
           {block.type === "text" && (
-            <AutoGrowTextarea
-              className={`${INPUT} resize-none scroll-thin !pt-0`}
-              placeholder="Write something…"
-              maxHeight={160}
-              value={block.content || ""}
-              onChange={(e) => onUpdate({ ...block, content: e.target.value })}
+            <TextBlockField
+              block={block}
+              onUpdate={onUpdate}
+              onOpenMarkdownEditor={() => onOpenMarkdownEditor?.()}
+              AutoGrowTextarea={AutoGrowTextarea}
+              inputClass={`${INPUT} resize-none scroll-thin !pt-0`}
             />
           )}
 

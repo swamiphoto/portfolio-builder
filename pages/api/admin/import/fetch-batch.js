@@ -8,6 +8,7 @@
 // This route does NOT write the library config — the client merges + PUTs.
 
 import { safeFetch } from '@/common/import/safeFetch'
+import { originalUrlCandidates } from '@/common/import/originalUrl'
 import { withAuth } from '@/common/withAuth'
 import { downloadJSON } from '@/common/gcsClient'
 import { storeImageBuffer } from '@/common/storeImage'
@@ -25,6 +26,16 @@ function filenameFromUrl(remoteUrl) {
   } catch {
     return 'image.jpg'
   }
+}
+
+async function fetchImage(url) {
+  const resp = await safeFetch(url)
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+  const contentType = resp.headers.get('content-type') || 'image/jpeg'
+  if (!contentType.startsWith('image/')) throw new Error(`not an image (${contentType})`)
+  const len = Number(resp.headers.get('content-length') || 0)
+  if (len > MAX_IMPORT_BYTES) throw new Error('image too large')
+  return { buffer: Buffer.from(await resp.arrayBuffer()), contentType }
 }
 
 async function handler(req, res, user) {
@@ -56,18 +67,17 @@ async function handler(req, res, user) {
 
   for (const ref of fresh) {
     try {
-      const resp = await safeFetch(ref.remoteUrl)
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-
-      const contentType = resp.headers.get('content-type') || 'image/jpeg'
-      if (!contentType.startsWith('image/')) {
-        throw new Error(`not an image (${contentType})`)
+      let fetched = null
+      for (const candidate of originalUrlCandidates(ref.remoteUrl)) {
+        try {
+          fetched = await fetchImage(candidate)
+          break
+        } catch {
+          // candidate guess failed — fall back to the discovered URL
+        }
       }
-
-      const len = Number(resp.headers.get('content-length') || 0)
-      if (len > MAX_IMPORT_BYTES) throw new Error('image too large')
-
-      const buffer = Buffer.from(await resp.arrayBuffer())
+      if (!fetched) fetched = await fetchImage(ref.remoteUrl)
+      const { buffer, contentType } = fetched
 
       // Best-effort — extractCapture never throws — must never fail the import.
       const capture = await extractCapture(buffer)

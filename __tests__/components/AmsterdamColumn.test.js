@@ -135,6 +135,21 @@ describe('AmsterdamColumn block treatments', () => {
     expect(on.querySelectorAll('.wall-text-placeholder span')).toHaveLength(3)
   })
 
+  it('renders markdown text blocks formatted, not as literal markdown syntax', () => {
+    const { container } = renderWall([
+      { type: 'text', content: '**bold** words', format: 'markdown', amsterdamStyle: 'panel' },
+      { type: 'text', content: '**quiet bold**', format: 'markdown', amsterdamStyle: 'quiet' },
+    ])
+    const panel = container.querySelector('.ams-col--panel .ams-panel__text')
+    expect(panel.querySelector('strong')).toBeTruthy()
+    expect(panel.querySelector('strong').textContent).toBe('bold')
+    expect(panel.textContent).not.toContain('**')
+
+    const quiet = container.querySelector('.ams-col--quiet .ams-quiet__text')
+    expect(quiet.querySelector('strong')).toBeTruthy()
+    expect(quiet.textContent).not.toContain('**')
+  })
+
   it('photo captions honor photoMeta', () => {
     const { container: withMeta } = renderWall(
       [{ type: 'photo', image: 'https://x/1.jpg', caption: 'T', capture: CAPTURE, themeState: { amsterdam: { variant: 'centered' } } }],

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
+import MarkdownEditorPanel from "./MarkdownEditorPanel";
 import ToggleSwitch from "../common/ToggleSwitch";
 import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 import { useEditorFeedback } from './EditorFeedbackContext';
@@ -102,6 +103,10 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onBlockHover,
   themeId = 'kyoto',
   autoFocusTitle,
+  libraryImages = [],
+  libraryConfig = {},
+  libraryLoading = false,
+  onMarkdownEditorOpen = () => {},
   blockGroundDefaults,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
@@ -111,6 +116,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const [expandedOverride, setExpandedOverride] = useState(null);
   const [allExpanded, setAllExpanded] = useState(true);
   const [glowingBlockIndex, setGlowingBlockIndex] = useState(null);
+  const [markdownEditorIndex, setMarkdownEditorIndex] = useState(null);
 
   const feedbackCtx = useEditorFeedback();
 
@@ -561,6 +567,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
                             glowing={glowingBlockIndex === index}
                             themeId={themeId}
+                            onOpenMarkdownEditor={() => { onMarkdownEditorOpen(); setMarkdownEditorIndex(index); }}
                             defaultGround={blockGroundDefaults?.[index]}
                           />
                         </div>
@@ -637,6 +644,16 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           onClose={() => { setShowBlockMenu(false); setInsertAtIndex(null); }}
         />
       )}
+
+      <MarkdownEditorPanel
+        open={markdownEditorIndex != null}
+        block={markdownEditorIndex != null ? (galleryRef.current.blocks || [])[markdownEditorIndex] : null}
+        onChange={(updated) => updateBlock(markdownEditorIndex, updated)}
+        onClose={() => setMarkdownEditorIndex(null)}
+        libraryImages={libraryImages}
+        libraryConfig={libraryConfig}
+        libraryLoading={libraryLoading}
+      />
     </div>
   );
 })

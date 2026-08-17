@@ -26,6 +26,26 @@
 .site-input::placeholder { color: rgba(168,150,122,0.55); }
 .site-input:focus { border-bottom-color: rgba(92,79,58,0.65) !important; }
 
+/* ── Markdown editor panel (WYSIWYG-lite contentEditable surface) ────────── */
+.md-editable:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.md-editable p { margin: 0 0 0.75em; }
+.md-editable p:last-child { margin-bottom: 0; }
+.md-editable h3 { font-size: 1.2em; font-weight: 600; margin: 0 0 0.5em; color: var(--text-primary); }
+.md-editable blockquote {
+  margin: 0 0 0.75em;
+  padding-left: 12px;
+  border-left: 2px solid rgba(160,140,110,0.4);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+.md-editable ul { margin: 0 0 0.75em; padding-left: 1.25em; }
+.md-editable li { margin-bottom: 0.25em; }
+.md-editable img { display: block; max-height: 120px; border-radius: 8px; margin: 0 0 0.75em; }
+
 @font-face {
   font-family: "Muse";
   src: url("/fonts/Muse/hv_muse_regular-webfont.woff2") format("woff2"), url("/fonts/Muse/hv_muse_regular-webfont.woff") format("woff");

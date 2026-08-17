@@ -87,7 +87,10 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
         setsCount,
         site: discovery.site,
         imported: result.imported,
+        skipped: result.skipped,
         collections: discovery.collections,
+        siteMap: discovery.siteMap,
+        importBatchId: batchId,
       }
       setSummary(s)
       setStep('done')
@@ -168,7 +171,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
         <div className="rounded-xl overflow-hidden" style={{ width: 460, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))' }}>
           <ImportDoneStep
             summary={summary}
-            onEnter={() => onComplete(summary)}
+            onEnter={(opts) => onComplete({ ...summary, replicate: !!opts?.replicate })}
             onImportAnother={() => {
               setSummary(null)
               setDiscovery(null)

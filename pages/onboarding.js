@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react'
 import ImportFlow from '../components/admin/import/ImportFlow'
 import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
+import { composeSite, applyComposedPages, resolveComposableAssets } from '../common/import/composer'
 
-function goToAdmin(slug, { imported = false } = {}) {
+function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
   const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
-  const query = imported ? '?imported=1' : ''
+  const params = new URLSearchParams()
+  if (imported) params.set('imported', '1')
+  if (rebuilt) params.set('rebuilt', '1')
+  const query = params.toString() ? `?${params.toString()}` : ''
   window.location.href = `${protocol}://${slug}.${rootDomain}/admin${query}`
 }
 
@@ -156,19 +160,68 @@ export default function Onboarding() {
               // Save the imported assets (with their source metadata) before redirecting,
               // otherwise the library GET will create them from the GCS listing with no
               // source info, defaulting to provider:'manual' → shows as "Uploaded".
+              // Captured outside the try so the compose step below can resolve
+              // dedupe-skipped photos (summary.skipped) against the merged config
+              // that now includes both newly-written and pre-existing assets.
+              // libraryGetOk gates composition: if the GET failed, the {} fallback
+              // would make resolveComposableAssets match nothing in the all-skipped
+              // case — the user who was just promised a rebuild would silently get
+              // no pages. Better to skip composing than compose from a blind spot.
+              let mergedLibraryConfig = null
+              let libraryGetOk = false
               try {
                 const res = await fetch('/api/admin/library')
+                libraryGetOk = res.ok
                 const currentConfig = res.ok ? await res.json() : {}
-                const next = applyImportToConfig(currentConfig, summary)
+                mergedLibraryConfig = applyImportToConfig(currentConfig, summary)
                 await fetch('/api/admin/library', {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(next),
+                  body: JSON.stringify(mergedLibraryConfig),
                 })
               } catch {
                 // Non-fatal — user still lands in admin, source just won't be labelled
               }
-              goToAdmin(claimedSlug, { imported: true })
+              // Tracks whether we actually created pages (not just whether the
+              // user *chose* to rebuild) — drives the separate "rebuilt" tour flag
+              // below, since composeSite can still come back empty.
+              let rebuilt = false
+              try {
+                if (summary.replicate && summary.siteMap?.pages?.length && !libraryGetOk) {
+                  console.error('import page composition skipped: library fetch failed')
+                } else if (summary.replicate && summary.siteMap?.pages?.length) {
+                  const scRes = await fetch('/api/admin/site-config')
+                  const siteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+                  const { pages } = composeSite({
+                    siteMap: summary.siteMap,
+                    collections: summary.collections,
+                    imported: resolveComposableAssets({
+                      imported: summary.imported,
+                      skipped: summary.skipped,
+                      libraryAssets: mergedLibraryConfig?.assets,
+                    }),
+                    importBatchId: summary.importBatchId,
+                    existingPages: siteConfig.pages || [],
+                  })
+                  if (pages.length) {
+                    await fetch('/api/admin/site-config', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(applyComposedPages(siteConfig, pages)),
+                    })
+                    rebuilt = true
+                  }
+                }
+              } catch (err) {
+                // Non-fatal — user still lands in admin, pages just won't be auto-created
+                console.error('import page composition failed', err)
+              }
+              // `imported` drives the library tour copy ("including the ones we
+              // just imported") and should reflect photos, independent of whether
+              // pages were rebuilt. `rebuilt` is the dedicated flag for the
+              // separate "pages we imported for you" tour step.
+              const imported = (summary?.imported?.length || 0) > 0
+              goToAdmin(claimedSlug, { imported, rebuilt })
             }}
           />
         )}

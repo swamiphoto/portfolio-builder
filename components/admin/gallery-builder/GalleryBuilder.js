@@ -238,6 +238,10 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
           onPickThumbnail={() => { fetchLibrary(); setThumbnailPickerOpen(true); }}
           expanded={expanded}
           onToggleExpand={() => setExpanded(true)}
+          libraryImages={libraryImages}
+          libraryConfig={libraryData}
+          libraryLoading={libraryLoading}
+          onMarkdownEditorOpen={fetchLibrary}
         />
       ) : (
         <button

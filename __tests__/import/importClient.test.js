@@ -50,16 +50,36 @@ describe('importSelected', () => {
 })
 
 describe('applyImportToConfig', () => {
-  it('merges assets and builds one gallery per collection by externalCollectionId', () => {
-    const config = { portfolios: {}, galleries: { existing: ['keep'] }, assets: {} }
+  it('groups imported assets into library sets, not galleries', () => {
+    const config = { assets: {}, sets: {}, savedViews: [{ id: 'v1' }], galleries: { keep: ['x'] } }
     const imported = [
-      { assetId: 'a1', publicUrl: 'https://cdn/1.jpg', source: { externalCollectionId: 'c1' } },
-      { assetId: 'a2', publicUrl: 'https://cdn/2.jpg', source: { externalCollectionId: 'c1' } },
+      { assetId: 'a1', publicUrl: 'https://gcs/1.jpg', source: { externalCollectionId: 'c1' } },
+      { assetId: 'a2', publicUrl: 'https://gcs/2.jpg', source: { externalCollectionId: 'c1' } },
     ]
-    const collections = [{ id: 'c1', name: 'Big Sur' }]
-    const next = applyImportToConfig(config, { imported, collections })
-    expect(Object.keys(next.assets)).toEqual(['a1', 'a2'])
-    expect(next.galleries['big-sur']).toEqual(['https://cdn/1.jpg', 'https://cdn/2.jpg'])
-    expect(next.galleries.existing).toEqual(['keep'])
+    const collections = [{ id: 'c1', name: 'Portraits' }]
+    const next = applyImportToConfig(config, { imported, collections, importBatchId: 'imp_1', now: '2026-08-16T00:00:00.000Z' })
+    const sets = Object.values(next.sets)
+    expect(sets).toHaveLength(1)
+    expect(sets[0]).toMatchObject({ name: 'Portraits', kind: 'manual', assetIds: ['a1', 'a2'] })
+    expect(next.assets.a1.setIds).toEqual([sets[0].setId])
+    expect(next.galleries).toEqual({ keep: ['x'] })      // untouched
+    expect(next.savedViews).toEqual([{ id: 'v1' }])      // preserved, not dropped
+  })
+
+  it('merges into an existing set with the same name', () => {
+    const config = { assets: {}, sets: { s1: { setId: 's1', name: 'Portraits', kind: 'manual', assetIds: ['a0'] } } }
+    const imported = [{ assetId: 'a1', publicUrl: 'u', source: { externalCollectionId: 'c1' } }]
+    const next = applyImportToConfig(config, { imported, collections: [{ id: 'c1', name: 'Portraits' }], importBatchId: 'imp_1', now: 'T' })
+    expect(next.sets.s1.assetIds).toEqual(['a0', 'a1'])
+    expect(next.assets.a1.setIds).toEqual(['s1'])
+  })
+
+  it('does not mutate the caller-provided config or its set objects', () => {
+    const originalSet = { setId: 's1', name: 'Portraits', kind: 'manual', assetIds: ['a0'] }
+    const config = { assets: {}, sets: { s1: originalSet } }
+    const imported = [{ assetId: 'a1', publicUrl: 'u', source: { externalCollectionId: 'c1' } }]
+    applyImportToConfig(config, { imported, collections: [{ id: 'c1', name: 'Portraits' }], importBatchId: 'imp_1', now: 'T' })
+    expect(config.sets.s1).toBe(originalSet)
+    expect(originalSet.assetIds).toEqual(['a0'])
   })
 })
