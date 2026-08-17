@@ -100,3 +100,37 @@ export function extractImageUrls(html, baseUrl) {
   return { images: [...images], links: [...links] }
 }
 
+// Prose + signals for page classification. Chrome elements (nav/header/footer)
+// and non-content tags are removed so wordCount reflects actual page copy.
+export function extractPageContent(html) {
+  const $ = cheerio.load(String(html || ''))
+  const hasForm = $('form').length > 0
+  const hasMailto = $('a[href^="mailto:"]').length > 0
+  $('script, style, noscript, nav, header, footer, svg').remove()
+  const scope = $('main').length ? $('main') : $('body')
+  const paras = []
+  scope.find('p, h1, h2, h3, blockquote, li').each((_, el) => {
+    const t = $(el).text().replace(/\s+/g, ' ').trim()
+    if (t) paras.push(t)
+  })
+  let text = paras.join('\n\n')
+  if (!text) text = scope.text().replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim()
+  const wordCount = text ? text.split(/\s+/).length : 0
+  return { text, wordCount, hasForm, hasMailto }
+}
+
+export function extractNavLinks(html, baseUrl) {
+  const $ = cheerio.load(String(html || ''))
+  const out = []
+  const seen = new Set()
+  $('header a[href], nav a[href]').each((_, el) => {
+    const resolved = safeResolve($(el).attr('href'), baseUrl)
+    if (!resolved) return
+    const href = resolved.split('#')[0]
+    if (seen.has(href)) return
+    seen.add(href)
+    out.push({ href, label: $(el).text().replace(/\s+/g, ' ').trim() })
+  })
+  return out
+}
+

@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls } from '@/common/import/crawlerUtils'
+import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls, extractPageContent, extractNavLinks } from '@/common/import/crawlerUtils'
 
 describe('normalizeUrl', () => {
   it('adds https:// when missing', () => {
@@ -81,5 +81,38 @@ describe('extractImageUrls — JSON/script-embedded photos', () => {
   it('recovers image URLs with escaped forward slashes (\\/ and \\u002F)', () => {
     expect(images).toContain('https://storage.googleapis.com/swamiphoto/photos/japan/DSC00324.jpg')
     expect(images).toContain('https://storage.googleapis.com/swamiphoto/photos/japan/DSC00328.png?w=2000')
+  })
+})
+
+describe('extractPageContent', () => {
+  it('extracts prose paragraphs, drops nav/header/footer/script chrome', () => {
+    const html = `<html><head><script>var x=1</script></head><body>
+      <nav><a href="/about">About</a></nav>
+      <main><p>I am a photographer based in Austin.</p><p>I shoot landscapes and portraits.</p></main>
+      <footer>© 2026</footer></body></html>`
+    const r = extractPageContent(html)
+    expect(r.text).toBe('I am a photographer based in Austin.\n\nI shoot landscapes and portraits.')
+    expect(r.wordCount).toBe(12)
+    expect(r.hasForm).toBe(false)
+    expect(r.hasMailto).toBe(false)
+  })
+  it('detects forms and mailto links', () => {
+    const html = `<body><form><input/></form><a href="mailto:hi@x.com">email me</a></body>`
+    const r = extractPageContent(html)
+    expect(r.hasForm).toBe(true)
+    expect(r.hasMailto).toBe(true)
+  })
+})
+
+describe('extractNavLinks', () => {
+  it('returns nav/header links resolved against base, in document order, deduped', () => {
+    const html = `<body><header><a href="/">Home</a><a href="/work">Work</a></header>
+      <nav><a href="/about">About</a><a href="/work">Work</a></nav>
+      <main><a href="/hidden">not nav</a></main></body>`
+    expect(extractNavLinks(html, 'https://site.com/')).toEqual([
+      { href: 'https://site.com/', label: 'Home' },
+      { href: 'https://site.com/work', label: 'Work' },
+      { href: 'https://site.com/about', label: 'About' },
+    ])
   })
 })
