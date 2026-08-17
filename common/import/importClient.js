@@ -1,4 +1,6 @@
-import { newImportBatchId } from '@/common/import/importCore'
+import { newImportBatchId, slugify } from '@/common/import/importCore'
+
+export { slugify } from '@/common/import/importCore'
 
 export class ImportError extends Error {
   constructor(message, status, code) {
@@ -13,15 +15,6 @@ export function chunk(arr, size) {
   const out = []
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
   return out
-}
-
-export function slugify(name) {
-  return String(name || '')
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
 }
 
 export function makeImportBatchId(provider, input, nowMs) {
