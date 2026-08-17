@@ -188,8 +188,9 @@ export default function Onboarding() {
                     })
                   }
                 }
-              } catch {
+              } catch (err) {
                 // Non-fatal — user still lands in admin, pages just won't be auto-created
+                console.error('import page composition failed', err)
               }
               goToAdmin(claimedSlug, { imported: true })
             }}

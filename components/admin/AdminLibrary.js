@@ -498,8 +498,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
             body: JSON.stringify(applyComposedPages(currentSiteConfig, pages)),
           })
         }
-      } catch {
+      } catch (err) {
         // Non-fatal — library import already saved; pages just won't be auto-created
+        console.error('import page composition failed', err)
       }
     }
   }, [currentConfig, saveConfig])
