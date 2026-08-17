@@ -12,7 +12,7 @@ import SiteNav from '../../image-displays/page/SiteNav'
 import SiteFooter from '../../image-displays/page/SiteFooter'
 import ThemeProvider from '../../image-displays/ThemeProvider'
 import GalleryPreview from '../gallery-builder/GalleryPreview'
-import { getTheme } from '../../../common/themes'
+import { getPageTheme } from '../../../common/themes'
 import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientEngagementContext'
 import { getPagePhotos } from '../../../common/assetRefs'
 import { resolveHomePage } from '../../../common/homePage'
@@ -32,7 +32,8 @@ function PagePreview({
   const page = (pageId ? config?.pages?.find(p => p.id === pageId) : null) || resolveHomePage(config)
   if (!page) return null
 
-  const theme = getTheme(config?.design?.theme)
+  // A page can override the site theme for itself only (page.themeOverride).
+  const theme = getPageTheme(config, page)
   // Provence swaps the standard site nav for its own scroll-sticky header, which is
   // a live-site behavior (window scroll); the preview just shows cover + gallery.
   const isProvence = theme.id === 'provence'
@@ -79,7 +80,7 @@ function PagePreview({
     <ThemeProvider themeId={theme.id}>
       <PreviewPackagesProvider packages={previewPackages} currency={previewCurrency} thumb={previewThumb}>
       <div className="theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
-        {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={config} username={username} variant={navVariant} onPageClick={onPageClick} currentPageId={page.id} />}
+        {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={config} username={username} variant={navVariant} themeId={theme.id} onPageClick={onPageClick} currentPageId={page.id} />}
         <div className="theme-content">
           <PageCover
             cover={page.cover}
@@ -94,6 +95,7 @@ function PagePreview({
           />
           <GalleryPreview
             gallery={gallery}
+            themeId={theme.id}
             pages={config?.pages}
             childPages={childPages}
             activeChildId={activeChildId}

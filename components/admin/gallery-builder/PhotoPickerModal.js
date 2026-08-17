@@ -343,7 +343,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
   }, [positions, scrollTop, containerSize.height]);
 
   const toggle = (asset) => {
-    const ref = normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl });
+    const ref = normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl, width: asset.width, height: asset.height });
     const key = asset.assetId || asset.publicUrl;
     if (!isMulti) {
       onConfirm(ref ? [ref] : []);
@@ -540,7 +540,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
               onClick={() => {
                 const selectedAssets = filtered.filter((asset) => selected.includes(asset.assetId || asset.publicUrl));
                 onConfirm(
-                  selectedAssets.map((asset) => normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl })).filter(Boolean)
+                  selectedAssets.map((asset) => normalizeImageRef({ assetId: asset.assetId, url: asset.publicUrl, width: asset.width, height: asset.height })).filter(Boolean)
                 );
               }}
               disabled={selected.length === 0}

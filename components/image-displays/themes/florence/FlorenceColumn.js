@@ -22,12 +22,13 @@ const ANCHOR_JUSTIFY = { top: 'flex-start', center: 'center', bottom: 'flex-end'
 // Definite (viewport-based) frame heights — a percentage/flex height can't drive
 // the aspect-ratio width during intrinsic sizing, so heights must be concrete.
 const PHOTO_HEIGHT = { large: '82vh', medium: '64vh', small: '46vh' }
-// Rows leave headroom above/below so the Position (top/center/bottom) control is
-// visible; Fill is the option for edge-to-edge height.
-const ROW_HEIGHT = { large: '62vh', medium: '50vh', small: '38vh' }
+// Photo sets (Row + Mosaic) share one height scale so a Row reads as tall as the
+// Mosaic "mixed" blocks. Large fills the column top-to-bottom (the column's own
+// vertical padding is the margin); Medium/Small step down so the Position control
+// (top/center/bottom) has real room to move the block.
+const WALL_HEIGHT = { large: '84vh', medium: '64vh', small: '46vh' }
 const TEXT_SIZE = { heading: 'clamp(1.3rem, 1.7vw, 1.65rem)', subheading: 'clamp(1.12rem, 1.4vw, 1.32rem)', body: 'clamp(1rem, 1.2vw, 1.14rem)' }
 const QUOTE_SIZE = { large: 'clamp(1.25rem, 2vw, 1.7rem)', medium: 'clamp(1.05rem, 1.6vw, 1.35rem)', small: 'clamp(0.95rem, 1.3vw, 1.1rem)' }
-const MOSAIC_HEIGHT = { large: '84vh', medium: '66vh', small: '50vh' }
 const MOSAIC_PATTERN = [1, 2, 3, 1, 2]
 // Varied widths for multi-photo groups (cycled by group index) so the wall reads
 // as a dynamic mosaic rather than uniform columns. Solo photos keep natural width.
@@ -97,7 +98,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       const size = resolvePhotoSize(block, TID)
 
       if (resolveVariant(block, TID) === 'mosaic') {
-        const mH = MOSAIC_HEIGHT[size] || MOSAIC_HEIGHT.large
+        const mH = WALL_HEIGHT[size] || WALL_HEIGHT.large
         return wrap('florence-col--mosaic', { justifyContent: justify }, (
           <div className="florence-mosaic" style={{ height: mH }}>
             {mosaicGroups(refs).map((grp, gi) => {
@@ -132,7 +133,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       }
 
       // Row (default): all photos side by side, each at the row height, plaque beneath.
-      const rowH = ROW_HEIGHT[size] || ROW_HEIGHT.large
+      const rowH = WALL_HEIGHT[size] || WALL_HEIGHT.large
       return wrap('florence-col--photorow', { justifyContent: justify }, (
         <div className="florence-row">
           {refs.map((img, i) => (
@@ -207,7 +208,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       const linked = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
       if (!linked.length) return null
       return wrap('florence-col--pagelinks', { justifyContent: justify }, (
-        <div className="florence-row" style={{ height: ROW_HEIGHT.medium }}>
+        <div className="florence-row" style={{ height: WALL_HEIGHT.medium }}>
           {linked.map((p) => {
             const thumb = pageDisplayThumbnail(p)
             const href = `${basePath}/${p.slug || p.id}`

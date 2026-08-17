@@ -16,6 +16,18 @@ export function getTheme(id) {
   return THEMES[id] || THEMES[DEFAULT_THEME_ID]
 }
 
+// The theme a specific page renders in: its own themeOverride if set to a real
+// theme, else the site theme. Single source of truth for per-page overrides.
+export function resolvePageThemeId(siteConfig, page) {
+  const override = page?.themeOverride
+  if (override && THEMES[override]) return override
+  return siteConfig?.design?.theme || DEFAULT_THEME_ID
+}
+
+export function getPageTheme(siteConfig, page) {
+  return getTheme(resolvePageThemeId(siteConfig, page))
+}
+
 export function getBlockSpec(themeId, blockType) {
   const base = baseBlocks[blockType]
   if (!base) return null

@@ -1,11 +1,20 @@
 // components/image-displays/page/SiteFooter.js
 import { resolveFooterSocial, socialHref, SOCIAL_KEYS } from '../../../common/siteDesign'
 import { SOCIAL_ICONS } from './SocialIcons'
+import { useTheme } from '../ThemeProvider'
+import { useIsMobile } from '../../../common/useIsMobile'
 
 const CG = '"Cormorant Garamond", "Cormorant", Georgia, serif'
 const LABELS = { instagram: 'Instagram', facebook: 'Facebook', twitter: 'Twitter', tiktok: 'TikTok', youtube: 'YouTube', website: 'Website' }
 
 export default function SiteFooter({ siteConfig }) {
+  const theme = useTheme()
+  const isMobile = useIsMobile()
+  // Left-rail themes (Copenhagen) render the footer + socials at the bottom of the
+  // rail on desktop, so skip the content-column footer there to avoid a duplicate.
+  // On phones there is no rail, so the content footer stays.
+  if (theme?.navStyle === 'left-rail' && !isMobile) return null
+
   const socialMode = resolveFooterSocial(siteConfig) // 'off' | 'text' | 'icons'
 
   const custom = siteConfig?.footer?.customText

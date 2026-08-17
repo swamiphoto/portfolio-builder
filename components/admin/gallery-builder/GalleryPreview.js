@@ -43,7 +43,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) {
+export default function GalleryPreview({ gallery, themeId: themeIdProp, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) {
   const feedbackCtx = useEditorFeedback()
 
   // Debounce the preview so a heavy re-render doesn't fire on every keystroke.
@@ -82,7 +82,9 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockCount]);
 
-  const themeId = siteConfig?.design?.theme || 'kyoto';
+  // Honor an explicit themeId (per-page theme override) before the site theme, so
+  // the whole gallery — layout, block treatments, nav, cover — renders in it.
+  const themeId = themeIdProp || siteConfig?.design?.theme || 'kyoto';
 
   const resolvedBlocks = useMemo(
     () => (debouncedGallery.blocks || []).map(b => resolveBlock(b, assetsByUrl)),
@@ -114,6 +116,12 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
       (childPages || []).map(p => `${p.id}:${p.title || ''}`).join(','),
     [siteConfig?.design?.subNavStyle, activeChildId, childPages]
   );
+
+  // Site DESIGN settings (photo treatment, ink, photo-meta, nav styles, …) are read
+  // from the closure inside the memoized render below. Fold a signature of them into
+  // its deps so a design change — clicking Mono/Sepia, swapping the ink — reflects in
+  // the preview immediately, not only after the next content edit or a page switch.
+  const designSig = useMemo(() => JSON.stringify(siteConfig?.design || {}), [siteConfig?.design]);
 
   // The heavy part: drawing every block/image. Memoize it on the DEBOUNCED
   // content so per-keystroke re-renders of the parent (hero title/description,
@@ -153,7 +161,7 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
       />
     </ThemeProvider>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, opener]);
+  ), [debouncedGallery, resolvedBlocks, themeId, designSig, printStore, pagesThumbSig, childNavSig, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, opener]);
 
   const content = (feedbackCtx?.showFeedback && feedbackCtx.hasFeedback)
     ? <ReviewFeedbackProvider feedbackByPhoto={feedbackCtx.feedbackByPhoto} onOpenPhoto={feedbackCtx.openPhoto}>{inner}</ReviewFeedbackProvider>

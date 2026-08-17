@@ -101,6 +101,22 @@ export function resolveAmsterdamStyle(block) {
   return block?.amsterdamStyle === 'quiet' ? 'quiet' : 'panel'
 }
 
+// Amsterdam-only photo Frame: how a photo (or each photo in a set) is mounted.
+// 'none' = the clean matted hang with a plaque beside; 'card'/'mount'/'print' =
+// vintage mounts with the caption printed on the mount; 'mixed' rotates those
+// three across a set for a scrapbook feel. Stored flat on the block.
+export const AMSTERDAM_FRAMES = ['none', 'card', 'mount', 'print', 'mixed']
+export function resolveAmsterdamFrame(block) {
+  return AMSTERDAM_FRAMES.includes(block?.amsterdamFrame) ? block.amsterdamFrame : 'none'
+}
+
+// Amsterdam-only per-block ground color. 'auto' defers to the wall's rotation;
+// light/dark/ink pin the block (and the rail, as it passes under it) to a color.
+const AMSTERDAM_GROUND_IDS = ['auto', 'light', 'dark', 'ink']
+export function resolveAmsterdamGround(block) {
+  return AMSTERDAM_GROUND_IDS.includes(block?.amsterdamGround) ? block.amsterdamGround : 'auto'
+}
+
 // Testimonial quote style (italic | regular). The block's choice wins; otherwise
 // the theme's default (from the block spec's defaultQuoteStyle), else italic.
 export function resolveQuoteStyle(block, themeId) {
