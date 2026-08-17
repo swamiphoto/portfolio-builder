@@ -17,8 +17,13 @@ a markdown-capable text block to land imported about-page prose.
 
 ## Decisions already made
 
-- **Fully automatic replication.** No review/confirm step. Users can delete pages
-  easily; a conditional onboarding tip explains what was imported.
+- **Replication is offered, not forced** (revised 2026-08-17). After import
+  completes, when site structure was detected, the done screen asks: keep the
+  photos library-only, or also rebuild the pages. Pages are only created on
+  opt-in, and only for the collections the user actually selected (the composer
+  already skips galleries with no imported assets). No mid-flow review of the
+  proposed mapping; users can delete pages easily and a conditional onboarding
+  tip explains what was imported.
 - **Instagram import: deferred.** Will be a later OAuth-based adapter.
 - **In-place editing on the preview surface: deferred entirely.** The preview stays
   read-only. All editing happens in the sidebar and the new slide-out panel.

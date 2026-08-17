@@ -1600,3 +1600,75 @@ Check BlockBuilder's existing props for library data: GalleryBuilder already hol
 - [ ] **Step 2:** Run the full test suite once more: `npx jest` → all green.
 - [ ] **Step 3:** In the app, exercise: (a) import a SmugMug or generic site URL through the library import flow and confirm pages appear in the sidebar with sensible blocks, sets appear in the library, and each imported page's gallery opens with a solo photo; (b) create a text block, open the markdown editor, add bold text, a heading, and a photo via `/`, and confirm the preview renders it themed and the sidebar card shows the snippet + badge; (c) confirm a plain text block behaves exactly as before.
 - [ ] **Step 4:** Report results (screenshots or a short written pass/fail per flow) — fix anything broken before declaring done.
+
+---
+
+### Task 16: Replication becomes an opt-in choice on the import done screen
+
+Added 2026-08-17 after user QA feedback: pages must not be created silently. When
+site structure was detected, the done step asks the user; pages are composed only
+on opt-in. Selection-scoping needs no composer change (galleries with no imported
+assets are already skipped).
+
+**Files:**
+- Modify: `components/admin/import/ImportDoneStep.js`
+- Modify: `components/admin/import/ImportFlow.js` (done-step wiring only)
+- Modify: `pages/onboarding.js`, `components/admin/AdminLibrary.js` (gate composition on `summary.replicate`)
+- Test: `__tests__/components/ImportDoneStep.test.js` (extend)
+
+**Interfaces:**
+- Consumes: `summary` already carries `siteMap` and `importBatchId` (Task 9); `ImportDoneStep({ summary, onEnter, onImportAnother })` with "Go to my studio" firing `onEnter`; ImportFlow renders it with `onEnter={() => onComplete(summary)}`.
+- Produces: `onComplete` is always called with `summary.replicate` set (`true` only when the user chose to rebuild pages). Both completion handlers run page composition only `if (summary.replicate && summary.siteMap?.pages?.length)`.
+
+Behavior:
+- `canReplicate = (summary.siteMap?.pages?.length || 0) > 0`.
+- When `canReplicate`: the done step describes what was found, derived from `summary.siteMap.pages` (e.g. "3 galleries, an about page, and a contact page" — counts by kind, omit kinds with zero, and only count gallery pages whose collection had at least one imported asset, matching what would actually be created). Two actions:
+  - Primary: "Rebuild these pages for me" → `onComplete({ ...summary, replicate: true })`
+  - Secondary: "Just keep the photos in my library" → `onComplete({ ...summary, replicate: false })`
+- When not `canReplicate`: existing single "Go to my studio" flow, `replicate: false`.
+- Copy: plain prose, no em-dashes (a tour test enforces the no-em-dash rule for tour copy; keep the same voice here), reassure reversibility: "You can edit or delete anything we create."
+- Keep `onImportAnother` behavior untouched.
+
+- [ ] **Step 1: Write failing tests** in `__tests__/components/ImportDoneStep.test.js` (keep all existing tests green; follow the file's existing render/mocking style):
+
+```js
+const siteMapSummary = {
+  importedCount: 12, failedCount: 0, setsCount: 2,
+  site: { title: 'Jane' },
+  imported: [{ assetId: 'a1', source: { externalCollectionId: 'c1' } }],
+  collections: [{ id: 'c1', name: 'Portraits', assetRefs: [{ remoteUrl: 'u' }] }],
+  siteMap: { pages: [
+    { kind: 'gallery', title: 'Portraits', collectionId: 'c1' },
+    { kind: 'about', title: 'About', collectionId: 'about' },
+  ] },
+}
+
+it('offers the rebuild choice when site structure was found', () => {
+  const onEnter = jest.fn()
+  render(<ImportDoneStep summary={siteMapSummary} onEnter={onEnter} />)
+  fireEvent.click(screen.getByRole('button', { name: /rebuild these pages/i }))
+  expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ replicate: true }))
+})
+
+it('lets the user keep photos library-only', () => {
+  const onEnter = jest.fn()
+  render(<ImportDoneStep summary={siteMapSummary} onEnter={onEnter} />)
+  fireEvent.click(screen.getByRole('button', { name: /keep the photos/i }))
+  expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ replicate: false }))
+})
+
+it('shows no rebuild choice without a site map', () => {
+  render(<ImportDoneStep summary={{ importedCount: 3, siteMap: null }} onEnter={jest.fn()} />)
+  expect(screen.queryByRole('button', { name: /rebuild/i })).toBeNull()
+})
+```
+
+Note the contract change these tests imply: `onEnter` now receives an options object `{ replicate }` (ImportDoneStep does not need the whole summary spread; ImportFlow merges). Adjust existing tests that call `onEnter` with no args accordingly (assert it was called; if they assert call shape, update to the new contract).
+
+- [ ] **Step 2: Run to verify failure**, then implement: ImportDoneStep computes `canReplicate` and the found-structure description from `summary.siteMap.pages` (gallery count restricted to pages whose `collectionId` matches a collection with imported assets — derive from `summary.imported[].source.externalCollectionId`); renders the two-button choice or the existing single button; fires `onEnter({ replicate })`. ImportFlow: `onEnter={(opts) => onComplete({ ...summary, replicate: !!opts?.replicate })}`.
+
+- [ ] **Step 3: Gate the handlers.** In `pages/onboarding.js` and `components/admin/AdminLibrary.js`, change the composition guard from `if (summary.siteMap?.pages?.length)` to `if (summary.replicate && summary.siteMap?.pages?.length)`. Library merge (assets + sets) continues unconditionally.
+
+- [ ] **Step 4: Run** `npx jest __tests__/components/ImportDoneStep.test.js`, then full `npx jest` → all green.
+
+- [ ] **Step 5: Commit** — `feat(import): make page replication an opt-in choice on the import done screen`
