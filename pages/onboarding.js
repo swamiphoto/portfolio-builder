@@ -170,7 +170,7 @@ export default function Onboarding() {
                 // Non-fatal — user still lands in admin, source just won't be labelled
               }
               try {
-                if (summary.siteMap?.pages?.length) {
+                if (summary.replicate && summary.siteMap?.pages?.length) {
                   const scRes = await fetch('/api/admin/site-config')
                   const siteConfig = scRes.ok ? await scRes.json() : { pages: [] }
                   const { pages } = composeSite({

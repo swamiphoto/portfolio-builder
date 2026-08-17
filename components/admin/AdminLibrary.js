@@ -480,7 +480,7 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     setSelectedAlbum({ type: 'all', key: 'all' })
     await saveConfig(next)
 
-    if (summary.siteMap?.pages?.length) {
+    if (summary.replicate && summary.siteMap?.pages?.length) {
       try {
         const scRes = await fetch('/api/admin/site-config')
         const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
