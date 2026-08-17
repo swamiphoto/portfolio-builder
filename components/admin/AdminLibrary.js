@@ -8,6 +8,7 @@ import DuplicateFinder from "./library/DuplicateFinder";
 import { getPagePhotos } from "../../common/assetRefs";
 import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
 import { applyImportToConfig } from '@/common/import/importClient';
+import { composeSite, applyComposedPages } from '@/common/import/composer';
 import { seedUploadedAsset } from '@/common/import/uploadedAsset';
 import { resolveSellableAsset } from "../../common/print/sellAsset";
 import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
@@ -472,12 +473,35 @@ export default function AdminLibrary({ onBack, siteConfig }) {
   const handleImportComplete = useCallback(async (summary) => {
     setImportOpen(false)
     if (!summary?.imported?.length) return
-    const next = applyImportToConfig(currentConfig(), { imported: summary.imported, collections: summary.collections })
+    const next = applyImportToConfig(currentConfig(), { imported: summary.imported, collections: summary.collections, importBatchId: summary.importBatchId })
     const urls = summary.imported.map((a) => a.publicUrl)
     setHighlightedUrls(new Set(urls))
     setTimeout(() => setHighlightedUrls(null), 2500)
     setSelectedAlbum({ type: 'all', key: 'all' })
     await saveConfig(next)
+
+    if (summary.siteMap?.pages?.length) {
+      try {
+        const scRes = await fetch('/api/admin/site-config')
+        const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+        const { pages } = composeSite({
+          siteMap: summary.siteMap,
+          collections: summary.collections,
+          imported: summary.imported,
+          importBatchId: summary.importBatchId,
+          existingPages: currentSiteConfig.pages || [],
+        })
+        if (pages.length) {
+          await fetch('/api/admin/site-config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(applyComposedPages(currentSiteConfig, pages)),
+          })
+        }
+      } catch {
+        // Non-fatal — library import already saved; pages just won't be auto-created
+      }
+    }
   }, [currentConfig, saveConfig])
 
   const handleCaptionChange = useCallback(async (assetId, caption) => {

@@ -122,3 +122,9 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
   })
   return { pages }
 }
+
+export function applyComposedPages(siteConfig, composedPages) {
+  const existing = new Set((siteConfig.pages || []).map((p) => p.id))
+  const fresh = (composedPages || []).filter((p) => !existing.has(p.id))
+  return { ...siteConfig, pages: [...(siteConfig.pages || []), ...fresh] }
+}

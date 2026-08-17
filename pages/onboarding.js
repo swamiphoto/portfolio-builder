@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import ImportFlow from '../components/admin/import/ImportFlow'
 import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
+import { composeSite, applyComposedPages } from '../common/import/composer'
 
 function goToAdmin(slug, { imported = false } = {}) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
@@ -167,6 +168,28 @@ export default function Onboarding() {
                 })
               } catch {
                 // Non-fatal — user still lands in admin, source just won't be labelled
+              }
+              try {
+                if (summary.siteMap?.pages?.length) {
+                  const scRes = await fetch('/api/admin/site-config')
+                  const siteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+                  const { pages } = composeSite({
+                    siteMap: summary.siteMap,
+                    collections: summary.collections,
+                    imported: summary.imported,
+                    importBatchId: summary.importBatchId,
+                    existingPages: siteConfig.pages || [],
+                  })
+                  if (pages.length) {
+                    await fetch('/api/admin/site-config', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(applyComposedPages(siteConfig, pages)),
+                    })
+                  }
+                }
+              } catch {
+                // Non-fatal — user still lands in admin, pages just won't be auto-created
               }
               goToAdmin(claimedSlug, { imported: true })
             }}
