@@ -25,6 +25,14 @@ export function buildTourSteps({ imported = false } = {}) {
       body: "This is where you add your pages. Anything you add here becomes a public page on your site's menu.",
       placement: 'right',
     },
+    ...(imported
+      ? [{
+          selector: '[data-tour="pages-section"]',
+          title: 'Pages we imported for you',
+          body: 'We rebuilt these pages from your old site, photos and all. Open any of them to fine-tune the layout, and if you would rather begin from a clean slate, you can delete them anytime from your profile menu.',
+          placement: 'right',
+        }]
+      : []),
     {
       selector: '[data-tour="hidden-section"]',
       title: 'Hidden pages',
