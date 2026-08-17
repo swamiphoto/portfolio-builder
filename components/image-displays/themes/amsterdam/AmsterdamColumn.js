@@ -12,7 +12,7 @@ import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveButtonStyle, resolveSize, resolveQuoteStyle, resolveAmsterdamStyle, resolveAmsterdamFrame } from '../../../../common/themes/variants'
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
-import { FitImg, Overlays } from '../shared/WallFit'
+import { FitImg, FitPlaceholder, Overlays } from '../shared/WallFit'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
 import AmsterdamCaption from './AmsterdamCaption'
@@ -46,7 +46,15 @@ function mosaicGroups(refs) {
   return groups
 }
 
-export default function AmsterdamColumn({ block, blockIndex, ground = 'light', onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '' }) {
+export default function AmsterdamColumn({ block, blockIndex, ground = 'light', onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', showPlaceholders = false }) {
+  // A photo box that renders a placeholder when the image is a placeholder marker,
+  // so empty blocks preview the wall layout before any photos are added.
+  const photoBox = (img, i, fitClass = 'ams-fit') => (
+    img?.placeholder
+      ? <FitPlaceholder fitClass={fitClass} />
+      : <FitImg img={img} index={i} onImageClick={onImageClick} fitClass={fitClass} />
+  )
+  const PH = { placeholder: true }
   const metaFor = (o) => formatCaptureMeta(o?.capture, photoMeta, o?.uploadedAt)
   // The Caption control (Sans / Serif / Accent) overrides the caption typography;
   // 'sans' returns {} so the plaque + per-frame defaults show untouched.
@@ -67,15 +75,19 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
   // the three styles across a set for a scrapbook feel.
   const mount = (img, i, frame, height) => {
     const style = frame === 'mixed' ? FRAME_CYCLE[i % FRAME_CYCLE.length] : frame
-    const cap = img.caption || ''
-    const m = metaFor(img)
+    const cap = img?.placeholder ? '' : (img.caption || '')
+    const m = img?.placeholder ? '' : metaFor(img)
+    // A long caption hangs beside the photo's long (right) edge instead of widening
+    // the frame; it's clamped and clicking it opens the full caption in the lightbox.
+    const beside = cap.length > 70
+    const openLightbox = beside && onImageClick ? () => onImageClick(i) : undefined
     return (
-      <figure key={i} className={`ams-mount ams-mount--${style}`} data-flip={i % 3}>
+      <figure key={i} className={`ams-mount ams-mount--${style}`} data-flip={i % 3} data-caplayout={beside ? 'beside' : 'below'}>
         <div className="ams-mount__photo" style={{ height }}>
-          <FitImg img={img} index={i} onImageClick={onImageClick} fitClass="ams-fit" />
+          {photoBox(img, i)}
         </div>
         {(cap || m) && (
-          <figcaption className="ams-mount__label">
+          <figcaption className="ams-mount__label" onClick={openLightbox} {...(openLightbox ? { role: 'button', tabIndex: 0, title: cap } : {})}>
             {cap && <span className="ams-mount__title" style={capStyle}>{cap}</span>}
             {m && <span className="ams-mount__meta">{m}</span>}
           </figcaption>
@@ -87,10 +99,13 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
   switch (block.type) {
     case 'photo': {
       const src = block.image || block.imageUrl
-      if (!getImageRefUrl(src)) return null
-      const imgObj = { ...(typeof src === 'object' ? src : { url: src }), caption: block.caption, print: block.print, aspectRatio: block.aspectRatio }
-      const caption = block.caption || ''
-      const meta = metaFor(block)
+      const hasImg = !!getImageRefUrl(src)
+      if (!hasImg && !showPlaceholders) return null
+      const imgObj = hasImg
+        ? { ...(typeof src === 'object' ? src : { url: src }), caption: block.caption, print: block.print, aspectRatio: block.aspectRatio }
+        : PH
+      const caption = hasImg ? (block.caption || '') : ''
+      const meta = hasImg ? metaFor(block) : ''
       const isFill = resolveVariant(block, TID) !== 'centered'
       const frame = resolveAmsterdamFrame(block)
       // Framed: the photo sits in a vintage mount with its caption on the card.
@@ -108,7 +123,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
         return wrap('ams-col--photo ams-col--fill', null, (
           <figure className="ams-figure ams-figure--fill">
             <div className="ams-frame" style={{ height: '100vh' }}>
-              <FitImg img={imgObj} index={0} onImageClick={onImageClick} fitClass="ams-fit" />
+              {photoBox(imgObj, 0)}
             </div>
           </figure>
         ))
@@ -120,7 +135,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       return wrap('ams-col--photo', null, (
         <figure className="ams-figure ams-figure--plaque">
           <div className="ams-frame" style={{ flex: '0 0 auto', height: frameH }}>
-            <FitImg img={imgObj} index={0} onImageClick={onImageClick} fitClass="ams-fit" />
+            {photoBox(imgObj, 0)}
           </div>
           <AmsterdamCaption caption={caption} meta={meta} beside tag="Left" titleStyle={capStyle} />
         </figure>
@@ -130,8 +145,11 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
     case 'photos':
     case 'stacked':
     case 'masonry': {
-      const refs = normalizeImageRefs(block.images || block.imageUrls || [])
-      if (!refs.length) return null
+      let refs = normalizeImageRefs(block.images || block.imageUrls || [])
+      if (!refs.length) {
+        if (!showPlaceholders) return null
+        refs = [PH, PH, PH]
+      }
       const size = resolvePhotoSize(block, TID)
       const isMosaicVariant = resolveVariant(block, TID) === 'mosaic'
 
@@ -157,7 +175,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
                 return (
                   <div key={gi} className="ams-mosaic__group ams-mosaic__group--solo">
                     <div className="ams-frame" style={{ height: mH }}>
-                      <FitImg img={grp[0]} index={refs.indexOf(grp[0])} onImageClick={onImageClick} fitClass="ams-fit" />
+                      {photoBox(grp[0], refs.indexOf(grp[0]))}
                       {grp[0].caption && <figcaption className="ams-mosaic__cap"><span style={capStyle}>{grp[0].caption}</span></figcaption>}
                     </div>
                   </div>
@@ -166,6 +184,13 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
               return (
                 <div key={gi} className="ams-mosaic__group" style={{ width: MOSAIC_GROUP_WIDTHS[gi % MOSAIC_GROUP_WIDTHS.length] }}>
                   {grp.map((img, ci) => {
+                    if (img?.placeholder) {
+                      return (
+                        <div key={ci} className="ams-mosaic__cell">
+                          <FitPlaceholder fitClass="ams-fit" />
+                        </div>
+                      )
+                    }
                     const url = getImageRefUrl(img) || img.url || img
                     return (
                       <div key={ci} className="ams-mosaic__cell relative group">
@@ -189,9 +214,9 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
           {refs.map((img, i) => (
             <figure key={i} className="ams-row__item m-0">
               <div className="ams-frame" style={{ height: rowH }}>
-                <FitImg img={img} index={i} onImageClick={onImageClick} fitClass="ams-fit" />
+                {photoBox(img, i)}
               </div>
-              <AmsterdamCaption caption={img.caption || ''} meta={metaFor(img)} titleStyle={capStyle} />
+              {!img?.placeholder && <AmsterdamCaption caption={img.caption || ''} meta={metaFor(img)} titleStyle={capStyle} />}
             </figure>
           ))}
         </div>
@@ -199,9 +224,17 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
     }
 
     case 'text': {
-      if (!block.content) return null
+      if (!block.content && !showPlaceholders) return null
       const fontFamily = resolveFont(block, TID)
       const variant = resolveVariant(block, TID)
+      // Empty text block: skeleton lines (like the other themes) rather than prose.
+      if (!block.content) {
+        return wrap('ams-col--quiet', null, (
+          <div className="wall-text-placeholder" aria-hidden>
+            <span style={{ width: '82%' }} /><span style={{ width: '94%' }} /><span style={{ width: '58%' }} />
+          </div>
+        ))
+      }
       // Split a leading capital off so it can be set as an oversized drop cap;
       // the rest flows beside/under it. Long copy sets in two columns.
       const content = String(block.content)
@@ -218,9 +251,11 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
           <p className={`ams-quiet__text${twoCol ? ' ams-text--twocol' : ''}`} style={{ fontFamily, fontSize: QUIET_SIZE[variant] || QUIET_SIZE.body }}>{dropCap}</p>
         ))
       }
-      const twoCol = content.length > 180 && variant === 'body'
+      // Panel is one fixed size; long copy flows into height-constrained columns so
+      // it respects the margins instead of overflowing the top of the viewport.
+      const long = content.length > 300
       return wrap('ams-col--panel', null, (
-        <p className={`ams-panel__text${twoCol ? ' ams-text--twocol' : ''}`} style={{ fontFamily, fontSize: PANEL_SIZE[variant] || PANEL_SIZE.body }}>{dropCap}</p>
+        <p className={`ams-panel__text${long ? ' ams-panel__text--cols' : ''}`} style={{ fontFamily }}>{dropCap}</p>
       ))
     }
 

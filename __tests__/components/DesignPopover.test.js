@@ -122,3 +122,28 @@ describe('DesignPopover write wiring', () => {
     )
   })
 })
+
+describe('DesignPopover — Florence Position by size', () => {
+  const setupFl = (block) => render(
+    <DesignPopover block={block} themeId="florence" onUpdate={() => {}} onClose={() => {}} anchorEl={null} />
+  )
+
+  it('hides Position for a Large photo row or mosaic (it fills the height)', () => {
+    setupFl({ type: 'photos', themeState: { florence: { variant: 'row' } } }) // default row size = large
+    expect(screen.queryByText('Position')).not.toBeInTheDocument()
+    setupFl({ type: 'photos', size: 'large', themeState: { florence: { variant: 'mosaic' } } })
+    expect(screen.queryByText('Position')).not.toBeInTheDocument()
+  })
+
+  it('shows Position for Medium / Small rows and mosaics (they leave room to move)', () => {
+    setupFl({ type: 'photos', size: 'medium', themeState: { florence: { variant: 'row' } } })
+    expect(screen.getByText('Position')).toBeInTheDocument()
+    setupFl({ type: 'photos', size: 'small', themeState: { florence: { variant: 'mosaic' } } })
+    expect(screen.getAllByText('Position').length).toBeGreaterThan(0)
+  })
+
+  it('always shows Position for a text block (no Large fill state)', () => {
+    setupFl({ type: 'text', content: 'hi' })
+    expect(screen.getByText('Position')).toBeInTheDocument()
+  })
+})

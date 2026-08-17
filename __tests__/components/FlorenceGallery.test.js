@@ -13,6 +13,7 @@ function renderGallery(props) {
       name={props.name}
       description={props.description}
       siteConfig={props.siteConfig || {}}
+      showPlaceholders={props.showPlaceholders}
     />
   )
 }
@@ -117,5 +118,20 @@ describe('Florence horizontal museum wall', () => {
   it('defaults photo treatment to colour when unset', () => {
     const { container } = renderGallery({ blocks: [], themeId: 'florence' })
     expect(container.querySelector('.gallery-container').getAttribute('data-photo-treatment')).toBe('colour')
+  })
+
+  it('previews empty blocks with placeholders only when showPlaceholders is set', () => {
+    const empty = [
+      { type: 'photo', florenceFrame: 'mat', themeState: { florence: { variant: 'centered' } } },
+      { type: 'photos', themeState: { florence: { variant: 'row' } } },
+      { type: 'text' },
+    ]
+    const off = renderGallery({ blocks: empty, themeId: 'florence', name: 'M' })
+    expect(off.container.querySelectorAll('.florence-col[data-block-index]')).toHaveLength(0)
+    const on = renderGallery({ blocks: empty, themeId: 'florence', name: 'M', showPlaceholders: true })
+    expect(on.container.querySelectorAll('.florence-col[data-block-index]')).toHaveLength(3)
+    expect(on.container.querySelector('.florence-mount--mat .wall-placeholder')).toBeTruthy()
+    expect(on.container.querySelectorAll('.florence-col--photorow .wall-placeholder')).toHaveLength(3)
+    expect(on.container.querySelectorAll('.wall-text-placeholder span')).toHaveLength(3)
   })
 })

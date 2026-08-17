@@ -226,6 +226,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               description={homePage.description}
               blocks={resolvedBlocks}
               pages={siteConfig.pages}
+              currentPageId={homePage?.id}
               username={username}
               basePath={basePath}
               enableSlideshow={!!slideshowHref}

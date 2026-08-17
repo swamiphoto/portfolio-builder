@@ -102,6 +102,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onBlockHover,
   themeId = 'kyoto',
   autoFocusTitle,
+  blockGroundDefaults,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -560,6 +561,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
                             glowing={glowingBlockIndex === index}
                             themeId={themeId}
+                            defaultGround={blockGroundDefaults?.[index]}
                           />
                         </div>
                       )}

@@ -1,8 +1,9 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec, getTheme } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamStyle, resolveAmsterdamFrame, resolveAmsterdamGround } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamStyle, resolveAmsterdamFrame, resolveAmsterdamGround, resolveFlorenceFrame } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
+import Tip from '../Tip'
 
 const IconAlignLeft = () => (
   <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style={{ display: 'block', margin: '0 auto' }}>
@@ -20,7 +21,7 @@ const IconAlignCenter = () => (
 )
 const ALIGN_LABELS = { left: <IconAlignLeft />, center: <IconAlignCenter /> }
 
-export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onClose, anchorEl }) {
+export default function DesignPopover({ block, themeId = 'kyoto', defaultGround, onUpdate, onClose, anchorEl }) {
   const spec = getBlockSpec(themeId, block.type)
   if (!spec) return null
 
@@ -48,6 +49,10 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const sizes = spec.sizes && sizeAllowed && !hideSize ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
   const isPhotoBlock = block.type === 'photos' || block.type === 'photo'
   const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)
+  // Florence: a Large photo row / mosaic (and a Large centered photo) already fills
+  // the column's full height, so Position (top / center / bottom) has nothing to move.
+  // Only offer it at Medium / Small, where the block is shorter than the viewport.
+  const florenceFillsHeight = themeId === 'florence' && isPhotoBlock && sizeValue === 'large'
 
   const hasSize = variants.length > 1
   // Testimonials expose an italic/regular style toggle (both themes).
@@ -60,37 +65,45 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   // Panel order: Font → Style → Size → Layout → (image side / align / caption / button).
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
-      {/* Amsterdam: the block's ground color, shown as swatches (Auto follows the
-          wall's rotation). Sits first — it sets the stage for everything else. */}
-      {themeId === 'amsterdam' && (
-        <DesignSection label="Background color">
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[
-              { value: 'auto', title: 'Auto — follows the wall', bg: 'conic-gradient(#141210 0 33.34%, #f6efe4 0 66.67%, #e02b20 0)' },
-              { value: 'light', title: 'Light', bg: '#f6efe4' },
-              { value: 'ink', title: 'Red', bg: '#e02b20' },
-              { value: 'dark', title: 'Black', bg: '#141210' },
-            ].map((s) => {
-              const active = resolveAmsterdamGround(block) === s.value
-              return (
-                <button
-                  key={s.value}
-                  type="button"
-                  aria-label={s.title}
-                  title={s.title}
-                  aria-pressed={active}
-                  onClick={() => onUpdate({ ...block, amsterdamGround: s.value })}
-                  style={{
-                    width: 26, height: 26, borderRadius: 999, cursor: 'pointer', background: s.bg,
-                    border: active ? '2px solid var(--text-primary)' : '2px solid rgba(0,0,0,0.12)',
-                    outline: active ? '1px solid #fff' : 'none', outlineOffset: -3,
-                  }}
-                />
-              )
-            })}
-          </div>
-        </DesignSection>
-      )}
+      {/* Amsterdam: the block's ink. The swatch the site rhythm gives this block is
+          marked as the default (dot + tooltip); the selected swatch reflects the
+          block's current color. Clicking the default returns it to auto. */}
+      {themeId === 'amsterdam' && (() => {
+        const pinned = resolveAmsterdamGround(block)
+        const def = defaultGround || 'ink'
+        const effective = pinned === 'auto' ? def : pinned
+        return (
+          <DesignSection label="Ink">
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { value: 'light', name: 'Light', bg: '#f6efe4' },
+                { value: 'ink', name: 'Red', bg: '#e02b20' },
+                { value: 'dark', name: 'Black', bg: '#141210' },
+              ].map((s) => {
+                const isDefault = s.value === def
+                const isSelected = s.value === effective
+                return (
+                  <Tip key={s.value} label={isDefault ? 'Default' : s.name}>
+                    <button
+                      type="button"
+                      aria-label={isDefault ? `${s.name} (default)` : s.name}
+                      aria-pressed={isSelected}
+                      onClick={() => onUpdate({ ...block, amsterdamGround: s.value })}
+                      style={{
+                        position: 'relative', width: 26, height: 26, borderRadius: 999, cursor: 'pointer', background: s.bg,
+                        border: isSelected ? '2px solid var(--text-primary)' : '2px solid rgba(0,0,0,0.12)',
+                        outline: isSelected ? '1px solid #fff' : 'none', outlineOffset: -3,
+                      }}
+                    >
+                      {isDefault && <span style={{ position: 'absolute', top: -4, right: -4, width: 8, height: 8, borderRadius: 999, background: '#8b6f47', border: '1.5px solid var(--popover)' }} />}
+                    </button>
+                  </Tip>
+                )
+              })}
+            </div>
+          </DesignSection>
+        )
+      })()}
       {fonts && (
         <DesignSection label="Font">
           <PillToggle value={currentFont} onChange={(v) => onUpdate({ ...block, font: v })} options={fonts} />
@@ -110,7 +123,9 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
           <PillToggle value={sizeValue} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
         </DesignSection>
       )}
-      {hasSize && (
+      {/* Amsterdam Panel is a single fixed size (it flows into columns when long),
+          so it doesn't expose the Size toggle — only Quiet does. */}
+      {hasSize && !(themeId === 'amsterdam' && block.type === 'text' && resolveAmsterdamStyle(block) === 'panel') && (
         <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
           <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
@@ -131,7 +146,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
       )}
       {/* Florence: vertical Position of the content within its full-height column.
           For a single photo it only matters when Centered (Full height fills). */}
-      {themeId === 'florence'
+      {themeId === 'florence' && !florenceFillsHeight
         && (block.type === 'photos' || block.type === 'text' || (block.type === 'photo' && currentVariant === 'centered')) && (
         <DesignSection label="Position">
           <PillToggle
@@ -147,7 +162,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
           <PillToggle
             value={resolveAmsterdamStyle(block)}
             onChange={(v) => onUpdate({ ...block, amsterdamStyle: v })}
-            options={[{ value: 'panel', label: 'Panel' }, { value: 'quiet', label: 'Quiet' }]}
+            options={[{ value: 'quiet', label: 'Quiet' }, { value: 'panel', label: 'Panel' }]}
           />
         </DesignSection>
       )}
@@ -164,6 +179,21 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
               { value: 'card', label: 'Card' },
               { value: 'mount', label: 'Mount' },
               { value: 'print', label: 'Print' },
+              ...(block.type === 'photos' ? [{ value: 'mixed', label: 'Mixed' }] : []),
+            ]}
+          />
+        </DesignSection>
+      )}
+      {/* Florence: a quiet gallery frame — wide mat or thin keyline (Mixed alternates). */}
+      {themeId === 'florence' && ((block.type === 'photo' && currentVariant === 'centered') || block.type === 'photos') && (
+        <DesignSection label="Frame">
+          <PillToggle
+            value={resolveFlorenceFrame(block)}
+            onChange={(v) => onUpdate({ ...block, florenceFrame: v })}
+            options={[
+              { value: 'none', label: 'None' },
+              { value: 'mat', label: 'Mat' },
+              { value: 'line', label: 'Line' },
               ...(block.type === 'photos' ? [{ value: 'mixed', label: 'Mixed' }] : []),
             ]}
           />

@@ -147,6 +147,9 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
               gap: 1,
             }}
           >
+            {/* Florence and Amsterdam open on a wall with no cover-design options,
+                so there's nothing for the brush to do — hide it. */}
+            {themeId !== 'florence' && themeId !== 'amsterdam' && (
             <Tip label="Design">
               <button
                 ref={brushRef}
@@ -161,6 +164,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
                 </svg>
               </button>
             </Tip>
+            )}
 
             <div ref={menuRef}>
               <button
@@ -272,6 +276,7 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
       {designOpen && (
         <PageDesignPopover
           page={page}
+          themeId={themeId}
           onUpdate={onChange}
           onClose={() => setDesignOpen(false)}
           anchorEl={brushRef.current}

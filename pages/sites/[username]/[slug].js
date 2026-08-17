@@ -186,6 +186,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             pages={siteConfig.pages}
             childPages={subNavPages}
             activeChildId={activeSubNavId}
+            currentPageId={page.id}
             username={username}
             basePath={basePath}
             enableSlideshow={!!slideshowHref}

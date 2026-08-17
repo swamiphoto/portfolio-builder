@@ -23,10 +23,12 @@ export const AMSTERDAM_GROUNDS = ['auto', 'light', 'dark', 'ink']
 // Curated poster inks. onInk is the display/emphasis color (giant wordmarks) on
 // top of the ink; bodyOnInk is the reading color for body copy + captions, which
 // De Stijl sets in black on the vermilion ground (white would flatten it).
+// Each ink also carries a frame palette (card / mount / print mount colors) so the
+// vintage frames harmonize with the chosen ink instead of always reading warm-light.
 export const AMSTERDAM_INKS = {
-  vermilion: { ink: '#e02b20', onInk: '#faf7f2', bodyOnInk: '#141210' },
-  ultramarine: { ink: '#1a1690', onInk: '#faf7f2', bodyOnInk: '#f1ece2' },
-  black: { ink: '#141210', onInk: '#f6efe4', bodyOnInk: '#f1ece2' },
+  vermilion: { ink: '#e02b20', onInk: '#faf7f2', bodyOnInk: '#141210', frameCard: '#ece2cd', frameMount: '#cfd6d8', framePrint: '#f5f2ec' },
+  ultramarine: { ink: '#1a1690', onInk: '#faf7f2', bodyOnInk: '#f1ece2', frameCard: '#e6e6dd', frameMount: '#c2ccdb', framePrint: '#f0f1f0' },
+  black: { ink: '#141210', onInk: '#f6efe4', bodyOnInk: '#f1ece2', frameCard: '#d6cbb2', frameMount: '#b4babd', framePrint: '#e3ded3' },
 }
 
 export function resolveAmsterdamInk(design) {
