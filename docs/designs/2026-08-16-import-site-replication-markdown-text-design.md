@@ -129,9 +129,11 @@ fresh from the profile menu." Shown only when import-tagged pages exist.
 Text block gains `format: 'plain' | 'markdown'` (absent = plain; no migration).
 `format` becomes `'markdown'` the first time edits are **saved from the markdown
 panel**. Content is stored as markdown text; supported syntax: headings, bold,
-italic, blockquote, links, unordered lists, images. Images are stored as library
-references — `![caption](asset:ASSET_ID)` — resolved to `publicUrl` at render;
-this keeps asset usage tracking honest and survives URL changes.
+italic, blockquote, links, unordered lists, images. Images are stored inline as
+`![caption](publicUrl)` — the public renderer only has the page config, not the
+library, so render-time asset lookup isn't possible. For usage tracking the
+block additionally records `images: [{ assetId, url }]`, mirroring the
+photos-block pattern of storing both `images` and `imageUrls`.
 
 ### B2. Sidebar UX
 
