@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { applyImportToConfig } from '@/common/import/importClient'
 import AdminLibrary from '@/components/admin/AdminLibrary'
+import MockImportFlow from '@/components/admin/import/ImportFlow'
 
 // Focused wiring/logic test: the merge that handleImportComplete performs.
 describe('handleImportComplete merge', () => {
@@ -23,20 +24,19 @@ describe('handleImportComplete merge', () => {
 
 // Mock the (heavy, multi-step) import flow with a one-click stand-in so we can
 // drive AdminLibrary's real handleImportComplete/currentConfig/saveConfig path.
+// The summary it fires is settable per-test via __setSummary so different tests
+// can exercise the photo-only vs. replicate-pages branches.
 jest.mock('@/components/admin/import/ImportFlow', () => {
-  return function MockImportFlow({ onComplete }) {
-    return (
-      <button
-        onClick={() => onComplete({
-          imported: [{ assetId: 'new1', publicUrl: 'https://cdn/new1.jpg', source: { provider: 'generic', externalCollectionId: 'c1' } }],
-          collections: [{ id: 'c1', name: 'Travel' }],
-          importBatchId: 'batch1',
-        })}
-      >
-        Mock complete import
-      </button>
-    )
+  let nextSummary = {
+    imported: [{ assetId: 'new1', publicUrl: 'https://cdn/new1.jpg', source: { provider: 'generic', externalCollectionId: 'c1' } }],
+    collections: [{ id: 'c1', name: 'Travel' }],
+    importBatchId: 'batch1',
   }
+  function MockImportFlow({ onComplete }) {
+    return <button onClick={() => onComplete(nextSummary)}>Mock complete import</button>
+  }
+  MockImportFlow.__setSummary = (s) => { nextSummary = s }
+  return MockImportFlow
 })
 
 // Critical regression: currentConfig() must echo every field the server-side
@@ -94,5 +94,51 @@ describe('AdminLibrary import PUT preserves existing library state', () => {
       const libraryCalls = global.fetch.mock.calls.filter(([u]) => String(u).includes('/api/admin/library'))
       expect(libraryCalls.length).toBeGreaterThanOrEqual(3)
     })
+  })
+})
+
+// Critical regression 2: when a parent supplies onComposedPages, replicated
+// pages must flow through it (the parent's own siteConfig state + autosave)
+// rather than AdminLibrary issuing a raw site-config fetch/PUT against a
+// snapshot that a stale parent could immediately clobber on its next autosave.
+describe('AdminLibrary routes composed pages through the parent when provided', () => {
+  afterEach(() => jest.resetAllMocks())
+
+  it('calls onComposedPages with the compose args instead of PUTing site-config itself', async () => {
+    MockImportFlow.__setSummary({
+      imported: [{ assetId: 'new1', publicUrl: 'https://cdn/new1.jpg', source: { provider: 'generic', externalCollectionId: 'c1', sourceUrl: 'https://old-site/1.jpg' } }],
+      collections: [{ id: 'c1', name: 'Travel' }],
+      importBatchId: 'batch1',
+      replicate: true,
+      siteMap: { pages: [{ kind: 'gallery', title: 'Travel', collectionId: 'c1' }] },
+    })
+
+    global.fetch = jest.fn((url, opts) => {
+      const u = String(url)
+      if (u.includes('/api/admin/library') && (!opts || opts.method === undefined)) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ images: [], portfolios: {}, galleries: {}, assets: {}, assetOrder: [], sets: {}, savedViews: {}, counts: {} }) })
+      }
+      if (u.includes('/api/admin/library') && opts?.method === 'PUT') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ ok: true }) })
+      }
+      if (u.includes('/api/admin/site-config')) {
+        throw new Error('AdminLibrary should not talk to site-config directly when onComposedPages is provided')
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+    })
+
+    const onComposedPages = jest.fn()
+    render(<AdminLibrary onBack={() => {}} siteConfig={{ pages: [] }} onComposedPages={onComposedPages} />)
+
+    fireEvent.click(await screen.findByText(/import from your other sites/i))
+    fireEvent.click(await screen.findByText(/mock complete import/i))
+
+    await waitFor(() => expect(onComposedPages).toHaveBeenCalledTimes(1))
+    expect(onComposedPages).toHaveBeenCalledWith(expect.objectContaining({
+      importBatchId: 'batch1',
+      siteMap: expect.objectContaining({ pages: expect.any(Array) }),
+      collections: expect.any(Array),
+      imported: expect.any(Array),
+    }))
   })
 })

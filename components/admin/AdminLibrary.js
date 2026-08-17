@@ -13,7 +13,7 @@ import { seedUploadedAsset } from '@/common/import/uploadedAsset';
 import { resolveSellableAsset } from "../../common/print/sellAsset";
 import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
-export default function AdminLibrary({ onBack, siteConfig }) {
+export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [libraryData, setLibraryData] = useState(null);
@@ -484,29 +484,43 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     await saveConfig(next)
 
     if (summary.replicate && summary.siteMap?.pages?.length) {
-      try {
-        const scRes = await fetch('/api/admin/site-config')
-        const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
-        const { pages } = composeSite({
-          siteMap: summary.siteMap,
-          collections: summary.collections,
-          imported: summary.imported,
-          importBatchId: summary.importBatchId,
-          existingPages: currentSiteConfig.pages || [],
-        })
-        if (pages.length) {
-          await fetch('/api/admin/site-config', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(applyComposedPages(currentSiteConfig, pages)),
-          })
+      const composeArgs = {
+        siteMap: summary.siteMap,
+        collections: summary.collections,
+        imported: summary.imported,
+        importBatchId: summary.importBatchId,
+      }
+      if (onComposedPages) {
+        // Route through the parent's siteConfig state (pages/admin/index.js) so the
+        // pages appear immediately in the sidebar and the parent's own debounced
+        // autosave persists them — a raw PUT here would race the parent's stale
+        // in-memory siteConfig and its next autosave would silently erase these pages.
+        try {
+          onComposedPages(composeArgs)
+        } catch (err) {
+          console.error('import page composition failed', err)
         }
-      } catch (err) {
-        // Non-fatal — library import already saved; pages just won't be auto-created
-        console.error('import page composition failed', err)
+      } else {
+        // Fallback for mount points that don't (yet) pass onComposedPages: fetch +
+        // PUT site-config directly, same as before.
+        try {
+          const scRes = await fetch('/api/admin/site-config')
+          const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+          const { pages } = composeSite({ ...composeArgs, existingPages: currentSiteConfig.pages || [] })
+          if (pages.length) {
+            await fetch('/api/admin/site-config', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(applyComposedPages(currentSiteConfig, pages)),
+            })
+          }
+        } catch (err) {
+          // Non-fatal — library import already saved; pages just won't be auto-created
+          console.error('import page composition failed', err)
+        }
       }
     }
-  }, [currentConfig, saveConfig])
+  }, [currentConfig, saveConfig, onComposedPages])
 
   const handleCaptionChange = useCallback(async (assetId, caption) => {
     if (!assetId) return;
