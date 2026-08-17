@@ -30,6 +30,16 @@ export function normalizeImageRef(value) {
   if (value.caption !== undefined) ref.caption = value.caption;
   if (value.print !== undefined) ref.print = value.print;
   if (value.focalPoint !== undefined) ref.focalPoint = normalizeFocalPoint(value.focalPoint);
+  // Persist the width/height ratio (captured at upload) so height-aware layouts
+  // like masonry can balance columns without waiting to measure images.
+  const aspectRatio = Number(value.aspectRatio);
+  const w = Number(value.width);
+  const h = Number(value.height);
+  if (Number.isFinite(aspectRatio) && aspectRatio > 0) {
+    ref.aspectRatio = Number(aspectRatio.toFixed(4));
+  } else if (Number.isFinite(w) && w > 0 && Number.isFinite(h) && h > 0) {
+    ref.aspectRatio = Number((w / h).toFixed(4));
+  }
   return ref;
 }
 

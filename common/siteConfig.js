@@ -158,6 +158,9 @@ export function defaultPage(overrides = {}) {
     showInNav: rest.showInNav ?? true,
     sortOrder: rest.sortOrder ?? 0,
     password: '',
+    // null = use the site theme; otherwise a theme id that overrides it for THIS
+    // page only (other pages are unaffected).
+    themeOverride: null,
     cover: null,
     thumbnail: { imageUrl: '', useCover: true },
     thumbnailUrl: '', // legacy mirror; kept for back-compat with normalizers

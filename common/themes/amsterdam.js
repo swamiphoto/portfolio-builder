@@ -1,23 +1,34 @@
 // common/themes/amsterdam.js
-// Amsterdam — the Dutch-poster editorial theme. A thin left rail beside a
-// horizontally scrolling wall of columns: a poster hero (site name enormous in
-// Abril Fatface over the cover photo) or an Anton condensed title panel opens
-// the wall, text blocks render as full-height solid-ink Panels (Quiet opts out),
-// photos hang as Fill columns / Rows / Mosaics with museum captions. Ink is a
-// curated 3-swatch control (design.amsterdamInk), never a free color pick.
+// Amsterdam — the Dutch-poster / De Stijl editorial theme. A thin left rail
+// beside a horizontally scrolling, dividerless wall whose columns march through
+// three grounds — black, warm-light, and red (ink) — with the rail flooding to
+// match whichever ground is centered (useWallChrome). A poster hero or Anton
+// condensed title panel opens; text sets in a fancy drop cap (two magazine
+// columns when long); photos hang matted on the ground with a LEFT/RIGHT museum
+// plaque beside them. Ink is a curated swatch (design.amsterdamInk) — it recolors
+// the red ground and pairs a black body / white display treatment on it.
 // Rendered bespoke via AmsterdamWall (Gallery short-circuits to it; SiteNav
 // suppressed in the page files); this file supplies palette + fonts + controls.
 const AMSTERDAM_FONTS = [
   { id: 'display', label: 'Display' },
   { id: 'serif', label: 'Editorial' },
   { id: 'condensed', label: 'Condensed' },
+  { id: 'mono', label: 'Mono' },
 ]
 
-// Curated poster inks. onInk is the text color used on top of the ink.
+// Per-block ground override: 'auto' keeps the black→light→red rotation; the rest
+// pin a block to one ground. Stored flat as block.amsterdamGround.
+export const AMSTERDAM_GROUNDS = ['auto', 'light', 'dark', 'ink']
+
+// Curated poster inks. onInk is the display/emphasis color (giant wordmarks) on
+// top of the ink; bodyOnInk is the reading color for body copy + captions, which
+// De Stijl sets in black on the vermilion ground (white would flatten it).
+// Each ink also carries a frame palette (card / mount / print mount colors) so the
+// vintage frames harmonize with the chosen ink instead of always reading warm-light.
 export const AMSTERDAM_INKS = {
-  vermilion: { ink: '#e02b20', onInk: '#ffffff' },
-  ultramarine: { ink: '#1a1690', onInk: '#ffffff' },
-  black: { ink: '#141210', onInk: '#f6efe4' },
+  vermilion: { ink: '#e02b20', onInk: '#faf7f2', bodyOnInk: '#141210', frameCard: '#ece2cd', frameMount: '#cfd6d8', framePrint: '#f5f2ec' },
+  ultramarine: { ink: '#1a1690', onInk: '#faf7f2', bodyOnInk: '#f1ece2', frameCard: '#e6e6dd', frameMount: '#c2ccdb', framePrint: '#f0f1f0' },
+  black: { ink: '#141210', onInk: '#f6efe4', bodyOnInk: '#f1ece2', frameCard: '#d6cbb2', frameMount: '#b4babd', framePrint: '#e3ded3' },
 }
 
 export function resolveAmsterdamInk(design) {

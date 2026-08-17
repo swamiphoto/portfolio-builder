@@ -267,6 +267,7 @@ function BlockCard({
   onAddBlockBelow,
   themeId = 'kyoto',
   onOpenMarkdownEditor,
+  defaultGround,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -575,6 +576,7 @@ function BlockCard({
                   <DesignPopover
                     block={block}
                     themeId={themeId}
+                    defaultGround={defaultGround}
                     onUpdate={onUpdate}
                     onClose={() => setShowDesign(false)}
                     anchorEl={designBtnRef.current}
@@ -1445,6 +1447,8 @@ export default memo(BlockCard, (prev, next) =>
   prev.glowing === next.glowing &&
   prev.expandedOverride?.ts === next.expandedOverride?.ts &&
   prev.blockIndex === next.blockIndex &&
+  prev.defaultGround === next.defaultGround &&
+  prev.themeId === next.themeId &&
   prev.assetsByUrl === next.assetsByUrl &&
   // Sets data loads async (library fetch resolves after first paint). Without
   // these, the card never re-renders when allSets/setsByUrl arrive, so the

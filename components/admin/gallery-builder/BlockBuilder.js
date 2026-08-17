@@ -107,6 +107,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   libraryConfig = {},
   libraryLoading = false,
   onMarkdownEditorOpen = () => {},
+  blockGroundDefaults,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -567,6 +568,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             glowing={glowingBlockIndex === index}
                             themeId={themeId}
                             onOpenMarkdownEditor={() => { onMarkdownEditorOpen(); setMarkdownEditorIndex(index); }}
+                            defaultGround={blockGroundDefaults?.[index]}
                           />
                         </div>
                       )}

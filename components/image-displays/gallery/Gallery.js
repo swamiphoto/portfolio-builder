@@ -281,7 +281,7 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans', themeId
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, currentPageId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, onPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   // Manhattan moves its section divider into the left rail (see SiteNav); the
   // body renders no between-section wiggles. Other themes keep them.
@@ -374,6 +374,12 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             currentPath={(router.asPath || '').split('?')[0]}
             photoMeta={siteConfig?.design?.florencePhotoMeta || 'date'}
             pages={pages}
+            childPages={childPages}
+            activeChildId={activeChildId}
+            onChildPageClick={onChildPageClick}
+            currentPageId={currentPageId}
+            onPageClick={onPageClick || onChildPageClick}
+            showPlaceholders={showPlaceholders}
           />
         </div>
         {lightboxIndex !== null && (
@@ -407,8 +413,14 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             currentPath={(router.asPath || '').split('?')[0]}
             photoMeta={siteConfig?.design?.amsterdamPhotoMeta || 'date'}
             pages={pages}
+            childPages={childPages}
+            activeChildId={activeChildId}
+            onChildPageClick={onChildPageClick}
+            currentPageId={currentPageId}
+            onPageClick={onPageClick || onChildPageClick}
             cover={cover}
             opener={opener}
+            showPlaceholders={showPlaceholders}
           />
         </div>
         {lightboxIndex !== null && (

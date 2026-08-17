@@ -7,6 +7,8 @@ import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisp
 import PageSettingsPanel from './PageSettingsPanel'
 import PageSettingsPopover from './PageSettingsPopover'
 import { generatePageId } from '../../../common/siteConfig'
+import { amsterdamGroundPlan } from '../../../common/themes/variants'
+import { resolveHomePage } from '../../../common/homePage'
 
 function pageToGallery(page) {
   return {
@@ -47,6 +49,15 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   const gallery = pageToGallery(page)
   const pages = siteConfig?.pages || []
+
+  // Amsterdam: the default (rotation) ground each block would take on auto, so the
+  // block's Ink swatches can mark which one is the site's choice. Mirrors the wall's
+  // opener rule (a home page with a cover opens on a photo hero = dark start).
+  const heroOpener = page?.id === resolveHomePage(siteConfig)?.id && !!page?.cover?.imageUrl
+  const blockGroundDefaults = useMemo(
+    () => amsterdamGroundPlan(gallery.blocks || [], { heroOpener }).map((g) => g.def),
+    [gallery.blocks, heroOpener]
+  )
 
   const pagesData = useMemo(() => (siteConfig?.pages || [])
     .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
@@ -224,6 +235,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         onToggleSet={handleToggleSet}
         headerLabel="PAGE"
         autoFocusTitle={titleFocusTs}
+        blockGroundDefaults={blockGroundDefaults}
         infoCardHidden={siteConfig?.design?.theme === 'manhattan'}
         pageSettingsSlot={
           <PageSettingsPanel

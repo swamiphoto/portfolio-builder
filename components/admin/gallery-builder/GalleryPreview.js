@@ -43,7 +43,7 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export default function GalleryPreview({ gallery, pages, childPages, activeChildId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) {
+export default function GalleryPreview({ gallery, themeId: themeIdProp, pages, childPages, activeChildId, currentPageId, username, assetsByUrl, printStore, noWrap = false, enableSlideshow = false, onSlideshowClick, onChildPageClick, highlightedBlockIndex, onBlockHover, onBlockClick, siteConfig, hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) {
   const feedbackCtx = useEditorFeedback()
 
   // Debounce the preview so a heavy re-render doesn't fire on every keystroke.
@@ -82,7 +82,29 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockCount]);
 
-  const themeId = siteConfig?.design?.theme || 'kyoto';
+  // Design toggles (position/anchor, size, layout, frame, ground, caption style, …)
+  // are discrete clicks, not typed text, so they should reflect at once instead of
+  // waiting out the 250ms typing debounce — otherwise a rapid re-render (hover, autosave)
+  // can keep resetting the timer and the toggle looks like it did nothing. Track a
+  // signature of just those per-block design fields and flush the preview when it changes.
+  const blockDesignSig = useMemo(
+    () => (gallery.blocks || [])
+      .map(b => [
+        b.florenceAnchor, b.florenceFrame, b.amsterdamFrame, b.amsterdamGround,
+        b.amsterdamStyle, b.captionStyle, b.font, b.align, b.size, b.variant,
+        JSON.stringify(b.themeState || {}),
+      ].join(':'))
+      .join('|'),
+    [gallery]
+  );
+  useEffect(() => {
+    setDebouncedGallery(gallery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blockDesignSig]);
+
+  // Honor an explicit themeId (per-page theme override) before the site theme, so
+  // the whole gallery — layout, block treatments, nav, cover — renders in it.
+  const themeId = themeIdProp || siteConfig?.design?.theme || 'kyoto';
 
   const resolvedBlocks = useMemo(
     () => (debouncedGallery.blocks || []).map(b => resolveBlock(b, assetsByUrl)),
@@ -115,6 +137,12 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
     [siteConfig?.design?.subNavStyle, activeChildId, childPages]
   );
 
+  // Site DESIGN settings (photo treatment, ink, photo-meta, nav styles, …) are read
+  // from the closure inside the memoized render below. Fold a signature of them into
+  // its deps so a design change — clicking Mono/Sepia, swapping the ink — reflects in
+  // the preview immediately, not only after the next content edit or a page switch.
+  const designSig = useMemo(() => JSON.stringify(siteConfig?.design || {}), [siteConfig?.design]);
+
   // The heavy part: drawing every block/image. Memoize it on the DEBOUNCED
   // content so per-keystroke re-renders of the parent (hero title/description,
   // hover, autosave status) reuse this exact element and React skips re-running
@@ -133,6 +161,7 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
         pages={pages}
         childPages={childPages}
         activeChildId={activeChildId}
+        currentPageId={currentPageId}
         username={username}
         onChildPageClick={onChildPageClick}
         showPlaceholders
@@ -153,7 +182,7 @@ export default function GalleryPreview({ gallery, pages, childPages, activeChild
       />
     </ThemeProvider>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [debouncedGallery, resolvedBlocks, themeId, printStore, pagesThumbSig, childNavSig, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, opener]);
+  ), [debouncedGallery, resolvedBlocks, themeId, designSig, printStore, pagesThumbSig, childNavSig, currentPageId, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, opener]);
 
   const content = (feedbackCtx?.showFeedback && feedbackCtx.hasFeedback)
     ? <ReviewFeedbackProvider feedbackByPhoto={feedbackCtx.feedbackByPhoto} onOpenPhoto={feedbackCtx.openPhoto}>{inner}</ReviewFeedbackProvider>

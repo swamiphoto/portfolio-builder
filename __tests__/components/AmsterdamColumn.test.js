@@ -8,14 +8,50 @@ function renderWall(blocks, siteConfig = {}, extra = {}) {
 }
 
 describe('AmsterdamColumn block treatments', () => {
-  it('photo defaults to Fill; Centered gets a caption plaque', () => {
+  it('mounts a framed photo (caption on the card) and rotates styles for a Mixed set', () => {
     const { container } = renderWall([
-      { type: 'photo', image: 'https://x/one.jpg', caption: 'GRACHT (2024)' },
-      { type: 'photo', image: 'https://x/two.jpg', caption: 'BRUG', themeState: { amsterdam: { variant: 'centered' } } },
+      { type: 'photo', image: 'https://x/a.jpg', caption: 'Keizersgracht', amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
+      { type: 'photos', amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } },
+        images: [{ url: 'https://x/1.jpg' }, { url: 'https://x/2.jpg' }, { url: 'https://x/3.jpg' }, { url: 'https://x/4.jpg' }] },
     ])
-    expect(container.querySelector('.ams-col--fill')).toBeTruthy()
-    expect(container.querySelectorAll('.ams-col--photo .ams-caption').length).toBeGreaterThanOrEqual(1)
+    // Single Card mount: the caption prints on the card (not a beside plaque).
+    const card = container.querySelector('.ams-col--framed .ams-mount--card')
+    expect(card).toBeTruthy()
+    expect(card.querySelector('.ams-mount__title').textContent).toBe('Keizersgracht')
+    expect(container.querySelector('.ams-col--framed .ams-caption--beside')).toBeNull()
+    // Mixed set rotates card -> mount -> print across the images.
+    const styles = Array.from(container.querySelectorAll('.ams-row--framed .ams-mount'))
+      .map(m => m.className.match(/ams-mount--(\w+)/)[1])
+    expect(styles).toEqual(['card', 'mount', 'print', 'card'])
+  })
+
+  it('the Caption style control drives the caption typography (plaque + framed)', () => {
+    const { container } = renderWall([
+      { type: 'photo', image: 'https://x/a.jpg', caption: 'Herengracht', captionStyle: 'accent' },
+      { type: 'photo', image: 'https://x/b.jpg', caption: 'Keizersgracht', amsterdamFrame: 'print', captionStyle: 'serif', themeState: { amsterdam: { variant: 'centered' } } },
+    ])
+    // Plaque caption picks up the Accent style (uppercase + red).
+    const plaque = container.querySelector('.ams-figure--plaque .ams-caption__title')
+    expect(plaque.getAttribute('style')).toMatch(/text-transform: uppercase/)
+    // Framed mount caption picks up the Serif style (Cormorant).
+    const mount = container.querySelector('.ams-mount--print .ams-mount__title')
+    expect(mount.getAttribute('style')).toMatch(/Cormorant/)
+  })
+
+  it('an uncaptioned photo goes full-bleed; a captioned one hangs with a right-side plaque', () => {
+    const { container } = renderWall([
+      { type: 'photo', image: 'https://x/one.jpg' },
+      { type: 'photo', image: 'https://x/two.jpg', caption: 'BRUG' },
+      { type: 'photo', image: 'https://x/three.jpg', caption: 'GRACHT', themeState: { amsterdam: { variant: 'centered' } } },
+    ])
+    // No caption => full-bleed Fill (no plaque).
+    const fill = container.querySelector('.ams-col--fill')
+    expect(fill).toBeTruthy()
+    expect(fill.querySelector('.ams-caption')).toBeNull()
+    // A caption => a beside plaque, whether the photo is Fill or Centered.
+    expect(container.querySelectorAll('.ams-figure--plaque .ams-caption--beside').length).toBe(2)
     expect(container.textContent).toContain('BRUG')
+    expect(container.textContent).toContain('GRACHT')
   })
 
   it('photos render as a Row by default and a Mosaic when stored', () => {
@@ -28,10 +64,10 @@ describe('AmsterdamColumn block treatments', () => {
     expect(container.querySelector('.ams-col--mosaic .ams-mosaic')).toBeTruthy()
   })
 
-  it('text renders as an ink Panel by default and a Quiet column when stored', () => {
+  it('text renders as a Quiet column by default and a Panel when stored', () => {
     const { container } = renderWall([
-      { type: 'text', content: 'Bold words' },
-      { type: 'text', content: 'Small words', amsterdamStyle: 'quiet' },
+      { type: 'text', content: 'Small words' },
+      { type: 'text', content: 'Bold words', amsterdamStyle: 'panel' },
     ])
     const panel = container.querySelector('.ams-col--panel .ams-panel__text')
     expect(panel.textContent).toBe('Bold words')
@@ -51,7 +87,7 @@ describe('AmsterdamColumn block treatments', () => {
     expect(container.querySelector('.ams-col--media')).toBeTruthy()
   })
 
-  it('tags each column type with the right data-surface for adaptive chrome', () => {
+  it('paints every column a De Stijl ground in rotation (black / light / red)', () => {
     const imgs = Array.from({ length: 2 }, (_, i) => ({ url: `https://x/${i}.jpg` }))
     const { container } = renderWall([
       { type: 'photo', image: 'https://x/fill.jpg' },
@@ -63,16 +99,40 @@ describe('AmsterdamColumn block treatments', () => {
       { type: 'testimonial', text: 'Wonderful work', name: 'A. Client' },
       { type: 'contact', heading: 'Get in touch' },
     ])
-    expect(container.querySelector('.ams-col--fill').getAttribute('data-surface')).toBe('image')
-    const photoCols = container.querySelectorAll('.ams-col--photo:not(.ams-col--fill)')
-    expect(photoCols.length).toBeGreaterThanOrEqual(1)
-    expect(photoCols[0].getAttribute('data-surface')).toBe('paper')
-    expect(container.querySelector('.ams-col--photorow').getAttribute('data-surface')).toBe('paper')
-    expect(container.querySelector('.ams-col--mosaic').getAttribute('data-surface')).toBe('paper')
-    expect(container.querySelector('.ams-col--panel').getAttribute('data-surface')).toBe('ink')
-    expect(container.querySelector('.ams-col--quiet').getAttribute('data-surface')).toBe('paper')
-    expect(container.querySelector('.ams-col--testimonial').getAttribute('data-surface')).toBe('paper')
-    expect(container.querySelector('.ams-col--contact').getAttribute('data-surface')).toBe('paper')
+    // No cover => title opener (ink), so the block grounds begin at dark and cycle
+    // dark -> light -> ink, regardless of block type — the surface IS the rhythm.
+    const grounds = Array.from(container.querySelectorAll('.ams-col[data-block-index]'))
+      .sort((a, b) => Number(a.dataset.blockIndex) - Number(b.dataset.blockIndex))
+      .map(el => el.getAttribute('data-surface'))
+    expect(grounds).toEqual(['dark', 'light', 'ink', 'dark', 'light', 'ink', 'dark', 'light'])
+    // Every ground is one of the three, and no two neighbours share a color.
+    grounds.forEach((g, i) => {
+      expect(['dark', 'light', 'ink']).toContain(g)
+      if (i > 0) expect(g).not.toBe(grounds[i - 1])
+    })
+  })
+
+  it('renders placeholders for empty photo/photos/text blocks only when showPlaceholders', () => {
+    const empty = [
+      { type: 'photo' },
+      { type: 'photo', amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
+      { type: 'photos', themeState: { amsterdam: { variant: 'row' } } },
+      { type: 'text' },
+    ]
+    // Without the flag, empty blocks render nothing at all.
+    const { container: off } = renderWall(empty)
+    expect(off.querySelectorAll('.ams-col[data-block-index]')).toHaveLength(0)
+    expect(off.querySelector('.wall-placeholder')).toBeNull()
+    // With the flag, each empty block previews its layout with placeholder boxes.
+    const { container: on } = renderWall(empty, {}, { showPlaceholders: true })
+    expect(on.querySelectorAll('.ams-col[data-block-index]')).toHaveLength(4)
+    // Fill photo, framed centered photo, and a 3-up row all show placeholder boxes.
+    expect(on.querySelector('.ams-col--fill .wall-placeholder')).toBeTruthy()
+    expect(on.querySelector('.ams-mount--card .wall-placeholder')).toBeTruthy()
+    expect(on.querySelectorAll('.ams-col--photorow .wall-placeholder')).toHaveLength(3)
+    // Placeholders carry no captions; the empty text block shows skeleton lines.
+    expect(on.querySelector('.ams-caption')).toBeNull()
+    expect(on.querySelectorAll('.wall-text-placeholder span')).toHaveLength(3)
   })
 
   it('renders markdown text blocks formatted, not as literal markdown syntax', () => {

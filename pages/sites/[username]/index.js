@@ -17,7 +17,7 @@ import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import SiteAnalytics from '../../../components/image-displays/SiteAnalytics'
-import { getTheme } from '../../../common/themes'
+import { getPageTheme } from '../../../common/themes'
 import { fontFamilyForSlot } from '../../../common/themes/variants'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
@@ -155,7 +155,8 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
 
   const resolvedBlocks = (homePage?.blocks || []).map(block => resolveBlock(block, assetsByUrl))
 
-  const theme = getTheme(siteConfig?.design?.theme)
+  // The home page can override the site theme for itself only (page.themeOverride).
+  const theme = getPageTheme(siteConfig, homePage)
   const isProvence = theme.id === 'provence'
   // Florence owns its own rail inside the gallery (FlorenceWall), so no SiteNav.
   const isFlorence = theme.id === 'florence'
@@ -186,7 +187,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
       <SiteAnalytics analytics={siteConfig.analytics} />
       {/* On mobile every theme uses the shared hamburger nav. Provence keeps its
           bespoke split-cover header only on desktop. */}
-      {!isFlorence && !isAmsterdam && (!isProvence || isMobile) && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={homePage?.id} />}
+      {!isFlorence && !isAmsterdam && (!isProvence || isMobile) && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} themeId={theme.id} currentPageId={homePage?.id} />}
       <main className="theme-content">
         {homePage ? (
           <ClientEngagementProvider
@@ -225,6 +226,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               description={homePage.description}
               blocks={resolvedBlocks}
               pages={siteConfig.pages}
+              currentPageId={homePage?.id}
               username={username}
               basePath={basePath}
               enableSlideshow={!!slideshowHref}

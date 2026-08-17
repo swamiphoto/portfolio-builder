@@ -17,7 +17,7 @@ import SiteFooter from '../../../components/image-displays/page/SiteFooter'
 import PasswordGate from '../../../components/image-displays/page/PasswordGate'
 import ThemeProvider from '../../../components/image-displays/ThemeProvider'
 import SiteAnalytics from '../../../components/image-displays/SiteAnalytics'
-import { getTheme } from '../../../common/themes'
+import { getPageTheme } from '../../../common/themes'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
 
@@ -99,7 +99,8 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   const pageUrl = `${siteUrl}/${page.slug || page.id}`
 
   const resolvedBlocks = (page.blocks || []).map(b => resolveBlock(b, assetsByUrl))
-  const theme = getTheme(siteConfig?.design?.theme)
+  // This page can override the site theme for itself only (page.themeOverride).
+  const theme = getPageTheme(siteConfig, page)
   const isProvence = theme.id === 'provence'
   // Florence owns its own rail inside the gallery (FlorenceWall), so no SiteNav.
   const isFlorence = theme.id === 'florence'
@@ -145,7 +146,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
         {ogImage && <meta name="twitter:image" content={ogImage} />}
       </Head>
       <SiteAnalytics analytics={siteConfig.analytics} />
-      {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} currentPageId={page.id} />}
+      {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} themeId={theme.id} currentPageId={page.id} />}
       <main className="theme-content">
         <ClientEngagementProvider
           username={username}
@@ -185,6 +186,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             pages={siteConfig.pages}
             childPages={subNavPages}
             activeChildId={activeSubNavId}
+            currentPageId={page.id}
             username={username}
             basePath={basePath}
             enableSlideshow={!!slideshowHref}

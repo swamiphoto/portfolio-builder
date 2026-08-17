@@ -105,7 +105,7 @@ export default function ThemeToolbarControl({ config, onChange, onEditHandles })
       )}
 
       {settingsOpen && (
-        <PopoverShell anchorEl={brushRef.current} onClose={() => setSettingsOpen(false)} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title={`${current} settings`}>
+        <PopoverShell anchorEl={brushRef.current} onClose={() => setSettingsOpen(false)} width={300} maxWidth="calc(100vw - 24px)" title={`${current} settings`}>
           <DesignControlsBody config={config} onChange={onChange} onEditHandles={onEditHandles} />
         </PopoverShell>
       )}

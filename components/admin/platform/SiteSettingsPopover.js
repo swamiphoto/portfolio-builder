@@ -796,7 +796,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       />
 
       {designOpen && (
-        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width="max-content" minWidth={280} maxWidth="calc(100vw - 24px)" title="Design">
+        <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width={300} maxWidth="calc(100vw - 24px)" title="Design">
           <DesignControlsBody config={config} onChange={update} onEditHandles={onEditHandles} includeTheme />
         </PopoverShell>
       )}

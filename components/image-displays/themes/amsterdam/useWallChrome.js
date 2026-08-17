@@ -13,8 +13,8 @@
 // are kept — they're not motion).
 import { useEffect, useRef } from 'react'
 
-const PARALLAX_FACTOR = 0.05
-const PARALLAX_CLAMP = 40
+const PARALLAX_FACTOR = 0.12
+const PARALLAX_CLAMP = 55
 
 // Pure decision: which column's horizontal span covers the viewport center X?
 // columns: [{ left, right, surface }], in wall/DOM order. Falls back to
