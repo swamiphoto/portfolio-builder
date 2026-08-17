@@ -137,7 +137,7 @@ describe('AmsterdamColumn block treatments', () => {
 
   it('renders markdown text blocks formatted, not as literal markdown syntax', () => {
     const { container } = renderWall([
-      { type: 'text', content: '**bold** words', format: 'markdown' },
+      { type: 'text', content: '**bold** words', format: 'markdown', amsterdamStyle: 'panel' },
       { type: 'text', content: '**quiet bold**', format: 'markdown', amsterdamStyle: 'quiet' },
     ])
     const panel = container.querySelector('.ams-col--panel .ams-panel__text')
