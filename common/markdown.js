@@ -51,6 +51,24 @@ function pushMixedLines(blocks, lines) {
   flushPara()
 }
 
+// Seeds markdown text for the WYSIWYG editor when it opens a block that
+// isn't already markdown-formatted. Maps the block's discrete variant
+// (1 heading, 2 subheading, 3 body, 4 quote) onto the matching markdown
+// prefix so the editor opens showing equivalent formatting instead of
+// silently dropping it. Markdown blocks pass their content through as-is —
+// this is a one-time conversion on open, not an ongoing transform.
+export function blockToMarkdownSeed(block) {
+  if (!block) return ''
+  const content = block.content || ''
+  if (block.format === 'markdown') return content
+  switch (block.variant) {
+    case 1: return `# ${content}`
+    case 2: return `## ${content}`
+    case 4: return `> ${content}`
+    default: return content
+  }
+}
+
 export function parseMarkdown(text) {
   const src = String(text ?? '').replace(/\r\n/g, '\n').trim()
   if (!src) return []

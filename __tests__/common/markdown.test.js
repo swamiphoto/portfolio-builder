@@ -1,4 +1,4 @@
-import { parseMarkdown } from '@/common/markdown'
+import { parseMarkdown, blockToMarkdownSeed } from '@/common/markdown'
 
 it('parses headings, paragraphs, quotes, lists, images', () => {
   const ast = parseMarkdown('# Title\n\nHello **bold** and *ital*.\n\n> a quote\n\n- one\n- two\n\n![Me at work](https://gcs/me.jpg)')
@@ -40,4 +40,32 @@ it('keeps content that follows a heading with only a single newline', () => {
 it('handles empty input', () => {
   expect(parseMarkdown('')).toEqual([])
   expect(parseMarkdown(null)).toEqual([])
+})
+
+describe('blockToMarkdownSeed', () => {
+  it('maps variant 1 (heading) to a level-1 heading', () => {
+    expect(blockToMarkdownSeed({ content: 'Title', variant: 1 })).toBe('# Title')
+  })
+
+  it('maps variant 2 (subheading) to a level-2 heading', () => {
+    expect(blockToMarkdownSeed({ content: 'Sub', variant: 2 })).toBe('## Sub')
+  })
+
+  it('maps variant 4 (quote) to a blockquote line', () => {
+    expect(blockToMarkdownSeed({ content: 'Wise words', variant: 4 })).toBe('> Wise words')
+  })
+
+  it('leaves variant 3 (body) and unset variants as plain content', () => {
+    expect(blockToMarkdownSeed({ content: 'Body copy', variant: 3 })).toBe('Body copy')
+    expect(blockToMarkdownSeed({ content: 'No variant' })).toBe('No variant')
+  })
+
+  it('passes markdown-formatted blocks through untouched, ignoring variant', () => {
+    expect(blockToMarkdownSeed({ content: '# Already markdown', format: 'markdown', variant: 3 })).toBe('# Already markdown')
+  })
+
+  it('handles missing block / content gracefully', () => {
+    expect(blockToMarkdownSeed(null)).toBe('')
+    expect(blockToMarkdownSeed({ variant: 1 })).toBe('# ')
+  })
 })
