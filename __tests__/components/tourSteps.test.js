@@ -32,19 +32,33 @@ describe('buildTourSteps', () => {
   })
 
   it('has no em-dashes in any copy', () => {
-    const all = [...buildTourSteps({ imported: true }), ...BLOCKS_TOUR_STEPS, WELCOME]
+    const all = [...buildTourSteps({ imported: true, rebuilt: true }), ...BLOCKS_TOUR_STEPS, WELCOME]
       .map(s => `${s.title} ${s.body} ${s.confirm || ''} ${s.dismiss || ''}`).join(' ')
     expect(all).not.toContain('—')
   })
 
-  it('includes the imported-pages step only after an import', () => {
-    const plain = buildTourSteps({ imported: false })
-    const imported = buildTourSteps({ imported: true })
+  it('includes the imported-pages step only after pages are actually rebuilt', () => {
+    const plain = buildTourSteps({ imported: false, rebuilt: false })
+    const rebuilt = buildTourSteps({ imported: false, rebuilt: true })
     expect(plain.some((s) => /imported/i.test(s.title || ''))).toBe(false)
-    const step = imported.find((s) => /pages we imported/i.test(s.title || ''))
+    const step = rebuilt.find((s) => /pages we imported/i.test(s.title || ''))
     expect(step).toBeTruthy()
-    const pagesIdx = imported.findIndex((s) => s.selector === '[data-tour="pages-section"]')
-    expect(imported.indexOf(step)).toBe(pagesIdx + 1)
+    const pagesIdx = rebuilt.findIndex((s) => s.selector === '[data-tour="pages-section"]')
+    expect(rebuilt.indexOf(step)).toBe(pagesIdx + 1)
+  })
+
+  it('does not show the imported-pages step for a photo-only import (imported without rebuilt)', () => {
+    const photoOnly = buildTourSteps({ imported: true, rebuilt: false })
+    expect(photoOnly.some((s) => /pages we imported/i.test(s.title || ''))).toBe(false)
+    // ...but the library step still credits the just-imported photos.
+    const lib = photoOnly.find(s => s.selector === '[data-tour="library"]')
+    expect(lib.body).toMatch(/just imported/i)
+  })
+
+  it('points at the pages list, not a profile menu, for deleting imported pages', () => {
+    const step = buildTourSteps({ imported: true, rebuilt: true }).find((s) => /pages we imported/i.test(s.title || ''))
+    expect(step.body).toMatch(/pages list/i)
+    expect(step.body).not.toMatch(/profile menu/i)
   })
 })
 

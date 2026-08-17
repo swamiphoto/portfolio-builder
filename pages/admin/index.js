@@ -50,10 +50,11 @@ export default function AdminIndex() {
   const router = useRouter()
   const { onboarding, loading: onboardingLoading, error: onboardingError, markSeen, resetOnboarding } = useOnboarding()
   const importedJustNow = router.query.imported === '1'
+  const rebuiltJustNow = router.query.rebuilt === '1'
 
   useEffect(() => {
-    if (router.query.imported) {
-      const { imported, ...rest } = router.query
+    if (router.query.imported || router.query.rebuilt) {
+      const { imported, rebuilt, ...rest } = router.query
       router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -624,7 +625,7 @@ export default function AdminIndex() {
       )}
       {showWelcomeTour && (
         <GuidedTour
-          steps={buildTourSteps({ imported: importedJustNow })}
+          steps={buildTourSteps({ imported: importedJustNow, rebuilt: rebuiltJustNow })}
           welcome={WELCOME}
           onFinish={() => markSeen('tourDone')}
         />

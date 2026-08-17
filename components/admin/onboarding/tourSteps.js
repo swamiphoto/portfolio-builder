@@ -4,7 +4,7 @@
 // the idea (a site is pages), then cover, pages, hidden pages, adding a page,
 // the library, and settings. Every anchored step is placed to the RIGHT of the
 // sidebar so the card never covers the thing it's pointing at.
-export function buildTourSteps({ imported = false } = {}) {
+export function buildTourSteps({ imported = false, rebuilt = false } = {}) {
   return [
     {
       // No selector: a centered "chapter" card that sets up the mental model.
@@ -25,11 +25,11 @@ export function buildTourSteps({ imported = false } = {}) {
       body: "This is where you add your pages. Anything you add here becomes a public page on your site's menu.",
       placement: 'right',
     },
-    ...(imported
+    ...(rebuilt
       ? [{
           selector: '[data-tour="pages-section"]',
           title: 'Pages we imported for you',
-          body: 'We rebuilt these pages from your old site, photos and all. Open any of them to fine-tune the layout, and if you would rather begin from a clean slate, you can delete them anytime from your profile menu.',
+          body: 'We rebuilt these pages from your old site, photos and all. Open any of them to fine-tune the layout, and if you would rather begin from a clean slate, you can delete any of them from your pages list whenever you like.',
           placement: 'right',
         }]
       : []),

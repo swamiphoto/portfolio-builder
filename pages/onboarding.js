@@ -6,10 +6,13 @@ import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
 import { composeSite, applyComposedPages } from '../common/import/composer'
 
-function goToAdmin(slug, { imported = false } = {}) {
+function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
   const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
-  const query = imported ? '?imported=1' : ''
+  const params = new URLSearchParams()
+  if (imported) params.set('imported', '1')
+  if (rebuilt) params.set('rebuilt', '1')
+  const query = params.toString() ? `?${params.toString()}` : ''
   window.location.href = `${protocol}://${slug}.${rootDomain}/admin${query}`
 }
 
@@ -169,6 +172,10 @@ export default function Onboarding() {
               } catch {
                 // Non-fatal — user still lands in admin, source just won't be labelled
               }
+              // Tracks whether we actually created pages (not just whether the
+              // user *chose* to rebuild) — drives the separate "rebuilt" tour flag
+              // below, since composeSite can still come back empty.
+              let rebuilt = false
               try {
                 if (summary.replicate && summary.siteMap?.pages?.length) {
                   const scRes = await fetch('/api/admin/site-config')
@@ -186,13 +193,19 @@ export default function Onboarding() {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify(applyComposedPages(siteConfig, pages)),
                     })
+                    rebuilt = true
                   }
                 }
               } catch (err) {
                 // Non-fatal — user still lands in admin, pages just won't be auto-created
                 console.error('import page composition failed', err)
               }
-              goToAdmin(claimedSlug, { imported: true })
+              // `imported` drives the library tour copy ("including the ones we
+              // just imported") and should reflect photos, independent of whether
+              // pages were rebuilt. `rebuilt` is the dedicated flag for the
+              // separate "pages we imported for you" tour step.
+              const imported = (summary?.imported?.length || 0) > 0
+              goToAdmin(claimedSlug, { imported, rebuilt })
             }}
           />
         )}
