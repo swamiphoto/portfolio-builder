@@ -7,6 +7,7 @@
 import { useRef, useState } from 'react'
 import { buildNavTree } from '../../../../common/pagesTree'
 import { amsterdamInkColors } from '../../../../common/themes/amsterdam'
+import { resolveAmsterdamGround } from '../../../../common/themes/variants'
 import { getImageRefUrl } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
 import useWallScroll from '../shared/useWallScroll'
@@ -55,6 +56,12 @@ export default function AmsterdamWall({
     ? <img src={siteConfig.logo} alt={siteConfig.siteName || 'Logo'} />
     : (siteConfig.siteName || name || '')
 
+  // Small uppercase-mono note at the foot of the rail: a tagline if set, else the
+  // primary social handle — a quiet signature under the wordmark.
+  const rawSocial = socialKeys.length ? socials[socialKeys[0]] : ''
+  const footText = siteConfig?.tagline
+    || (rawSocial ? `@${String(rawSocial).replace(/^https?:\/\/[^/]+\//, '').replace(/^@/, '').replace(/\/$/, '')}` : '')
+
   const toggleMenu = () => {
     setMenuOpen(o => {
       const next = !o
@@ -77,6 +84,23 @@ export default function AmsterdamWall({
   const coverUrl = getImageRefUrl(cover) || cover?.imageUrl
   const heroOpener = opener === 'hero' && !!coverUrl
 
+  // De Stijl rhythm: the wall marches through black → white → red grounds, and
+  // the rail floods to match whichever ground is centered. The opener sets the
+  // downbeat (a photo hero reads as black; the title panel is red), then every
+  // block takes the next ground in the cycle so no two neighbours share a color.
+  const GROUND_ORDER = ['dark', 'light', 'ink']
+  const openerSurface = heroOpener ? 'dark' : 'ink'
+  const blockStart = (GROUND_ORDER.indexOf(openerSurface) + 1) % GROUND_ORDER.length
+  // A block can pin its own ground (Color control); otherwise it takes the next
+  // color in the rotation. Pinned blocks don't consume a rotation slot, so the
+  // auto blocks around them keep alternating cleanly.
+  let autoStep = 0
+  const groundFor = (block) => {
+    const pinned = resolveAmsterdamGround(block)
+    if (pinned !== 'auto') return pinned
+    return GROUND_ORDER[(blockStart + autoStep++) % GROUND_ORDER.length]
+  }
+
   const actionButtons = actions.length > 0 && (
     <div className="ams-opener__actions">
       {actions.map((a, i) => (
@@ -86,17 +110,19 @@ export default function AmsterdamWall({
   )
 
   return (
-    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome="paper" style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk }}>
+    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome={openerSurface} style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk, '--ams-body-on-ink': inks.bodyOnInk || inks.onInk }}>
       <nav className="ams-rail" aria-label="Site navigation">
-        {onPageClick
-          ? <button className="ams-rail__logo" onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
-          : <a className="ams-rail__logo" href={basePath || '/'}>{brand}</a>}
-        <div className="ams-rail__mid">
+        <div className="ams-rail__top">
           <button className="ams-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
             {menuOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
-        <span className="ams-rail__rule" aria-hidden />
+        {onPageClick
+          ? <button className="ams-rail__logo" onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
+          : <a className="ams-rail__logo" href={basePath || '/'}>{brand}</a>}
+        <div className="ams-rail__foot">
+          {footText && <span className="ams-rail__tagline">{footText}</span>}
+        </div>
       </nav>
 
       <div
@@ -125,7 +151,7 @@ export default function AmsterdamWall({
         </section>
 
         {heroOpener ? (
-          <section className="ams-col ams-col--hero" data-surface="image">
+          <section className="ams-col ams-col--hero" data-surface="dark">
             <img className="ams-hero__img" src={getSizedUrl(coverUrl, 'display')} alt="" />
             <h1 className="ams-hero__title">{name}</h1>
             <div className="ams-hero__foot">
@@ -146,6 +172,7 @@ export default function AmsterdamWall({
             key={`col-${index}`}
             block={block}
             blockIndex={index}
+            ground={groundFor(block)}
             photoMeta={photoMeta}
             siteConfig={siteConfig}
             pages={pages}

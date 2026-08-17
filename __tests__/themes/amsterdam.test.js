@@ -24,14 +24,14 @@ describe('amsterdam theme', () => {
     const text = getBlockSpec('amsterdam', 'text')
     expect(text.variants.map(v => v.id)).toEqual(['heading', 'subheading', 'body'])
     expect(text.defaultFont).toBe('display')
-    expect(text.fonts.map(f => f.id)).toEqual(['display', 'serif', 'condensed'])
+    expect(text.fonts.map(f => f.id)).toEqual(['display', 'serif', 'condensed', 'mono'])
   })
 
   it('resolves inks: vermilion default, invalid ids fall back', () => {
     expect(resolveAmsterdamInk(undefined)).toBe('vermilion')
     expect(resolveAmsterdamInk({ amsterdamInk: 'nope' })).toBe('vermilion')
     expect(resolveAmsterdamInk({ amsterdamInk: 'ultramarine' })).toBe('ultramarine')
-    expect(amsterdamInkColors({ amsterdamInk: 'black' })).toEqual({ ink: '#141210', onInk: '#f6efe4' })
-    expect(AMSTERDAM_INKS.vermilion).toEqual({ ink: '#e02b20', onInk: '#ffffff' })
+    expect(amsterdamInkColors({ amsterdamInk: 'black' })).toEqual({ ink: '#141210', onInk: '#f6efe4', bodyOnInk: '#f1ece2' })
+    expect(AMSTERDAM_INKS.vermilion).toEqual({ ink: '#e02b20', onInk: '#faf7f2', bodyOnInk: '#141210' })
   })
 })
