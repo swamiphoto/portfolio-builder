@@ -22,8 +22,10 @@ import GuidedTour from '../../components/admin/onboarding/GuidedTour'
 import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
 import { buildTourSteps, WELCOME, BLOCKS_TOUR_STEPS } from '../../components/admin/onboarding/tourSteps'
 import { fontFamilyForSlot } from '../../common/themes/variants'
+import { THEME_LIST } from '../../common/themes'
 
 const AUTOSAVE_DELAY = 1500
+const themeName = (id) => (THEME_LIST.find((t) => t.id === id) || {}).name || id
 
 // Which page is being edited/previewed right now: the explicitly selected page,
 // else the homepage default (mirrors the `selectedPage` derivation below). Pulled
@@ -78,6 +80,27 @@ export default function AdminIndex() {
 
   // Hover highlight sync
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null)
+  // First-time nudge when a photo is marked for sale but the print store is off.
+  const [printNudge, setPrintNudge] = useState(false)
+  const printNudgeShownRef = useRef(false)
+  const printStoreEnabledRef = useRef(false)
+  // Warn when the site theme changes while the open page has an override (its
+  // preview won't reflect the change). selOverrideRef is set during render below.
+  const [siteThemeToast, setSiteThemeToast] = useState('')
+  const prevSiteThemeRef = useRef(undefined)
+  const selOverrideRef = useRef(null)
+  useEffect(() => {
+    const cur = siteConfig?.design?.theme
+    if (cur == null) return
+    const prev = prevSiteThemeRef.current
+    prevSiteThemeRef.current = cur
+    if (prev === undefined || prev === cur) return
+    const ov = selOverrideRef.current
+    if (ov && ov !== cur && THEME_LIST.some((t) => t.id === ov)) {
+      setSiteThemeToast(`Site theme is now ${themeName(cur)}. This page has been overridden to a different theme (${themeName(ov)}), which is why the change isn't reflected here.`)
+      setTimeout(() => setSiteThemeToast(''), 9000)
+    }
+  }, [siteConfig?.design?.theme])
 
   // Click-based scroll sync between sidebar blocks and preview
   const previewContainerRef = useRef(null)
@@ -124,6 +147,13 @@ export default function AdminIndex() {
   // library cache so the block re-renders and the toggle survives close/reopen.
   const handleUpdateLibraryPrint = useCallback((assetId, print) => {
     if (!assetId) return
+    // Marking a photo for sale does nothing until the print store is turned on in
+    // Site Settings — let the photographer know the first time it happens.
+    if (print?.sellable && !printStoreEnabledRef.current && !printNudgeShownRef.current) {
+      printNudgeShownRef.current = true
+      setPrintNudge(true)
+      setTimeout(() => setPrintNudge(false), 7000)
+    }
     setLibraryConfig(prev => prev ? {
       ...prev,
       assets: { ...prev.assets, [assetId]: { ...(prev.assets?.[assetId] || {}), print, forSale: !!print?.sellable } },
@@ -368,6 +398,8 @@ export default function AdminIndex() {
 
   // Resolved above the early returns (so the client-feedback hook can key off it).
   const selectedPage = editingPage
+  // Keep the open page's override handy for the site-theme-change warning effect.
+  selOverrideRef.current = selectedPage?.themeOverride || null
 
   const sidebar = (
     <PlatformSidebar
@@ -530,6 +562,8 @@ export default function AdminIndex() {
     !isCoverPageSelected &&
     !blockSidebarCollapsed
 
+  printStoreEnabledRef.current = !!siteConfig?.printStore?.enabled
+
   return (
     <DragProvider>
       <EditorFeedbackProvider
@@ -555,6 +589,26 @@ export default function AdminIndex() {
         {content}
       </AdminLayout>
       </EditorFeedbackProvider>
+
+      {[
+        printNudge && { key: 'print', node: <>Marked for sale. Turn on your print store in <strong>Site Settings</strong> to start selling prints.</>, dismiss: () => setPrintNudge(false) },
+        siteThemeToast && { key: 'theme', node: siteThemeToast, dismiss: () => setSiteThemeToast('') },
+      ].filter(Boolean).map((t, i) => (
+        <div
+          key={t.key}
+          className="fixed left-1/2 -translate-x-1/2 flex items-start gap-3 px-4 py-3 rounded-lg text-sm"
+          style={{ zIndex: 9999, bottom: 24 + i * 88, background: '#2c2416', color: '#f3ece0', boxShadow: '0 10px 30px rgba(0,0,0,0.28)', width: 340, maxWidth: 'calc(100vw - 32px)' }}
+          role="status"
+        >
+          <span style={{ lineHeight: 1.45 }}>{t.node}</span>
+          <button
+            type="button"
+            onClick={t.dismiss}
+            aria-label="Dismiss"
+            style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.7, cursor: 'pointer', flexShrink: 0, lineHeight: 1, marginTop: 1 }}
+          >✕</button>
+        </div>
+      ))}
 
       {showLibrary && (
         <div

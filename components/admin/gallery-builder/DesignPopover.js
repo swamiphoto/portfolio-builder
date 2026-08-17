@@ -1,7 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec, getTheme } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamStyle } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamStyle, resolveAmsterdamFrame, resolveAmsterdamGround } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
 
 const IconAlignLeft = () => (
@@ -52,13 +52,45 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
   const hasSize = variants.length > 1
   // Testimonials expose an italic/regular style toggle (both themes).
   const isTestimonial = block.type === 'testimonial'
-  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes && !isTestimonial) return null
+  // Amsterdam always offers a background-color swatch, so keep the popover open.
+  if (!hasSize && !fonts && !aligns && !buttonStyles && !captionStyles && !sizes && !isTestimonial && themeId !== 'amsterdam') return null
 
   const currentFont = block.font || spec.defaultFont
 
   // Panel order: Font → Style → Size → Layout → (image side / align / caption / button).
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
+      {/* Amsterdam: the block's ground color, shown as swatches (Auto follows the
+          wall's rotation). Sits first — it sets the stage for everything else. */}
+      {themeId === 'amsterdam' && (
+        <DesignSection label="Background color">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[
+              { value: 'auto', title: 'Auto — follows the wall', bg: 'conic-gradient(#141210 0 33.34%, #f6efe4 0 66.67%, #e02b20 0)' },
+              { value: 'light', title: 'Light', bg: '#f6efe4' },
+              { value: 'ink', title: 'Red', bg: '#e02b20' },
+              { value: 'dark', title: 'Black', bg: '#141210' },
+            ].map((s) => {
+              const active = resolveAmsterdamGround(block) === s.value
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  aria-label={s.title}
+                  title={s.title}
+                  aria-pressed={active}
+                  onClick={() => onUpdate({ ...block, amsterdamGround: s.value })}
+                  style={{
+                    width: 26, height: 26, borderRadius: 999, cursor: 'pointer', background: s.bg,
+                    border: active ? '2px solid var(--text-primary)' : '2px solid rgba(0,0,0,0.12)',
+                    outline: active ? '1px solid #fff' : 'none', outlineOffset: -3,
+                  }}
+                />
+              )
+            })}
+          </div>
+        </DesignSection>
+      )}
       {fonts && (
         <DesignSection label="Font">
           <PillToggle value={currentFont} onChange={(v) => onUpdate({ ...block, font: v })} options={fonts} />
@@ -116,6 +148,24 @@ export default function DesignPopover({ block, themeId = 'kyoto', onUpdate, onCl
             value={resolveAmsterdamStyle(block)}
             onChange={(v) => onUpdate({ ...block, amsterdamStyle: v })}
             options={[{ value: 'panel', label: 'Panel' }, { value: 'quiet', label: 'Quiet' }]}
+          />
+        </DesignSection>
+      )}
+      {/* Amsterdam: mount a photo (or a whole set) in a vintage frame — the caption
+          prints on the card. Mixed rotates the three styles across a set. Frames
+          only make sense for a Centered photo (a Fill photo is edge-to-edge). */}
+      {themeId === 'amsterdam' && ((block.type === 'photo' && currentVariant === 'centered') || block.type === 'photos') && (
+        <DesignSection label="Frame">
+          <PillToggle
+            value={resolveAmsterdamFrame(block)}
+            onChange={(v) => onUpdate({ ...block, amsterdamFrame: v })}
+            options={[
+              { value: 'none', label: 'None' },
+              { value: 'card', label: 'Card' },
+              { value: 'mount', label: 'Mount' },
+              { value: 'print', label: 'Print' },
+              ...(block.type === 'photos' ? [{ value: 'mixed', label: 'Mixed' }] : []),
+            ]}
           />
         </DesignSection>
       )}

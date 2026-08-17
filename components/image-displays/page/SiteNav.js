@@ -6,8 +6,11 @@ import { TfiClose } from 'react-icons/tfi'
 import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
 import { useIsMobile } from '../../../common/useIsMobile'
-import { logoFontStyle, resolveSubNavStyle, resolveNavMode } from '../../../common/siteDesign'
+import { logoFontStyle, resolveSubNavStyle, resolveNavMode, resolveFooterSocial, socialHref, SOCIAL_KEYS } from '../../../common/siteDesign'
+import { SOCIAL_ICONS } from './SocialIcons'
 import WiggleLine from '../../wiggle-line/WiggleLine'
+
+const SOCIAL_LABELS = { instagram: 'Instagram', facebook: 'Facebook', twitter: 'Twitter', tiktok: 'TikTok', youtube: 'YouTube', website: 'Website' }
 
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -411,12 +414,13 @@ function MobileNavOverlay({ open, onClose, tree, basePath, currentPath, currentP
   )
 }
 
-export default function SiteNav({ siteConfig, username, variant, onPageClick, basePath: basePathProp, currentPageId }) {
+export default function SiteNav({ siteConfig, username, variant, themeId, onPageClick, basePath: basePathProp, currentPageId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
   const isPhone = useIsMobile()
   const tree = buildNavTree(siteConfig.pages, { respectHideChildren: true })
-  const style = variant || resolveNavStyle(siteConfig.design?.theme)
+  // themeId (a per-page override) wins over the site theme when resolving nav style.
+  const style = variant || resolveNavStyle(themeId || siteConfig.design?.theme)
   const subNavMode = resolveSubNavStyle(siteConfig?.design)
   const navMode = resolveNavMode(siteConfig?.design)
   const basePath = basePathProp != null ? basePathProp : `/sites/${username}`
@@ -432,8 +436,17 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
   const logoStyle = logoImage ? null : logoFontStyle(siteConfig?.logoFont)
 
   if (style === 'left-rail') {
-    const socials = siteConfig.contact || {}
-    const socialKeys = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website'].filter(k => socials[k])
+    // Footer + social links live at the bottom of the rail (Copenhagen). Reuse the
+    // same resolution the content-column SiteFooter uses so the two never diverge;
+    // the content SiteFooter self-suppresses on desktop for this rail (see SiteFooter).
+    const contact = siteConfig.contact || {}
+    const socialMode = resolveFooterSocial(siteConfig) // 'off' | 'text' | 'icons'
+    const socials = socialMode === 'off'
+      ? []
+      : SOCIAL_KEYS.map(k => ({ k, href: socialHref(k, contact[k]) })).filter(s => s.href)
+    const footerCustom = siteConfig?.footer?.customText
+    const footerName = siteConfig?.siteName || ''
+    const footerText = footerCustom || (footerName ? `© ${new Date().getFullYear()} ${footerName}` : '')
 
     if (isPhone) {
       return (
@@ -484,13 +497,45 @@ export default function SiteNav({ siteConfig, username, variant, onPageClick, ba
           </ul>
           <WiggleLine color="currentColor" className="my-2 ml-0 opacity-30" />
         </div>
-        <div className="flex flex-col gap-4" style={{ color: 'var(--theme-text)', opacity: 0.4 }}>
-          {socialKeys.length > 0 && (
-            <div className="flex gap-3 text-xs tracking-[0.12em]">
-              {socialKeys.map(k => <span key={k} aria-hidden="true">{k[0].toUpperCase()}</span>)}
-            </div>
-          )}
-        </div>
+        {(socials.length > 0 || footerText) && (
+          <div className="flex flex-col gap-3">
+            {socials.length > 0 && socialMode === 'icons' && (
+              <div className="flex gap-4">
+                {socials.map(({ k, href }) => {
+                  const Icon = SOCIAL_ICONS[k]
+                  return (
+                    <a
+                      key={k} href={href} target="_blank" rel="noopener noreferrer"
+                      aria-label={SOCIAL_LABELS[k]}
+                      className="opacity-60 hover:opacity-100 transition-opacity"
+                      style={{ color: 'var(--theme-text, #141414)', display: 'inline-flex' }}
+                    >
+                      {Icon ? <Icon size={16} /> : SOCIAL_LABELS[k]}
+                    </a>
+                  )
+                })}
+              </div>
+            )}
+            {socials.length > 0 && socialMode === 'text' && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {socials.map(({ k, href }) => (
+                  <a
+                    key={k} href={href} target="_blank" rel="noopener noreferrer"
+                    className="font-fraunces text-[11px] tracking-[0.14em] uppercase opacity-60 hover:opacity-100 transition-opacity"
+                    style={{ color: 'var(--theme-text, #141414)', textDecoration: 'none' }}
+                  >
+                    {SOCIAL_LABELS[k]}
+                  </a>
+                ))}
+              </div>
+            )}
+            {footerText && (
+              <div className="font-fraunces text-[12px] leading-snug" style={{ color: 'var(--theme-text, #141414)', opacity: 0.4 }}>
+                {footerText}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
     )
   }

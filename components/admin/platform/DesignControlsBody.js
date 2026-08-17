@@ -79,7 +79,7 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
       )}
 
       {(config.design?.theme || 'kyoto') === 'amsterdam' && (
-        <DesignSection label="Ink" description="The poster color used for panels, titles and the menu.">
+        <DesignSection label="Ink" description="The bold color used for solid blocks, titles and the menu.">
           <div style={{ display: 'flex', gap: 8 }}>
             {Object.entries(AMSTERDAM_INKS).map(([id, v]) => {
               const active = resolveAmsterdamInk(config.design) === id
@@ -128,7 +128,12 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
       )}
 
       {config.design?.navStyle !== 'menu' && (
-        <DesignSection label="Nested pages">
+        <DesignSection
+          label="Nested pages"
+          description={config.design?.subNavStyle === 'inline'
+            ? 'Nested pages appear as links on their parent page.'
+            : 'Nested pages appear in a dropdown under the parent link in the site menu.'}
+        >
           <DesignPillToggle
             value={config.design?.subNavStyle === 'inline' ? 'inline' : 'dropdown'}
             onChange={(v) => update({ design: { ...(config.design || {}), subNavStyle: v } })}
@@ -149,10 +154,15 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
           </>
         ) : 'You can add these in your profile'}
       >
+        {/* Florence only renders social links as text, so it doesn't offer Icons. */}
         <DesignPillToggle
-          value={resolveFooterSocial(config)}
+          value={config.design?.theme === 'florence' && resolveFooterSocial(config) === 'icons' ? 'text' : resolveFooterSocial(config)}
           onChange={(v) => update({ design: { ...(config.design || {}), footerSocial: v } })}
-          options={[{ value: 'text', label: 'Text' }, { value: 'icons', label: 'Icons' }, { value: 'off', label: 'Off' }]}
+          options={[
+            { value: 'text', label: 'Text' },
+            ...(config.design?.theme === 'florence' ? [] : [{ value: 'icons', label: 'Icons' }]),
+            { value: 'off', label: 'Off' },
+          ]}
         />
       </DesignSection>
     </>
