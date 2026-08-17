@@ -205,4 +205,14 @@ describe('normalizePageEntity — back-compat migration', () => {
     })
     expect(p.cover.buttons).toEqual([])
   })
+
+  it('preserves import provenance and block format fields', () => {
+    const page = normalizePageEntity({
+      id: 'pg-x', title: 'T', slug: 't',
+      source: { importBatchId: 'imp_1', sourceUrl: 'https://x.com/t' },
+      blocks: [{ type: 'text', content: '# hi', format: 'markdown' }],
+    })
+    expect(page.source).toEqual({ importBatchId: 'imp_1', sourceUrl: 'https://x.com/t' })
+    expect(page.blocks[0].format).toBe('markdown')
+  })
 })
