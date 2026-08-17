@@ -64,10 +64,10 @@ describe('AmsterdamColumn block treatments', () => {
     expect(container.querySelector('.ams-col--mosaic .ams-mosaic')).toBeTruthy()
   })
 
-  it('text renders as an ink Panel by default and a Quiet column when stored', () => {
+  it('text renders as a Quiet column by default and a Panel when stored', () => {
     const { container } = renderWall([
-      { type: 'text', content: 'Bold words' },
-      { type: 'text', content: 'Small words', amsterdamStyle: 'quiet' },
+      { type: 'text', content: 'Small words' },
+      { type: 'text', content: 'Bold words', amsterdamStyle: 'panel' },
     ])
     const panel = container.querySelector('.ams-col--panel .ams-panel__text')
     expect(panel.textContent).toBe('Bold words')
@@ -110,6 +110,29 @@ describe('AmsterdamColumn block treatments', () => {
       expect(['dark', 'light', 'ink']).toContain(g)
       if (i > 0) expect(g).not.toBe(grounds[i - 1])
     })
+  })
+
+  it('renders placeholders for empty photo/photos/text blocks only when showPlaceholders', () => {
+    const empty = [
+      { type: 'photo' },
+      { type: 'photo', amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
+      { type: 'photos', themeState: { amsterdam: { variant: 'row' } } },
+      { type: 'text' },
+    ]
+    // Without the flag, empty blocks render nothing at all.
+    const { container: off } = renderWall(empty)
+    expect(off.querySelectorAll('.ams-col[data-block-index]')).toHaveLength(0)
+    expect(off.querySelector('.wall-placeholder')).toBeNull()
+    // With the flag, each empty block previews its layout with placeholder boxes.
+    const { container: on } = renderWall(empty, {}, { showPlaceholders: true })
+    expect(on.querySelectorAll('.ams-col[data-block-index]')).toHaveLength(4)
+    // Fill photo, framed centered photo, and a 3-up row all show placeholder boxes.
+    expect(on.querySelector('.ams-col--fill .wall-placeholder')).toBeTruthy()
+    expect(on.querySelector('.ams-mount--card .wall-placeholder')).toBeTruthy()
+    expect(on.querySelectorAll('.ams-col--photorow .wall-placeholder')).toHaveLength(3)
+    // Placeholders carry no captions; the empty text block shows skeleton lines.
+    expect(on.querySelector('.ams-caption')).toBeNull()
+    expect(on.querySelectorAll('.wall-text-placeholder span')).toHaveLength(3)
   })
 
   it('photo captions honor photoMeta', () => {

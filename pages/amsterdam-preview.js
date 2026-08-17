@@ -22,10 +22,10 @@ const BLOCKS = [
   { type: 'photo', image: P(1016, 1600, 1000), caption: LONGCAP },
   { type: 'photo', image: P(1015, 1000, 1500), caption: LONGCAP, themeState: { amsterdam: { variant: 'centered' } } },
   // Frame styles: a single Card-mounted photo, then a Mixed-mounted set.
-  { type: 'photo', image: P(1024, 1400, 1000), caption: 'Keizersgracht', capture: { capturedAt: '1902-01-01T00:00:00Z' }, amsterdamFrame: 'card' },
+  { type: 'photo', image: P(1024, 1000, 1500), caption: LONGCAP, capture: { capturedAt: '1902-01-01T00:00:00Z' }, amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'photos', images: [{ url: P(1033), caption: 'Oudezijds' }, { url: P(1037), caption: 'Prinsengracht' }, { url: P(1041), caption: 'Herengracht' }], amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } } },
-  { type: 'text', content: 'Four hundred years of water, brick and light.' },
-  { type: 'text', content: LONG, themeState: { amsterdam: { variant: 'body' } } },
+  { type: 'text', content: 'Four hundred years of water, brick and light.', amsterdamStyle: 'panel' },
+  { type: 'text', content: LONG, amsterdamStyle: 'panel' },
   { type: 'photos', images: [{ url: P(1039) }, { url: P(1043), caption: 'Jordaan' }, { url: P(1044) }], themeState: { amsterdam: { variant: 'row', size: 'large' } } },
   { type: 'text', content: 'Shot over three winters along the canal ring.', amsterdamStyle: 'quiet', themeState: { amsterdam: { variant: 'body' } } },
   { type: 'photos', images: [{ url: P(1050), caption: 'Singel' }, { url: P(1051), caption: 'Brouwersgracht' }, { url: P(1052), caption: 'Bloemgracht' }, { url: P(1053), caption: 'Lijnbaansgracht' }, { url: P(1054), caption: 'Leliegracht' }], themeState: { amsterdam: { variant: 'mosaic' } } },
@@ -33,6 +33,16 @@ const BLOCKS = [
   { type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', caption: 'PROCESS FILM' },
   { type: 'testimonial', text: 'The prints are extraordinary — the water almost moves.', name: 'A. Collector' },
   { type: 'contact', heading: 'Commissions', subheading: 'Open for 2027 bookings.', buttonText: 'Write to me' },
+]
+
+// ?empty=1 seeds only empty blocks to check the placeholder previews.
+const EMPTY_BLOCKS = [
+  { type: 'photo' },
+  { type: 'photo', themeState: { amsterdam: { variant: 'centered' } }, amsterdamFrame: 'card' },
+  { type: 'photos', themeState: { amsterdam: { variant: 'row' } } },
+  { type: 'photos', amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } } },
+  { type: 'photos', themeState: { amsterdam: { variant: 'mosaic' } } },
+  { type: 'text', amsterdamStyle: 'panel' },
 ]
 
 const SITE = {
@@ -54,20 +64,30 @@ export default function AmsterdamPreview() {
   // ?name= lets us stress the title opener with a long word (fit / wrap check).
   const name = router.query.name || (opener === 'title' ? 'Landscapes' : 'Van der Meer')
   const siteConfig = { ...SITE, design: { theme: themeId, amsterdamInk: ink } }
-  return (
+  const pane = router.query.pane
+  const empty = router.query.empty
+  const gallery = (
+    <Gallery
+      name={name}
+      description="Photographs from the canal ring, 2021–2026."
+      blocks={empty ? EMPTY_BLOCKS : BLOCKS}
+      showPlaceholders={!!empty}
+      pages={siteConfig.pages}
+      childPages={[{ id: 'c1', title: 'Portraits', slug: 'portraits', showInNav: true }, { id: 'c2', title: 'Landscapes', slug: 'landscapes', showInNav: true }]}
+      siteConfig={siteConfig}
+      themeId={themeId}
+      cover={{ imageUrl: P(1015, 2000, 1300) }}
+      opener={opener}
+    />
+  )
+  const inner = (
     <ThemeProvider themeId={themeId}>
-      <div className="theme-shell">
-        <Gallery
-          name={name}
-          description="Photographs from the canal ring, 2021–2026."
-          blocks={BLOCKS}
-          pages={siteConfig.pages}
-          siteConfig={siteConfig}
-          themeId={themeId}
-          cover={{ imageUrl: P(1015, 2000, 1300) }}
-          opener={opener}
-        />
+      <div className="theme-shell" data-viewport="desktop" data-admin-preview={pane ? 'true' : undefined}>
+        {/* ?pane reproduces the admin's nested wrappers to test the preview fit. */}
+        {pane ? <div className="theme-content"><ThemeProvider themeId={themeId}>{gallery}</ThemeProvider></div> : gallery}
       </div>
     </ThemeProvider>
   )
+  if (!pane) return inner
+  return <div style={{ height: '600px', overflowY: 'auto', border: '4px solid red' }}>{inner}</div>
 }

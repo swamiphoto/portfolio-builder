@@ -3,11 +3,11 @@ import DesignPopover from '@/components/admin/gallery-builder/DesignPopover'
 import { resolveAmsterdamStyle } from '@/common/themes/variants'
 
 describe('Amsterdam text Style control', () => {
-  it('resolveAmsterdamStyle: panel by default, quiet only when stored', () => {
-    expect(resolveAmsterdamStyle({ type: 'text' })).toBe('panel')
-    expect(resolveAmsterdamStyle({ type: 'text', amsterdamStyle: 'quiet' })).toBe('quiet')
-    expect(resolveAmsterdamStyle({ type: 'text', amsterdamStyle: 'bogus' })).toBe('panel')
-    expect(resolveAmsterdamStyle(undefined)).toBe('panel')
+  it('resolveAmsterdamStyle: quiet by default, panel only when stored', () => {
+    expect(resolveAmsterdamStyle({ type: 'text' })).toBe('quiet')
+    expect(resolveAmsterdamStyle({ type: 'text', amsterdamStyle: 'panel' })).toBe('panel')
+    expect(resolveAmsterdamStyle({ type: 'text', amsterdamStyle: 'bogus' })).toBe('quiet')
+    expect(resolveAmsterdamStyle(undefined)).toBe('quiet')
   })
 
   it('offers Panel/Quiet for amsterdam text blocks only', () => {

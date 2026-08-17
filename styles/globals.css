@@ -387,6 +387,27 @@ a {
 /* The horizontal stage: rail + wall side by side, full height (desktop). */
 .florence-stage { --fl-hairline: rgba(28, 26, 23, 0.16); display: flex; height: 100vh; }
 
+/* ── Admin preview fit (rail themes) ───────────────────────────────────────
+   Florence + Amsterdam are fixed-viewport (100vh). In the shorter editor preview
+   pane that overflowed and scrolled, so openers looked cramped and bottom-heavy.
+   Scoped to the editor via [data-admin-preview]: the shell fills the pane and the
+   stage is absolutely positioned to fill the shell — this bypasses the nested
+   theme/gallery wrappers between them (whose auto heights broke a plain cascade),
+   so the whole opener fits with its real margins, no scroll. */
+[data-theme="florence"]:has(> .theme-shell[data-admin-preview]),
+[data-theme="amsterdam"]:has(> .theme-shell[data-admin-preview]) { height: 100%; min-height: 0; }
+[data-theme="florence"] .theme-shell[data-admin-preview],
+[data-theme="amsterdam"] .theme-shell[data-admin-preview] { position: relative; height: 100%; min-height: 0; overflow: hidden; }
+[data-theme="florence"] .theme-shell[data-admin-preview] .florence-stage,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-stage { position: absolute; inset: 0; height: auto; }
+[data-theme="florence"] .theme-shell[data-admin-preview] .florence-rail,
+[data-theme="florence"] .theme-shell[data-admin-preview] .florence-wall,
+[data-theme="florence"] .theme-shell[data-admin-preview] .florence-content,
+[data-theme="florence"] .theme-shell[data-admin-preview] .florence-col,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-rail,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-wall,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-col { height: 100%; min-height: 0; }
+
 /* Thin fixed rail: logo top, hamburger/X middle-ish, search bottom. */
 .florence-rail {
   flex: 0 0 96px; width: 96px; height: 100vh;
@@ -450,6 +471,17 @@ a {
   font-size: clamp(0.82rem, 0.95vw, 0.92rem); line-height: 1.7; letter-spacing: 0.005em;
   color: var(--theme-text); margin: 0; max-width: 30rem;
 }
+/* Nested pages listed under the description, in the same mono voice — an arrow
+   marker gives them a quiet, stylish index feel. */
+.florence-intro__children { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-top: 1.5rem; }
+.florence-intro__childlink {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.72rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--theme-text); text-decoration: none; background: none; border: none;
+  padding: 0; cursor: pointer; opacity: 0.82; transition: opacity 0.15s ease;
+  display: inline-flex; align-items: center; gap: 0.55rem;
+}
+.florence-intro__childlink:hover { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+.florence-intro__childlink.is-active { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
 .florence-intro__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.8rem; }
 .florence-intro__btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -472,6 +504,29 @@ a {
 .florence-frame { position: relative; }
 .florence-fit { display: inline-block; height: 100%; position: relative; vertical-align: top; }
 .florence-fit img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
+
+/* Empty-block placeholder box for the wall themes: a neutral tinted panel with a
+   centered picture icon that inherits the ground's text color, so an empty photo
+   block previews the wall layout (frame, height, position) before any photos exist.
+   It shares .florence-fit / .ams-fit sizing so its width follows the same aspect.
+   The theme-scoped selectors here must out-specify the later [data-theme] .ams-fit /
+   .florence-fit base rules (which set display:inline-block) so the flex centering wins. */
+[data-theme="florence"] .florence-fit.wall-placeholder,
+[data-theme="amsterdam"] .ams-fit.wall-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in oklab, currentColor 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 12%, transparent);
+  overflow: hidden; color: inherit;
+}
+.wall-placeholder svg { color: currentColor; opacity: 0.5; }
+
+/* Text-block placeholder: a few skeleton lines (matching the other themes' empty
+   text state) instead of literal prose — reads clearly as "your copy goes here". */
+.wall-text-placeholder { display: flex; flex-direction: column; gap: 0.9em; width: min(46ch, 60vw); }
+.wall-text-placeholder span {
+  display: block; height: 0.7em; border-radius: 999px;
+  background: color-mix(in oklab, currentColor 16%, transparent);
+}
 
 /* Single-photo column. Fill: the image spans the full viewport height and the
    section drops all padding so it reaches every edge (block widens to the image);
@@ -514,6 +569,36 @@ a {
 .florence-col--text .florence-text {
   line-height: 1.6; color: var(--theme-text); white-space: pre-line; margin: 0;
 }
+/* Long copy: fill the column height, then flow into a second column so it never
+   runs past the viewport. The column widens to fit the extra columns. */
+.florence-col--text-cols { width: auto; max-width: 88vw; justify-content: flex-start; padding-top: 9vh; padding-bottom: 9vh; }
+.florence-text--cols {
+  height: 82vh; column-width: clamp(230px, 22vw, 320px); column-gap: clamp(1.6rem, 2.4vw, 2.8rem);
+  column-fill: auto; white-space: normal;
+}
+
+/* ── Florence frames: quiet gallery framing (mat / keyline), distinct from
+   Amsterdam's vintage mounts. Caption prints on the frame. ─────────────────── */
+.florence-col--framed { display: flex; flex-direction: column; padding: 0 2vw; }
+.florence-row--framed { display: flex; align-items: center; gap: clamp(28px, 3.6vw, 68px); height: 100%; padding: 0 1.5vw; }
+.florence-mount { display: inline-flex; flex-direction: column; margin: 0; color: var(--theme-text); box-sizing: border-box; }
+.florence-mount__photo { position: relative; overflow: hidden; }
+.florence-mount__photo .florence-fit { height: 100%; }
+.florence-mount__label { font-family: "IBM Plex Mono", ui-monospace, monospace; display: flex; flex-direction: column; gap: 3px; }
+/* Long caption hangs beside the photo, clamped to its height with an ellipsis;
+   click opens the full caption in the lightbox. */
+.florence-mount[data-caplayout="beside"] { flex-direction: row; align-items: stretch; }
+.florence-mount[data-caplayout="beside"] .florence-mount__label { align-self: stretch; width: clamp(150px, 14vw, 220px); padding: 2px 0 2px clamp(16px, 1.6vw, 26px); text-align: left; overflow: hidden; cursor: pointer; }
+.florence-mount[data-caplayout="beside"] .florence-mount__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 22; line-clamp: 22; overflow: hidden; text-transform: none; }
+.florence-mount__title { font-size: 11px; letter-spacing: 0.05em; color: inherit; }
+.florence-mount__meta { font-size: 10px; letter-spacing: 0.04em; opacity: 0.6; }
+/* Mat: a wide passe-partout with a hairline keyline; caption centered beneath. */
+.florence-mount--mat { background: #faf8f2; padding: clamp(20px, 2.4vw, 44px); box-shadow: 0 14px 36px rgba(28, 26, 23, 0.16); }
+.florence-mount--mat .florence-mount__photo { box-shadow: 0 0 0 1px var(--fl-hairline, rgba(28, 26, 23, 0.16)); }
+.florence-mount--mat .florence-mount__label { align-items: center; text-align: center; padding-top: clamp(14px, 1.6vw, 24px); text-transform: uppercase; letter-spacing: 0.12em; }
+/* Line: a slim keyline frame, minimal, caption lower-left. */
+.florence-mount--line { padding: clamp(9px, 1vw, 14px); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--theme-text) 42%, transparent); }
+.florence-mount--line .florence-mount__label { align-items: flex-start; padding-top: clamp(10px, 1.1vw, 16px); }
 
 /* Video / media column. */
 .florence-col--media { align-items: flex-start; }
@@ -658,12 +743,12 @@ a {
 }
 /* The Canal rail: hamburger up top (divider under it), the wordmark centered and
    reading bottom-to-top, a small mono note at the foot (divider over it). */
-[data-theme="amsterdam"] .ams-rail { width: var(--theme-rail-width, 96px); flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; padding: 0; position: relative; z-index: 30; background: var(--ams-light); color: var(--ams-on-light); transition: background-color 350ms ease, color 350ms ease; }
-[data-theme="amsterdam"] .ams-rail__top { display: flex; align-items: center; justify-content: center; padding: 20px 0; border-bottom: 1px solid color-mix(in oklab, currentColor 20%, transparent); }
+[data-theme="amsterdam"] .ams-rail { width: var(--theme-rail-width, 96px); flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; padding: 0; position: relative; z-index: 30; background: var(--ams-light); color: var(--ams-on-light); border-right: 1px solid color-mix(in oklab, currentColor 48%, transparent); transition: background-color 350ms ease, color 350ms ease; }
+[data-theme="amsterdam"] .ams-rail__top { display: flex; align-items: center; justify-content: center; padding: 20px 0; border-bottom: 1px solid color-mix(in oklab, currentColor 38%, transparent); }
 [data-theme="amsterdam"] .ams-rail__logo { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; writing-mode: sideways-lr; text-orientation: mixed; font-family: "Abril Fatface", Georgia, serif; font-size: 18px; letter-spacing: 0.06em; color: inherit; text-decoration: none; overflow: hidden; background: none; border: none; cursor: pointer; }
 [data-theme="amsterdam"] .ams-rail__logo img { writing-mode: horizontal-tb; max-width: 56px; height: auto; }
 [data-theme="amsterdam"] .ams-rail__btn { background: none; border: none; cursor: pointer; color: inherit; padding: 8px; display: flex; }
-[data-theme="amsterdam"] .ams-rail__foot { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 18px 0; border-top: 1px solid color-mix(in oklab, currentColor 20%, transparent); }
+[data-theme="amsterdam"] .ams-rail__foot { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 18px 0; border-top: 1px solid color-mix(in oklab, currentColor 38%, transparent); }
 [data-theme="amsterdam"] .ams-rail__tagline { writing-mode: sideways-lr; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6; max-height: 30vh; overflow: hidden; }
 
 /* Adaptive chrome: the whole rail floods to match whichever ground (dark / light
@@ -696,6 +781,12 @@ a {
 [data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: clamp(15px, 1.3vw, 19px); line-height: 1.45; opacity: 0.92; }
 
 /* Opener actions (Music Show / Client Login) */
+/* Nested pages under the opener, as condensed uppercase links. */
+[data-theme="amsterdam"] .ams-opener__children { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 16px; }
+[data-theme="amsterdam"] .ams-opener__childlink { font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: inherit; text-decoration: none; background: none; border: none; padding: 0; cursor: pointer; opacity: 0.82; transition: opacity 0.15s ease; }
+[data-theme="amsterdam"] .ams-opener__childlink:hover,
+[data-theme="amsterdam"] .ams-opener__childlink.is-active { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+[data-theme="amsterdam"] .ams-col--hero .ams-opener__childlink { color: #fff; }
 [data-theme="amsterdam"] .ams-opener__actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 [data-theme="amsterdam"] .ams-opener__btn { font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; padding: 10px 18px; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; transition: background-color 180ms ease, color 180ms ease; }
 /* Hover fills the outline with the ink and flips the label — a clear CTA state. */
@@ -726,7 +817,7 @@ a {
 
 /* Mobile: vertical stack (mirrors the Florence data-mobile collapse) */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] { display: block; height: auto; overflow: visible; }
-[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail { flex-direction: row; align-items: center; width: 100%; height: 56px; padding: 0 16px; border-right: none; border-bottom: 1px solid color-mix(in oklab, currentColor 20%, transparent); position: sticky; top: 0; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail { flex-direction: row; align-items: center; width: 100%; height: 56px; padding: 0 16px; border-right: none; border-bottom: 1px solid color-mix(in oklab, currentColor 48%, transparent); box-shadow: none; position: sticky; top: 0; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__top { padding: 0 14px 0 0; border-bottom: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__logo { writing-mode: horizontal-tb; justify-content: flex-start; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__foot { display: none; }
@@ -810,20 +901,26 @@ a {
 [data-theme="amsterdam"] .ams-mount { display: inline-flex; flex-direction: column; margin: 0; box-sizing: border-box; color: #2b2620; max-width: 46vw; }
 [data-theme="amsterdam"] .ams-mount__photo { position: relative; overflow: hidden; }
 [data-theme="amsterdam"] .ams-mount__label { display: flex; flex-direction: column; gap: 3px; font-family: Inter, sans-serif; }
+/* Long caption: hang it beside the photo (right long edge) instead of widening the
+   frame downward; clamp to the photo height with an ellipsis, click opens the full
+   caption in the lightbox. */
+[data-theme="amsterdam"] .ams-mount[data-caplayout="beside"] { flex-direction: row; align-items: stretch; }
+[data-theme="amsterdam"] .ams-mount[data-caplayout="beside"] .ams-mount__label { align-self: stretch; width: clamp(150px, 14vw, 220px); padding: 2px 0 2px clamp(14px, 1.5vw, 24px); justify-content: flex-start; align-items: flex-start; text-align: left; overflow: hidden; cursor: pointer; }
+[data-theme="amsterdam"] .ams-mount[data-caplayout="beside"] .ams-mount__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 22; line-clamp: 22; overflow: hidden; text-transform: none; letter-spacing: 0.01em; }
 [data-theme="amsterdam"] .ams-mount__title { color: inherit; }
 [data-theme="amsterdam"] .ams-mount__meta { color: inherit; opacity: 0.6; }
 
 /* Card — cabinet card / stereograph: warm ivory board, a thin vermilion keyline
    around the photo, caption centered beneath in a serif italic. */
-[data-theme="amsterdam"] .ams-mount--card { background: #ece2cd; padding: clamp(13px, 1.5vw, 22px) clamp(13px, 1.5vw, 22px) clamp(16px, 1.7vw, 26px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.30); }
-[data-theme="amsterdam"] .ams-mount--card .ams-mount__photo { box-shadow: 0 0 0 1.5px rgba(190, 70, 45, 0.55); }
+[data-theme="amsterdam"] .ams-mount--card { background: var(--ams-frame-card, #ece2cd); padding: clamp(13px, 1.5vw, 22px) clamp(13px, 1.5vw, 22px) clamp(16px, 1.7vw, 26px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.30); }
+[data-theme="amsterdam"] .ams-mount--card .ams-mount__photo { box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ams-ink) 60%, transparent); }
 [data-theme="amsterdam"] .ams-mount--card .ams-mount__label { align-items: center; text-align: center; padding-top: clamp(9px, 1vw, 15px); }
 [data-theme="amsterdam"] .ams-mount--card .ams-mount__title { font-size: clamp(13px, 1.05vw, 17px); letter-spacing: 0.02em; }
 [data-theme="amsterdam"] .ams-mount--card .ams-mount__meta { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
 
 /* Mount — archival board: a wide cool-grey mount, extra room at the foot, caption
    handwritten-italic in the lower-left like a curator's pencil note. */
-[data-theme="amsterdam"] .ams-mount--mount { background: #cfd6d8; padding: clamp(22px, 2.6vw, 44px) clamp(22px, 2.6vw, 44px) clamp(38px, 4vw, 66px); box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28); }
+[data-theme="amsterdam"] .ams-mount--mount { background: var(--ams-frame-mount, #cfd6d8); padding: clamp(22px, 2.6vw, 44px) clamp(22px, 2.6vw, 44px) clamp(38px, 4vw, 66px); box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28); }
 [data-theme="amsterdam"] .ams-mount--mount .ams-mount__photo { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
 [data-theme="amsterdam"] .ams-mount--mount .ams-mount__label { align-items: flex-start; padding-top: clamp(12px, 1.4vw, 20px); }
 [data-theme="amsterdam"] .ams-mount--mount .ams-mount__title { font-size: clamp(12px, 1vw, 16px); letter-spacing: 0.02em; color: #3a4147; }
@@ -831,7 +928,7 @@ a {
 
 /* Print — bordered photographic print: a slim white margin and a printed footer
    strip (rule + small-caps title + meta), spread across the bottom. */
-[data-theme="amsterdam"] .ams-mount--print { background: #f5f2ec; padding: clamp(10px, 1.1vw, 16px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26); }
+[data-theme="amsterdam"] .ams-mount--print { background: var(--ams-frame-print, #f5f2ec); padding: clamp(10px, 1.1vw, 16px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26); }
 [data-theme="amsterdam"] .ams-mount--print .ams-mount__label { margin-top: clamp(9px, 1vw, 14px); padding-top: clamp(7px, 0.8vw, 11px); border-top: 1px solid rgba(20, 18, 16, 0.22); gap: 4px; }
 [data-theme="amsterdam"] .ams-mount--print .ams-mount__title { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; }
 [data-theme="amsterdam"] .ams-mount--print .ams-mount__meta { font-size: 10px; letter-spacing: 0.1em; }
@@ -843,8 +940,13 @@ a {
 /* Text panels — color comes from the column's ground (data-surface). Panel is the
    big statement; Quiet is the small museum note. A fancy drop cap opens the copy,
    and long passages set in two magazine columns. */
-[data-theme="amsterdam"] .ams-col--panel { width: clamp(460px, 48vw, 900px); display: flex; align-items: center; padding: 8vh 3.6vw; }
-[data-theme="amsterdam"] .ams-panel__text { margin: 0; max-width: 26ch; line-height: 1.12; overflow-wrap: break-word; color: inherit; }
+[data-theme="amsterdam"] .ams-col--panel { width: clamp(440px, 46vw, 860px); display: flex; align-items: center; padding: 9vh 3.6vw; }
+/* Panel = one confident statement size (no size toggle). */
+[data-theme="amsterdam"] .ams-panel__text { margin: 0; max-width: 26ch; font-size: clamp(1.6rem, 2.4vw, 2.7rem); line-height: 1.14; overflow-wrap: break-word; color: inherit; }
+/* Long panel copy fills the column height then flows into more columns, so it
+   never overruns the top/bottom margins. align-self stretch = the pane height. */
+[data-theme="amsterdam"] .ams-col--panel:has(.ams-panel__text--cols) { align-items: stretch; width: clamp(520px, 58vw, 1040px); }
+[data-theme="amsterdam"] .ams-panel__text--cols { max-width: none; align-self: stretch; column-width: clamp(240px, 23vw, 340px); column-gap: clamp(1.8em, 2.6vw, 3em); column-fill: auto; text-align: left; line-height: 1.28; }
 [data-theme="amsterdam"] .ams-col--quiet { width: clamp(300px, 30vw, 480px); display: flex; align-items: center; padding: 6vh 2.6vw; }
 [data-theme="amsterdam"] .ams-quiet__text { margin: 0; line-height: 1.5; white-space: pre-line; color: inherit; }
 

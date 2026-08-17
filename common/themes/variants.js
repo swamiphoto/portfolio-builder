@@ -98,7 +98,8 @@ export function resolveFlorenceAnchor(block) {
 // Panel (default) or a Quiet cream museum-label column. Stored flat on the
 // block (like florenceAnchor); ignored by every other theme.
 export function resolveAmsterdamStyle(block) {
-  return block?.amsterdamStyle === 'quiet' ? 'quiet' : 'panel'
+  // Quiet is the default; Panel is opt-in (a solid statement block).
+  return block?.amsterdamStyle === 'panel' ? 'panel' : 'quiet'
 }
 
 // Amsterdam-only photo Frame: how a photo (or each photo in a set) is mounted.
@@ -110,11 +111,36 @@ export function resolveAmsterdamFrame(block) {
   return AMSTERDAM_FRAMES.includes(block?.amsterdamFrame) ? block.amsterdamFrame : 'none'
 }
 
+// Florence-only per-photo frame: 'none' = clean hang; 'mat' = wide gallery
+// passe-partout with a hairline; 'line' = a thin keyline frame; 'mixed' alternates.
+// Distinct from Amsterdam's vintage mounts — quieter, museum-wall framing.
+export const FLORENCE_FRAMES = ['none', 'mat', 'line', 'mixed']
+export function resolveFlorenceFrame(block) {
+  return FLORENCE_FRAMES.includes(block?.florenceFrame) ? block.florenceFrame : 'none'
+}
+
 // Amsterdam-only per-block ground color. 'auto' defers to the wall's rotation;
 // light/dark/ink pin the block (and the rail, as it passes under it) to a color.
 const AMSTERDAM_GROUND_IDS = ['auto', 'light', 'dark', 'ink']
 export function resolveAmsterdamGround(block) {
   return AMSTERDAM_GROUND_IDS.includes(block?.amsterdamGround) ? block.amsterdamGround : 'auto'
+}
+
+// Walk a page's blocks and return, per block, both its effective `ground` (a pin,
+// or the next color in the black→light→red rotation) and the `def` the rotation
+// would give it if it were left on auto. The wall renders `ground`; the editor
+// uses `def` to show which swatch is a block's default. Pinned blocks don't
+// consume a rotation slot, so the auto blocks around them keep alternating.
+export function amsterdamGroundPlan(blocks, { heroOpener = false } = {}) {
+  const ORDER = ['dark', 'light', 'ink']
+  const start = (ORDER.indexOf(heroOpener ? 'dark' : 'ink') + 1) % ORDER.length
+  let step = 0
+  return (blocks || []).map((block) => {
+    const pinned = resolveAmsterdamGround(block)
+    const def = ORDER[(start + step) % ORDER.length]
+    if (pinned === 'auto') { step += 1; return { ground: def, def } }
+    return { ground: pinned, def }
+  })
 }
 
 // Testimonial quote style (italic | regular). The block's choice wins; otherwise

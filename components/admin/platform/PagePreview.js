@@ -79,7 +79,7 @@ function PagePreview({
   return (
     <ThemeProvider themeId={theme.id}>
       <PreviewPackagesProvider packages={previewPackages} currency={previewCurrency} thumb={previewThumb}>
-      <div className="theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
+      <div className="theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'} data-admin-preview="true">
         {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={config} username={username} variant={navVariant} themeId={theme.id} onPageClick={onPageClick} currentPageId={page.id} />}
         <div className="theme-content">
           <PageCover
@@ -99,6 +99,7 @@ function PagePreview({
             pages={config?.pages}
             childPages={childPages}
             activeChildId={activeChildId}
+            currentPageId={page.id}
             username={username}
             assetsByUrl={assetsByUrl}
             printStore={config?.printStore}

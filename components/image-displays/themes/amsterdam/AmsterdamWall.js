@@ -7,7 +7,7 @@
 import { useRef, useState } from 'react'
 import { buildNavTree } from '../../../../common/pagesTree'
 import { amsterdamInkColors } from '../../../../common/themes/amsterdam'
-import { resolveAmsterdamGround } from '../../../../common/themes/variants'
+import { amsterdamGroundPlan } from '../../../../common/themes/variants'
 import { getImageRefUrl } from '../../../../common/assetRefs'
 import { getSizedUrl } from '../../../../common/imageUtils'
 import useWallScroll from '../shared/useWallScroll'
@@ -39,7 +39,8 @@ export default function AmsterdamWall({
   siteConfig = {}, name, description, blocks = [], basePath = '', makeClickHandler,
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
-  cover = null, opener = 'title',
+  childPages = [], activeChildId = null, onChildPageClick,
+  cover = null, opener = 'title', showPlaceholders = false,
 }) {
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -88,18 +89,9 @@ export default function AmsterdamWall({
   // the rail floods to match whichever ground is centered. The opener sets the
   // downbeat (a photo hero reads as black; the title panel is red), then every
   // block takes the next ground in the cycle so no two neighbours share a color.
-  const GROUND_ORDER = ['dark', 'light', 'ink']
   const openerSurface = heroOpener ? 'dark' : 'ink'
-  const blockStart = (GROUND_ORDER.indexOf(openerSurface) + 1) % GROUND_ORDER.length
-  // A block can pin its own ground (Color control); otherwise it takes the next
-  // color in the rotation. Pinned blocks don't consume a rotation slot, so the
-  // auto blocks around them keep alternating cleanly.
-  let autoStep = 0
-  const groundFor = (block) => {
-    const pinned = resolveAmsterdamGround(block)
-    if (pinned !== 'auto') return pinned
-    return GROUND_ORDER[(blockStart + autoStep++) % GROUND_ORDER.length]
-  }
+  // Per-block grounds (pins + the black→light→red rotation), shared with the editor.
+  const groundPlan = amsterdamGroundPlan(blocks, { heroOpener })
 
   const actionButtons = actions.length > 0 && (
     <div className="ams-opener__actions">
@@ -109,8 +101,24 @@ export default function AmsterdamWall({
     </div>
   )
 
+  // Nested pages of the current page, listed as condensed links under the opener.
+  const renderChildLink = (p) => {
+    const isLink = p.type === 'link'
+    const href = isLink ? (p.url || '#') : `${basePath}/${p.slug || p.id}`
+    const cls = `ams-opener__childlink${p.id === activeChildId ? ' is-active' : ''}`
+    if (onChildPageClick && !isLink) {
+      return <button key={p.id} type="button" className={cls} onClick={() => onChildPageClick(p.id)}>{p.title}</button>
+    }
+    return <a key={p.id} className={cls} href={href} {...(isLink ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{p.title}</a>
+  }
+  const childLinksNav = childPages.length > 0 && (
+    <nav className="ams-opener__children" aria-label="Pages in this section">
+      {childPages.map(renderChildLink)}
+    </nav>
+  )
+
   return (
-    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome={openerSurface} style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk, '--ams-body-on-ink': inks.bodyOnInk || inks.onInk }}>
+    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome={openerSurface} style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk, '--ams-body-on-ink': inks.bodyOnInk || inks.onInk, '--ams-frame-card': inks.frameCard, '--ams-frame-mount': inks.frameMount, '--ams-frame-print': inks.framePrint }}>
       <nav className="ams-rail" aria-label="Site navigation">
         <div className="ams-rail__top">
           <button className="ams-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
@@ -156,6 +164,7 @@ export default function AmsterdamWall({
             <h1 className="ams-hero__title">{name}</h1>
             <div className="ams-hero__foot">
               {description && <p className="ams-hero__desc">{description}</p>}
+              {childLinksNav}
               {actionButtons}
             </div>
           </section>
@@ -163,6 +172,7 @@ export default function AmsterdamWall({
           <section className="ams-col ams-col--title" data-surface="ink">
             {name && <h1 className="ams-title__name">{name}</h1>}
             {description && <p className="ams-title__desc">{description}</p>}
+            {childLinksNav}
             {actionButtons}
           </section>
         )}
@@ -172,11 +182,12 @@ export default function AmsterdamWall({
             key={`col-${index}`}
             block={block}
             blockIndex={index}
-            ground={groundFor(block)}
+            ground={groundPlan[index]?.ground || 'light'}
             photoMeta={photoMeta}
             siteConfig={siteConfig}
             pages={pages}
             basePath={basePath}
+            showPlaceholders={showPlaceholders}
             onImageClick={makeClickHandler ? makeClickHandler(index) : undefined}
             hoverProps={{
               ...(onBlockHover ? { onMouseEnter: () => onBlockHover(index), onMouseLeave: () => onBlockHover(null) } : {}),

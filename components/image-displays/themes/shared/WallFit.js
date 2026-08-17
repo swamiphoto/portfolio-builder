@@ -21,6 +21,20 @@ export function Overlays({ url, print }) {
   )
 }
 
+// A height-driven placeholder box in the same fit format as FitImg, so an empty
+// photo block previews the wall layout (frames and all) before any photos exist.
+export function FitPlaceholder({ fitClass = 'florence-fit', ar = '3 / 4' }) {
+  return (
+    <div className={`${fitClass} wall-placeholder relative`} style={{ aspectRatio: ar }} data-placeholder="true" aria-hidden>
+      <svg viewBox="0 0 48 48" fill="none" width="40" height="40" style={{ opacity: 0.5 }}>
+        <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="33" cy="18" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M4 32 l10-10 a2 2 0 0 1 2.8 0l8 8 a2 2 0 0 0 2.8 0l4-4 a2 2 0 0 1 2.8 0L44 34" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
 // An image whose box is height-driven: it fills its parent's height and its width
 // follows the image's real aspect ratio (measured on load, with a fallback so the
 // column doesn't collapse before the image loads). This avoids the flexbox

@@ -10,12 +10,16 @@
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../../../common/assetRefs'
-import { resolveVariant, resolvePhotoSize, resolveFont, resolveFlorenceAnchor, resolveButtonStyle, resolveSize } from '../../../../common/themes/variants'
+import { resolveVariant, resolvePhotoSize, resolveFont, resolveFlorenceAnchor, resolveButtonStyle, resolveSize, resolveFlorenceFrame } from '../../../../common/themes/variants'
+import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
+
+const FL_FRAME_CYCLE = ['mat', 'line']
+const FL_MOUNT_HEIGHT = { large: '58vh', medium: '48vh', small: '38vh' }
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
 import FlorenceCaption from './FlorenceCaption'
-import { FitImg, Overlays } from '../shared/WallFit'
+import { FitImg, FitPlaceholder, Overlays } from '../shared/WallFit'
 
 const TID = 'florence'
 const ANCHOR_JUSTIFY = { top: 'flex-start', center: 'center', bottom: 'flex-end' }
@@ -45,10 +49,45 @@ function mosaicGroups(refs) {
   return groups
 }
 
-export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '' }) {
+export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', showPlaceholders = false }) {
   const anchor = resolveFlorenceAnchor(block)
   const justify = ANCHOR_JUSTIFY[anchor]
   const metaFor = (o) => formatCaptureMeta(o?.capture, photoMeta, o?.uploadedAt)
+  const PH = { placeholder: true }
+  // A photo box that renders a placeholder when the image is a placeholder marker,
+  // so empty blocks preview the wall layout before any photos are added.
+  const photoBox = (img, i) => (
+    img?.placeholder
+      ? <FitPlaceholder fitClass="florence-fit" />
+      : <FitImg img={img} index={i} onImageClick={onImageClick} />
+  )
+  // The Caption style control (Sans / Serif / Accent) overrides caption typography.
+  const capStyle = captionStyleCss(resolveCaptionStyle(block))
+  const frame = resolveFlorenceFrame(block)
+  // A quiet gallery frame around a photo — a wide mat or a thin keyline — with the
+  // caption printed on it. 'mixed' alternates the two across a set.
+  const florenceMount = (img, i, height) => {
+    const style = frame === 'mixed' ? FL_FRAME_CYCLE[i % FL_FRAME_CYCLE.length] : frame
+    const cap = img?.placeholder ? '' : (img.caption || '')
+    const m = img?.placeholder ? '' : metaFor(img)
+    // A long caption hangs beside the photo's long edge; clamped, click opens the
+    // full caption in the lightbox.
+    const beside = cap.length > 70
+    const openLightbox = beside && onImageClick ? () => onImageClick(i) : undefined
+    return (
+      <figure key={i} className={`florence-mount florence-mount--${style}`} data-caplayout={beside ? 'beside' : 'below'}>
+        <div className="florence-mount__photo" style={{ height }}>
+          {photoBox(img, i)}
+        </div>
+        {(cap || m) && (
+          <figcaption className="florence-mount__label" onClick={openLightbox} {...(openLightbox ? { role: 'button', tabIndex: 0, title: cap } : {})}>
+            {cap && <span className="florence-mount__title" style={capStyle}>{cap}</span>}
+            {m && <span className="florence-mount__meta">{m}</span>}
+          </figcaption>
+        )}
+      </figure>
+    )
+  }
   const wrap = (cls, style, children, extra = {}) => (
     <section className={`florence-col ${cls}`} data-block-index={blockIndex} data-anchor={anchor} style={style} {...extra} {...hoverProps}>{children}</section>
   )
@@ -56,10 +95,13 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
   switch (block.type) {
     case 'photo': {
       const src = block.image || block.imageUrl
-      if (!getImageRefUrl(src)) return null
-      const imgObj = { ...(typeof src === 'object' ? src : { url: src }), caption: block.caption, print: block.print, aspectRatio: block.aspectRatio }
-      const caption = block.caption || ''
-      const meta = metaFor(block)
+      const hasImg = !!getImageRefUrl(src)
+      if (!hasImg && !showPlaceholders) return null
+      const imgObj = hasImg
+        ? { ...(typeof src === 'object' ? src : { url: src }), caption: block.caption, print: block.print, aspectRatio: block.aspectRatio }
+        : PH
+      const caption = hasImg ? (block.caption || '') : ''
+      const meta = hasImg ? metaFor(block) : ''
       // Fill: the image spans the whole viewport height (top→bottom edges); the
       // section carries no padding so it also reaches the left/right edges, and the
       // block widens to the image. Its plaque overlays the bottom-left.
@@ -67,10 +109,10 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
         return wrap('florence-col--photo florence-col--fill', null, (
           <figure className="florence-figure florence-figure--fill">
             <div className="florence-frame" style={{ height: '100vh' }}>
-              <FitImg img={imgObj} index={0} onImageClick={onImageClick} />
+              {photoBox(imgObj, 0)}
               {(caption || meta) && (
                 <figcaption className="florence-fill-label">
-                  {caption && <span className="florence-caption__title">{caption}</span>}
+                  {caption && <span className="florence-caption__title" style={capStyle}>{caption}</span>}
                   {meta && <span className="florence-caption__meta">{meta}</span>}
                 </figcaption>
               )}
@@ -80,12 +122,16 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       }
       // Centered: sized by Size, placed vertically by Position, plaque beneath.
       const size = resolvePhotoSize(block, TID)
+      if (frame !== 'none') {
+        return wrap('florence-col--photo florence-col--framed', { justifyContent: justify },
+          florenceMount(imgObj, 0, FL_MOUNT_HEIGHT[size] || FL_MOUNT_HEIGHT.large), { 'data-fit': 'centered' })
+      }
       return wrap('florence-col--photo', { justifyContent: justify }, (
         <figure className="florence-figure" style={{ justifyContent: 'center' }}>
           <div className="florence-frame" style={{ flex: '0 0 auto', height: PHOTO_HEIGHT[size] || PHOTO_HEIGHT.large }}>
-            <FitImg img={imgObj} index={0} onImageClick={onImageClick} />
+            {photoBox(imgObj, 0)}
           </div>
-          <FlorenceCaption caption={caption} meta={meta} />
+          <FlorenceCaption caption={caption} meta={meta} titleStyle={capStyle} />
         </figure>
       ), { 'data-fit': 'centered' })
     }
@@ -93,8 +139,11 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
     case 'photos':
     case 'stacked':
     case 'masonry': {
-      const refs = normalizeImageRefs(block.images || block.imageUrls || [])
-      if (!refs.length) return null
+      let refs = normalizeImageRefs(block.images || block.imageUrls || [])
+      if (!refs.length) {
+        if (!showPlaceholders) return null
+        refs = [PH, PH, PH]
+      }
       const size = resolvePhotoSize(block, TID)
 
       if (resolveVariant(block, TID) === 'mosaic') {
@@ -108,7 +157,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
                 return (
                   <div key={gi} className="florence-mosaic__group florence-mosaic__group--solo">
                     <div className="florence-frame" style={{ height: mH }}>
-                      <FitImg img={grp[0]} index={refs.indexOf(grp[0])} onImageClick={onImageClick} />
+                      {photoBox(grp[0], refs.indexOf(grp[0]))}
                     </div>
                   </div>
                 )
@@ -117,6 +166,13 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
               return (
                 <div key={gi} className="florence-mosaic__group" style={{ width: MOSAIC_GROUP_WIDTHS[gi % MOSAIC_GROUP_WIDTHS.length] }}>
                   {grp.map((img, ci) => {
+                    if (img?.placeholder) {
+                      return (
+                        <div key={ci} className="florence-mosaic__cell">
+                          <FitPlaceholder fitClass="florence-fit" />
+                        </div>
+                      )
+                    }
                     const url = getImageRefUrl(img) || img.url || img
                     return (
                       <div key={ci} className="florence-mosaic__cell relative group">
@@ -132,6 +188,16 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
         ))
       }
 
+      // Framed set: each photo in a gallery mat / keyline (or a rotating mix).
+      if (frame !== 'none') {
+        const mh = FL_MOUNT_HEIGHT[size] || FL_MOUNT_HEIGHT.large
+        return wrap('florence-col--photorow florence-col--framed', { justifyContent: justify }, (
+          <div className="florence-row florence-row--framed">
+            {refs.map((img, i) => florenceMount(img, i, mh))}
+          </div>
+        ))
+      }
+
       // Row (default): all photos side by side, each at the row height, plaque beneath.
       const rowH = WALL_HEIGHT[size] || WALL_HEIGHT.large
       return wrap('florence-col--photorow', { justifyContent: justify }, (
@@ -139,9 +205,9 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
           {refs.map((img, i) => (
             <figure key={i} className="florence-row__item m-0">
               <div className="florence-frame" style={{ height: rowH }}>
-                <FitImg img={img} index={i} onImageClick={onImageClick} />
+                {photoBox(img, i)}
               </div>
-              <FlorenceCaption caption={img.caption || ''} meta={metaFor(img)} />
+              {!img?.placeholder && <FlorenceCaption caption={img.caption || ''} meta={metaFor(img)} titleStyle={capStyle} />}
             </figure>
           ))}
         </div>
@@ -149,11 +215,23 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
     }
 
     case 'text': {
-      if (!block.content) return null
+      if (!block.content && !showPlaceholders) return null
       const fontFamily = resolveFont(block, TID)
       const fontSize = TEXT_SIZE[resolveVariant(block, TID)] || TEXT_SIZE.body
-      return wrap('florence-col--text', { justifyContent: justify }, (
-        <p className="florence-text" style={{ fontFamily, fontSize }}>{block.content}</p>
+      // Empty text block: skeleton lines (like the other themes) rather than prose.
+      if (!block.content) {
+        return wrap('florence-col--text', { justifyContent: justify }, (
+          <div className="wall-text-placeholder" aria-hidden>
+            <span style={{ width: '82%' }} /><span style={{ width: '94%' }} /><span style={{ width: '58%' }} />
+          </div>
+        ))
+      }
+      const content = block.content
+      // Long copy would overflow the fixed-height wall column, so it flows into a
+      // second column instead of running past the viewport.
+      const cols = String(content).length > 280
+      return wrap(`florence-col--text${cols ? ' florence-col--text-cols' : ''}`, cols ? null : { justifyContent: justify }, (
+        <p className={`florence-text${cols ? ' florence-text--cols' : ''}`} style={{ fontFamily, fontSize }}>{content}</p>
       ))
     }
 
@@ -162,7 +240,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       return wrap('florence-col--media', { justifyContent: justify }, (
         <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
           <VideoBlock url={block.url} caption="" variant={2} />
-          <FlorenceCaption caption={block.caption || ''} />
+          <FlorenceCaption caption={block.caption || ''} titleStyle={capStyle} />
         </figure>
       ))
     }

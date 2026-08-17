@@ -35,6 +35,7 @@ export default function FlorenceWall({
   siteConfig = {}, name, description, blocks = [], basePath = '', makeClickHandler,
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
+  childPages = [], activeChildId = null, onChildPageClick, showPlaceholders = false,
 }) {
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -44,6 +45,18 @@ export default function FlorenceWall({
   const tree = buildNavTree(siteConfig.pages || [], { respectHideChildren: true }).filter(i => i.showInNav !== false)
   const socials = siteConfig.contact || {}
   const socialKeys = SOCIAL_KEYS.filter(k => socials[k])
+
+  // Nested pages of the page being viewed (the sub-nav set), shown as links under
+  // its description in the mono voice.
+  const renderChildLink = (p) => {
+    const isLink = p.type === 'link'
+    const href = isLink ? (p.url || '#') : `${basePath}/${p.slug || p.id}`
+    const cls = `florence-intro__childlink${p.id === activeChildId ? ' is-active' : ''}`
+    if (onChildPageClick && !isLink) {
+      return <button key={p.id} type="button" className={cls} onClick={() => onChildPageClick(p.id)}>{p.title}</button>
+    }
+    return <a key={p.id} className={cls} href={href} {...(isLink ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{p.title}</a>
+  }
 
   const logoImage = siteConfig?.logoType === 'image' && siteConfig?.logo
   const brand = logoImage
@@ -113,6 +126,11 @@ export default function FlorenceWall({
         <section className="florence-col florence-col--intro">
           {name && <h1 className="florence-intro__title">{name}</h1>}
           {description && <p className="florence-intro__desc">{description}</p>}
+          {childPages.length > 0 && (
+            <nav className="florence-intro__children" aria-label="Pages in this section">
+              {childPages.map(renderChildLink)}
+            </nav>
+          )}
           {actions.length > 0 && (
             <div className="florence-intro__actions">
               {actions.map((a, i) => (
@@ -131,6 +149,7 @@ export default function FlorenceWall({
             siteConfig={siteConfig}
             pages={pages}
             basePath={basePath}
+            showPlaceholders={showPlaceholders}
             onImageClick={makeClickHandler ? makeClickHandler(index) : undefined}
             hoverProps={{
               ...(onBlockHover ? { onMouseEnter: () => onBlockHover(index), onMouseLeave: () => onBlockHover(null) } : {}),
