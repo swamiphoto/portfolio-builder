@@ -55,3 +55,34 @@ describe('generic.discover', () => {
     expect(images).toContain('https://joe.com/ok.jpg')
   })
 })
+
+describe('generic.discover siteMap', () => {
+  const IMG = (n) => Array.from({ length: n }, (_, i) => `<img src="/photos/p${i}.jpg">`).join('')
+  const PAGES = {
+    'https://x.com/': `<html><title>Jane</title><body><nav><a href="/work">Work</a><a href="/about">About</a><a href="/contact">Contact</a></nav>${IMG(10)}</body></html>`,
+    'https://x.com/work': `<html><title>Work</title><body>${IMG(20)}</body></html>`,
+    'https://x.com/about': `<html><title>About</title><body><main>${'<p>I am Jane and I shoot portraits in Austin every day of the week and love it dearly.</p>'.repeat(12)}</main><img src="/photos/me.jpg"></body></html>`,
+    'https://x.com/contact': `<html><title>Contact</title><body><form><input/></form><p>Say hello.</p></body></html>`,
+  }
+  const fetchPage = async (url) => {
+    const clean = url.replace(/\/+$/, '') || url
+    const html = PAGES[url] || PAGES[clean] || PAGES[`${clean}/`]
+    if (!html) throw new Error('404')
+    return html
+  }
+
+  it('returns a classified siteMap alongside collections', async () => {
+    const result = await generic.discover('https://x.com', { fetchPage })
+    expect(result.siteMap).toBeTruthy()
+    const kinds = Object.fromEntries(result.siteMap.pages.map((p) => [p.slug, p.kind]))
+    expect(kinds['work']).toBe('gallery')
+    expect(kinds['about']).toBe('about')
+    expect(kinds['contact']).toBe('contact')
+    expect(result.siteMap.pages.find((p) => p.kind === 'about').textContent).toMatch(/I am Jane/)
+  })
+
+  it('returns siteMap null in single-page mode', async () => {
+    const result = await generic.discover('https://x.com/work', { fetchPage })
+    expect(result.siteMap).toBeNull()
+  })
+})

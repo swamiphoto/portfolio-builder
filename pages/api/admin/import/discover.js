@@ -46,6 +46,7 @@ async function handler(req, res) {
     provider: adapter.id,
     site: result.site,
     collections: result.collections,
+    siteMap: result.siteMap || null,
     totalAssets,
   })
 }

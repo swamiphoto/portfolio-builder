@@ -1,6 +1,7 @@
 import { safeFetch } from '../safeFetch'
-import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls } from '../crawlerUtils'
+import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls, extractPageContent, extractNavLinks } from '../crawlerUtils'
 import { filterJunkImages, groupIntoCollections, inferCollectionName } from '../junkFilter'
+import { buildSiteMap } from '../siteMap'
 
 export const PROVIDER_ID = 'generic'
 
@@ -30,6 +31,8 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
   const imageMap = new Map() // remoteUrl -> { remoteUrl, pageUrl }
   const seenOnPages = new Map() // remoteUrl -> count
   let siteTitle = null
+  const pageRecords = []
+  let navLinks = null
 
   while (queue.length && visited.size < maxPages) {
     const pageUrl = queue.shift()
@@ -49,6 +52,17 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
       seenOnPages.set(img, (seenOnPages.get(img) || 0) + 1)
       if (!imageMap.has(img)) imageMap.set(img, { remoteUrl: img, pageUrl })
     }
+    const content = extractPageContent(html)
+    pageRecords.push({
+      url: pageUrl,
+      title: extractTitle(html),
+      wordCount: content.wordCount,
+      imageCount: images.length,
+      hasForm: content.hasForm,
+      hasMailto: content.hasMailto,
+      text: content.text,
+    })
+    if (navLinks === null) navLinks = extractNavLinks(html, pageUrl)
     // Scoped to a single page → don't fan out across the site's other links.
     if (!singlePage) {
       for (const link of links) {
@@ -68,6 +82,7 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
   return {
     site: { title: siteTitle || new URL(startUrl).hostname, url: startUrl },
     collections,
+    siteMap: singlePage ? null : buildSiteMap({ pageRecords, origin, navLinks: navLinks || [] }),
   }
 }
 
