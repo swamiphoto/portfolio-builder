@@ -7,6 +7,7 @@ import Link from "next/link";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
+import MarkdownEditorPanel from "./MarkdownEditorPanel";
 import ToggleSwitch from "../common/ToggleSwitch";
 import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 import { useEditorFeedback } from './EditorFeedbackContext';
@@ -102,6 +103,9 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onBlockHover,
   themeId = 'kyoto',
   autoFocusTitle,
+  libraryImages = [],
+  libraryConfig = {},
+  libraryLoading = false,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -637,6 +641,16 @@ const BlockBuilder = forwardRef(function BlockBuilder({
           onClose={() => { setShowBlockMenu(false); setInsertAtIndex(null); }}
         />
       )}
+
+      <MarkdownEditorPanel
+        open={markdownEditorIndex != null}
+        block={markdownEditorIndex != null ? (galleryRef.current.blocks || [])[markdownEditorIndex] : null}
+        onChange={(updated) => updateBlock(markdownEditorIndex, updated)}
+        onClose={() => setMarkdownEditorIndex(null)}
+        libraryImages={libraryImages}
+        libraryConfig={libraryConfig}
+        libraryLoading={libraryLoading}
+      />
     </div>
   );
 })

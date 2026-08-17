@@ -192,6 +192,9 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
             onToggleSet={handleToggleSet}
             onPrintChange={handlePrintChange}
             themeId={siteConfig?.design?.theme || 'kyoto'}
+            libraryImages={libraryImages}
+            libraryConfig={libraryData}
+            libraryLoading={libraryLoading}
           />
 
           <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} assetsByUrl={assetsByUrl} printStore={siteConfig?.printStore} />
