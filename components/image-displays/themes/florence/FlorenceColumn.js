@@ -14,6 +14,7 @@ import { resolveVariant, resolvePhotoSize, resolveFont, resolveFlorenceAnchor, r
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
+import MarkdownText from '../../MarkdownText'
 import FlorenceCaption from './FlorenceCaption'
 import { FitImg, Overlays } from '../shared/WallFit'
 
@@ -151,8 +152,19 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       if (!block.content) return null
       const fontFamily = resolveFont(block, TID)
       const fontSize = TEXT_SIZE[resolveVariant(block, TID)] || TEXT_SIZE.body
+      const textStyle = { fontFamily, fontSize }
+      // Florence has no distinct heading/quote treatment for text blocks — every
+      // markdown node reuses the same "florence-text" look; formatting (bold,
+      // links, lists) is what matters here, not new art direction.
+      if (block.format === 'markdown') {
+        return wrap('florence-col--text', { justifyContent: justify }, (
+          <div className="florence-text" style={textStyle}>
+            <MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} />
+          </div>
+        ))
+      }
       return wrap('florence-col--text', { justifyContent: justify }, (
-        <p className="florence-text" style={{ fontFamily, fontSize }}>{block.content}</p>
+        <p className="florence-text" style={textStyle}>{block.content}</p>
       ))
     }
 

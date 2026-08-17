@@ -14,6 +14,7 @@ import { formatCaptureMeta } from '../../../../common/photoMeta'
 import { FitImg, Overlays } from '../shared/WallFit'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
+import MarkdownText from '../../MarkdownText'
 import AmsterdamCaption from './AmsterdamCaption'
 
 const TID = 'amsterdam'
@@ -137,13 +138,24 @@ export default function AmsterdamColumn({ block, blockIndex, onImageClick, hover
       if (!block.content) return null
       const fontFamily = resolveFont(block, TID)
       const variant = resolveVariant(block, TID)
+      const isMarkdown = block.format === 'markdown'
+      // Amsterdam has no distinct heading/quote treatment for text blocks beyond
+      // Panel vs Quiet — every markdown node reuses the same look for whichever
+      // style is active; formatting (bold, links, lists) is what matters here,
+      // not new art direction.
       if (resolveAmsterdamStyle(block) === 'quiet') {
+        const style = { fontFamily, fontSize: QUIET_SIZE[variant] || QUIET_SIZE.body }
         return wrap('ams-col--quiet', null, (
-          <p className="ams-quiet__text" style={{ fontFamily, fontSize: QUIET_SIZE[variant] || QUIET_SIZE.body }}>{block.content}</p>
+          isMarkdown
+            ? <div className="ams-quiet__text" style={style}><MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} /></div>
+            : <p className="ams-quiet__text" style={style}>{block.content}</p>
         ))
       }
+      const style = { fontFamily, fontSize: PANEL_SIZE[variant] || PANEL_SIZE.body }
       return wrap('ams-col--panel', null, (
-        <p className="ams-panel__text" style={{ fontFamily, fontSize: PANEL_SIZE[variant] || PANEL_SIZE.body }}>{block.content}</p>
+        isMarkdown
+          ? <div className="ams-panel__text" style={style}><MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} /></div>
+          : <p className="ams-panel__text" style={style}>{block.content}</p>
       ), 'ink')
     }
 
