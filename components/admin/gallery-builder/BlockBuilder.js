@@ -110,6 +110,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   const [expandedOverride, setExpandedOverride] = useState(null);
   const [allExpanded, setAllExpanded] = useState(true);
   const [glowingBlockIndex, setGlowingBlockIndex] = useState(null);
+  const [markdownEditorIndex, setMarkdownEditorIndex] = useState(null);
 
   const feedbackCtx = useEditorFeedback();
 
@@ -560,6 +561,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
                             glowing={glowingBlockIndex === index}
                             themeId={themeId}
+                            onOpenMarkdownEditor={() => setMarkdownEditorIndex(index)}
                           />
                         </div>
                       )}

@@ -14,6 +14,7 @@ import { resolveVariant } from "../../../common/themes/variants";
 import { getBlockSpec } from "../../../common/themes";
 import Tip from "../Tip";
 import { EditableInput, EditableTextarea } from "../platform/EditableText";
+import TextBlockField from "./TextBlockField";
 
 const TYPE_LABELS = {
   page: "Hero",
@@ -249,6 +250,7 @@ function BlockCard({
   onAddBlockAbove,
   onAddBlockBelow,
   themeId = 'kyoto',
+  onOpenMarkdownEditor,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -979,12 +981,12 @@ function BlockCard({
 
           {/* Text */}
           {block.type === "text" && (
-            <AutoGrowTextarea
-              className={`${INPUT} resize-none scroll-thin !pt-0`}
-              placeholder="Write something…"
-              maxHeight={160}
-              value={block.content || ""}
-              onChange={(e) => onUpdate({ ...block, content: e.target.value })}
+            <TextBlockField
+              block={block}
+              onUpdate={onUpdate}
+              onOpenMarkdownEditor={() => onOpenMarkdownEditor?.()}
+              AutoGrowTextarea={AutoGrowTextarea}
+              inputClass={`${INPUT} resize-none scroll-thin !pt-0`}
             />
           )}
 
