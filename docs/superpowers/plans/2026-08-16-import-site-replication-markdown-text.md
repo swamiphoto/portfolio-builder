@@ -852,7 +852,9 @@ Update both call sites to pass `importBatchId`: `pages/onboarding.js:155-171` an
 
 - [ ] **Step 6: Commit** — `git commit -m "fix(import): imported collections become library sets and config fields are preserved"`
 
----### Task 8: `page.source` survives normalization
+---
+
+### Task 8: `page.source` survives normalization
 
 **Files:**
 - Modify (if needed): `common/assetRefs.js:220` (`normalizePageEntity`)
