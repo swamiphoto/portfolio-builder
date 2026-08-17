@@ -119,6 +119,90 @@ export function extractPageContent(html) {
   return { text, wordCount, hasForm, hasMailto }
 }
 
+const MAX_VIDEO_URLS = 10
+
+function hostMatches(hostname, suffix) {
+  return hostname === suffix || hostname.endsWith(`.${suffix}`)
+}
+
+function youtubeIdFromEmbed(url) {
+  try {
+    const u = new URL(url)
+    if (!hostMatches(u.hostname, 'youtube.com') && !hostMatches(u.hostname, 'youtube-nocookie.com')) return null
+    const m = u.pathname.match(/^\/embed\/([A-Za-z0-9_-]+)/)
+    return m ? m[1] : null
+  } catch {
+    return null
+  }
+}
+
+function youtubeIdFromWatch(url) {
+  try {
+    const u = new URL(url)
+    if (!hostMatches(u.hostname, 'youtube.com') || u.pathname !== '/watch') return null
+    return u.searchParams.get('v')
+  } catch {
+    return null
+  }
+}
+
+function youtubeIdFromShort(url) {
+  try {
+    const u = new URL(url)
+    if (!hostMatches(u.hostname, 'youtu.be')) return null
+    return u.pathname.split('/').filter(Boolean)[0] || null
+  } catch {
+    return null
+  }
+}
+
+function vimeoIdFromPlayer(url) {
+  try {
+    const u = new URL(url)
+    if (!hostMatches(u.hostname, 'player.vimeo.com')) return null
+    const m = u.pathname.match(/^\/video\/(\d+)/)
+    return m ? m[1] : null
+  } catch {
+    return null
+  }
+}
+
+function vimeoIdFromLink(url) {
+  try {
+    const u = new URL(url)
+    if (!hostMatches(u.hostname, 'vimeo.com') || hostMatches(u.hostname, 'player.vimeo.com')) return null
+    const m = u.pathname.match(/^\/(\d+)/)
+    return m ? m[1] : null
+  } catch {
+    return null
+  }
+}
+
+// YouTube/Vimeo links embedded as <iframe src> (embed players) or <a href>
+// (plain links). Every form is normalized to a canonical watch/vimeo URL so
+// the same video reached two different ways dedupes to one entry.
+export function extractVideoUrls(html, baseUrl) {
+  const $ = cheerio.load(String(html || ''))
+  const found = []
+  const addYoutube = (id) => { if (id) found.push(`https://www.youtube.com/watch?v=${id}`) }
+  const addVimeo = (id) => { if (id) found.push(`https://vimeo.com/${id}`) }
+
+  $('iframe[src]').each((_, el) => {
+    const resolved = safeResolve($(el).attr('src'), baseUrl)
+    if (!resolved) return
+    addYoutube(youtubeIdFromEmbed(resolved))
+    addVimeo(vimeoIdFromPlayer(resolved))
+  })
+  $('a[href]').each((_, el) => {
+    const resolved = safeResolve($(el).attr('href'), baseUrl)
+    if (!resolved) return
+    addYoutube(youtubeIdFromWatch(resolved) || youtubeIdFromShort(resolved))
+    addVimeo(vimeoIdFromLink(resolved))
+  })
+
+  return [...new Set(found)].slice(0, MAX_VIDEO_URLS)
+}
+
 export function extractNavLinks(html, baseUrl) {
   const $ = cheerio.load(String(html || ''))
   const out = []

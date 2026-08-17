@@ -39,14 +39,16 @@ export function buildSiteMap({ pageRecords, origin, navLinks = [] }) {
     const { id: collectionId, name } = inferCollectionName(rec.url, origin)
     const isRoot = collectionId === 'home'
     const title = isRoot ? 'Home' : nav?.label || name || rec.title || 'Untitled'
+    const keepText = kind === 'about' || (kind === 'gallery' && (rec.wordCount ?? 0) < 200)
     pages.push({
       kind,
       title,
       slug: isRoot ? 'home' : slugify(title) || slugify(collectionId) || 'page',
       navOrder: nav ? nav.order : null,
       sourceUrl: rec.url,
-      textContent: kind === 'about' ? rec.text || '' : '',
+      textContent: keepText ? rec.text || '' : '',
       collectionId,
+      videoUrls: rec.videoUrls || [],
     })
   }
   return { pages }

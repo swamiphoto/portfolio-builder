@@ -61,6 +61,7 @@ async function discover(input, { fetchJson = httpFetchJson } = {}) {
         sourceUrl: c.remoteUrl,
         textContent: '',
         collectionId: c.id,
+        videoUrls: [],
       })),
     },
   }

@@ -85,4 +85,22 @@ describe('generic.discover siteMap', () => {
     const result = await generic.discover('https://x.com/work', { fetchPage })
     expect(result.siteMap).toBeNull()
   })
+
+  it('threads discovered video URLs onto the about page in the siteMap', async () => {
+    const pagesWithVideo = {
+      ...PAGES,
+      'https://x.com/about': `<html><title>About</title><body><main>${'<p>I am Jane and I shoot portraits in Austin every day of the week and love it dearly.</p>'.repeat(12)}</main><img src="/photos/me.jpg"><iframe src="https://www.youtube.com/embed/aboutVid1"></iframe></body></html>`,
+    }
+    const fetchVideoPage = async (url) => {
+      const clean = url.replace(/\/+$/, '') || url
+      const html = pagesWithVideo[url] || pagesWithVideo[clean] || pagesWithVideo[`${clean}/`]
+      if (!html) throw new Error('404')
+      return html
+    }
+    const result = await generic.discover('https://x.com', { fetchPage: fetchVideoPage })
+    const about = result.siteMap.pages.find((p) => p.kind === 'about')
+    expect(about.videoUrls).toEqual(['https://www.youtube.com/watch?v=aboutVid1'])
+    const work = result.siteMap.pages.find((p) => p.slug === 'work')
+    expect(work.videoUrls).toEqual([])
+  })
 })

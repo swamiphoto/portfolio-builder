@@ -47,8 +47,8 @@ describe('smugmug.discover', () => {
 
     const result = await smugmug.discover('https://jane.smugmug.com', { fetchJson })
     expect(result.siteMap.pages).toEqual([
-      { kind: 'gallery', title: 'Landscapes', slug: 'landscapes', navOrder: 0, sourceUrl: '/img/K1', textContent: '', collectionId: 'K1' },
-      { kind: 'gallery', title: 'City Nights', slug: 'city-nights', navOrder: 1, sourceUrl: '/img/K2', textContent: '', collectionId: 'K2' },
+      { kind: 'gallery', title: 'Landscapes', slug: 'landscapes', navOrder: 0, sourceUrl: '/img/K1', textContent: '', collectionId: 'K1', videoUrls: [] },
+      { kind: 'gallery', title: 'City Nights', slug: 'city-nights', navOrder: 1, sourceUrl: '/img/K2', textContent: '', collectionId: 'K2', videoUrls: [] },
     ])
   })
 })

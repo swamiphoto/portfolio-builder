@@ -39,4 +39,30 @@ describe('buildSiteMap', () => {
     const { pages } = buildSiteMap({ pageRecords: records, origin: 'https://x.com', navLinks })
     expect(pages.find((p) => p.slug === 'portraits').title).toBe('Portraits')
   })
+
+  it('defaults videoUrls to [] on every page, carrying through record videoUrls', () => {
+    const withVideo = records.map((r) => (r.url === 'https://x.com/about' ? { ...r, videoUrls: ['https://vimeo.com/1'] } : r))
+    const { pages } = buildSiteMap({ pageRecords: withVideo, origin: 'https://x.com', navLinks })
+    const bySlug = Object.fromEntries(pages.map((p) => [p.slug, p]))
+    expect(bySlug['about'].videoUrls).toEqual(['https://vimeo.com/1'])
+    expect(bySlug['portraits'].videoUrls).toEqual([])
+    expect(bySlug['contact'].videoUrls).toEqual([])
+    expect(bySlug['home'].videoUrls).toEqual([])
+  })
+
+  it('retains gallery textContent when the source prose is short (wordCount < 200)', () => {
+    const recs = [
+      { url: 'https://x.com/portraits', title: 'Portraits', wordCount: 8, imageCount: 30, text: 'A short intro to my portrait work.' },
+    ]
+    const { pages } = buildSiteMap({ pageRecords: recs, origin: 'https://x.com', navLinks: [{ href: 'https://x.com/portraits', label: 'Portraits' }] })
+    expect(pages[0]).toMatchObject({ kind: 'gallery', textContent: 'A short intro to my portrait work.' })
+  })
+
+  it('drops gallery textContent when the source prose is long (wordCount >= 200)', () => {
+    const recs = [
+      { url: 'https://x.com/work', title: 'Work', wordCount: 250, imageCount: 6, text: 'A very long essay about my work.' },
+    ]
+    const { pages } = buildSiteMap({ pageRecords: recs, origin: 'https://x.com', navLinks: [{ href: 'https://x.com/work', label: 'Work' }] })
+    expect(pages[0]).toMatchObject({ kind: 'gallery', textContent: '' })
+  })
 })

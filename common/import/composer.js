@@ -97,6 +97,37 @@ function uniqueSlug(base, taken) {
   return slug
 }
 
+// First paragraph of source prose, trimmed and capped — used as the page's
+// description. Plain text only (no markdown), internal whitespace/newlines
+// collapsed to single spaces.
+function firstParagraphDescription(text) {
+  if (!text) return ''
+  const [first] = String(text).split(/\n\s*\n/)
+  const collapsed = (first || '').replace(/\s+/g, ' ').trim()
+  return collapsed.slice(0, 300)
+}
+
+// Ordering rule: galleries first (by navOrder, nulls last, stable), then
+// about, then contact last — regardless of source nav position.
+const KIND_RANK = { gallery: 0, about: 1, contact: 2 }
+
+function orderPages(mapPages) {
+  return mapPages
+    .map((page, index) => ({ page, index }))
+    .sort((a, b) => {
+      const ra = KIND_RANK[a.page.kind] ?? 3
+      const rb = KIND_RANK[b.page.kind] ?? 3
+      if (ra !== rb) return ra - rb
+      if (ra === 0) {
+        const an = a.page.navOrder ?? Infinity
+        const bn = b.page.navOrder ?? Infinity
+        if (an !== bn) return an - bn
+      }
+      return a.index - b.index
+    })
+    .map((x) => x.page)
+}
+
 export function composeSite({ siteMap, collections, imported, importBatchId, existingPages }) {
   const mapPages = siteMap?.pages?.filter((p) => p.kind !== 'other') || []
   if (!mapPages.length) return { pages: [] }
@@ -105,24 +136,34 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
   const collectionById = new Map((collections || []).map((c) => [c.id, c]))
   const taken = new Set((existingPages || []).map((p) => p.slug).filter(Boolean))
 
-  const ordered = [...mapPages].sort((a, b) => {
-    const an = a.navOrder ?? Infinity
-    const bn = b.navOrder ?? Infinity
-    return an - bn
-  })
+  const ordered = orderPages(mapPages)
 
   const pages = []
   ordered.forEach((page) => {
     const assets = assetsForCollection(collectionById.get(page.collectionId), assetBySourceUrl)
+    const videoUrls = page.videoUrls || []
     let blocks
+    let description = ''
     if (page.kind === 'gallery') {
       if (!assets.length) return // an empty gallery page helps no one
       blocks = composeGalleryBlocks(assets)
+      for (const url of videoUrls) blocks.push({ ...defaultBlock('video'), url })
+      description = firstParagraphDescription(page.textContent)
     } else if (page.kind === 'about') {
       blocks = [{ ...defaultBlock('text'), variant: 1, content: page.title }]
-      const portrait = assets.find((a) => a.orientation === 'portrait')
-      if (portrait) blocks.push({ ...defaultBlock('photo'), imageUrl: portrait.publicUrl })
+      const remaining = [...assets]
+      const portraitIdx = remaining.findIndex((a) => a.orientation === 'portrait')
+      if (portraitIdx !== -1) {
+        const [portrait] = remaining.splice(portraitIdx, 1)
+        blocks.push({ ...defaultBlock('photo'), imageUrl: portrait.publicUrl })
+      }
       blocks.push({ ...defaultBlock('text'), variant: 3, format: 'markdown', content: page.textContent || '' })
+      if (remaining.length === 1) {
+        blocks.push({ ...defaultBlock('photo'), imageUrl: remaining[0].publicUrl })
+      } else if (remaining.length >= 2) {
+        blocks.push(photosBlock(remaining, 'masonry'))
+      }
+      for (const url of videoUrls) blocks.push({ ...defaultBlock('video'), url })
     } else {
       blocks = [defaultBlock('contact')]
     }
@@ -136,6 +177,7 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
         showInNav: true,
         sortOrder: (existingPages?.length || 0) + pages.length,
         blocks,
+        description,
         source: { importBatchId: importBatchId || null, sourceUrl: page.sourceUrl || null },
       })
     )

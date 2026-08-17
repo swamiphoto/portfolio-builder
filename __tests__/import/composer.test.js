@@ -51,6 +51,119 @@ it('composes about and contact pages and skips other', () => {
   expect(pages[1].blocks[0].type).toBe('contact')
 })
 
+it('about pages append leftover assets (2+) as a masonry block, then one video block per videoUrl', () => {
+  const collections = [{ id: 'about', name: 'About', assetRefs: [
+    { remoteUrl: 'https://x.com/portrait.jpg' },
+    { remoteUrl: 'https://x.com/extra1.jpg' },
+    { remoteUrl: 'https://x.com/extra2.jpg' },
+  ] }]
+  const imported = [
+    asset('portrait.jpg', { w: 800, h: 1200, cid: 'about' }),
+    asset('extra1.jpg', { w: 1200, h: 800, cid: 'about' }),
+    asset('extra2.jpg', { w: 1200, h: 800, cid: 'about' }),
+  ]
+  const siteMap = { pages: [
+    {
+      kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about',
+      textContent: 'Hi.\n\nI shoot.', collectionId: 'about',
+      videoUrls: ['https://vimeo.com/1', 'https://www.youtube.com/watch?v=abc'],
+    },
+  ] }
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const blocks = pages[0].blocks
+  expect(blocks[0]).toMatchObject({ type: 'text', variant: 1, content: 'About' })
+  expect(blocks[1]).toMatchObject({ type: 'photo', imageUrl: 'https://gcs/portrait.jpg' })
+  expect(blocks[2]).toMatchObject({ type: 'text', variant: 3, format: 'markdown', content: 'Hi.\n\nI shoot.' })
+  expect(blocks[3]).toMatchObject({ type: 'photos', layout: 'masonry' })
+  expect(blocks[3].imageUrls).toEqual(['https://gcs/extra1.jpg', 'https://gcs/extra2.jpg'])
+  expect(blocks[4]).toMatchObject({ type: 'video', url: 'https://vimeo.com/1', caption: '' })
+  expect(blocks[5]).toMatchObject({ type: 'video', url: 'https://www.youtube.com/watch?v=abc', caption: '' })
+  expect(blocks).toHaveLength(6)
+})
+
+it('about pages append a single leftover asset as one photo block (not masonry)', () => {
+  const collections = [{ id: 'about', name: 'About', assetRefs: [
+    { remoteUrl: 'https://x.com/portrait.jpg' },
+    { remoteUrl: 'https://x.com/extra1.jpg' },
+  ] }]
+  const imported = [
+    asset('portrait.jpg', { w: 800, h: 1200, cid: 'about' }),
+    asset('extra1.jpg', { w: 1200, h: 800, cid: 'about' }),
+  ]
+  const siteMap = { pages: [
+    { kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about', textContent: 'Hi.', collectionId: 'about', videoUrls: [] },
+  ] }
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const blocks = pages[0].blocks
+  expect(blocks[3]).toMatchObject({ type: 'photo', imageUrl: 'https://gcs/extra1.jpg' })
+  expect(blocks).toHaveLength(4)
+})
+
+it('gallery pages append one video block per videoUrl after the composed photo blocks', () => {
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].videoUrls = ['https://vimeo.com/42']
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const blocks = pages[0].blocks
+  expect(blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
+  expect(blocks[blocks.length - 1]).toMatchObject({ type: 'video', url: 'https://vimeo.com/42' })
+  expect(blocks).toHaveLength(2)
+})
+
+it('orders galleries first (by navOrder, nulls last), then about, then contact — regardless of source nav order', () => {
+  const collections = [
+    { id: 'c1', name: 'Portraits', assetRefs: refs(5, 'c1') },
+    { id: 'c2', name: 'Landscapes', assetRefs: refs(5, 'c2') },
+  ]
+  const imported = [
+    ...refs(5, 'c1').map((r, i) => asset(`pc1${i}.jpg`, { cid: 'c1' })),
+    ...refs(5, 'c2').map((r, i) => asset(`pc2${i}.jpg`, { cid: 'c2' })),
+  ]
+  const siteMap = { pages: [
+    { kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about', textContent: '', collectionId: 'about' },
+    { kind: 'gallery', title: 'Portraits', slug: 'portraits', navOrder: 1, sourceUrl: 'https://x.com/portraits', textContent: '', collectionId: 'c1' },
+    { kind: 'contact', title: 'Contact', slug: 'contact', navOrder: 2, sourceUrl: 'https://x.com/contact', textContent: '', collectionId: 'contact' },
+    { kind: 'gallery', title: 'Landscapes', slug: 'landscapes', navOrder: 3, sourceUrl: 'https://x.com/landscapes', textContent: '', collectionId: 'c2' },
+  ] }
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages.map((p) => p.slug)).toEqual(['portraits', 'landscapes', 'about', 'contact'])
+  expect(pages.map((p) => p.sortOrder)).toEqual([0, 1, 2, 3])
+})
+
+it('sets a gallery page description from the first paragraph of its textContent', () => {
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].textContent = 'A short intro to my portrait work.\n\nMore details follow that should not appear.'
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages[0].description).toBe('A short intro to my portrait work.')
+})
+
+it('collapses internal newlines within the first paragraph to spaces', () => {
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].textContent = 'Line one\nLine two continues.\n\nSecond paragraph.'
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages[0].description).toBe('Line one Line two continues.')
+})
+
+it('caps a long first-paragraph description at 300 characters', () => {
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].textContent = 'x'.repeat(400)
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages[0].description).toHaveLength(300)
+})
+
+it('leaves description empty when gallery textContent is empty', () => {
+  const { pages } = composeSite({ ...fixture(5), importBatchId: 'imp_1', existingPages: [] })
+  expect(pages[0].description).toBe('')
+})
+
+it('leaves about/contact page descriptions empty regardless of textContent', () => {
+  const siteMap = { pages: [
+    { kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about', textContent: 'Hi.\n\nI shoot.', collectionId: 'about' },
+    { kind: 'contact', title: 'Contact', slug: 'contact', navOrder: 1, sourceUrl: 'https://x.com/contact', textContent: '', collectionId: 'contact' },
+  ] }
+  const { pages } = composeSite({ siteMap, collections: [], imported: [], importBatchId: 'imp_1', existingPages: [] })
+  expect(pages.map((p) => p.description)).toEqual(['', ''])
+})
+
 it('suffixes colliding slugs and continues sortOrder after existing pages', () => {
   const { siteMap, collections, imported } = fixture(5)
   const existingPages = [{ slug: 'portraits', sortOrder: 0 }, { slug: 'x', sortOrder: 1 }]
