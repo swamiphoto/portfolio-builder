@@ -1,4 +1,4 @@
-import { newImportBatchId, slugify } from '@/common/import/importCore'
+import { newImportBatchId, stableHash } from '@/common/import/importCore'
 
 export { slugify } from '@/common/import/importCore'
 
@@ -67,26 +67,47 @@ export async function importSelected({ provider, label, importBatchId, selectedC
   return { imported, failed, skipped, total }
 }
 
-export function applyImportToConfig(config, { imported, collections }) {
+export function applyImportToConfig(config, { imported, collections, importBatchId, now }) {
   const nameById = {}
   for (const c of collections || []) nameById[c.id] = c.name
 
   const assets = { ...(config.assets || {}) }
-  const galleries = { ...(config.galleries || {}) }
-  const urlsByCollection = {}
+  const sets = { ...(config.sets || {}) }
+  // Tracks which setIds have already been cloned (or freshly created) in this
+  // call, so we can safely mutate them in place without touching the
+  // caller's original set objects (sets is only a shallow copy of config.sets).
+  const owned = new Set()
+  const ts = now || new Date().toISOString()
+
+  const setForCollection = (cid) => {
+    const name = nameById[cid] || cid
+    const existing = Object.values(sets).find((s) => s?.name === name)
+    if (existing) {
+      if (!owned.has(existing.setId)) {
+        sets[existing.setId] = { ...existing }
+        owned.add(existing.setId)
+      }
+      return existing.setId
+    }
+    const setId = `set-${stableHash(`${importBatchId || ''}:${cid}`)}`
+    sets[setId] = { setId, name, kind: 'manual', assetIds: [], rule: null, createdAt: ts, updatedAt: ts }
+    owned.add(setId)
+    return setId
+  }
 
   for (const asset of imported || []) {
-    assets[asset.assetId] = { ...(config.assets?.[asset.assetId] || {}), ...asset }
+    const prev = config.assets?.[asset.assetId] || {}
+    const merged = { ...prev, ...asset }
     const cid = asset.source?.externalCollectionId
-    if (cid == null) continue
-    ;(urlsByCollection[cid] = urlsByCollection[cid] || []).push(asset.publicUrl)
+    if (cid != null) {
+      const setId = setForCollection(cid)
+      const set = sets[setId]
+      if (!set.assetIds.includes(asset.assetId)) set.assetIds = [...set.assetIds, asset.assetId]
+      set.updatedAt = ts
+      merged.setIds = [...new Set([...(prev.setIds || []), setId])]
+    }
+    assets[asset.assetId] = merged
   }
 
-  for (const [cid, urls] of Object.entries(urlsByCollection)) {
-    const slug = slugify(nameById[cid] || cid)
-    if (!slug) continue
-    galleries[slug] = [...new Set([...(galleries[slug] || []), ...urls])]
-  }
-
-  return { portfolios: config.portfolios || {}, galleries, assets }
+  return { ...config, assets, sets }
 }
