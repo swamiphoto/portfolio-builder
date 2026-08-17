@@ -292,6 +292,9 @@ export default function AdminLibrary({ onBack, siteConfig }) {
     portfolios: libraryData?.portfolios || {},
     galleries: libraryData?.galleries || {},
     assets: libraryData?.assets || {},
+    assetOrder: libraryData?.assetOrder || [],
+    sets: libraryData?.sets || {},
+    savedViews: libraryData?.savedViews || {},
   }), [libraryData]);
 
   const handleToggleSet = useCallback(async (imageUrl, slug, type, add) => {
