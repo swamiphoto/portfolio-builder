@@ -24,18 +24,15 @@ export default function TextBlockField({ block, onUpdate, onOpenMarkdownEditor, 
       </button>
     )
   }
+  // Plain blocks edit inline; the markdown editor opens from the block's
+  // "…" menu, so no extra entry point clutters the card.
   return (
-    <div>
-      <AutoGrowTextarea
-        className={inputClass}
-        placeholder="Write something…"
-        maxHeight={160}
-        value={block.content || ''}
-        onChange={(e) => onUpdate({ ...block, content: e.target.value })}
-      />
-      <button type="button" onClick={onOpenMarkdownEditor} className="mt-1 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-800">
-        Open markdown editor
-      </button>
-    </div>
+    <AutoGrowTextarea
+      className={inputClass}
+      placeholder="Write something…"
+      maxHeight={160}
+      value={block.content || ''}
+      onChange={(e) => onUpdate({ ...block, content: e.target.value })}
+    />
   )
 }

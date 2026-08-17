@@ -3,12 +3,10 @@ import TextBlockField from '@/components/admin/gallery-builder/TextBlockField'
 
 const Textarea = (props) => <textarea {...props} />
 
-it('plain block shows textarea plus an open-editor link', () => {
-  const open = jest.fn()
-  render(<TextBlockField block={{ type: 'text', content: 'hi' }} onUpdate={jest.fn()} onOpenMarkdownEditor={open} AutoGrowTextarea={Textarea} inputClass="" />)
+it('plain block shows only the textarea; the editor opens from the block menu instead', () => {
+  render(<TextBlockField block={{ type: 'text', content: 'hi' }} onUpdate={jest.fn()} onOpenMarkdownEditor={jest.fn()} AutoGrowTextarea={Textarea} inputClass="" />)
   expect(screen.getByPlaceholderText(/write something/i).value).toBe('hi')
-  fireEvent.click(screen.getByRole('button', { name: /open markdown editor/i }))
-  expect(open).toHaveBeenCalled()
+  expect(screen.queryByRole('button', { name: /open markdown editor/i })).toBeNull()
 })
 
 it('markdown block shows a formatted read-only snippet that opens the editor', () => {

@@ -23,8 +23,7 @@ function openBlockMenu(container) {
   fireEvent.click(dots.closest('button'))
 }
 
-test('markdown block: menu offers Open markdown editor and Convert to plain text', () => {
-  const onOpenMarkdownEditor = jest.fn()
+test('markdown block: menu offers Convert to plain text but not Open markdown editor', () => {
   const onUpdate = jest.fn()
   const block = { type: 'text', format: 'markdown', content: 'hi' }
   const { container } = render(
@@ -35,15 +34,14 @@ test('markdown block: menu offers Open markdown editor and Convert to plain text
       onRemove={() => {}}
       onAddPhotos={() => {}}
       onRemovePhoto={() => {}}
-      onOpenMarkdownEditor={onOpenMarkdownEditor}
+      onOpenMarkdownEditor={() => {}}
     />
   )
 
   openBlockMenu(container)
-  fireEvent.click(screen.getByText('Open markdown editor'))
-  expect(onOpenMarkdownEditor).toHaveBeenCalledTimes(1)
-
-  openBlockMenu(container)
+  // The snippet itself opens the editor for markdown blocks; the menu item
+  // exists only for plain blocks.
+  expect(screen.queryByText('Open markdown editor')).toBeNull()
   fireEvent.click(screen.getByText('Convert to plain text'))
   expect(onUpdate).toHaveBeenCalledTimes(1)
   const updated = onUpdate.mock.calls[0][0]
@@ -51,7 +49,8 @@ test('markdown block: menu offers Open markdown editor and Convert to plain text
   expect(updated.format).toBeUndefined()
 })
 
-test('plain block: menu offers Open markdown editor but not Convert to plain text', () => {
+test('plain block: menu is the only Open markdown editor entry point', () => {
+  const onOpenMarkdownEditor = jest.fn()
   const block = { type: 'text', content: 'hi' }
   const { container } = render(
     <BlockCard
@@ -61,12 +60,14 @@ test('plain block: menu offers Open markdown editor but not Convert to plain tex
       onRemove={() => {}}
       onAddPhotos={() => {}}
       onRemovePhoto={() => {}}
-      onOpenMarkdownEditor={() => {}}
+      onOpenMarkdownEditor={onOpenMarkdownEditor}
     />
   )
 
   openBlockMenu(container)
-  // One "Open markdown editor" from the plain-textarea link, one from the menu.
-  expect(screen.getAllByText('Open markdown editor').length).toBe(2)
+  // Exactly one entry: the menu item (the under-textarea link is gone).
+  expect(screen.getAllByText('Open markdown editor').length).toBe(1)
   expect(screen.queryByText('Convert to plain text')).toBeNull()
+  fireEvent.click(screen.getByText('Open markdown editor'))
+  expect(onOpenMarkdownEditor).toHaveBeenCalledTimes(1)
 })

@@ -683,16 +683,18 @@ function BlockCard({
                   {block.type === 'text' && (
                     <>
                       <div style={{ height: 1, background: 'rgba(160,140,110,0.15)', margin: '4px 0' }} />
-                      <button
-                        onClick={() => { setShowMenu(false); onOpenMarkdownEditor?.(); }}
-                        className="w-full text-left flex items-center gap-2 transition-colors"
-                        style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <MarkdownIcon />
-                        Open markdown editor
-                      </button>
+                      {block.format !== 'markdown' && (
+                        <button
+                          onClick={() => { setShowMenu(false); onOpenMarkdownEditor?.(); }}
+                          className="w-full text-left flex items-center gap-2 transition-colors"
+                          style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(160,140,110,0.10)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        >
+                          <MarkdownIcon />
+                          Open markdown editor
+                        </button>
+                      )}
                       {block.format === 'markdown' && (
                         <button
                           onClick={() => { setShowMenu(false); onUpdate({ ...block, format: undefined }); }}
