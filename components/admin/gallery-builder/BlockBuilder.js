@@ -106,6 +106,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   libraryImages = [],
   libraryConfig = {},
   libraryLoading = false,
+  onMarkdownEditorOpen = () => {},
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -565,7 +566,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onTitleClick={onScrollPreviewToBlock ? () => onScrollPreviewToBlock(index) : undefined}
                             glowing={glowingBlockIndex === index}
                             themeId={themeId}
-                            onOpenMarkdownEditor={() => setMarkdownEditorIndex(index)}
+                            onOpenMarkdownEditor={() => { onMarkdownEditorOpen(); setMarkdownEditorIndex(index); }}
                           />
                         </div>
                       )}

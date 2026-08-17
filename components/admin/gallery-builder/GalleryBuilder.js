@@ -241,6 +241,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
           libraryImages={libraryImages}
           libraryConfig={libraryData}
           libraryLoading={libraryLoading}
+          onMarkdownEditorOpen={fetchLibrary}
         />
       ) : (
         <button
