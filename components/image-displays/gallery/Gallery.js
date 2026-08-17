@@ -23,6 +23,7 @@ import ManhattanPhoto from "./photo-block/ManhattanPhoto";
 import FlorenceWall from "../themes/florence/FlorenceWall";
 import AmsterdamWall from "../themes/amsterdam/AmsterdamWall";
 import PageGalleryLinks from "./page-gallery/PageGalleryLinks";
+import MarkdownText from "@/components/image-displays/MarkdownText";
 
 // Varying heights per column slot to mimic natural photo proportions
 const PLACEHOLDER_ASPECTS = [
@@ -497,19 +498,30 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const fontFamily = resolveFont(block, themeId);
               // Manhattan: small, description-level sizes. Other themes: size/margins
               // keyed off the JS mobile flag so the admin Mobile preview scales truthfully.
-              const variantClass = themeId === 'manhattan'
+              const classForV = (vv) => themeId === 'manhattan'
                 ? (
-                    v === 4 ? `text-[0.9rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
-                    : v === 3 ? `text-[0.9rem] ${alignClass} max-w-2xl py-2`
-                    : v === 2 ? `text-lg md:text-xl font-medium ${alignClass} max-w-2xl py-3`
+                    vv === 4 ? `text-[0.9rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
+                    : vv === 3 ? `text-[0.9rem] ${alignClass} max-w-2xl py-2`
+                    : vv === 2 ? `text-lg md:text-xl font-medium ${alignClass} max-w-2xl py-3`
                     : `text-2xl md:text-3xl font-light ${alignClass} max-w-3xl py-5`
                   )
                 : (
-                    v === 4 ? `${isSmallScreen ? 'text-base px-6 py-5' : 'text-xl px-8 py-6'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
-                    : v === 3 ? `${isSmallScreen ? 'text-base px-6 py-3' : 'text-lg py-4'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
-                    : v === 2 ? `${isSmallScreen ? 'text-lg px-6 py-4' : 'text-2xl py-6'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
+                    vv === 4 ? `${isSmallScreen ? 'text-base px-6 py-5' : 'text-xl px-8 py-6'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
+                    : vv === 3 ? `${isSmallScreen ? 'text-base px-6 py-3' : 'text-lg py-4'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
+                    : vv === 2 ? `${isSmallScreen ? 'text-lg px-6 py-4' : 'text-2xl py-6'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
                     : `${isSmallScreen ? 'text-2xl px-6 py-6' : 'text-4xl py-10'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
+              const variantClass = classForV(v);
+              if (block.format === 'markdown') {
+                return (
+                  <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...hoverProps} style={{ ...hoverProps.style, fontFamily }}>
+                    <MarkdownText
+                      content={block.content}
+                      variantClasses={{ heading: classForV(1), body: classForV(3), quote: classForV(4) }}
+                    />
+                  </div>
+                );
+              }
               return (
                 <div
                   key={`block-${index}`}
