@@ -22,19 +22,27 @@ function joinWithAnd(parts) {
 }
 
 // Describes only what composeSite would actually create: gallery pages are
-// counted only when their collection had at least one imported asset; about
-// and contact pages always count (they don't depend on a collection).
+// counted when their collection had at least one imported asset, OR when any
+// of the collection's assetRefs were dedupe-skipped (already in the library —
+// resolveComposableAssets will still resolve those into composable assets).
+// About and contact pages always count (they don't depend on a collection).
 function describeFoundPages(summary) {
   const pages = summary?.siteMap?.pages || []
   const importedCollectionIds = new Set(
     (summary?.imported || []).map((a) => a.source?.externalCollectionId).filter(Boolean)
   )
+  const skippedUrls = new Set(summary?.skipped || [])
+  const collectionsById = new Map((summary?.collections || []).map((c) => [c.id, c]))
+  const collectionHasSkippedRefs = (collectionId) => {
+    const collection = collectionsById.get(collectionId)
+    return (collection?.assetRefs || []).some((r) => skippedUrls.has(r.remoteUrl))
+  }
   let galleryCount = 0
   let aboutCount = 0
   let contactCount = 0
   for (const p of pages) {
     if (p.kind === 'gallery') {
-      if (importedCollectionIds.has(p.collectionId)) galleryCount += 1
+      if (importedCollectionIds.has(p.collectionId) || collectionHasSkippedRefs(p.collectionId)) galleryCount += 1
     } else if (p.kind === 'about') {
       aboutCount += 1
     } else if (p.kind === 'contact') {

@@ -87,6 +87,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
         setsCount,
         site: discovery.site,
         imported: result.imported,
+        skipped: result.skipped,
         collections: discovery.collections,
         siteMap: discovery.siteMap,
         importBatchId: batchId,

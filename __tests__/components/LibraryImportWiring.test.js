@@ -142,3 +142,69 @@ describe('AdminLibrary routes composed pages through the parent when provided', 
     }))
   })
 })
+
+// Requirement 4 regression: fetch-batch dedupe-skips photos already in the
+// library, so `summary.imported` comes back empty even though the user chose
+// to rebuild pages. AdminLibrary must resolve those skipped remoteUrls against
+// the library's assets (keyed by source.sourceUrl) before composing, and must
+// not bail out early just because nothing new was imported.
+describe('AdminLibrary composes pages from photos that were dedupe-skipped (already in the library)', () => {
+  afterEach(() => jest.resetAllMocks())
+
+  it('resolves skipped remoteUrls against the library and still calls onComposedPages with composable assets', async () => {
+    const existingAsset = {
+      assetId: 'existing1',
+      publicUrl: 'https://cdn/existing1.jpg',
+      source: { provider: 'generic', externalCollectionId: 'c1', sourceUrl: 'https://old-site/1.jpg' },
+    }
+
+    MockImportFlow.__setSummary({
+      imported: [],
+      skipped: ['https://old-site/1.jpg'],
+      collections: [{ id: 'c1', name: 'Travel', assetRefs: [{ remoteUrl: 'https://old-site/1.jpg' }] }],
+      importBatchId: 'batch1',
+      replicate: true,
+      siteMap: { pages: [{ kind: 'gallery', title: 'Travel', collectionId: 'c1' }] },
+    })
+
+    global.fetch = jest.fn((url, opts) => {
+      const u = String(url)
+      if (u.includes('/api/admin/library') && (!opts || opts.method === undefined)) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            images: [], portfolios: {}, galleries: {},
+            assets: { existing1: existingAsset },
+            assetOrder: [], sets: {}, savedViews: {}, counts: {},
+          }),
+        })
+      }
+      if (u.includes('/api/admin/library') && opts?.method === 'PUT') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ ok: true }) })
+      }
+      if (u.includes('/api/admin/print/settings')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+      }
+      if (u.includes('/api/admin/site-config')) {
+        throw new Error('AdminLibrary should not talk to site-config directly when onComposedPages is provided')
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+    })
+
+    const onComposedPages = jest.fn()
+    render(<AdminLibrary onBack={() => {}} siteConfig={{ pages: [] }} onComposedPages={onComposedPages} />)
+
+    fireEvent.click(await screen.findByText(/import from your other sites/i))
+    fireEvent.click(await screen.findByText(/mock complete import/i))
+
+    await waitFor(() => expect(onComposedPages).toHaveBeenCalledTimes(1))
+    expect(onComposedPages).toHaveBeenCalledWith(expect.objectContaining({
+      importBatchId: 'batch1',
+      imported: [existingAsset],
+    }))
+
+    // No new-asset PUT should have been necessary, but a compose-only run
+    // must not throw if a PUT never happens — assert it simply didn't crash
+    // and no site-config call was attempted (covered by the fetch mock above).
+  })
+})

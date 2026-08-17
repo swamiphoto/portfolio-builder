@@ -54,6 +54,21 @@ describe('ImportDoneStep', () => {
     expect(screen.queryByRole('button', { name: /rebuild/i })).toBeNull()
   })
 
+  it('offers the rebuild choice when every photo in a gallery was dedupe-skipped (already in the library)', () => {
+    const onEnter = jest.fn()
+    const summary = {
+      importedCount: 0, failedCount: 0,
+      imported: [],
+      skipped: ['u1', 'u2'],
+      collections: [{ id: 'c1', name: 'Portraits', assetRefs: [{ remoteUrl: 'u1' }, { remoteUrl: 'u2' }] }],
+      siteMap: { pages: [{ kind: 'gallery', title: 'Portraits', collectionId: 'c1' }] },
+    }
+    render(<ImportDoneStep summary={summary} onEnter={onEnter} />)
+    expect(screen.getByText(/gallery/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /rebuild these pages/i }))
+    expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ replicate: true }))
+  })
+
   it('shows no rebuild choice when the site map has pages but none are describable (all "other")', () => {
     render(<ImportDoneStep summary={{
       importedCount: 3,

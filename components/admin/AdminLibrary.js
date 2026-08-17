@@ -8,7 +8,7 @@ import DuplicateFinder from "./library/DuplicateFinder";
 import { getPagePhotos } from "../../common/assetRefs";
 import { sourceCounts as computeSourceCounts, matchesSource, sourceLabel } from '@/common/import/sourceFilter';
 import { applyImportToConfig } from '@/common/import/importClient';
-import { composeSite, applyComposedPages } from '@/common/import/composer';
+import { composeSite, applyComposedPages, resolveComposableAssets } from '@/common/import/composer';
 import { seedUploadedAsset } from '@/common/import/uploadedAsset';
 import { resolveSellableAsset } from "../../common/print/sellAsset";
 import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
@@ -475,19 +475,25 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
 
   const handleImportComplete = useCallback(async (summary) => {
     setImportOpen(false)
-    if (!summary?.imported?.length) return
-    const next = applyImportToConfig(currentConfig(), { imported: summary.imported, collections: summary.collections, importBatchId: summary.importBatchId })
-    const urls = summary.imported.map((a) => a.publicUrl)
-    setHighlightedUrls(new Set(urls))
-    setTimeout(() => setHighlightedUrls(null), 2500)
-    setSelectedAlbum({ type: 'all', key: 'all' })
-    await saveConfig(next)
+    // fetch-batch dedupe-skips photos already in the library — `imported` can
+    // be empty even though the user has photos to rebuild pages from (they're
+    // just sitting in `skipped`, resolved against the library below).
+    if (!summary?.imported?.length && !summary?.skipped?.length) return
+    let next = currentConfig()
+    if (summary.imported?.length) {
+      next = applyImportToConfig(next, { imported: summary.imported, collections: summary.collections, importBatchId: summary.importBatchId })
+      const urls = summary.imported.map((a) => a.publicUrl)
+      setHighlightedUrls(new Set(urls))
+      setTimeout(() => setHighlightedUrls(null), 2500)
+      setSelectedAlbum({ type: 'all', key: 'all' })
+      await saveConfig(next)
+    }
 
     if (summary.replicate && summary.siteMap?.pages?.length) {
       const composeArgs = {
         siteMap: summary.siteMap,
         collections: summary.collections,
-        imported: summary.imported,
+        imported: resolveComposableAssets({ imported: summary.imported, skipped: summary.skipped, libraryAssets: next.assets }),
         importBatchId: summary.importBatchId,
       }
       if (onComposedPages) {

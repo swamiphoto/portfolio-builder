@@ -62,6 +62,26 @@ export function composeGalleryBlocks(assets) {
   return blocks
 }
 
+// Merges freshly imported assets with assets that fetch-batch dedupe-skipped
+// (already present in the library, so the import step never returned them as
+// `imported`). Each skipped url is resolved against the library's assets map
+// by matching `source.sourceUrl`; urls with no match are dropped. Guards
+// against double-counting an asset that ends up in both lists.
+export function resolveComposableAssets({ imported, skipped, libraryAssets }) {
+  const result = [...(imported || [])]
+  const seen = new Set(result.map((a) => a?.assetId).filter(Boolean))
+  const bySourceUrl = new Map(
+    Object.values(libraryAssets || {}).map((a) => [a?.source?.sourceUrl, a]).filter(([url]) => url)
+  )
+  for (const url of skipped || []) {
+    const asset = bySourceUrl.get(url)
+    if (!asset || seen.has(asset.assetId)) continue
+    seen.add(asset.assetId)
+    result.push(asset)
+  }
+  return result
+}
+
 function assetsForCollection(collection, assetBySourceUrl) {
   if (!collection) return []
   return (collection.assetRefs || [])

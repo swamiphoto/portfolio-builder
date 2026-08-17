@@ -1,4 +1,4 @@
-import { composeSite } from '@/common/import/composer'
+import { composeSite, resolveComposableAssets } from '@/common/import/composer'
 
 const asset = (url, { w = 2000, h = 1333, cid = 'c1' } = {}) => ({
   assetId: `a_${url}`, publicUrl: `https://gcs/${url}`, width: w, height: h,
@@ -61,4 +61,35 @@ it('suffixes colliding slugs and continues sortOrder after existing pages', () =
 
 it('returns no pages without a site map', () => {
   expect(composeSite({ siteMap: null, collections: [], imported: [], importBatchId: 'i', existingPages: [] }).pages).toEqual([])
+})
+
+describe('resolveComposableAssets', () => {
+  const libraryAssets = {
+    aLib1: { assetId: 'aLib1', publicUrl: 'https://gcs/lib1.jpg', source: { sourceUrl: 'https://x.com/skip1.jpg' } },
+    aLib2: { assetId: 'aLib2', publicUrl: 'https://gcs/lib2.jpg', source: { sourceUrl: 'https://x.com/skip2.jpg' } },
+  }
+
+  it('merges freshly imported assets with matched skipped assets resolved from the library', () => {
+    const imported = [{ assetId: 'aNew', publicUrl: 'https://gcs/new.jpg', source: { sourceUrl: 'https://x.com/new.jpg' } }]
+    const skipped = ['https://x.com/skip1.jpg', 'https://x.com/skip2.jpg']
+    const result = resolveComposableAssets({ imported, skipped, libraryAssets })
+    expect(result).toEqual([imported[0], libraryAssets.aLib1, libraryAssets.aLib2])
+  })
+
+  it('drops skipped urls that have no matching library asset', () => {
+    const result = resolveComposableAssets({ imported: [], skipped: ['https://x.com/skip1.jpg', 'https://x.com/nowhere.jpg'], libraryAssets })
+    expect(result).toEqual([libraryAssets.aLib1])
+  })
+
+  it('does not duplicate an asset that is somehow present in both imported and skipped', () => {
+    const imported = [libraryAssets.aLib1]
+    const result = resolveComposableAssets({ imported, skipped: ['https://x.com/skip1.jpg'], libraryAssets })
+    expect(result).toEqual([libraryAssets.aLib1])
+  })
+
+  it('returns an empty array for empty/undefined inputs', () => {
+    expect(resolveComposableAssets({})).toEqual([])
+    expect(resolveComposableAssets({ imported: undefined, skipped: undefined, libraryAssets: undefined })).toEqual([])
+    expect(resolveComposableAssets({ imported: [], skipped: [], libraryAssets: {} })).toEqual([])
+  })
 })

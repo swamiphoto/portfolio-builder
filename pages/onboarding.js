@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import ImportFlow from '../components/admin/import/ImportFlow'
 import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
-import { composeSite, applyComposedPages } from '../common/import/composer'
+import { composeSite, applyComposedPages, resolveComposableAssets } from '../common/import/composer'
 
 function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
@@ -160,14 +160,18 @@ export default function Onboarding() {
               // Save the imported assets (with their source metadata) before redirecting,
               // otherwise the library GET will create them from the GCS listing with no
               // source info, defaulting to provider:'manual' → shows as "Uploaded".
+              // Captured outside the try so the compose step below can resolve
+              // dedupe-skipped photos (summary.skipped) against the merged config
+              // that now includes both newly-written and pre-existing assets.
+              let mergedLibraryConfig = null
               try {
                 const res = await fetch('/api/admin/library')
                 const currentConfig = res.ok ? await res.json() : {}
-                const next = applyImportToConfig(currentConfig, summary)
+                mergedLibraryConfig = applyImportToConfig(currentConfig, summary)
                 await fetch('/api/admin/library', {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(next),
+                  body: JSON.stringify(mergedLibraryConfig),
                 })
               } catch {
                 // Non-fatal — user still lands in admin, source just won't be labelled
@@ -183,7 +187,11 @@ export default function Onboarding() {
                   const { pages } = composeSite({
                     siteMap: summary.siteMap,
                     collections: summary.collections,
-                    imported: summary.imported,
+                    imported: resolveComposableAssets({
+                      imported: summary.imported,
+                      skipped: summary.skipped,
+                      libraryAssets: mergedLibraryConfig?.assets,
+                    }),
                     importBatchId: summary.importBatchId,
                     existingPages: siteConfig.pages || [],
                   })
