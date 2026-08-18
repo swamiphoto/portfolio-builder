@@ -1,5 +1,6 @@
 import { useState, useCallback, memo } from 'react'
 import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff } from './importFlowStyles'
+import { coverThumbUrl, onCoverError } from './coverThumb'
 
 function Check({ size = 12 }) {
   return (
@@ -30,17 +31,19 @@ const STACK_SLOTS = [
 const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
   const [broken, setBroken] = useState(() => new Set())
   const count = collection.assetRefs?.length || 0
-  // Up to three source images, rendered as a small pile of prints.
-  // Cheap cover thumbnails: prefer the small `thumbUrl` variant (S/Th, ~200px
-  // or less) discovery surfaced alongside each ref; fall back to remoteUrl only
-  // when a source has no smaller size (e.g. a single-URL image). remoteUrl
-  // itself is always the LARGEST usable variant post size-collapse, so decoding
-  // it at 40px for dozens of covers is what made this screen heavy.
+  // Up to three source images, rendered as a small pile of prints. Prefer a small
+  // `thumbUrl` variant discovery surfaced; otherwise proxy the full-res original
+  // down to a ~120px thumbnail (coverThumbUrl) so a single cover never downloads
+  // several MB just to paint a 40px pile. `raw` is kept for the error fallback.
   const covers = (collection.assetRefs || [])
     .slice(0, 3)
-    .map((a) => a?.thumbUrl || a?.remoteUrl)
-    .filter(Boolean)
-    .filter((url) => !broken.has(url))
+    .map((a) => {
+      const raw = a?.thumbUrl || a?.remoteUrl
+      // A discovered thumbUrl is already the smallest variant — use it directly.
+      // Otherwise proxy the full-res original down to a ~120px cover thumbnail.
+      return { raw, src: a?.thumbUrl ? a.thumbUrl : coverThumbUrl(raw, 120) }
+    })
+    .filter((c) => c.raw && !broken.has(c.raw))
   const slots = STACK_SLOTS.slice(STACK_SLOTS.length - covers.length)
 
   return (
@@ -72,21 +75,22 @@ const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
             <PhotoGlyph />
           </div>
         ) : (
-          covers.map((url, i) => {
+          covers.map((cover, i) => {
             const s = slots[i] || STACK_SLOTS[STACK_SLOTS.length - 1]
             const isTop = i === covers.length - 1
             return (
-              // Full-res source images; decode off-thread + lazy-load so scrolling stays smooth.
+              // Proxied ~120px thumbnails; decode off-thread + lazy-load so scrolling
+              // stays smooth. On proxy failure onCoverError falls back to the raw URL.
               <img
-                key={url}
-                src={url}
+                key={cover.raw}
+                src={cover.src}
                 alt=""
                 loading="lazy"
                 decoding="async"
                 fetchpriority="low"
                 width={80}
                 height={80}
-                onError={() => setBroken((prev) => new Set(prev).add(url))}
+                onError={onCoverError(cover.raw, () => setBroken((prev) => new Set(prev).add(cover.raw)))}
                 style={{
                   position: 'absolute', top: '50%', left: '50%', width: 40, height: 40,
                   objectFit: 'cover', borderRadius: 4, background: '#e7ded0',

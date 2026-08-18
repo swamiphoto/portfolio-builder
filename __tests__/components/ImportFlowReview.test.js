@@ -115,9 +115,12 @@ describe('ImportFlow review + import', () => {
     await screen.findByText(/import all 2 photos/i)
 
     const srcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src'))
-    expect(srcs).toContain('https://cdn/small1.jpg') // has thumbUrl -> use it
+    expect(srcs).toContain('https://cdn/small1.jpg') // has thumbUrl -> use it directly
     expect(srcs).not.toContain('https://cdn/big1.jpg') // never the large remoteUrl when a thumb exists
-    expect(srcs).toContain('https://cdn/big2.jpg') // no thumbUrl -> falls back to remoteUrl
+    // No thumbUrl -> the full-res original is proxied down to a small cover thumbnail
+    // (wsrv.nl) rather than downloaded at full resolution.
+    expect(srcs).not.toContain('https://cdn/big2.jpg')
+    expect(srcs.some((s) => s && s.includes('wsrv.nl') && s.includes(encodeURIComponent('https://cdn/big2.jpg')))).toBe(true)
   })
 
   it('deselect all / select all toggles every gallery at once', async () => {
