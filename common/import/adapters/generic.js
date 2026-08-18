@@ -2,6 +2,7 @@ import { safeFetch } from '../safeFetch'
 import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls, extractPageContent, extractNavLinks, extractVideoUrls } from '../crawlerUtils'
 import { filterJunkImages, groupIntoCollections, inferCollectionName } from '../junkFilter'
 import { buildSiteMap } from '../siteMap'
+import { imageIdentity, preferLargerVariant } from '../originalUrl'
 
 export const PROVIDER_ID = 'generic'
 
@@ -14,6 +15,41 @@ async function httpFetchPage(url) {
   const type = res.headers.get('content-type') || ''
   if (!type.includes('text/html')) throw new Error(`non-html: ${type}`)
   return res.text()
+}
+
+// CDNs (SmugMug foremost) publish every photo at many size-variant URLs, and
+// pages/inline JSON often reference several of them for the same image. Naive
+// per-URL dedupe treats each size as a distinct photo — collapse same-identity
+// URLs to ONE before junk filtering/grouping, keeping the largest variant and
+// merging their page-appearance data (union of pages, not sum) so per-page
+// attribution and the junk filter's repeat-ratio math still work correctly.
+function collapseImageVariants(imageMap, seenOnPages, imagePages) {
+  const groups = new Map() // identity -> urls[]
+  for (const url of imageMap.keys()) {
+    const id = imageIdentity(url)
+    if (!groups.has(id)) groups.set(id, [])
+    groups.get(id).push(url)
+  }
+  const newImageMap = new Map()
+  const newSeenOnPages = new Map()
+  const newImagePages = new Map()
+  for (const urls of groups.values()) {
+    const winner = urls.reduce((best, u) => preferLargerVariant(best, u))
+    const pages = []
+    const seenPages = new Set()
+    for (const u of urls) {
+      for (const p of imagePages.get(u) || []) {
+        if (!seenPages.has(p)) {
+          seenPages.add(p)
+          pages.push(p)
+        }
+      }
+    }
+    newImageMap.set(winner, { ...imageMap.get(winner), remoteUrl: winner })
+    newSeenOnPages.set(winner, pages.length)
+    newImagePages.set(winner, pages)
+  }
+  return { imageMap: newImageMap, seenOnPages: newSeenOnPages, imagePages: newImagePages }
 }
 
 async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}) {
@@ -80,13 +116,14 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
   // every image for the root page. Prefer the first NON-root page an image appeared
   // on; only images seen exclusively on root stay attributed to root.
   const rootUrl = startUrl
-  let refs = [...imageMap.values()].map((v) => {
+  const collapsed = collapseImageVariants(imageMap, seenOnPages, imagePages)
+  let refs = [...collapsed.imageMap.values()].map((v) => {
     let pageUrl = v.pageUrl
     if (!singlePage) {
-      const pages = imagePages.get(v.remoteUrl) || [v.pageUrl]
+      const pages = collapsed.imagePages.get(v.remoteUrl) || [v.pageUrl]
       pageUrl = pages.find((p) => p !== rootUrl) || pages[0]
     }
-    return { ...v, pageUrl, seenOnPages: seenOnPages.get(v.remoteUrl) }
+    return { ...v, pageUrl, seenOnPages: collapsed.seenOnPages.get(v.remoteUrl) }
   })
   refs = filterJunkImages(refs, { totalPages: visited.size })
   // A specific page → one flat collection named after that page; a whole site →

@@ -77,6 +77,18 @@ export function existingSourceUrls(config) {
   return set
 }
 
+// Content-hash dedupe (belt and suspenders alongside sourceUrl dedupe): catches
+// byte-identical images reachable at unrelated URLs — e.g. two size variants that
+// slipped past crawler-level identity collapse, or a re-import from a mirror.
+export function existingHashes(config) {
+  const set = new Set()
+  for (const asset of Object.values(config?.assets || {})) {
+    const h = asset?.hashes?.exact
+    if (h) set.add(h)
+  }
+  return set
+}
+
 export function dedupeRefs(assetRefs, existingUrls) {
   const fresh = []
   const skipped = []

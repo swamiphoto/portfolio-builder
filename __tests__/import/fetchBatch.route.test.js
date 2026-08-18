@@ -156,6 +156,60 @@ describe('POST /api/admin/import/fetch-batch', () => {
     expect(mockSafeFetch).toHaveBeenCalledTimes(1)
   })
 
+  it('skips a ref whose downloaded bytes hash-match an existing library asset', async () => {
+    mockDownload.mockResolvedValue({
+      assets: {
+        'asset-1': { source: { sourceUrl: 'https://remote/other-url.jpg' }, hashes: { exact: 'dup-hash' } },
+      },
+    })
+    mockSafeFetch.mockResolvedValue(okImage())
+    mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/new.jpg', width: 200, height: 100, hash: 'dup-hash' })
+
+    const res = mockRes()
+    await handler(
+      {
+        method: 'POST',
+        body: {
+          provider: 'generic',
+          assetRefs: [{ remoteUrl: 'https://remote/variant.jpg' }],
+        },
+      },
+      res
+    )
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.imported).toHaveLength(0)
+    expect(payload.skipped).toEqual(['https://remote/variant.jpg'])
+  })
+
+  it('skips the second ref in the same batch when its bytes hash-match an already-imported ref', async () => {
+    mockDownload.mockResolvedValue({ assets: {} })
+    mockSafeFetch.mockResolvedValue(okImage())
+    mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/same.jpg', width: 200, height: 100, hash: 'same-hash' })
+
+    const res = mockRes()
+    await handler(
+      {
+        method: 'POST',
+        body: {
+          provider: 'generic',
+          assetRefs: [
+            { remoteUrl: 'https://remote/variant-a.jpg' },
+            { remoteUrl: 'https://remote/variant-b.jpg' },
+          ],
+        },
+      },
+      res
+    )
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.imported).toHaveLength(1)
+    expect(payload.imported[0].source.sourceUrl).toBe('https://remote/variant-a.jpg')
+    expect(payload.skipped).toEqual(['https://remote/variant-b.jpg'])
+  })
+
   it('400 when assetRefs is missing or not an array', async () => {
     const res = mockRes()
     await handler({ method: 'POST', body: { provider: 'generic' } }, res)

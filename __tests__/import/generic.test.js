@@ -56,6 +56,29 @@ describe('generic.discover', () => {
   })
 })
 
+describe('generic.discover size-variant collapse (SmugMug CDN duplication)', () => {
+  // SmugMug custom-domain sites reference several size variants of the SAME photo
+  // (srcset-style, or separate <img> tags for thumb + lightbox). Without collapsing
+  // by image identity, each size becomes a distinct "duplicate" photo in the import.
+  const PAGES = {
+    'https://gal.com/': `<title>Gal</title>
+      <img src="https://photos.smugmug.com/Trip/i-XyZ99/0/abc/M/sunset-M.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-XyZ99/0/abc/L/sunset-L.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-XyZ99/0/abc/X3/sunset-X3.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-Other1/0/abc/M/beach-M.jpg">`,
+  }
+  const fetchPage = (url) => (PAGES[url] != null ? Promise.resolve(PAGES[url]) : Promise.reject(new Error('404')))
+
+  it('collapses M/L/X3 variants of the same SmugMug image to ONE ref at the largest size', async () => {
+    const result = await generic.discover('gal.com/', { fetchPage, maxPages: 10 })
+    const images = result.collections.flatMap((c) => c.assetRefs.map((r) => r.remoteUrl))
+    const sunsetRefs = images.filter((u) => u.includes('i-XyZ99'))
+    expect(sunsetRefs).toEqual(['https://photos.smugmug.com/Trip/i-XyZ99/0/abc/X3/sunset-X3.jpg'])
+    // Distinct image key stays a separate photo.
+    expect(images.some((u) => u.includes('i-Other1'))).toBe(true)
+  })
+})
+
 describe('generic.discover attribution (SmugMug-shaped site)', () => {
   // Mirrors www.sankarsalvady.com (SmugMug custom domain): the homepage is
   // JS-rendered and its inline hydration <script> JSON embeds the URLs of every

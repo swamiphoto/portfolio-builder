@@ -1,4 +1,4 @@
-import { newImportBatchId, buildImportedAsset, existingSourceUrls, dedupeRefs } from '@/common/import/importCore'
+import { newImportBatchId, buildImportedAsset, existingSourceUrls, existingHashes, dedupeRefs } from '@/common/import/importCore'
 
 describe('newImportBatchId', () => {
   it('is deterministic for a given seed', () => {
@@ -71,6 +71,27 @@ describe('buildImportedAsset capture', () => {
   it('omits the capture key when extraction returned null', () => {
     const a = buildImportedAsset({ url: 'https://cdn/z.jpg', provider: 'generic', capture: null, now: '2026-07-09T00:00:00Z' })
     expect(a).not.toHaveProperty('capture')
+  })
+})
+
+describe('existingHashes', () => {
+  it('collects exact-hash fingerprints from the library config', () => {
+    const config = {
+      assets: {
+        ast_1: { hashes: { exact: 'hash-a', perceptual: null } },
+        ast_2: { hashes: { exact: 'hash-b', perceptual: null } },
+        ast_3: { hashes: { exact: null, perceptual: null } },
+        ast_4: {},
+      },
+    }
+    const set = existingHashes(config)
+    expect(set.has('hash-a')).toBe(true)
+    expect(set.has('hash-b')).toBe(true)
+    expect(set.size).toBe(2)
+  })
+  it('returns an empty set for a missing/empty config', () => {
+    expect(existingHashes(null).size).toBe(0)
+    expect(existingHashes({}).size).toBe(0)
   })
 })
 
