@@ -422,6 +422,23 @@ a {
 /* The horizontal stage: rail + wall side by side, full height (desktop). */
 .florence-stage { --fl-hairline: rgba(28, 26, 23, 0.16); display: flex; height: 100vh; }
 
+/* ── Shared reading type scale (Florence + Amsterdam) ──────────────────────
+   Fixed px, no vw — legibility stays constant regardless of monitor size, and
+   nothing scales UP on large screens. Medium is the default for text blocks AND
+   testimonials; Large/Small step one notch on the L/M/S control. Captions are a
+   deliberately smaller tier; tags / mount stamps stay tiny by intent. On phones
+   (<768px, or the admin Mobile toggle) every size steps down one notch, never up. */
+[data-theme="florence"] .florence-stage,
+[data-theme="amsterdam"] .ams-stage {
+  --fs-text-s: 16px;  --fs-text-m: 18px;  --fs-text-l: 20px;
+  --fs-caption: 15px; --fs-caption-meta: 13px; --fs-byline: 12.5px; --fs-micro: 11px;
+}
+[data-theme="florence"] .florence-stage[data-mobile="true"],
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] {
+  --fs-text-s: 15px;  --fs-text-m: 16px;  --fs-text-l: 18px;
+  --fs-caption: 14px; --fs-caption-meta: 12.5px; --fs-byline: 12px; --fs-micro: 10.5px;
+}
+
 /* ── Admin preview fit (rail themes) ───────────────────────────────────────
    Florence + Amsterdam are fixed-viewport (100vh). In the shorter editor preview
    pane that overflowed and scrolled, so openers looked cramped and bottom-heavy.
@@ -429,19 +446,25 @@ a {
    stage is absolutely positioned to fill the shell — this bypasses the nested
    theme/gallery wrappers between them (whose auto heights broke a plain cascade),
    so the whole opener fits with its real margins, no scroll. */
-[data-theme="florence"]:has(> .theme-shell[data-admin-preview]),
-[data-theme="amsterdam"]:has(> .theme-shell[data-admin-preview]) { height: 100%; min-height: 0; }
-[data-theme="florence"] .theme-shell[data-admin-preview],
-[data-theme="amsterdam"] .theme-shell[data-admin-preview] { position: relative; height: 100%; min-height: 0; overflow: hidden; }
-[data-theme="florence"] .theme-shell[data-admin-preview] .florence-stage,
-[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-stage { position: absolute; inset: 0; height: auto; }
-[data-theme="florence"] .theme-shell[data-admin-preview] .florence-rail,
-[data-theme="florence"] .theme-shell[data-admin-preview] .florence-wall,
-[data-theme="florence"] .theme-shell[data-admin-preview] .florence-content,
-[data-theme="florence"] .theme-shell[data-admin-preview] .florence-col,
-[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-rail,
-[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-wall,
-[data-theme="amsterdam"] .theme-shell[data-admin-preview] .ams-col { height: 100%; min-height: 0; }
+[data-theme="florence"]:has(> .theme-shell[data-admin-preview]:not([data-viewport="mobile"])),
+[data-theme="amsterdam"]:has(> .theme-shell[data-admin-preview]:not([data-viewport="mobile"])) { height: 100%; min-height: 0; }
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]),
+[data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) { position: relative; height: 100%; min-height: 0; overflow: hidden; }
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-stage,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-stage { position: absolute; inset: 0; height: auto; }
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-rail,
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-wall,
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-content,
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-col,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-rail,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-wall,
+[data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-col { height: 100%; min-height: 0; }
+
+/* Mobile admin preview: the desktop fixed-viewport fit above is desktop-only, so
+   here the shell flows to its natural height and the preview pane scrolls (the
+   vertical-stack walls + footer sit in normal flow, footer last / at the bottom). */
+[data-theme="florence"] .theme-shell[data-admin-preview][data-viewport="mobile"],
+[data-theme="amsterdam"] .theme-shell[data-admin-preview][data-viewport="mobile"] { height: auto; min-height: 100%; overflow: visible; }
 
 /* Thin fixed rail: logo top, hamburger/X middle-ish, search bottom. */
 .florence-rail {
@@ -519,7 +542,7 @@ a {
 /* Small, bookish IBM Plex Mono under the name — the museum "wall text" voice. */
 .florence-intro__desc {
   font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 400;
-  font-size: clamp(0.82rem, 0.95vw, 0.92rem); line-height: 1.7; letter-spacing: 0.005em;
+  font-size: var(--fs-caption); line-height: 1.7; letter-spacing: 0.005em;
   color: var(--theme-text); margin: 0; max-width: 30rem;
 }
 /* Nested pages listed under the description, in the same mono voice — an arrow
@@ -639,8 +662,8 @@ a {
 .florence-mount[data-caplayout="beside"] { flex-direction: row; align-items: stretch; }
 .florence-mount[data-caplayout="beside"] .florence-mount__label { align-self: stretch; width: clamp(150px, 14vw, 220px); padding: 2px 0 2px clamp(16px, 1.6vw, 26px); text-align: left; overflow: hidden; cursor: pointer; }
 .florence-mount[data-caplayout="beside"] .florence-mount__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 22; line-clamp: 22; overflow: hidden; text-transform: none; }
-.florence-mount__title { font-size: 11px; letter-spacing: 0.05em; color: inherit; }
-.florence-mount__meta { font-size: 10px; letter-spacing: 0.04em; opacity: 0.6; }
+.florence-mount__title { font-size: var(--fs-caption); letter-spacing: 0.05em; color: inherit; }
+.florence-mount__meta { font-size: var(--fs-caption-meta); letter-spacing: 0.04em; opacity: 0.6; }
 /* Mat: a wide passe-partout with a hairline keyline; caption centered beneath. */
 .florence-mount--mat { background: #faf8f2; padding: clamp(20px, 2.4vw, 44px); box-shadow: 0 14px 36px rgba(28, 26, 23, 0.16); }
 .florence-mount--mat .florence-mount__photo { box-shadow: 0 0 0 1px var(--fl-hairline, rgba(28, 26, 23, 0.16)); }
@@ -663,8 +686,8 @@ a {
 /* Testimonial column. */
 .florence-col--testimonial { width: clamp(320px, 30vw, 500px); }
 .florence-testimonial { display: flex; flex-direction: column; gap: 1.4rem; }
-.florence-testimonial__quote { margin: 0; font-size: clamp(1.15rem, 1.6vw, 1.5rem); line-height: 1.5; color: var(--theme-text); }
-.florence-testimonial__by { display: flex; align-items: center; gap: 0.7rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.8rem; color: var(--theme-text-muted, #8b8378); }
+.florence-testimonial__quote { margin: 0; font-size: var(--fs-text-m); line-height: 1.5; color: var(--theme-text); }
+.florence-testimonial__by { display: flex; align-items: center; gap: 0.7rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--fs-byline); color: var(--theme-text-muted, #8b8378); }
 .florence-testimonial__avatar { width: 40px; height: 40px; object-fit: cover; }
 /* Empty testimonial: skeleton quote bars reuse .wall-text-placeholder; the byline
    gets a round avatar blob and a short name bar in the same muted tone. */
@@ -711,13 +734,13 @@ a {
    (title/medium) sits above the capture metadata (date / EXIF), which is dimmer. */
 .florence-caption {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.74rem; line-height: 1.6; letter-spacing: 0.005em;
+  font-size: var(--fs-caption); line-height: 1.6; letter-spacing: 0.005em;
   color: var(--theme-text-muted, #8b8378);
   text-align: left; margin-top: 0.85rem; max-width: 30rem;
   display: flex; flex-direction: column; gap: 0.5rem;
 }
 .florence-caption__title { white-space: pre-line; color: var(--theme-text-muted, #8b8378); }
-.florence-caption__meta { white-space: pre-line; opacity: 0.72; font-size: 0.96em; }
+.florence-caption__meta { white-space: pre-line; opacity: 0.72; font-size: var(--fs-caption-meta); }
 
 /* Menu column — slides in at the front (width 0 → open), pushing the wall right.
    Inner has a fixed width so text doesn't reflow mid-transition. */
@@ -765,7 +788,13 @@ a {
   position: sticky; top: 0;
 }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__search { display: none; }
-[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__logo { writing-mode: initial; transform: none; max-height: none; font-size: 1.1rem; }
+/* Standardized top bar: logo left, hamburger right. Drop the empty rail spacer so
+   space-between pins the two to opposite ends (no centered hamburger). */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__spacer { display: none; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail[data-logobar] { justify-content: space-between; gap: 0; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__mid { order: 2; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__logo { order: 0; writing-mode: initial; transform: none; max-height: none; max-width: 70vw; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-rail__logo img { writing-mode: initial; transform: none; max-width: 140px; max-height: 32px; width: auto; height: auto; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-wall {
   display: block; height: auto; overflow: visible;
 }
@@ -798,6 +827,16 @@ a {
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-menu__inner { width: 100%; height: auto; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-arrows { display: none; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--intro { min-height: 40vh; }
+/* A mount's photo box carries a fixed desktop-wall height inline; on phones let it
+   size to the image so an uncaptioned/short-captioned photo doesn't reserve a tall
+   empty box beneath it (the column then hugs the photo). */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount__photo { height: auto !important; }
+/* The "beside" caption (long captions) is a desktop-wall trick — a narrow column
+   hanging on the photo's right edge. On phones there's no room, so stack the caption
+   full-width beneath the photo, un-clamped. */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount[data-caplayout="beside"] { flex-direction: column; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount[data-caplayout="beside"] .florence-mount__label { width: 100%; align-self: auto; padding: clamp(12px, 2.5vh, 20px) 0 0 0; overflow: visible; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount[data-caplayout="beside"] .florence-mount__title { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
 
 /* ---------- Amsterdam: Dutch-poster horizontal wall ---------- */
 [data-theme="amsterdam"] { background: var(--theme-bg, #f6efe4); color: var(--theme-text, #141210); }
@@ -867,7 +906,7 @@ a {
 /* The condensed name fills the block but always fits: it wraps (or scales down via
    the vw term) rather than overflowing, with equal air on both sides. */
 [data-theme="amsterdam"] .ams-title__name { margin: 0 0 2.5vh 0; max-width: 100%; color: var(--ams-on-ink); font-family: "Anton", "Arial Narrow", sans-serif; font-weight: 400; text-transform: uppercase; font-size: clamp(56px, 11vw, 190px); line-height: 0.9; letter-spacing: 0.005em; overflow-wrap: break-word; word-break: break-word; hyphens: auto; }
-[data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: clamp(15px, 1.3vw, 19px); line-height: 1.45; opacity: 0.92; }
+[data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: var(--fs-text-m); line-height: 1.45; opacity: 0.92; }
 
 /* Opener actions (Music Show / Client Login) */
 /* Nested pages under the opener, as condensed uppercase links. */
@@ -907,8 +946,12 @@ a {
 /* Mobile: vertical stack (mirrors the Florence data-mobile collapse) */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] { display: block; height: auto; overflow: visible; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail { flex-direction: row; align-items: center; width: 100%; height: 56px; padding: 0 16px; border-right: none; border-bottom: 1px solid color-mix(in oklab, currentColor 48%, transparent); box-shadow: none; position: sticky; top: 0; }
-[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__top { padding: 0 14px 0 0; border-bottom: none; }
-[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__logo { writing-mode: horizontal-tb; justify-content: flex-start; }
+/* Standardized top bar: logo left, hamburger right. The logo (order -1) grows to
+   fill the row and left-aligns its wordmark, pushing the hamburger to the far end. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__logo { order: -1; flex: 1 1 auto; writing-mode: horizontal-tb; justify-content: flex-start; padding: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail[data-logobar] .ams-rail__logo { padding: 0; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__logo img { writing-mode: initial; transform: none; max-width: 140px; max-height: 30px; width: auto; height: auto; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__top { order: 0; padding: 0 0 0 14px; border-bottom: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__foot { display: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-wall { display: block; overflow: visible; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col { width: 100% !important; height: auto; min-height: 40vh; border-right: none; border-bottom: 1px solid rgba(20, 18, 16, 0.12); }
@@ -916,7 +959,11 @@ a {
    column (override the inline column-count/width the balancer sets). */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-text--cols { column-count: 1 !important; width: 100% !important; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--hero { height: 72vh; }
-[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-title__name { white-space: normal; font-size: clamp(64px, 18vw, 120px); overflow-wrap: break-word; }
+/* Scale the big condensed display type down for phone widths so a single title word
+   (e.g. "Landscapes") sets on one line instead of breaking across three. Relax the
+   aggressive word-break so it wraps between words, not mid-word. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-title__name { white-space: normal; font-size: clamp(38px, 12vw, 84px); word-break: normal; overflow-wrap: break-word; hyphens: manual; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-hero__title { font-size: clamp(40px, 13vw, 90px); word-break: normal; overflow-wrap: break-word; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu { width: 100%; transition: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu[data-open="false"] { display: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu__inner { width: 100%; height: auto; }
@@ -929,9 +976,9 @@ a {
 /* Museum caption: an optional LEFT/RIGHT position tag, then the title in italic,
    then dimmer meta. Colors ride currentColor so the label reads on any ground. */
 [data-theme="amsterdam"] .ams-caption { display: flex; flex-direction: column; gap: 4px; padding: 12px 2px 0; font-family: Inter, sans-serif; color: inherit; }
-[data-theme="amsterdam"] .ams-caption__tag { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6; }
-[data-theme="amsterdam"] .ams-caption__title { font-size: 12.5px; font-style: italic; letter-spacing: 0.01em; line-height: 1.35; color: inherit; white-space: pre-line; }
-[data-theme="amsterdam"] .ams-caption__meta { font-size: 11px; letter-spacing: 0.02em; opacity: 0.62; white-space: pre-line; }
+[data-theme="amsterdam"] .ams-caption__tag { font-size: var(--fs-micro); letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6; }
+[data-theme="amsterdam"] .ams-caption__title { font-size: var(--fs-caption); font-style: italic; letter-spacing: 0.01em; line-height: 1.35; color: inherit; white-space: pre-line; }
+[data-theme="amsterdam"] .ams-caption__meta { font-size: var(--fs-caption-meta); letter-spacing: 0.02em; opacity: 0.62; white-space: pre-line; }
 /* Plaque: the label hangs to the RIGHT of the photo. Extra class specificity
    beats the base .ams-figure column direction regardless of order. The label is
    as tall as the photo and flows its lines into columns (column-fill:auto) when
@@ -977,7 +1024,7 @@ a {
 [data-theme="amsterdam"] .ams-mosaic__cell { flex: 1; min-height: 0; position: relative; }
 [data-theme="amsterdam"] .ams-mosaic__cell img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
 /* Mosaic captions ride inside the photo as a small ink plaque (no room beside). */
-[data-theme="amsterdam"] .ams-mosaic__cap { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); z-index: 3; margin: 0; padding: 5px 9px; background: rgba(20, 18, 16, 0.62); color: #f6efe4; font-family: Inter, sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; backdrop-filter: blur(2px); }
+[data-theme="amsterdam"] .ams-mosaic__cap { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); z-index: 3; margin: 0; padding: 5px 9px; background: rgba(20, 18, 16, 0.62); color: #f6efe4; font-family: Inter, sans-serif; font-size: var(--fs-micro); letter-spacing: 0.14em; text-transform: uppercase; backdrop-filter: blur(2px); }
 
 /* ── Vintage mounts (Frame styles) ─────────────────────────────────────────
    A photo set in a period mount — cabinet card, archival board, or bordered
@@ -1007,23 +1054,23 @@ a {
 [data-theme="amsterdam"] .ams-mount--card { background: var(--ams-frame-card, #ece2cd); padding: clamp(13px, 1.5vw, 22px) clamp(13px, 1.5vw, 22px) clamp(16px, 1.7vw, 26px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.30); }
 [data-theme="amsterdam"] .ams-mount--card .ams-mount__photo { box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ams-ink) 60%, transparent); }
 [data-theme="amsterdam"] .ams-mount--card .ams-mount__label { align-items: center; text-align: center; padding-top: clamp(9px, 1vw, 15px); }
-[data-theme="amsterdam"] .ams-mount--card .ams-mount__title { font-size: clamp(13px, 1.05vw, 17px); letter-spacing: 0.02em; }
-[data-theme="amsterdam"] .ams-mount--card .ams-mount__meta { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
+[data-theme="amsterdam"] .ams-mount--card .ams-mount__title { font-size: var(--fs-caption); letter-spacing: 0.02em; }
+[data-theme="amsterdam"] .ams-mount--card .ams-mount__meta { font-size: var(--fs-micro); letter-spacing: 0.16em; text-transform: uppercase; }
 
 /* Mount — archival board: a wide cool-grey mount, extra room at the foot, caption
    handwritten-italic in the lower-left like a curator's pencil note. */
 [data-theme="amsterdam"] .ams-mount--mount { background: var(--ams-frame-mount, #cfd6d8); padding: clamp(22px, 2.6vw, 44px) clamp(22px, 2.6vw, 44px) clamp(38px, 4vw, 66px); box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28); }
 [data-theme="amsterdam"] .ams-mount--mount .ams-mount__photo { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
 [data-theme="amsterdam"] .ams-mount--mount .ams-mount__label { align-items: flex-start; padding-top: clamp(12px, 1.4vw, 20px); }
-[data-theme="amsterdam"] .ams-mount--mount .ams-mount__title { font-size: clamp(12px, 1vw, 16px); letter-spacing: 0.02em; color: #3a4147; }
-[data-theme="amsterdam"] .ams-mount--mount .ams-mount__meta { font-size: 10px; letter-spacing: 0.1em; color: #4a5157; }
+[data-theme="amsterdam"] .ams-mount--mount .ams-mount__title { font-size: var(--fs-caption); letter-spacing: 0.02em; color: #3a4147; }
+[data-theme="amsterdam"] .ams-mount--mount .ams-mount__meta { font-size: var(--fs-micro); letter-spacing: 0.1em; color: #4a5157; }
 
 /* Print — bordered photographic print: a slim white margin and a printed footer
    strip (rule + small-caps title + meta), spread across the bottom. */
 [data-theme="amsterdam"] .ams-mount--print { background: var(--ams-frame-print, #f5f2ec); padding: clamp(10px, 1.1vw, 16px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26); }
 [data-theme="amsterdam"] .ams-mount--print .ams-mount__label { margin-top: clamp(9px, 1vw, 14px); padding-top: clamp(7px, 0.8vw, 11px); border-top: 1px solid rgba(20, 18, 16, 0.22); gap: 4px; }
-[data-theme="amsterdam"] .ams-mount--print .ams-mount__title { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; }
-[data-theme="amsterdam"] .ams-mount--print .ams-mount__meta { font-size: 10px; letter-spacing: 0.1em; }
+[data-theme="amsterdam"] .ams-mount--print .ams-mount__title { font-size: var(--fs-micro); letter-spacing: 0.18em; text-transform: uppercase; }
+[data-theme="amsterdam"] .ams-mount--print .ams-mount__meta { font-size: var(--fs-micro); letter-spacing: 0.1em; }
 
 /* Framed photos don't scale-crop for parallax — a mounted print reads as a whole
    object; let the image show fully and drift as one with a gentle pan. */
@@ -1045,7 +1092,7 @@ a {
 /* Testimonial / contact / page links */
 [data-theme="amsterdam"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-col--contact { width: clamp(340px, 34vw, 560px); display: flex; align-items: center; padding: 6vh 2.5vw; }
 [data-theme="amsterdam"] .ams-testimonial__quote { margin: 0 0 16px; line-height: 1.3; }
-[data-theme="amsterdam"] .ams-testimonial__by { display: flex; align-items: center; gap: 10px; font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; }
+[data-theme="amsterdam"] .ams-testimonial__by { display: flex; align-items: center; gap: 10px; font-family: Inter, sans-serif; font-size: var(--fs-byline); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; }
 [data-theme="amsterdam"] .ams-testimonial__avatar { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; }
 [data-theme="amsterdam"] .ams-pagelink { display: flex; flex-direction: column; gap: 8px; height: 100%; text-decoration: none; color: inherit; }
 [data-theme="amsterdam"] .ams-pagelink__frame { flex: 1; min-height: 0; width: clamp(220px, 24vw, 380px); background: rgba(127, 127, 127, 0.12); }
@@ -1060,6 +1107,36 @@ a {
    photo's width (single column, normal wrap) so it never runs past the image. */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-figure.ams-figure--plaque { flex-direction: column; align-items: stretch; gap: 0; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-caption--beside { align-self: auto; width: 100%; max-width: 100%; column-width: auto; columns: auto; padding: 12px 0 0; }
+/* Vintage-mount "beside" caption: the narrow right-hand label is a desktop trick;
+   stack it full-width beneath the mount on phones, un-clamped. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mount[data-caplayout="beside"] { flex-direction: column; align-items: stretch; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mount[data-caplayout="beside"] .ams-mount__label { width: 100%; align-self: auto; padding: 12px 0 0 0; overflow: visible; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mount[data-caplayout="beside"] .ams-mount__title { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mount { max-width: 100%; }
+
+/* ── Phone: image columns hug their content, evenly spaced ──────────────────
+   On the desktop wall every column is full-height (40vh floor, tall photo frames,
+   vertically-centered figures) because it's a fixed-viewport horizontal wall. On
+   phones that just reserves dead vertical space above/below short photos, so drop
+   the 40vh floor, let figures + photo boxes size to the image, and give each image
+   unit breathing room between neighbours. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photo,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photorow,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--mosaic,
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--media { min-height: 0; padding: 22px 2vw; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-figure { height: auto; justify-content: flex-start; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-figure--fill { height: auto; }
+/* Photo boxes carry a fixed desktop height inline (100vh / 82vh / Size) — size to
+   the image on phones so nothing reserves a tall empty box. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mount__photo { height: auto !important; }
+/* The LEFT/RIGHT plaque tag describes where the caption hangs on the desktop wall;
+   it's meaningless once the caption stacks under the photo, so hide it on phones. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-caption--beside .ams-caption__tag { display: none; }
+/* The desktop collage rhythm (data-flow padding offsets, data-flip scatter shifts)
+   drops photos to varied vertical positions across the wall. On a vertical phone
+   stack that just injects big empty gaps, so flatten it back to even spacing. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photo[data-flow] { justify-content: flex-start; padding-top: 22px; padding-bottom: 22px; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row--scatter .ams-mount[data-flip] { transform: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic { flex-wrap: wrap; height: auto !important; }
 /* Mosaic groups + page links stack full-width on phones (mirrors Florence's
    .florence-mosaic__group / .florence-pagelink data-mobile normalization). */

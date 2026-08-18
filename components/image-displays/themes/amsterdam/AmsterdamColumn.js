@@ -34,8 +34,10 @@ const MOSAIC_PATTERN = [1, 2, 3, 1, 2]
 const MOSAIC_GROUP_WIDTHS = ['clamp(240px, 26vw, 400px)', 'clamp(190px, 20vw, 300px)', 'clamp(280px, 30vw, 440px)', 'clamp(210px, 23vw, 340px)']
 // One restrained text scale (museum-label register): Medium is the readable base,
 // Large/Small step one notch either way. No poster-sized display type any more.
-const TEXT_SIZE = { heading: 'clamp(1.15rem, 1.4vw, 1.25rem)', subheading: 'clamp(1rem, 1.1vw, 1.05rem)', body: 'clamp(0.85rem, 0.95vw, 0.92rem)' }
-const QUOTE_SIZE = { large: 'clamp(1.4rem, 2.2vw, 1.9rem)', medium: 'clamp(1.15rem, 1.7vw, 1.5rem)', small: 'clamp(1rem, 1.4vw, 1.2rem)' }
+// Fixed reading scale (CSS vars on .ams-stage; steps down on mobile). L/M/S →
+// heading/subheading/body; Medium is the default. Testimonials share the same scale.
+const TEXT_SIZE = { heading: 'var(--fs-text-l)', subheading: 'var(--fs-text-m)', body: 'var(--fs-text-s)' }
+const QUOTE_SIZE = { large: 'var(--fs-text-l)', medium: 'var(--fs-text-m)', small: 'var(--fs-text-s)' }
 // One column of quiet copy, plus the gap when it flows into several.
 const TEXT_COL_W = 'clamp(280px, 26vw, 440px)'
 const TEXT_GAP = 'clamp(1.6rem, 2.4vw, 2.8rem)'
