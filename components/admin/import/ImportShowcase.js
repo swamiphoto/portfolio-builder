@@ -12,9 +12,10 @@ import { showcaseThumbUrl, onCoverError } from './coverThumb'
 
 const PITCHES = [
   { title: 'Galleries set to music.', body: 'The kind of slideshow a client actually sits through to the end.' },
-  { title: 'Built around your photographs.', body: 'Your work sets the tone, instead of bending to fit a template.' },
+  { title: 'Built from blocks.', body: 'Add photos, video, and text, then drag them into any order you like.' },
   { title: 'One click, a new look.', body: 'Change the whole design and your photos and captions stay exactly where they are.' },
-  { title: 'Fast on every screen.', body: 'Sharp and quick to load, with nothing for you to configure.' },
+  { title: 'Sell prints from any photo.', body: 'A print store built in, with nothing for you to run.' },
+  { title: 'Deliver the whole shoot.', body: 'Send the gallery, collect their favorites, get paid.' },
   { title: 'Yours, top to bottom.', body: 'Your name on the door, and no badges but your own.' },
 ]
 
