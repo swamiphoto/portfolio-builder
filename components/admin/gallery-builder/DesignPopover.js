@@ -44,15 +44,15 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
   // Only offer Size for layouts that actually respond to it (e.g. not full-bleed
   // photos). `sizeVariants` on the spec lists the variants where size applies.
   const sizeAllowed = !spec.sizeVariants || spec.sizeVariants.includes(currentVariant)
-  // Manhattan renders page-links and testimonials at a fixed size — no Size control.
-  const hideSize = themeId === 'manhattan' && (block.type === 'page-gallery' || block.type === 'testimonial')
-  const sizes = spec.sizes && sizeAllowed && !hideSize ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
   const isPhotoBlock = block.type === 'photos' || block.type === 'photo'
+  // Manhattan renders page-links and testimonials at a fixed size — no Size control.
+  // Florence and Amsterdam hang photos at one fixed scale (always large) — no Size
+  // control there either.
+  const hideSize =
+    (themeId === 'manhattan' && (block.type === 'page-gallery' || block.type === 'testimonial')) ||
+    ((themeId === 'florence' || themeId === 'amsterdam') && isPhotoBlock)
+  const sizes = spec.sizes && sizeAllowed && !hideSize ? spec.sizes.map(s => ({ value: s.id, label: s.label })) : null
   const sizeValue = isPhotoBlock ? resolvePhotoSize(block, themeId) : (block.size || spec.defaultSize)
-  // Florence: a Large photo row / mosaic (and a Large centered photo) already fills
-  // the column's full height, so Position (top / center / bottom) has nothing to move.
-  // Only offer it at Medium / Small, where the block is shorter than the viewport.
-  const florenceFillsHeight = themeId === 'florence' && isPhotoBlock && sizeValue === 'large'
 
   const hasSize = variants.length > 1
   // Testimonials expose an italic/regular style toggle (both themes).
@@ -142,18 +142,6 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
       {aligns && (
         <DesignSection label="Alignment">
           <PillToggle value={resolveAlign(block, themeId)} onChange={(v) => onUpdate({ ...block, align: v })} options={aligns} />
-        </DesignSection>
-      )}
-      {/* Florence: vertical Position of the content within its full-height column.
-          For a single photo it only matters when Centered (Full height fills). */}
-      {themeId === 'florence' && !florenceFillsHeight
-        && (block.type === 'photos' || block.type === 'text' || (block.type === 'photo' && currentVariant === 'centered')) && (
-        <DesignSection label="Position">
-          <PillToggle
-            value={block.florenceAnchor || 'top'}
-            onChange={(v) => onUpdate({ ...block, florenceAnchor: v })}
-            options={[{ value: 'top', label: 'Top' }, { value: 'center', label: 'Center' }, { value: 'bottom', label: 'Bottom' }]}
-          />
         </DesignSection>
       )}
       {/* Amsterdam: a text block is a solid ink Panel (default) or Quiet museum text. */}

@@ -87,11 +87,11 @@ export function fontFamilyForSlot(themeId, slot) {
   return fonts[slot] || fonts.serif || '"Cormorant Garamond", Georgia, serif'
 }
 
-// Florence-only vertical Position of a block's content within its full-height
-// column: top | center | bottom (→ flex justify-content). Default top.
-const FLORENCE_ANCHORS = ['top', 'center', 'bottom']
-export function resolveFlorenceAnchor(block) {
-  return FLORENCE_ANCHORS.includes(block?.florenceAnchor) ? block.florenceAnchor : 'top'
+// Florence Position (top/center/bottom) is retired: the control never rendered
+// centering reliably, so every block sits at the column top and the option is
+// no longer offered. Stored florenceAnchor values are deliberately ignored.
+export function resolveFlorenceAnchor() {
+  return 'top'
 }
 
 // Amsterdam-only text Style: a text block renders as a full-height solid-ink
@@ -173,6 +173,9 @@ export function resolvePhotoSizeDefault(variantId) {
 }
 
 export function resolvePhotoSize(block, themeId) {
+  // The wall themes hang photos at one fixed scale — Size is not offered there,
+  // and stored sizes from before the control was retired are ignored.
+  if (themeId === 'florence' || themeId === 'amsterdam') return 'large'
   if (block.size) return block.size
   return resolvePhotoSizeDefault(resolveVariant(block, themeId))
 }
