@@ -125,6 +125,50 @@ describe('generic.discover attribution (SmugMug-shaped site)', () => {
   })
 })
 
+describe('generic.discover — JS-rendered nav (page links only in inline script JSON)', () => {
+  // The second half of the real www.sankarsalvady.com failure: SmugMug custom-
+  // domain sites render nav with JS, so the raw HTML has ZERO <a href> page
+  // links. Subpages are only discoverable via the homepage's inline JSON
+  // ("UrlPath":"\/India" with escaped slashes, or absolute same-origin URLs).
+  // Without script-link discovery the BFS never leaves the homepage.
+  const landPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/land${n}.jpg`)
+  const indiaPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/india${n}.jpg`)
+
+  const PAGES = {
+    // No <a> tags anywhere. One gallery referenced by escaped UrlPath, the other
+    // by an absolute same-origin URL inside the same script blob.
+    'https://sam.com/': `<title>Sam</title>
+      <div id="app"></div>
+      <script>window.__INITIAL__ = {"nav":[
+        {"UrlPath":"\\/landscapes","Name":"Landscapes"},
+        {"WebUri":"https:\\/\\/sam.com\\/india"}
+      ],"allPhotos":${JSON.stringify([...landPhotos, ...indiaPhotos]).replace(/\//g, '\\/')}}</script>`,
+    'https://sam.com/landscapes': `<title>Landscapes</title>${landPhotos.map((u) => `<img src="${u}">`).join('')}`,
+    'https://sam.com/india': `<title>India</title>${indiaPhotos.map((u) => `<img src="${u}">`).join('')}`,
+  }
+  const fetchPage = (url) => {
+    if (PAGES[url] == null) return Promise.reject(new Error('404'))
+    return Promise.resolve(PAGES[url])
+  }
+
+  it('crawls subpages reachable only through script JSON and builds per-page collections', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const byId = Object.fromEntries(result.collections.map((c) => [c.id, c]))
+    expect(Object.keys(byId).sort()).toEqual(['india', 'landscapes'])
+    expect(byId['landscapes'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...landPhotos].sort())
+    expect(byId['india'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...indiaPhotos].sort())
+  })
+
+  it('classifies the script-discovered subpages in the siteMap', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const bySlug = Object.fromEntries(result.siteMap.pages.map((p) => [p.slug, p]))
+    expect(bySlug['landscapes'].kind).toBe('gallery')
+    expect(bySlug['india'].kind).toBe('gallery')
+    expect(bySlug['landscapes'].collectionId).toBe('landscapes')
+    expect(bySlug['india'].collectionId).toBe('india')
+  })
+})
+
 describe('generic.discover siteMap', () => {
   const IMG = (n) => Array.from({ length: n }, (_, i) => `<img src="/photos/p${i}.jpg">`).join('')
   const PAGES = {

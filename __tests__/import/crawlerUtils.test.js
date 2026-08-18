@@ -84,6 +84,60 @@ describe('extractImageUrls — JSON/script-embedded photos', () => {
   })
 })
 
+// SmugMug custom-domain sites (and other JS-rendered builders) render their nav
+// entirely with JavaScript: the raw HTML contains ZERO <a href> page links. The
+// only route to the subpages is the homepage's inline JSON, which carries entries
+// like "UrlPath":"\/India" (escaped slashes) and absolute same-origin page URLs.
+const SCRIPT_NAV = `<html><head><title>Sam</title></head><body>
+  <div id="app"></div>
+  <script>window.__INITIAL__ = {"nodes":[
+    {"UrlPath":"\\/India","Name":"India"},
+    {"UrlPath":"\\/Clients\\/Weddings-and-Receptions","Name":"Weddings"},
+    {"UrlPath":"\\u002FAvifauna","Name":"Avifauna"},
+    {"UrlPath":"","Name":"empty"},
+    {"UrlPath":"\\/","Name":"root"},
+    {"urlPath":"\\/Travel","Name":"lowercase key"},
+    {"WebUri":"https:\\/\\/sam.com\\/Landscapes"},
+    {"OffSite":"https:\\/\\/other.com\\/NotMine"},
+    {"Photo":"https:\\/\\/sam.com\\/photos\\/p1.jpg"},
+    {"Style":"https:\\/\\/sam.com\\/theme.css?v=3"},
+    {"Bundle":"https:\\/\\/sam.com\\/app.js"}
+  ]}</script>
+</body></html>`
+
+describe('extractImageUrls — script-JSON page links (JS-rendered nav)', () => {
+  const { images, links } = extractImageUrls(SCRIPT_NAV, 'https://sam.com/')
+
+  it('collects UrlPath values from inline JSON, unescaped and resolved against base', () => {
+    expect(links).toContain('https://sam.com/India')
+    expect(links).toContain('https://sam.com/Clients/Weddings-and-Receptions')
+    expect(links).toContain('https://sam.com/Avifauna')
+  })
+  it('accepts the lowercase urlPath key form', () => {
+    expect(links).toContain('https://sam.com/Travel')
+  })
+  it('skips empty and "/" UrlPath values', () => {
+    expect(links).not.toContain('https://sam.com/')
+  })
+  it('collects absolute same-origin page URLs from script text', () => {
+    expect(links).toContain('https://sam.com/Landscapes')
+  })
+  it('does NOT collect off-origin absolute URLs from scripts', () => {
+    expect(links.some((l) => l.includes('other.com'))).toBe(false)
+  })
+  it('does NOT let asset URLs (images/css/js) enter links', () => {
+    expect(links.some((l) => /\.(?:jpg|css|js)(?:\?|$)/.test(l))).toBe(false)
+    // the image URL still lands in images, as before
+    expect(images).toContain('https://sam.com/photos/p1.jpg')
+  })
+  it('caps script-derived links at 60 per page', () => {
+    const many = Array.from({ length: 100 }, (_, i) => `{"UrlPath":"\\/page-${i}"}`).join(',')
+    const html = `<script>var x = [${many}]</script>`
+    const { links: capped } = extractImageUrls(html, 'https://sam.com/')
+    expect(capped.length).toBe(60)
+  })
+})
+
 describe('extractPageContent', () => {
   it('extracts prose paragraphs, drops nav/header/footer/script chrome', () => {
     const html = `<html><head><script>var x=1</script></head><body>
