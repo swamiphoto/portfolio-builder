@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { discoverSource, importSelected, makeImportBatchId } from '@/common/import/importClient'
-import { MONO, monoLabel, primaryBtn, CloseIcon } from './importFlowStyles'
+import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff, CloseIcon } from './importFlowStyles'
 import ReviewStep from './ReviewStep'
 import ImportShowcase from './ImportShowcase'
 import ImportDoneStep from './ImportDoneStep'
@@ -125,6 +125,8 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
               onClick={handleDiscover}
               disabled={!input.trim()}
               style={{ ...primaryBtn(!input.trim()), whiteSpace: 'nowrap' }}
+              onMouseEnter={primaryBtnHoverOn}
+              onMouseLeave={primaryBtnHoverOff}
             >
               Find my photos
             </button>

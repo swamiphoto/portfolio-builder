@@ -1,5 +1,5 @@
 import { useState, useCallback, memo } from 'react'
-import { MONO, monoLabel, primaryBtn } from './importFlowStyles'
+import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff } from './importFlowStyles'
 
 function Check({ size = 12 }) {
   return (
@@ -202,6 +202,8 @@ export default function ReviewStep({ discovery, onBack, onImport }) {
           onClick={() => onImport(selectedCollections)}
           disabled={selectedCount === 0}
           style={{ ...primaryBtn(selectedCount === 0), width: '100%' }}
+          onMouseEnter={primaryBtnHoverOn}
+          onMouseLeave={primaryBtnHoverOff}
         >
           Import all {selectedCount} photos
         </button>
