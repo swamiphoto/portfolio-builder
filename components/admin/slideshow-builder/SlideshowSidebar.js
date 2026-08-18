@@ -6,8 +6,9 @@ import Tip from "../Tip";
 
 const THEMES = [
   { label: "Ken Burns", value: "kenburns" },
-  { label: "Film Stack", value: "film-stack" },
-  { label: "Film Single", value: "film-single" },
+  { label: "Shoebox", value: "film-stack" },
+  { label: "Print", value: "film-single" },
+  { label: "Polaroid", value: "polaroid" },
 ];
 
 const INPUT = "w-full border-b border-stone-200 p-0 pb-1 text-sm leading-snug text-stone-800 outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300 bg-transparent";

@@ -8,6 +8,7 @@ import useYouTubePlayer from "./useYouTubePlayer";
 import FilmStackSlideshowLayout from "./film-stack-slideshow-layout/FilmStackSlideshowLayout";
 import FilmSingleSlideshowLayout from "./film-single-slideshow-layout/FilmSingleSlideshowLayout";
 import KenBurnsSlideshowLayout from "./kenburns-slideshow-layout/KenBurnsSlideshowLayout";
+import PolaroidSlideshowLayout from "./polaroid-slideshow-layout/PolaroidSlideshowLayout";
 import { TfiClose } from "react-icons/tfi";
 import styles from "./Slideshow.module.css";
 
@@ -184,8 +185,10 @@ const Slideshow = ({ slides = [], layout = "film-stack", title = "Gallery Title"
         return <FilmStackSlideshowLayout slides={slides} currentImageIndex={currentSlideIndex} transitioning={transitioning} aspectRatios={aspectRatios} hideCaptionsOnMobile={hideCaptionsOnMobile} />;
       case "film-single":
         return <FilmSingleSlideshowLayout slides={slides} currentImageIndex={currentSlideIndex} transitioning={transitioning} aspectRatios={aspectRatios} hideCaptionsOnMobile={hideCaptionsOnMobile} />;
+      case "polaroid":
+        return <PolaroidSlideshowLayout slides={slides} currentImageIndex={currentSlideIndex} transitioning={transitioning} />;
       case "kenburns":
-        return <KenBurnsSlideshowLayout slides={slides} currentImageIndex={currentSlideIndex} transitioning={transitioning} aspectRatios={aspectRatios} hideCaptionsOnMobile={hideCaptionsOnMobile} currentMusicCredit={currentMusicCredit} />;
+        return <KenBurnsSlideshowLayout slides={slides} currentImageIndex={currentSlideIndex} transitioning={transitioning} aspectRatios={aspectRatios} hideCaptionsOnMobile={hideCaptionsOnMobile} />;
       default:
         return null;
     }
@@ -217,6 +220,14 @@ const Slideshow = ({ slides = [], layout = "film-stack", title = "Gallery Title"
       setCurrentMusicCredit(musicCredits[0]);
     }
   }, [musicCredits]);
+
+  // Back arrow returns to the gallery this slideshow belongs to (one level up from
+  // the /slideshow route), falling back to the slug-based gallery path.
+  const backToGallery = () => {
+    if (isFullscreen) handleToggleFullscreen();
+    const parent = router.asPath.replace(/[?#].*$/, "").replace(/\/slideshow\/?$/, "");
+    router.push(parent || (slug ? `/galleries/${slug}` : "/"));
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -298,17 +309,9 @@ const Slideshow = ({ slides = [], layout = "film-stack", title = "Gallery Title"
       )}
 
       {isMobile && !isModalOpen && (
-        <div className="fixed top-0 left-0 w-full flex justify-between items-center p-4 bg-black bg-opacity-90 border-b border-gray-800 z-50">
-          <div className="flex items-center space-x-4">
-            <HiOutlineArrowLeft className="text-gray-500 hover:text-white cursor-pointer" size={20} onClick={() => router.replace("/galleries")} />
-            {slideshowPlaying ? <HiOutlinePause className="text-gray-500 hover:text-white cursor-pointer" size={24} onClick={handlePlayPauseSlideshow} /> : <HiOutlinePlay className="text-gray-500 hover:text-white cursor-pointer" size={24} onClick={handlePlayPauseSlideshow} />}
-          </div>
-
-          <div className="ml-auto flex space-x-4 text-sm text-gray-400">
-            <button className="hover:text-white cursor-pointer" onClick={() => router.push(`/galleries/${slug}`)}>
-              View Gallery
-            </button>
-          </div>
+        <div className="fixed top-0 left-0 w-full flex items-center gap-4 p-4 bg-black bg-opacity-90 border-b border-gray-800 z-50">
+          <HiOutlineArrowLeft className="text-gray-500 hover:text-white cursor-pointer" size={20} onClick={backToGallery} />
+          {slideshowPlaying ? <HiOutlinePause className="text-gray-500 hover:text-white cursor-pointer" size={24} onClick={handlePlayPauseSlideshow} /> : <HiOutlinePlay className="text-gray-500 hover:text-white cursor-pointer" size={24} onClick={handlePlayPauseSlideshow} />}
         </div>
       )}
 
@@ -318,21 +321,58 @@ const Slideshow = ({ slides = [], layout = "film-stack", title = "Gallery Title"
       </main>
 
       {!isMobile && (
-        <div className={`fixed top-4 left-4 flex items-center space-x-4 bg-white bg-opacity-80 p-3 shadow-md rounded-lg z-50 transition-opacity duration-1000 ${showControls ? "opacity-100" : "opacity-0"}`}>
-          <HiOutlineArrowLeft
-            className="hover:text-red-500 cursor-pointer"
-            size={24}
-            onClick={() => {
-              handleToggleFullscreen();
-              router.replace("/galleries");
-            }}
-          />
-          {slideshowPlaying ? <HiOutlinePause className="hover:text-red-500 cursor-pointer" size={24} onClick={handlePlayPauseSlideshow} /> : <HiOutlinePlay className="hover:text-red-500 cursor-pointer" size={24} onClick={handlePlayPauseSlideshow} />}
-          {isFullscreen ? <RxExitFullScreen className="hover:text-red-500 cursor-pointer" size={20} onClick={handleToggleFullscreen} /> : <RxEnterFullScreen className="hover:text-red-500 cursor-pointer" size={20} onClick={handleToggleFullscreen} />}
+        <div
+          className={`fixed top-4 left-4 flex items-center gap-3.5 px-3.5 py-2.5 z-50 transition-opacity duration-1000 ${showControls ? "opacity-100" : "opacity-0"}`}
+          style={{
+            background: "rgba(28,22,16,0.68)",
+            border: "1px solid rgba(200,170,120,0.18)",
+            borderRadius: 9,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+            color: "rgba(233,222,203,0.82)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
+        >
+          <HiOutlineArrowLeft className="cursor-pointer transition-colors hover:text-white" size={17} onClick={backToGallery} />
+          {slideshowPlaying ? <HiOutlinePause className="cursor-pointer transition-colors hover:text-white" size={17} onClick={handlePlayPauseSlideshow} /> : <HiOutlinePlay className="cursor-pointer transition-colors hover:text-white" size={17} onClick={handlePlayPauseSlideshow} />}
+          {isFullscreen ? <RxExitFullScreen className="cursor-pointer transition-colors hover:text-white" size={16} onClick={handleToggleFullscreen} /> : <RxEnterFullScreen className="cursor-pointer transition-colors hover:text-white" size={16} onClick={handleToggleFullscreen} />}
+        </div>
+      )}
 
-          <button className="hover:text-red-500 cursor-pointer" onClick={() => router.push(`/galleries/${slug}`)}>
-            View Gallery
-          </button>
+      {/* Music credit — a "now playing" ticker that slides in from the left,
+          holds, then tickers back off the edge. Works across all layouts. */}
+      {currentMusicCredit && (
+        <div className={styles["now-playing"]}>
+          <span
+            style={{
+              fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+              fontSize: 8.5,
+              letterSpacing: "0.28em",
+              textTransform: "uppercase",
+              color: "rgba(232,201,143,0.6)",
+            }}
+          >
+            Music Credits
+          </span>
+          <div className={styles["now-playing-row"]}>
+            <div className={styles["now-playing-eq"]} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <span
+              style={{
+                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                fontSize: 14,
+                fontWeight: 400,
+                letterSpacing: "0.01em",
+                color: "rgba(233,222,203,0.9)",
+              }}
+            >
+              {currentMusicCredit}
+            </span>
+          </div>
         </div>
       )}
     </div>

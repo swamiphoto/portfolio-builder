@@ -1,23 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import styles from "./KenBurnsSlideshowLayout.module.css";
 import Text from "../../../text/Text";
 
-const KenBurnsSlideshowLayout = ({ slides, currentImageIndex, transitioning, aspectRatios = [], currentMusicCredit }) => {
-  const [showMusicCredit, setShowMusicCredit] = useState(true);
-
-  useEffect(() => {
-    // Show the music credit whenever it changes
-    setShowMusicCredit(true);
-
-    // Hide it after 5 seconds
-    const timer = setTimeout(() => {
-      setShowMusicCredit(false);
-    }, 7000);
-
-    return () => clearTimeout(timer);
-  }, [currentMusicCredit]);
-
+const KenBurnsSlideshowLayout = ({ slides, currentImageIndex, transitioning, aspectRatios = [] }) => {
   // Filter the slides to extract only the images for proper aspect ratio handling
   const imageSlides = slides.filter((slide) => slide.type === "image");
 
@@ -55,7 +41,6 @@ const KenBurnsSlideshowLayout = ({ slides, currentImageIndex, transitioning, asp
           );
         }
       })}
-      {currentMusicCredit && <div className={`absolute bottom-4 left-4  text-white z-10 text-lg transition-opacity duration-1000 font-serif2 ${showMusicCredit ? "opacity-100" : "opacity-0"}`}>{currentMusicCredit}</div>}
     </div>
   );
 };
@@ -66,7 +51,6 @@ KenBurnsSlideshowLayout.propTypes = {
   transitioning: PropTypes.bool.isRequired,
   aspectRatios: PropTypes.array.isRequired,
   hideCaptionsOnMobile: PropTypes.bool.isRequired,
-  currentMusicCredit: PropTypes.string,
 };
 
 export default KenBurnsSlideshowLayout;
