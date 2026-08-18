@@ -11,7 +11,7 @@ const SITE_DESC = 'Build your beautiful photography portfolio in minutes, with m
 const SITE_URL = 'https://www.sepia.photo'
 // Bump the version query whenever og-image.png changes so scrapers (FB/LinkedIn/
 // Twitter) fetch fresh bytes instead of serving a stale cached preview.
-const OG_IMAGE = `${SITE_URL}/og-image.png?v=2`
+const OG_IMAGE = `${SITE_URL}/og-image.png?v=3`
 
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (
