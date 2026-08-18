@@ -205,7 +205,11 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(20,12,4,0.55)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
+      // A plain dark scrim, no backdrop-filter: blur() here recomposites the entire
+      // live admin editor behind the modal on every repaint (compositor-thread work,
+      // invisible to main-thread profiling), which janks select/unselect badly with
+      // many galleries. The dimmed scrim gives the same separation without the cost.
+      style={{ background: 'rgba(20,12,4,0.62)' }}
       onClick={step !== 'importing' ? onClose : undefined}
     >
       <div
