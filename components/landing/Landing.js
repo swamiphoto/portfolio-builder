@@ -50,7 +50,8 @@ const FONT = {
 // The list grows as the product does — keep each line short enough to scan.
 const ITEMS = [
   ['gorgeous galleries', 'clean, museum-style displays for your photos'],
-  ['fast to build', 'assemble blocks of photos, video, and text, like Lego'],
+  ['built from blocks', 'add photos, video, and text as blocks, and drag them into any order you like'],
+  ['change themes freely', 'swap your whole look anytime, and your photos and captions stay exactly where they are'],
   ['emotional slideshows', 'reel-like music slideshows that move clients to tears'],
   ['one-click print store', 'sell prints from any photo, no store to run'],
   ['client galleries', 'deliver shoots, collect favorites, get paid'],
