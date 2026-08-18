@@ -4,7 +4,11 @@ export function filterJunkImages(refs, { totalPages = 1, repeatRatio = 0.5 } = {
   const threshold = totalPages >= 4 ? Math.ceil(totalPages * repeatRatio) : Infinity
   return (refs || []).filter((r) => {
     if (JUNK_PATTERNS.test(r.remoteUrl)) return false
-    if ((r.seenOnPages || 1) >= threshold) return false
+    // Strictly MORE than the ratio, not >=: a legit album photo that shows up on
+    // both the root page (whole-site JSON dumps, e.g. SmugMug) and its own album
+    // page sits exactly at the 50% boundary on a 4-page crawl and must survive —
+    // only images that repeat on a clear majority of pages are site chrome.
+    if ((r.seenOnPages || 1) > threshold) return false
     return true
   })
 }
@@ -34,7 +38,7 @@ export function groupIntoCollections(refs, origin) {
   for (const r of refs || []) {
     const { id, name } = inferCollectionName(r.pageUrl, origin)
     if (!map.has(id)) map.set(id, { id, name, remoteUrl: r.pageUrl, assetRefs: [] })
-    map.get(id).assetRefs.push({ remoteUrl: r.remoteUrl, caption: r.caption || null })
+    map.get(id).assetRefs.push({ remoteUrl: r.remoteUrl, caption: r.caption || null, ...(r.thumbUrl ? { thumbUrl: r.thumbUrl } : {}) })
   }
   return [...map.values()]
 }

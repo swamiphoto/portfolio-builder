@@ -21,6 +21,16 @@ describe('filterJunkImages', () => {
     const refs = [{ remoteUrl: 'https://s.com/a.jpg', seenOnPages: 2 }]
     expect(filterJunkImages(refs, { totalPages: 2 })).toHaveLength(1)
   })
+  it('keeps an album photo seen on root + its own album page (2 of 4 pages, the 50% boundary)', () => {
+    const refs = [
+      // Nav chrome seen on every page of a 4-page crawl — a clear majority, still dropped.
+      { remoteUrl: 'https://s.com/header-bg.jpg', seenOnPages: 4 },
+      // A real photo embedded in root's whole-site JSON dump AND on its own album page.
+      { remoteUrl: 'https://s.com/album-photo.jpg', seenOnPages: 2 },
+    ]
+    const out = filterJunkImages(refs, { totalPages: 4 })
+    expect(out.map((r) => r.remoteUrl)).toEqual(['https://s.com/album-photo.jpg'])
+  })
 })
 
 describe('inferCollectionName', () => {

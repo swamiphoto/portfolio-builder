@@ -1,4 +1,5 @@
-import { MONO, primaryBtn } from './importFlowStyles'
+import { useState } from 'react'
+import { MONO, primaryBtn, outlineBtn, primaryBtnHoverOn, primaryBtnHoverOff, outlineBtnHoverOn, outlineBtnHoverOff } from './importFlowStyles'
 
 // The subdued text-button style already used for "Import from another site",
 // reused here for the "keep photos only" choice so the two secondary actions
@@ -57,7 +58,6 @@ function describeFoundPages(summary) {
 }
 
 export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
-  const n = summary?.importedCount || 0
   const hasSiteMapPages = (summary?.siteMap?.pages?.length || 0) > 0
   const found = hasSiteMapPages ? describeFoundPages(summary) : ''
   // Only offer the rebuild choice when there's something to describe — a
@@ -66,43 +66,83 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
   // "Build these pages for me on Sepia" button would be a no-op.
   const canReplicate = found !== ''
 
+  // Body copy is real body text: secondary color at 14px, not the muted hint
+  // token this screen originally borrowed (illegible on the cream surface).
+  const bodyText = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }
+
+  // onEnter's handler chain (library GET/PUT + optional page composition +
+  // site-config write) is async and was previously fire-and-forget — clicking
+  // gave zero feedback while it ran. Track a busy state, same shape as the
+  // studio's Publish button: label swaps, button disables, and we wait out
+  // the promise (if the caller returns one) before clearing it. The done
+  // screen typically unmounts once onEnter finishes (it redirects into the
+  // studio), so the finally's setBusy(false) may be a no-op on an unmounted
+  // component — harmless in React 18, no state-update warning.
+  const [busy, setBusy] = useState(false)
+  async function handleEnter(opts) {
+    if (busy) return
+    setBusy(true)
+    try {
+      await onEnter(opts)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div style={{ padding: '32px 28px 28px' }}>
       <h2 className="font-fraunces" style={{ fontSize: 21, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
-        You're all set, your photos are in.
+        You're all set.
       </h2>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: summary?.failedCount > 0 || (canReplicate && found) ? 6 : 22, lineHeight: 1.5 }}>
-        {n} {n === 1 ? 'photo' : 'photos'}, ready to use.
+      <p style={{ ...bodyText, marginBottom: summary?.failedCount > 0 ? 6 : 22 }}>
+        {canReplicate
+          ? "You'll find all your photos in your library, ready to use on any page. If you'd like, we can give you a head start by building your first pages with these images."
+          : "You'll find all your photos in your library, ready to use on any page you build."}
       </p>
       {summary?.failedCount > 0 && (
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: canReplicate && found ? 6 : 22, lineHeight: 1.5 }}>
-          A few couldn't be brought in. You can add those manually.
+        <p style={{ ...bodyText, marginBottom: 22 }}>
+          A few photos couldn't be copied over. You can upload those to your library anytime.
         </p>
       )}
-      {canReplicate && found && (
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 22, lineHeight: 1.5 }}>
-          We also spotted {found} on your old site. You can edit or delete anything we create.
-        </p>
-      )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+      {/* The two CTAs share one row (never wrapping); the quiet text action
+          sits on its own line below so it can't force the pair apart. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap', marginBottom: 14 }}>
         {canReplicate ? (
           <>
-            <button onClick={() => onEnter({ replicate: true })} style={{ ...primaryBtn(false) }}>
-              Build these pages for me on Sepia
+            <button
+              onClick={() => handleEnter({ replicate: true })}
+              disabled={busy}
+              style={primaryBtn(busy)}
+              onMouseEnter={primaryBtnHoverOn}
+              onMouseLeave={primaryBtnHoverOff}
+            >
+              {busy ? 'Building your pages…' : 'Build my pages for me'}
             </button>
-            <button onClick={() => onEnter({ replicate: false })} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
-              Just keep the photos in my library
+            <button
+              onClick={() => handleEnter({ replicate: false })}
+              disabled={busy}
+              style={outlineBtn(busy)}
+              onMouseEnter={outlineBtnHoverOn}
+              onMouseLeave={outlineBtnHoverOff}
+            >
+              I'll build my own
             </button>
           </>
         ) : (
-          <button onClick={() => onEnter({ replicate: false })} style={{ ...primaryBtn(false) }}>
-            Go to my studio
+          <button
+            onClick={() => handleEnter({ replicate: false })}
+            disabled={busy}
+            style={primaryBtn(busy)}
+            onMouseEnter={primaryBtnHoverOn}
+            onMouseLeave={primaryBtnHoverOff}
+          >
+            {busy ? 'Setting up…' : 'Go to my studio'}
           </button>
         )}
-        <button onClick={onImportAnother} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
-          Import from another site
-        </button>
       </div>
+      <button onClick={onImportAnother} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
+        Import from another site
+      </button>
     </div>
   )
 }

@@ -474,57 +474,65 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
   }, [selectedAlbum, handleUploaded]);
 
   const handleImportComplete = useCallback(async (summary) => {
-    setImportOpen(false)
     // fetch-batch dedupe-skips photos already in the library — `imported` can
     // be empty even though the user has photos to rebuild pages from (they're
     // just sitting in `skipped`, resolved against the library below).
-    if (!summary?.imported?.length && !summary?.skipped?.length) return
-    let next = currentConfig()
-    if (summary.imported?.length) {
-      next = applyImportToConfig(next, { imported: summary.imported, collections: summary.collections, importBatchId: summary.importBatchId })
-      const urls = summary.imported.map((a) => a.publicUrl)
-      setHighlightedUrls(new Set(urls))
-      setTimeout(() => setHighlightedUrls(null), 2500)
-      setSelectedAlbum({ type: 'all', key: 'all' })
-      await saveConfig(next)
-    }
+    if (!summary?.imported?.length && !summary?.skipped?.length) { setImportOpen(false); return }
+    // Close the import modal only once this whole chain (library save + optional
+    // page composition) settles, success or failure. Closing it up front used to
+    // unmount the done screen's "Build my pages for me" button the instant it
+    // was clicked — the busy state it shows while this runs never had a chance
+    // to render, and the modal just vanished with no feedback.
+    try {
+      let next = currentConfig()
+      if (summary.imported?.length) {
+        next = applyImportToConfig(next, { imported: summary.imported, collections: summary.collections, importBatchId: summary.importBatchId })
+        const urls = summary.imported.map((a) => a.publicUrl)
+        setHighlightedUrls(new Set(urls))
+        setTimeout(() => setHighlightedUrls(null), 2500)
+        setSelectedAlbum({ type: 'all', key: 'all' })
+        await saveConfig(next)
+      }
 
-    if (summary.replicate && summary.siteMap?.pages?.length) {
-      const composeArgs = {
-        siteMap: summary.siteMap,
-        collections: summary.collections,
-        imported: resolveComposableAssets({ imported: summary.imported, skipped: summary.skipped, libraryAssets: next.assets }),
-        importBatchId: summary.importBatchId,
-      }
-      if (onComposedPages) {
-        // Route through the parent's siteConfig state (pages/admin/index.js) so the
-        // pages appear immediately in the sidebar and the parent's own debounced
-        // autosave persists them — a raw PUT here would race the parent's stale
-        // in-memory siteConfig and its next autosave would silently erase these pages.
-        try {
-          onComposedPages(composeArgs)
-        } catch (err) {
-          console.error('import page composition failed', err)
+      if (summary.replicate && summary.siteMap?.pages?.length) {
+        const composeArgs = {
+          siteMap: summary.siteMap,
+          collections: summary.collections,
+          imported: resolveComposableAssets({ imported: summary.imported, skipped: summary.skipped, libraryAssets: next.assets }),
+          importBatchId: summary.importBatchId,
         }
-      } else {
-        // Fallback for mount points that don't (yet) pass onComposedPages: fetch +
-        // PUT site-config directly, same as before.
-        try {
-          const scRes = await fetch('/api/admin/site-config')
-          const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
-          const { pages } = composeSite({ ...composeArgs, existingPages: currentSiteConfig.pages || [] })
-          if (pages.length) {
-            await fetch('/api/admin/site-config', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(applyComposedPages(currentSiteConfig, pages)),
-            })
+        if (onComposedPages) {
+          // Route through the parent's siteConfig state (pages/admin/index.js) so the
+          // pages appear immediately in the sidebar and the parent's own debounced
+          // autosave persists them — a raw PUT here would race the parent's stale
+          // in-memory siteConfig and its next autosave would silently erase these pages.
+          try {
+            onComposedPages(composeArgs)
+          } catch (err) {
+            console.error('import page composition failed', err)
           }
-        } catch (err) {
-          // Non-fatal — library import already saved; pages just won't be auto-created
-          console.error('import page composition failed', err)
+        } else {
+          // Fallback for mount points that don't (yet) pass onComposedPages: fetch +
+          // PUT site-config directly, same as before.
+          try {
+            const scRes = await fetch('/api/admin/site-config')
+            const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+            const { pages } = composeSite({ ...composeArgs, existingPages: currentSiteConfig.pages || [] })
+            if (pages.length) {
+              await fetch('/api/admin/site-config', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(applyComposedPages(currentSiteConfig, pages)),
+              })
+            }
+          } catch (err) {
+            // Non-fatal — library import already saved; pages just won't be auto-created
+            console.error('import page composition failed', err)
+          }
         }
       }
+    } finally {
+      setImportOpen(false)
     }
   }, [currentConfig, saveConfig, onComposedPages])
 

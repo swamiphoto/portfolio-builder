@@ -56,6 +56,184 @@ describe('generic.discover', () => {
   })
 })
 
+describe('generic.discover size-variant collapse (SmugMug CDN duplication)', () => {
+  // SmugMug custom-domain sites reference several size variants of the SAME photo
+  // (srcset-style, or separate <img> tags for thumb + lightbox). Without collapsing
+  // by image identity, each size becomes a distinct "duplicate" photo in the import.
+  const PAGES = {
+    'https://gal.com/': `<title>Gal</title>
+      <img src="https://photos.smugmug.com/Trip/i-XyZ99/0/abc/M/sunset-M.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-XyZ99/0/abc/L/sunset-L.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-XyZ99/0/abc/X3/sunset-X3.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-Other1/0/abc/M/beach-M.jpg">`,
+  }
+  const fetchPage = (url) => (PAGES[url] != null ? Promise.resolve(PAGES[url]) : Promise.reject(new Error('404')))
+
+  it('collapses M/L/X3 variants of the same SmugMug image to ONE ref at the largest size', async () => {
+    const result = await generic.discover('gal.com/', { fetchPage, maxPages: 10 })
+    const images = result.collections.flatMap((c) => c.assetRefs.map((r) => r.remoteUrl))
+    const sunsetRefs = images.filter((u) => u.includes('i-XyZ99'))
+    expect(sunsetRefs).toEqual(['https://photos.smugmug.com/Trip/i-XyZ99/0/abc/X3/sunset-X3.jpg'])
+    // Distinct image key stays a separate photo.
+    expect(images.some((u) => u.includes('i-Other1'))).toBe(true)
+  })
+})
+
+describe('generic.discover size-variant collapse thumbUrl', () => {
+  // Mirrors the M/L/X3 collapse test above, but asserts the smallest surviving
+  // variant is carried through as `thumbUrl` on the ref, so review/showcase
+  // covers don't have to decode the largest (X3) size just to paint a preview.
+  const PAGES = {
+    'https://gal2.com/': `<title>Gal2</title>
+      <img src="https://photos.smugmug.com/Trip/i-Abc1/0/abc/M/sunset-M.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-Abc1/0/abc/X3/sunset-X3.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-Solo1/0/abc/M/solo-M.jpg">`,
+  }
+  const fetchPage = (url) => (PAGES[url] != null ? Promise.resolve(PAGES[url]) : Promise.reject(new Error('404')))
+
+  it('keeps the smallest variant url as thumbUrl on the surviving ref; single-variant images omit it', async () => {
+    const result = await generic.discover('gal2.com/', { fetchPage, maxPages: 10 })
+    const refs = result.collections.flatMap((c) => c.assetRefs)
+
+    const sunset = refs.find((r) => r.remoteUrl.includes('i-Abc1'))
+    expect(sunset.remoteUrl).toBe('https://photos.smugmug.com/Trip/i-Abc1/0/abc/X3/sunset-X3.jpg')
+    expect(sunset.thumbUrl).toBe('https://photos.smugmug.com/Trip/i-Abc1/0/abc/M/sunset-M.jpg')
+
+    const solo = refs.find((r) => r.remoteUrl.includes('i-Solo1'))
+    expect(solo).not.toHaveProperty('thumbUrl')
+  })
+
+  it('a single-page (scoped URL) import also carries thumbUrl through', async () => {
+    // singlePage mode is a distinct code path (assetRefs.map(...) in generic.js)
+    // from the whole-site groupIntoCollections path exercised above — both must
+    // preserve thumbUrl rather than dropping it while rebuilding the ref shape.
+    const scopedPages = {
+      'https://gal3.com/gallery': `<title>Gallery</title>
+        <img src="https://photos.smugmug.com/Trip/i-Scoped1/0/abc/M/dune-M.jpg">
+        <img src="https://photos.smugmug.com/Trip/i-Scoped1/0/abc/X3/dune-X3.jpg">`,
+    }
+    const scopedFetchPage = (url) => (scopedPages[url] != null ? Promise.resolve(scopedPages[url]) : Promise.reject(new Error('404')))
+    const result = await generic.discover('gal3.com/gallery', { fetchPage: scopedFetchPage, maxPages: 10 })
+    expect(result.collections).toHaveLength(1)
+    const dune = result.collections[0].assetRefs.find((r) => r.remoteUrl.includes('i-Scoped1'))
+    expect(dune.remoteUrl).toBe('https://photos.smugmug.com/Trip/i-Scoped1/0/abc/X3/dune-X3.jpg')
+    expect(dune.thumbUrl).toBe('https://photos.smugmug.com/Trip/i-Scoped1/0/abc/M/dune-M.jpg')
+  })
+})
+
+describe('generic.discover attribution (SmugMug-shaped site)', () => {
+  // Mirrors www.sankarsalvady.com (SmugMug custom domain): the homepage is
+  // JS-rendered and its inline hydration <script> JSON embeds the URLs of every
+  // photo on the ENTIRE site, not just what's visually on the homepage. Each
+  // gallery subpage also independently references its own subset (mixed between
+  // <img> tags and inline JSON, like real gallery templates). A naive "first page
+  // wins" crawler would attribute every photo to the homepage and produce one
+  // giant collection instead of Landscapes / India / USA Travel.
+  const landPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/land${n}.jpg`)
+  const indiaPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/india${n}.jpg`)
+  const usaPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/usa${n}.jpg`)
+  const allPhotos = [...landPhotos, ...indiaPhotos, ...usaPhotos]
+
+  const PAGES = {
+    'https://sam.com/': `<title>Sam</title>
+      <nav><a href="/landscapes">Landscapes</a><a href="/india">India</a><a href="/usa-travel">USA Travel</a></nav>
+      <img src="/hero-portrait.jpg">
+      <script>window.__DATA__ = ${JSON.stringify({ allPhotos })}</script>`,
+    // <img> tags — the subpage's own DOM markup.
+    'https://sam.com/landscapes': `<title>Landscapes</title>${landPhotos.map((u) => `<img src="${u}">`).join('')}`,
+    // inline JSON — mixes the two extraction paths per the real templates.
+    'https://sam.com/india': `<title>India</title><script>window.__DATA__ = ${JSON.stringify({ photos: indiaPhotos })}</script>`,
+    'https://sam.com/usa-travel': `<title>USA Travel</title>${usaPhotos.map((u) => `<img src="${u}">`).join('')}`,
+  }
+  const fetchPage = (url) => {
+    if (PAGES[url] == null) return Promise.reject(new Error('404'))
+    return Promise.resolve(PAGES[url])
+  }
+
+  it('attributes photos to the gallery subpage they belong to, not the root page', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+
+    const byId = Object.fromEntries(result.collections.map((c) => [c.id, c]))
+    const idsWithPhotos = Object.keys(byId).sort()
+    expect(idsWithPhotos).toEqual(['home', 'india', 'landscapes', 'usa-travel'])
+
+    expect(byId['landscapes'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...landPhotos].sort())
+    expect(byId['india'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...indiaPhotos].sort())
+    expect(byId['usa-travel'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...usaPhotos].sort())
+
+    // No giant catch-all collection: the root page (home) only keeps the photo
+    // that is genuinely root-only (the hero portrait, never seen anywhere else).
+    expect(byId['home'].assetRefs.map((r) => r.remoteUrl)).toEqual(['https://sam.com/hero-portrait.jpg'])
+  })
+
+  it('does not let the repeat-ratio junk filter drop the reattributed album photos', async () => {
+    // 4 total pages crawled (root + 3 subpages) means the repeat-ratio rule is
+    // active. Each album photo appears on exactly 2 of the 4 pages (root's JSON
+    // dump + its own subpage) — the 50% boundary — and must still survive.
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const allUrls = result.collections.flatMap((c) => c.assetRefs.map((r) => r.remoteUrl))
+    expect(allUrls).toEqual(expect.arrayContaining(allPhotos))
+  })
+
+  it('classifies the gallery subpages as galleries in the siteMap using page-local image counts', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const bySlug = Object.fromEntries(result.siteMap.pages.map((p) => [p.slug, p]))
+    // Each subpage's imageCount reflects what's on THAT page (4 photos each), not
+    // the homepage's 12-photo full-site dump — confirming imageCount is computed
+    // per-page rather than inherited from the reattributed collection.
+    expect(bySlug['landscapes'].kind).toBe('gallery')
+    expect(bySlug['india'].kind).toBe('gallery')
+    expect(bySlug['usa-travel'].kind).toBe('gallery')
+    expect(bySlug['landscapes'].collectionId).toBe('landscapes')
+    expect(bySlug['india'].collectionId).toBe('india')
+    expect(bySlug['usa-travel'].collectionId).toBe('usa-travel')
+  })
+})
+
+describe('generic.discover — JS-rendered nav (page links only in inline script JSON)', () => {
+  // The second half of the real www.sankarsalvady.com failure: SmugMug custom-
+  // domain sites render nav with JS, so the raw HTML has ZERO <a href> page
+  // links. Subpages are only discoverable via the homepage's inline JSON
+  // ("UrlPath":"\/India" with escaped slashes, or absolute same-origin URLs).
+  // Without script-link discovery the BFS never leaves the homepage.
+  const landPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/land${n}.jpg`)
+  const indiaPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/india${n}.jpg`)
+
+  const PAGES = {
+    // No <a> tags anywhere. One gallery referenced by escaped UrlPath, the other
+    // by an absolute same-origin URL inside the same script blob.
+    'https://sam.com/': `<title>Sam</title>
+      <div id="app"></div>
+      <script>window.__INITIAL__ = {"nav":[
+        {"UrlPath":"\\/landscapes","Name":"Landscapes"},
+        {"WebUri":"https:\\/\\/sam.com\\/india"}
+      ],"allPhotos":${JSON.stringify([...landPhotos, ...indiaPhotos]).replace(/\//g, '\\/')}}</script>`,
+    'https://sam.com/landscapes': `<title>Landscapes</title>${landPhotos.map((u) => `<img src="${u}">`).join('')}`,
+    'https://sam.com/india': `<title>India</title>${indiaPhotos.map((u) => `<img src="${u}">`).join('')}`,
+  }
+  const fetchPage = (url) => {
+    if (PAGES[url] == null) return Promise.reject(new Error('404'))
+    return Promise.resolve(PAGES[url])
+  }
+
+  it('crawls subpages reachable only through script JSON and builds per-page collections', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const byId = Object.fromEntries(result.collections.map((c) => [c.id, c]))
+    expect(Object.keys(byId).sort()).toEqual(['india', 'landscapes'])
+    expect(byId['landscapes'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...landPhotos].sort())
+    expect(byId['india'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...indiaPhotos].sort())
+  })
+
+  it('classifies the script-discovered subpages in the siteMap', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const bySlug = Object.fromEntries(result.siteMap.pages.map((p) => [p.slug, p]))
+    expect(bySlug['landscapes'].kind).toBe('gallery')
+    expect(bySlug['india'].kind).toBe('gallery')
+    expect(bySlug['landscapes'].collectionId).toBe('landscapes')
+    expect(bySlug['india'].collectionId).toBe('india')
+  })
+})
+
 describe('generic.discover siteMap', () => {
   const IMG = (n) => Array.from({ length: n }, (_, i) => `<img src="/photos/p${i}.jpg">`).join('')
   const PAGES = {

@@ -1,5 +1,5 @@
 import { useState, useCallback, memo } from 'react'
-import { MONO, monoLabel, primaryBtn } from './importFlowStyles'
+import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff } from './importFlowStyles'
 
 function Check({ size = 12 }) {
   return (
@@ -31,9 +31,14 @@ const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
   const [broken, setBroken] = useState(() => new Set())
   const count = collection.assetRefs?.length || 0
   // Up to three source images, rendered as a small pile of prints.
+  // Cheap cover thumbnails: prefer the small `thumbUrl` variant (S/Th, ~200px
+  // or less) discovery surfaced alongside each ref; fall back to remoteUrl only
+  // when a source has no smaller size (e.g. a single-URL image). remoteUrl
+  // itself is always the LARGEST usable variant post size-collapse, so decoding
+  // it at 40px for dozens of covers is what made this screen heavy.
   const covers = (collection.assetRefs || [])
     .slice(0, 3)
-    .map((a) => a?.remoteUrl)
+    .map((a) => a?.thumbUrl || a?.remoteUrl)
     .filter(Boolean)
     .filter((url) => !broken.has(url))
   const slots = STACK_SLOTS.slice(STACK_SLOTS.length - covers.length)
@@ -49,6 +54,13 @@ const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
         background: selected ? 'rgba(139,111,71,0.10)' : 'transparent',
         border: `1px solid ${selected ? 'rgba(139,111,71,0.38)' : 'rgba(160,140,110,0.22)'}`,
         transition: 'background 0.14s, border-color 0.14s',
+        // Skip layout/paint/style work entirely for cards scrolled offscreen — with
+        // ~20 collections this is most of the list at any given scroll position.
+        // containIntrinsicSize reserves the card's known height (68px thumbnail
+        // area + 16px padding) so the scrollbar doesn't jump as cards enter/leave
+        // the render viewport.
+        contentVisibility: 'auto',
+        containIntrinsicSize: 'auto 68px',
       }}
       onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = 'rgba(160,140,110,0.07)' }}
       onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = 'transparent' }}
@@ -202,6 +214,8 @@ export default function ReviewStep({ discovery, onBack, onImport }) {
           onClick={() => onImport(selectedCollections)}
           disabled={selectedCount === 0}
           style={{ ...primaryBtn(selectedCount === 0), width: '100%' }}
+          onMouseEnter={primaryBtnHoverOn}
+          onMouseLeave={primaryBtnHoverOff}
         >
           Import all {selectedCount} photos
         </button>

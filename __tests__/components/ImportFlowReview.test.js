@@ -93,6 +93,33 @@ describe('ImportFlow review + import', () => {
     expect(screen.queryByText(/← Back/)).toBeNull()
   })
 
+  it('cover thumbnails prefer thumbUrl over remoteUrl, falling back to remoteUrl when absent', async () => {
+    client.discoverSource.mockResolvedValue({
+      provider: 'generic',
+      site: { title: 'Joe', url: 'https://joe.com/' },
+      totalAssets: 2,
+      collections: [
+        {
+          id: 'c1',
+          name: 'Travel',
+          assetRefs: [
+            { remoteUrl: 'https://cdn/big1.jpg', thumbUrl: 'https://cdn/small1.jpg' },
+            { remoteUrl: 'https://cdn/big2.jpg' },
+          ],
+        },
+      ],
+    })
+    const { container } = render(<ImportFlow variant="modal" onClose={() => {}} onComplete={jest.fn()} />)
+    fireEvent.change(screen.getByPlaceholderText(/yourwebsite/i), { target: { value: 'joe.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /find my photos/i }))
+    await screen.findByText(/import all 2 photos/i)
+
+    const srcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src'))
+    expect(srcs).toContain('https://cdn/small1.jpg') // has thumbUrl -> use it
+    expect(srcs).not.toContain('https://cdn/big1.jpg') // never the large remoteUrl when a thumb exists
+    expect(srcs).toContain('https://cdn/big2.jpg') // no thumbUrl -> falls back to remoteUrl
+  })
+
   it('deselect all / select all toggles every gallery at once', async () => {
     await toReview()
     // starts all-selected → the toggle offers "Deselect all"

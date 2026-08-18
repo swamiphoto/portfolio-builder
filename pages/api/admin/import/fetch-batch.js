@@ -13,7 +13,7 @@ import { withAuth } from '@/common/withAuth'
 import { downloadJSON } from '@/common/gcsClient'
 import { storeImageBuffer } from '@/common/storeImage'
 import { extractCapture } from '@/common/exifCapture'
-import { buildImportedAsset, existingSourceUrls, dedupeRefs } from '@/common/import/importCore'
+import { buildImportedAsset, existingSourceUrls, existingHashes, dedupeRefs } from '@/common/import/importCore'
 import { getUserLibraryConfigPath } from '@/common/gcsUser'
 
 const MAX_BATCH = 50
@@ -52,18 +52,27 @@ async function handler(req, res, user) {
   }
 
   // Read existing library config for dedupe; tolerate absence (new user, no config yet).
-  let existing = new Set()
+  let existingConfig = null
   try {
-    existing = existingSourceUrls(await downloadJSON(getUserLibraryConfigPath(user.id)))
+    existingConfig = await downloadJSON(getUserLibraryConfigPath(user.id))
   } catch {
     // no config yet — nothing to dedupe against
   }
+  const existing = existingSourceUrls(existingConfig)
+  const existingHashSet = existingHashes(existingConfig)
 
   const { fresh, skipped } = dedupeRefs(assetRefs, existing)
 
   const now = new Date().toISOString()
   const imported = []
   const failed = []
+  // Content-hash dedupe (belt and suspenders): the same image can be reachable at
+  // several unrelated URLs (crawler identity collapse can only catch so much) —
+  // after downloading, if the bytes match an existing asset OR one already stored
+  // earlier in this same batch, skip creating a duplicate asset record. The image
+  // is downloaded before its hash is known; that cost is fine, the point is no
+  // duplicate records.
+  const batchHashes = new Set()
 
   for (const ref of fresh) {
     try {
@@ -88,6 +97,12 @@ async function handler(req, res, user) {
         contentType,
         folder: 'photos/import',
       })
+
+      if (stored.hash && (existingHashSet.has(stored.hash) || batchHashes.has(stored.hash))) {
+        skipped.push(ref.remoteUrl)
+        continue
+      }
+      if (stored.hash) batchHashes.add(stored.hash)
 
       imported.push(
         buildImportedAsset({

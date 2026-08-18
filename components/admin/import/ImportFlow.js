@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { discoverSource, importSelected, makeImportBatchId } from '@/common/import/importClient'
-import { MONO, monoLabel, primaryBtn, CloseIcon } from './importFlowStyles'
+import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff, CloseIcon } from './importFlowStyles'
 import ReviewStep from './ReviewStep'
 import ImportShowcase from './ImportShowcase'
 import ImportDoneStep from './ImportDoneStep'
@@ -60,9 +60,12 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   async function handleImport(selectedCollections) {
     // The source photos are already in hand from discovery — feed them to the
     // showcase so it can start dropping prints immediately, shuffled for variety.
+    // Prefer the small thumbUrl variant (same cheap covers used in review) —
+    // the showcase renders these at up to ~300px, and remoteUrl is always the
+    // largest usable size post size-collapse, so it's wasted bytes/decode here too.
     const srcUrls = []
     for (const c of selectedCollections || []) {
-      for (const r of c.assetRefs || []) if (r.remoteUrl) srcUrls.push(r.remoteUrl)
+      for (const r of c.assetRefs || []) if (r.remoteUrl) srcUrls.push(r.thumbUrl || r.remoteUrl)
     }
     setPhotoUrls(shuffle(srcUrls))
     setStep('importing')
@@ -125,6 +128,8 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
               onClick={handleDiscover}
               disabled={!input.trim()}
               style={{ ...primaryBtn(!input.trim()), whiteSpace: 'nowrap' }}
+              onMouseEnter={primaryBtnHoverOn}
+              onMouseLeave={primaryBtnHoverOff}
             >
               Find my photos
             </button>

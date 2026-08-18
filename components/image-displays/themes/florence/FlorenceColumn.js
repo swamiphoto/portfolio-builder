@@ -147,7 +147,10 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       }
       const size = resolvePhotoSize(block, TID)
 
-      if (resolveVariant(block, TID) === 'mosaic') {
+      // A chosen frame wins over the mosaic packing: mats and keylines are a
+      // row presentation, and the mosaic branch returning first used to make
+      // the Frame pills silently do nothing on Mosaic galleries.
+      if (resolveVariant(block, TID) === 'mosaic' && frame === 'none') {
         const mH = WALL_HEIGHT[size] || WALL_HEIGHT.large
         return wrap('florence-col--mosaic', { justifyContent: justify }, (
           <div className="florence-mosaic" style={{ height: mH }}>

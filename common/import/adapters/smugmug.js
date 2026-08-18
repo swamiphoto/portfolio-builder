@@ -71,7 +71,13 @@ const smugmug = {
   id: PROVIDER_ID,
   label: 'SmugMug',
   icon: 'smugmug',
-  enabled: true,
+  // Keyless deployments must never route here — the smugmugWeb adapter (no API
+  // key required) handles SmugMug sites instead. A getter (not a fixed value at
+  // module load) so it reflects the env at call time, matching how discover()
+  // itself already reads process.env.SMUGMUG_API_KEY lazily.
+  get enabled() {
+    return !!process.env.SMUGMUG_API_KEY
+  },
   detect(input) {
     try {
       return /(^|\.)smugmug\.com$/i.test(new URL(normalize(input)).hostname)

@@ -49,6 +49,50 @@ function imageUrlsFromText(text) {
   return unescapeSlashes(text).match(IMG_URL_RE) || []
 }
 
+// Page-link discovery from inline <script> JSON. SmugMug custom-domain sites
+// (and other JS-rendered builders) draw their nav entirely with JavaScript —
+// the raw HTML has zero <a href> page links. The subpages only exist in the
+// hydration JSON, as "UrlPath":"\/India" entries (escaped slashes) or as
+// absolute same-origin page URLs.
+const URL_PATH_RE = /"[Uu]rlPath"\s*:\s*"([^"]*)"/g
+const ABS_URL_RE = /https?:\/\/[^\s"'\\<>)]+/g
+// Anything asset-shaped must not enter the crawl queue (images/video/css/js/fonts...).
+const ASSET_EXT_RE = /\.(?:jpe?g|png|webp|gif|avif|svg|ico|css|js|mjs|json|xml|map|woff2?|ttf|otf|eot|mp4|webm|mov|m4v|mp3|wav|pdf|zip)$/i
+export const MAX_SCRIPT_LINKS_PER_PAGE = 60
+
+function pageLinksFromText(text, baseUrl) {
+  if (!text) return []
+  let origin
+  try {
+    origin = new URL(baseUrl).origin
+  } catch {
+    return []
+  }
+  const unescaped = unescapeSlashes(text)
+  const out = []
+  URL_PATH_RE.lastIndex = 0
+  let m
+  while ((m = URL_PATH_RE.exec(unescaped))) {
+    const p = m[1].trim()
+    if (!p || p === '/') continue
+    const resolved = safeResolve(p, baseUrl)
+    if (resolved) out.push(resolved.split('#')[0])
+  }
+  for (const raw of unescaped.match(ABS_URL_RE) || []) {
+    try {
+      const u = new URL(raw)
+      // Same-origin only: cross-origin absolutes are CDNs/trackers, never our pages.
+      if (u.origin !== origin) continue
+      if (u.pathname === '/' || u.pathname === '') continue
+      if (ASSET_EXT_RE.test(u.pathname)) continue
+      out.push(u.toString().split('#')[0])
+    } catch {
+      // unparseable fragment picked up by the loose regex — skip
+    }
+  }
+  return out
+}
+
 function largestFromSrcset(srcset) {
   const candidates = String(srcset || '')
     .split(',')
@@ -91,11 +135,21 @@ export function extractImageUrls(html, baseUrl) {
   // <script> contents for absolute image URLs. External <script src> tags have
   // no inline text, so bundle internals are not scanned. Junk (logos, tracking
   // pixels) is removed downstream by the junk filter.
+  // The same pass also collects candidate same-origin PAGE links (UrlPath keys,
+  // absolute non-asset URLs) so JS-rendered navs without <a href> tags are still
+  // crawlable; capped per page to bound noise — junk pages are filtered
+  // downstream by classification anyway.
+  const scriptLinks = new Set()
   $('script').each((_, el) => {
     const text = $(el).html() || ''
     if (text.length > 8_000_000) return
     for (const u of imageUrlsFromText(text)) addImage(u)
+    for (const l of pageLinksFromText(text, baseUrl)) {
+      if (scriptLinks.size >= MAX_SCRIPT_LINKS_PER_PAGE) break
+      scriptLinks.add(l)
+    }
   })
+  for (const l of scriptLinks) links.add(l)
 
   return { images: [...images], links: [...links] }
 }

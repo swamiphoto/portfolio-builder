@@ -1,4 +1,4 @@
-import { newImportBatchId, buildImportedAsset, existingSourceUrls, dedupeRefs } from '@/common/import/importCore'
+import { newImportBatchId, buildImportedAsset, existingSourceUrls, existingHashes, dedupeRefs } from '@/common/import/importCore'
 
 describe('newImportBatchId', () => {
   it('is deterministic for a given seed', () => {
@@ -74,6 +74,27 @@ describe('buildImportedAsset capture', () => {
   })
 })
 
+describe('existingHashes', () => {
+  it('collects exact-hash fingerprints from the library config', () => {
+    const config = {
+      assets: {
+        ast_1: { hashes: { exact: 'hash-a', perceptual: null } },
+        ast_2: { hashes: { exact: 'hash-b', perceptual: null } },
+        ast_3: { hashes: { exact: null, perceptual: null } },
+        ast_4: {},
+      },
+    }
+    const set = existingHashes(config)
+    expect(set.has('hash-a')).toBe(true)
+    expect(set.has('hash-b')).toBe(true)
+    expect(set.size).toBe(2)
+  })
+  it('returns an empty set for a missing/empty config', () => {
+    expect(existingHashes(null).size).toBe(0)
+    expect(existingHashes({}).size).toBe(0)
+  })
+})
+
 describe('dedupe', () => {
   it('collects existing source urls and partitions incoming refs', () => {
     const config = {
@@ -87,5 +108,22 @@ describe('dedupe', () => {
     )
     expect(fresh.map((r) => r.remoteUrl)).toEqual(['https://remote/b.jpg'])
     expect(skipped).toEqual(['https://remote/a.jpg'])
+  })
+
+  it('ignores thumbUrl entirely — dedupe keys on remoteUrl only', () => {
+    const urls = new Set(['https://remote/a.jpg'])
+    // ref 1: remoteUrl matches an existing asset -> skipped, regardless of its thumbUrl.
+    // ref 2: remoteUrl is new, but its thumbUrl happens to equal an existing remoteUrl
+    //        -> must still import fresh; thumbUrl must never be consulted for dedupe.
+    const { fresh, skipped } = dedupeRefs(
+      [
+        { remoteUrl: 'https://remote/a.jpg', thumbUrl: 'https://remote/a-thumb.jpg' },
+        { remoteUrl: 'https://remote/b.jpg', thumbUrl: 'https://remote/a.jpg' },
+      ],
+      urls
+    )
+    expect(skipped).toEqual(['https://remote/a.jpg'])
+    expect(fresh.map((r) => r.remoteUrl)).toEqual(['https://remote/b.jpg'])
+    expect(fresh[0].thumbUrl).toBe('https://remote/a.jpg')
   })
 })
