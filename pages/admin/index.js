@@ -482,6 +482,7 @@ export default function AdminIndex() {
   let content
   if (isCoverPageSelected) {
     const cover = siteConfig.cover || {}
+    const logoImage = siteConfig.logoType === 'image' && siteConfig.logo
     const themeId = siteConfig?.design?.theme
     const titleFF = fontFamilyForSlot(themeId, cover.titleFont || 'serif')
     const descFF = fontFamilyForSlot(themeId, cover.descriptionFont || 'serif')
@@ -496,11 +497,16 @@ export default function AdminIndex() {
       <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center text-center px-6 relative" style={bgStyle}>
         {cover.imageUrl && <div className="absolute inset-0 bg-black/30" />}
         <div className="relative z-10 text-white">
-          {(cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
+          {(logoImage || cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
             <div className="space-y-3 mb-9">
-              {(cover.heading || siteConfig.siteName) && (
+              {/* A set logo stands in for the wordmark — same swap the nav rail
+                  makes — so uploading a logo reflects here immediately instead of
+                  only after navigating to a page. */}
+              {logoImage ? (
+                <img src={siteConfig.logo} alt={siteConfig.siteName || 'Logo'} className="mx-auto max-h-24 md:max-h-28 w-auto object-contain" style={{ filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.35))' }} />
+              ) : (cover.heading || siteConfig.siteName) ? (
                 <h2 className="text-4xl md:text-6xl font-light tracking-tight" style={{ fontFamily: titleFF }}>{cover.heading || siteConfig.siteName}</h2>
-              )}
+              ) : null}
               {(cover.subheading || siteConfig.tagline) && (
                 <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto" style={{ fontFamily: descFF }}>{cover.subheading || siteConfig.tagline}</p>
               )}

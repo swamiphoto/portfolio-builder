@@ -29,6 +29,9 @@ export const AMSTERDAM_INKS = {
   vermilion: { ink: '#e02b20', onInk: '#faf7f2', bodyOnInk: '#141210', frameCard: '#ece2cd', frameMount: '#cfd6d8', framePrint: '#f5f2ec' },
   ultramarine: { ink: '#1a1690', onInk: '#faf7f2', bodyOnInk: '#f1ece2', frameCard: '#e6e6dd', frameMount: '#c2ccdb', framePrint: '#f0f1f0' },
   black: { ink: '#141210', onInk: '#f6efe4', bodyOnInk: '#f1ece2', frameCard: '#d6cbb2', frameMount: '#b4babd', framePrint: '#e3ded3' },
+  // Paper/bone light ink: a warm oat panel that reads as a distinct solid
+  // against the fixed light ground (#f6efe4), with dark display + body ink on it.
+  light: { ink: '#e4d9c1', onInk: '#20190f', bodyOnInk: '#20190f', frameCard: '#d6cbb2', frameMount: '#b4babd', framePrint: '#e3ded3' },
 }
 
 export function resolveAmsterdamInk(design) {
@@ -75,8 +78,8 @@ export const amsterdam = {
       defaultVariant: 'row',
       sizeVariants: ['row', 'mosaic'],
     },
-    // Text keeps the base L/M/S variants (they ARE the size control). Panel/Quiet
-    // is the Amsterdam-only Style pill (block.amsterdamStyle — see DesignPopover).
+    // Text keeps the base L/M/S variants (they ARE the size control). Every text
+    // block is the quiet museum label; long copy auto-flows into balanced columns.
     text: { defaultAlign: 'left', aligns: ['left'], defaultFont: 'display', fonts: AMSTERDAM_FONTS },
     testimonial: { defaultFont: 'serif', fonts: AMSTERDAM_FONTS },
     contact: { defaultAlign: 'left', aligns: ['left'] },

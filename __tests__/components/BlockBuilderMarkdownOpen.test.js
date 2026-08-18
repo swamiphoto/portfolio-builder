@@ -35,8 +35,8 @@ it('opening the markdown editor fires onMarkdownEditorOpen (so hosts can lazy-fe
   openEditorViaMenu(container)
   expect(onOpen).toHaveBeenCalledTimes(1)
   // and the panel actually opened on that block — the panel has no title
-  // (the header only holds the formatting toolbar + Done), so assert via a
-  // toolbar control instead.
+  // (the header only holds the formatting toolbar + a close X), so assert via
+  // a toolbar control instead.
   expect(screen.getByRole('button', { name: /^bold$/i })).toBeTruthy()
 })
 

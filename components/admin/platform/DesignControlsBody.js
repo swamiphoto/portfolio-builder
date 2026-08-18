@@ -40,18 +40,18 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
         </DesignSection>
       )}
 
-      {(config.design?.theme || 'kyoto') === 'florence' && (config.logoType || 'sitename') === 'sitename' && (
-        <DesignSection label="Logo on rail">
+      {['florence', 'amsterdam'].includes(config.design?.theme || 'kyoto') && (
+        <DesignSection label="Logo bar">
           <DesignPillToggle
-            value={config.design?.florenceLogo === 'horizontal' ? 'horizontal' : 'vertical'}
-            onChange={(v) => update({ design: { ...(config.design || {}), florenceLogo: v } })}
-            options={[{ value: 'vertical', label: 'Vertical' }, { value: 'horizontal', label: 'Horizontal' }]}
+            value={['1', '2', '3'].includes(config.design?.logoBarLayout) ? config.design.logoBarLayout : '1'}
+            onChange={(v) => update({ design: { ...(config.design || {}), logoBarLayout: v } })}
+            options={[{ value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' }]}
           />
         </DesignSection>
       )}
 
       {(config.design?.theme || 'kyoto') === 'florence' && (
-        <DesignSection label="Photo details" description="Show each photo's date or full camera details beneath it.">
+        <DesignSection label="Photo details" description="Choose what details to show next to your photos.">
           <DesignPillToggle
             value={['off', 'date', 'exif'].includes(config.design?.florencePhotoMeta) ? config.design.florencePhotoMeta : 'date'}
             onChange={(v) => update({ design: { ...(config.design || {}), florencePhotoMeta: v } })}
@@ -104,7 +104,7 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
       )}
 
       {(config.design?.theme || 'kyoto') === 'amsterdam' && (
-        <DesignSection label="Photo details" description="Show each photo's date or full camera details beneath it.">
+        <DesignSection label="Photo details" description="Choose what details to show next to your photos.">
           <DesignPillToggle
             value={['off', 'date', 'exif'].includes(config.design?.amsterdamPhotoMeta) ? config.design.amsterdamPhotoMeta : 'date'}
             onChange={(v) => update({ design: { ...(config.design || {}), amsterdamPhotoMeta: v } })}

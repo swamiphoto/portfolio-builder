@@ -93,6 +93,24 @@ it('inserts a picked image as an inline preview and tracks it on block.images', 
   expect(img.closest('[contenteditable="false"]')).toBeTruthy()
 })
 
+it('inserts the image at top level when the caret is mid-paragraph, so it survives serialization', () => {
+  // Regression: inserting a photo while the caret sat inside a body paragraph
+  // nested the image wrapper inside that <p>. The serializer only walks
+  // top-level children, so the ![](url) was silently dropped from `content` —
+  // the image then disappeared from the preview and from the editor on reopen.
+  const onChange = jest.fn()
+  const { container } = render(<MarkdownEditorPanel open block={block} onChange={onChange} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
+  const el = getEditable(container)
+  placeCaretIn(el.querySelector('p').firstChild, 2) // caret inside "Hello world"
+  fireEvent.click(screen.getByRole('button', { name: /^image$/i }))
+  fireEvent.click(screen.getByTestId('picker'))
+  const call = onChange.mock.calls.at(-1)[0]
+  expect(call.content).toContain('![](https://gcs/pic.jpg)')
+  // The image wrapper must be a direct child of the editable root, not nested.
+  const wrapper = el.querySelector('img[src="https://gcs/pic.jpg"]').closest('[data-md-image]')
+  expect(wrapper.parentElement).toBe(el)
+})
+
 it('"/" on an empty block opens the photo picker', () => {
   const empty = { type: 'text', content: '' }
   const { container } = render(<MarkdownEditorPanel open block={empty} onChange={jest.fn()} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
@@ -101,10 +119,13 @@ it('"/" on an empty block opens the photo picker', () => {
   expect(screen.getByTestId('picker')).toBeTruthy()
 })
 
-it('opens the picker anchored to the left of the panel, not centered over it', () => {
+it('opens the picker at its own default position (no docked anchor)', () => {
+  // The editor is now a free-floating panel rather than a right-docked drawer,
+  // so it no longer hands the picker an anchorRight offset — the picker uses
+  // its default beside-the-block position.
   render(<MarkdownEditorPanel open block={block} onChange={jest.fn()} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
   fireEvent.click(screen.getByRole('button', { name: /^image$/i }))
-  expect(screen.getByTestId('picker').dataset.anchorRight).toBe('440')
+  expect(screen.getByTestId('picker').dataset.anchorRight).toBeUndefined()
 })
 
 it('escape closes', () => {
@@ -114,11 +135,14 @@ it('escape closes', () => {
   expect(onClose).toHaveBeenCalled()
 })
 
-it('the Done button is outline styled, not solid', () => {
-  render(<MarkdownEditorPanel open block={block} onChange={jest.fn()} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
-  const done = screen.getByRole('button', { name: /^done$/i })
-  expect(done.style.background).toBe('transparent')
-  expect(done.style.border).toContain('1px solid')
+it('closes via an X button, not a Done button', () => {
+  // Mirrors the library picker: a close (X) affordance in the header, no Done.
+  const onClose = jest.fn()
+  render(<MarkdownEditorPanel open block={block} onChange={jest.fn()} onClose={onClose} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
+  expect(screen.queryByRole('button', { name: /^done$/i })).toBeNull()
+  const close = screen.getByRole('button', { name: /^close$/i })
+  fireEvent.click(close)
+  expect(onClose).toHaveBeenCalled()
 })
 
 it('the footer hint is the single theme-dependent sentence', () => {
