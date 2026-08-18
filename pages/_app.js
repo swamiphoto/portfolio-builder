@@ -8,8 +8,10 @@ import '../styles/globals.css'
 const SITE_NAME = 'Sepia'
 const SITE_TITLE = 'Sepia — Show and sell your photography'
 const SITE_DESC = 'Build your beautiful photography portfolio in minutes, with museum-style galleries, music slideshows, one-click prints, and client galleries that get you paid.'
-const SITE_URL = 'https://sepia.photo'
-const OG_IMAGE = `${SITE_URL}/og-image.png`
+const SITE_URL = 'https://www.sepia.photo'
+// Bump the version query whenever og-image.png changes so scrapers (FB/LinkedIn/
+// Twitter) fetch fresh bytes instead of serving a stale cached preview.
+const OG_IMAGE = `${SITE_URL}/og-image.png?v=2`
 
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (
