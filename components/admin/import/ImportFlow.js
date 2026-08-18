@@ -173,7 +173,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   if (step === 'done' && summary) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: SHOWCASE_BG }}>
-        <div className="rounded-xl overflow-hidden" style={{ width: 460, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))' }}>
+        <div className="rounded-xl overflow-hidden" style={{ width: 540, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))' }}>
           <ImportDoneStep
             summary={summary}
             onEnter={(opts) => onComplete({ ...summary, replicate: !!opts?.replicate })}

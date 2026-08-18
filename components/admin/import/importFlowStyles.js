@@ -11,7 +11,7 @@ export const primaryBtn = (disabled) => ({
   background: disabled ? 'rgba(60,40,15,0.20)' : '#2c2416',
   color: disabled ? 'rgba(246,243,236,0.5)' : '#f6f3ec',
   fontFamily: MONO, fontSize: 11.5, fontWeight: 500, letterSpacing: '0.10em', textTransform: 'uppercase',
-  padding: '13px 22px', borderRadius: 5, border: 'none',
+  padding: '13px 22px', borderRadius: 5, border: 'none', whiteSpace: 'nowrap',
   cursor: disabled ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
 })
 
@@ -22,7 +22,7 @@ export const outlineBtn = (disabled) => ({
   background: 'transparent',
   color: disabled ? 'rgba(44,36,22,0.35)' : '#2c2416',
   fontFamily: MONO, fontSize: 11.5, fontWeight: 500, letterSpacing: '0.10em', textTransform: 'uppercase',
-  padding: '13px 22px', borderRadius: 5,
+  padding: '13px 22px', borderRadius: 5, whiteSpace: 'nowrap',
   border: `1px solid rgba(44,36,22,${disabled ? 0.2 : 0.45})`,
   cursor: disabled ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
 })
