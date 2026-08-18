@@ -13,6 +13,7 @@ import { getSizedUrl } from '../../../../common/imageUtils'
 import useWallScroll from '../shared/useWallScroll'
 import useWallChrome from './useWallChrome'
 import AmsterdamColumn from './AmsterdamColumn'
+import MobileNavOverlay from '../../page/MobileNavOverlay'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
 
@@ -144,22 +145,26 @@ export default function AmsterdamWall({
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
       >
-        <section className="ams-menu" data-open={menuOpen ? 'true' : 'false'} data-surface="ink" aria-hidden={!menuOpen}>
-          <div className="ams-menu__inner">
-            <ul className="ams-menu__list">
-              {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
-            </ul>
-            {socialKeys.length > 0 && (
-              <div className="ams-menu__socials">
-                {socialKeys.map(k => {
-                  const v = socials[k]
-                  const href = v?.startsWith?.('http') ? v : `https://${k}.com/${String(v).replace(/^@/, '')}`
-                  return <a key={k} className="ams-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
-                })}
-              </div>
-            )}
-          </div>
-        </section>
+        {/* Desktop: the ink menu slides in as a column at the front of the wall.
+            On phones we use the shared full-screen overlay instead (below). */}
+        {!mobile && (
+          <section className="ams-menu" data-open={menuOpen ? 'true' : 'false'} data-surface="ink" aria-hidden={!menuOpen}>
+            <div className="ams-menu__inner">
+              <ul className="ams-menu__list">
+                {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
+              </ul>
+              {socialKeys.length > 0 && (
+                <div className="ams-menu__socials">
+                  {socialKeys.map(k => {
+                    const v = socials[k]
+                    const href = v?.startsWith?.('http') ? v : `https://${k}.com/${String(v).replace(/^@/, '')}`
+                    return <a key={k} className="ams-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {heroOpener ? (
           <section className="ams-col ams-col--hero" data-surface="dark">
@@ -205,6 +210,16 @@ export default function AmsterdamWall({
           <button className="ams-arrows__btn" onClick={() => page('prev')} aria-label="Previous"><IconArrow dir="prev" /></button>
           <button className="ams-arrows__btn" onClick={() => page('next')} aria-label="Next"><IconArrow dir="next" /></button>
         </div>
+      )}
+
+      {/* Phone: standardized full-screen page menu (page links only — no socials).
+          Themed to the ink ground to keep the Amsterdam feel. */}
+      {mobile && (
+        <MobileNavOverlay
+          open={menuOpen} onClose={() => setMenuOpen(false)} tree={tree} basePath={basePath}
+          currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick}
+          overlayStyle={{ background: inks.ink, color: inks.onInk }}
+        />
       )}
     </div>
   )

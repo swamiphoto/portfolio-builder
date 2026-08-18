@@ -34,8 +34,11 @@ const PHOTO_HEIGHT = { large: '82vh', medium: '64vh', small: '46vh' }
 // (top/center/bottom) has real room to move the block.
 const WALL_HEIGHT = { large: '84vh', medium: '64vh', small: '46vh' }
 // One restrained text scale: Medium is the readable base, Large/Small one notch each way.
-const TEXT_SIZE = { heading: 'clamp(1.15rem, 1.4vw, 1.25rem)', subheading: 'clamp(1rem, 1.1vw, 1.05rem)', body: 'clamp(0.85rem, 0.95vw, 0.92rem)' }
-const QUOTE_SIZE = { large: 'clamp(1.25rem, 2vw, 1.7rem)', medium: 'clamp(1.05rem, 1.6vw, 1.35rem)', small: 'clamp(0.95rem, 1.3vw, 1.1rem)' }
+// Fixed reading scale (defined as CSS vars on .florence-stage; steps down on mobile).
+// L/M/S → heading/subheading/body; Medium is the default.
+const TEXT_SIZE = { heading: 'var(--fs-text-l)', subheading: 'var(--fs-text-m)', body: 'var(--fs-text-s)' }
+// Testimonials share the text scale (no separate, larger tier).
+const QUOTE_SIZE = { large: 'var(--fs-text-l)', medium: 'var(--fs-text-m)', small: 'var(--fs-text-s)' }
 // One column of copy, plus the gap when it flows into several.
 const TEXT_COL_W = 'clamp(260px, 24vw, 380px)'
 const TEXT_GAP = 'clamp(1.6rem, 2.4vw, 2.8rem)'

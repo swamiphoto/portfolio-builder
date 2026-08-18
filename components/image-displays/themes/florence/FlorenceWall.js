@@ -8,6 +8,7 @@
 import { useRef, useState } from 'react'
 import { buildNavTree } from '../../../../common/pagesTree'
 import FlorenceColumn from './FlorenceColumn'
+import MobileNavOverlay from '../../page/MobileNavOverlay'
 import useWallScroll from '../shared/useWallScroll'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
@@ -107,22 +108,26 @@ export default function FlorenceWall({
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
       >
-        <section className="florence-menu" data-open={menuOpen ? 'true' : 'false'} aria-hidden={!menuOpen}>
-          <div className="florence-menu__inner">
-            <ul className="florence-menu__list">
-              {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
-            </ul>
-            {socialKeys.length > 0 && (
-              <div className="florence-menu__socials">
-                {socialKeys.map(k => {
-                  const v = socials[k]
-                  const href = v?.startsWith?.('http') ? v : `https://${k}.com/${String(v).replace(/^@/, '')}`
-                  return <a key={k} className="florence-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
-                })}
-              </div>
-            )}
-          </div>
-        </section>
+        {/* Desktop: the menu slides in as a column at the front of the wall. On
+            phones we use the shared full-screen overlay instead (below). */}
+        {!mobile && (
+          <section className="florence-menu" data-open={menuOpen ? 'true' : 'false'} aria-hidden={!menuOpen}>
+            <div className="florence-menu__inner">
+              <ul className="florence-menu__list">
+                {tree.map(item => <li key={item.id}>{renderLink(item)}</li>)}
+              </ul>
+              {socialKeys.length > 0 && (
+                <div className="florence-menu__socials">
+                  {socialKeys.map(k => {
+                    const v = socials[k]
+                    const href = v?.startsWith?.('http') ? v : `https://${k}.com/${String(v).replace(/^@/, '')}`
+                    return <a key={k} className="florence-menu__social" href={href} target="_blank" rel="noopener noreferrer">{k}</a>
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="florence-col florence-col--intro">
           {name && <h1 className="florence-intro__title">{name}</h1>}
@@ -165,6 +170,16 @@ export default function FlorenceWall({
           <button className="florence-arrows__btn" onClick={() => page('prev')} aria-label="Previous"><IconArrow dir="prev" /></button>
           <button className="florence-arrows__btn" onClick={() => page('next')} aria-label="Next"><IconArrow dir="next" /></button>
         </div>
+      )}
+
+      {/* Phone: standardized full-screen page menu (page links only — no socials). */}
+      {mobile && (
+        <MobileNavOverlay
+          open={menuOpen} onClose={() => setMenuOpen(false)} tree={tree} basePath={basePath}
+          currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick}
+          linkClassName="font-fraunces"
+          overlayStyle={{ background: 'var(--theme-bg, #f4f1ea)', color: 'var(--theme-text, #1c1a17)' }}
+        />
       )}
     </div>
   )
