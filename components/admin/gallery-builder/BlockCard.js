@@ -506,7 +506,7 @@ function BlockCard({
         <div className="relative flex items-center" style={{ minHeight: 22 }}>
           {/* Toolbar pill: always in DOM to reserve space; cross-fades in on card hover */}
           <div
-            className={`flex items-center transition-opacity duration-150 ${showDesign || showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto'}`}
+            className={`block-card-toolbar-pill flex items-center transition-opacity duration-150 ${showDesign || showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto'}`}
             style={{
               background: showDesign || showMenu ? 'rgba(232,225,212,0.9)' : 'rgba(232,225,212,0.9)',
               borderRadius: 4,

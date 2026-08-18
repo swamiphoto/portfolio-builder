@@ -117,6 +117,15 @@ body {
   pointer-events: auto !important;
 }
 
+/* The design brush's opacity-managed ancestor is the toolbar pill container,
+   not just its direct parent (the anchor sits a couple of levels deeper, inside
+   a Tip trigger wrapper) — `:has(> ...)` above doesn't reach it. Force that
+   container visible whenever it contains the tagged anchor anywhere below it. */
+.block-card-toolbar-pill:has([data-tour-highlight]) {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 a {
   @apply hover:underline;
 }
