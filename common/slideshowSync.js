@@ -1,17 +1,13 @@
 export const MUSIC_POOL = [
   { id: 'IvoAT-5HKwM', label: 'Richard Clayderman — Eléana' },
   { id: 'PYujyluMxMU', label: 'Monica Bellucci — Oceo' },
-  { id: 'ZTmF2v59CtI', label: 'Sheila Ki Jawani — Katrina Kaif' },
   { id: 'JkfSV51U-64', label: 'Richard Clayderman — Yesterday' },
-  { id: 'puOnVzlkrQM', label: 'Jab Koi Baat Bigad Jaye — Ash King' },
   { id: 'qj4RiKoARPk', label: 'Fuyu no Hana — 冬の華' },
   { id: 'BciS5krYL80', label: 'Hotel California — Eagles' },
   { id: '_iktURk0X-A', label: 'Phir Bhi Tumko Chaahunga — Arijit Singh' },
   { id: 'BeUSuSXBqMQ', label: 'Richard Clayderman — Murmures' },
   { id: 'hzGHrQBq_i4', label: 'Denean — To the Children' },
   { id: '6P5zx_rxlhI', label: 'La Playa' },
-  { id: 'qmBW9-fUvag', label: 'Tajdar-e-Haram' },
-  { id: 'S61L1fpqFXE', label: 'Chikku Bukku Rayile — AR Rahman' },
   { id: 'LD5W8W7-0II', label: 'U. Shrinivas — Parjanya' },
   { id: 'U1FZVpcKhGg', label: 'Richard Clayderman — Souvenirs D\'Enfance' },
 ]
@@ -29,6 +25,14 @@ export function musicUrlToId(url) {
 export function randomMusicUrl() {
   const track = MUSIC_POOL[Math.floor(Math.random() * MUSIC_POOL.length)]
   return musicIdToUrl(track.id)
+}
+
+// The curated label for a track URL, if it's one of the built-in pool tracks.
+// Returns '' for custom URLs (the caller can fall back to a fetched title).
+export function musicLabelForUrl(url) {
+  const id = musicUrlToId(url)
+  const track = MUSIC_POOL.find(t => t.id === id)
+  return track ? track.label : ''
 }
 
 // Build the actual slide sequence for the public slideshow player.
