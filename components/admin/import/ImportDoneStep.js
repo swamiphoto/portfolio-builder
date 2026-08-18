@@ -57,7 +57,6 @@ function describeFoundPages(summary) {
 }
 
 export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
-  const n = summary?.importedCount || 0
   const hasSiteMapPages = (summary?.siteMap?.pages?.length || 0) > 0
   const found = hasSiteMapPages ? describeFoundPages(summary) : ''
   // Only offer the rebuild choice when there's something to describe — a
@@ -66,32 +65,37 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
   // "Build these pages for me on Sepia" button would be a no-op.
   const canReplicate = found !== ''
 
+  // Body copy is real body text: secondary color at 14px, not the muted hint
+  // token this screen originally borrowed (illegible on the cream surface).
+  const bodyText = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }
+  const outlineBtn = {
+    background: 'transparent', color: '#2c2416', border: '1px solid rgba(44,36,22,0.4)',
+    borderRadius: 4, padding: '6px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+  }
+
   return (
     <div style={{ padding: '32px 28px 28px' }}>
       <h2 className="font-fraunces" style={{ fontSize: 21, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
-        You're all set, your photos are in.
+        You're all set.
       </h2>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: summary?.failedCount > 0 || (canReplicate && found) ? 6 : 22, lineHeight: 1.5 }}>
-        {n} {n === 1 ? 'photo' : 'photos'}, ready to use.
+      <p style={{ ...bodyText, marginBottom: summary?.failedCount > 0 ? 6 : 22 }}>
+        {canReplicate
+          ? "You'll find all your photos in your library, ready to use on any page. If you'd like, we can give you a head start by building your first pages with these images."
+          : "You'll find all your photos in your library, ready to use on any page you build."}
       </p>
       {summary?.failedCount > 0 && (
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: canReplicate && found ? 6 : 22, lineHeight: 1.5 }}>
-          A few couldn't be brought in. You can add those manually.
-        </p>
-      )}
-      {canReplicate && found && (
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 22, lineHeight: 1.5 }}>
-          We also spotted {found} on your old site. You can edit or delete anything we create.
+        <p style={{ ...bodyText, marginBottom: 22 }}>
+          A few photos couldn't be copied over. You can upload those to your library anytime.
         </p>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
         {canReplicate ? (
           <>
             <button onClick={() => onEnter({ replicate: true })} style={{ ...primaryBtn(false) }}>
-              Build these pages for me on Sepia
+              Build my pages for me
             </button>
-            <button onClick={() => onEnter({ replicate: false })} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
-              Just keep the photos in my library
+            <button onClick={() => onEnter({ replicate: false })} style={outlineBtn}>
+              I'll build my own
             </button>
           </>
         ) : (
