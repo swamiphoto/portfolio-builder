@@ -6,8 +6,8 @@ import '../styles/globals.css'
 // Default site metadata. Individual pages (e.g. published photographer sites)
 // can override <title>/<meta> by rendering their own next/head tags.
 const SITE_NAME = 'Sepia'
-const SITE_TITLE = 'Sepia — A platform for photographers'
-const SITE_DESC = 'Turn a link into a beautiful photography portfolio in under two minutes. Elegant galleries, music slideshows, and a store — hosted for you.'
+const SITE_TITLE = 'Sepia — Show and sell your photography'
+const SITE_DESC = 'Build your beautiful photography portfolio in minutes, with museum-style galleries, music slideshows, one-click prints, and client galleries that get you paid.'
 const SITE_URL = 'https://sepia.photo'
 const OG_IMAGE = `${SITE_URL}/og-image.png`
 
