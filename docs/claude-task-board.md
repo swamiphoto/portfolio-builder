@@ -7,7 +7,7 @@ mobile).
 
 ## The board
 
-- **Project:** Claude Tasks — https://github.com/users/swamiphoto/projects/3
+- **Project:** Sepia Tasks — https://github.com/users/swamiphoto/projects/3
 - **Repo:** `swamiphoto/portfolio-builder`
 - **Columns (Status field):** Todo → In Progress → Done
 - **You (the human)** drop cards into Todo (via the "Claude Task" issue
