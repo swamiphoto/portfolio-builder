@@ -116,7 +116,7 @@ function shortenLens(v) {
 }
 
 // ── Picker Tile ─────────────────────────────────────────────────────────────
-function PickerTile({ asset, isSelected, onToggle, onPreview }) {
+function PickerTile({ asset, isSelected, onToggle, onPreview, isMulti }) {
   const [loaded, setLoaded] = useState(false);
   const c = asset.capture || {};
   const camera = shortenCamera(c.cameraModel || (c.cameraMake && c.cameraModel ? `${c.cameraMake} ${c.cameraModel}` : null));
@@ -178,10 +178,13 @@ function PickerTile({ asset, isSelected, onToggle, onPreview }) {
       </button>
       </Tip>
 
-      {/* Selection indicator — top-right. Selected: filled badge with a white
-          border + shadow so it stays visible on any photo. Unselected: a faint
-          hollow circle on hover, so it's clear where to click to select. */}
-      {isSelected ? (
+      {/* Selection indicator — multi-select only. Single-select pickers (e.g.
+          the markdown editor) insert on click, so a select circle would be
+          misleading; there the eye icon is the only hover affordance.
+          Selected: filled badge with a white border + shadow so it stays
+          visible on any photo. Unselected: a faint hollow circle on hover, so
+          it's clear where to click to select. */}
+      {!isMulti ? null : isSelected ? (
         <div
           className="absolute top-1.5 right-1.5 rounded-full flex items-center justify-center"
           style={{ width: 22, height: 22, background: '#8b6f47', border: '2px solid #fff', boxShadow: '0 1px 5px rgba(0,0,0,0.4)' }}
@@ -518,6 +521,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
                     <PickerTile
                       asset={asset}
                       isSelected={isSelected}
+                      isMulti={isMulti}
                       onToggle={() => toggle(asset)}
                       onPreview={() => onPreview && onPreview(asset)}
                     />
@@ -709,25 +713,37 @@ function UploadTab({ onUploaded, libraryConfig }) {
         {/* File list */}
         {files.length > 0 && (
           <div className="overflow-y-auto scroll-quiet space-y-1" style={{ marginTop: 10, paddingBottom: 4 }}>
-            {files.map((f) => (
+            {files.map((f) => {
+              const state = progress[f.name]; // undefined | pending | done | error
+              return (
               <div
                 key={f.name}
-                className="flex items-center gap-2 group"
+                className="relative flex items-center gap-2 group overflow-hidden"
                 style={{ padding: '4px 8px', borderRadius: 3, background: 'rgba(160,140,110,0.08)' }}
               >
-                <span className="flex-1 truncate" style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{f.name}</span>
-                <span
-                  style={{
-                    fontSize: 10.5, fontFamily: MONO, fontWeight: 500,
-                    color: progress[f.name] === "done" ? '#3b8a52'
-                         : progress[f.name] === "error" ? '#c14a4a'
-                         : progress[f.name] === "pending" ? 'var(--text-secondary)'
-                         : 'var(--text-muted)',
-                  }}
-                >
-                  {progress[f.name] === "done" ? "✓" : progress[f.name] === "error" ? "✗" : progress[f.name] === "pending" ? "…" : "·"}
-                </span>
-                {!progress[f.name] && (
+                {/* Progress bar along the row's bottom edge: an indeterminate
+                    sweep while uploading, a solid line when done or failed. */}
+                {state === "pending" && (
+                  <div aria-hidden className="absolute left-0 right-0 bottom-0" style={{ height: 2, background: 'rgba(139,111,71,0.16)', overflow: 'hidden', pointerEvents: 'none' }}>
+                    <div style={{ position: 'absolute', top: 0, bottom: 0, width: '35%', background: '#8b6f47', animation: 'md-upload-sweep 1.1s ease-in-out infinite' }} />
+                  </div>
+                )}
+                {state === "done" && (
+                  <div aria-hidden className="absolute left-0 right-0 bottom-0" style={{ height: 2, background: '#3b8a52', pointerEvents: 'none' }} />
+                )}
+                {state === "error" && (
+                  <div aria-hidden className="absolute left-0 right-0 bottom-0" style={{ height: 2, background: '#c14a4a', pointerEvents: 'none' }} />
+                )}
+                <span className="relative flex-1 truncate" style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{f.name}</span>
+                {(state === "done" || state === "error") && (
+                  <span
+                    className="relative"
+                    style={{ fontSize: 10.5, fontFamily: MONO, fontWeight: 500, color: state === "done" ? '#3b8a52' : '#c14a4a' }}
+                  >
+                    {state === "done" ? "✓" : "✗"}
+                  </span>
+                )}
+                {!state && (
                   <Tip label="Remove">
                   <button
                     type="button"
@@ -744,7 +760,8 @@ function UploadTab({ onUploaded, libraryConfig }) {
                   </Tip>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -768,15 +785,20 @@ function UploadTab({ onUploaded, libraryConfig }) {
           className="w-full"
           style={{
             background: files.length === 0 || uploading ? 'rgba(60,40,15,0.20)' : '#2c2416',
-            color: '#f5ecd6',
-            fontSize: 12,
+            color: '#f6f3ec',
+            fontFamily: MONO,
+            fontSize: 10.5,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
             fontWeight: 500,
-            padding: '8px 14px',
-            borderRadius: 4,
+            padding: '10px 14px',
+            borderRadius: 6,
             cursor: files.length === 0 || uploading ? 'not-allowed' : 'pointer',
             transition: 'background 0.15s',
             border: 'none',
           }}
+          onMouseEnter={(e) => { if (!(files.length === 0 || uploading)) e.currentTarget.style.background = '#3d3020' }}
+          onMouseLeave={(e) => { if (!(files.length === 0 || uploading)) e.currentTarget.style.background = '#2c2416' }}
         >
           {uploading ? "Uploading…" : `Upload ${files.length || ''} photo${files.length !== 1 ? "s" : ""}`}
         </button>

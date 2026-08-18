@@ -167,6 +167,12 @@ a {
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* Indeterminate sweep for the photo-upload progress bar (per-file row). */
+@keyframes md-upload-sweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
 .insertion-zone-btn {
   box-shadow: 0 2px 6px rgba(26,18,10,0.14), 0 1px 2px rgba(26,18,10,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
   transition: box-shadow 0.15s ease, transform 0.15s ease;
@@ -467,6 +473,22 @@ a {
 .florence-rail__btn:hover { opacity: 1; }
 .florence-rail__mid { display: flex; align-items: center; }
 
+/* Logo-bar presets. Preset 1 is the base rail above (wordmark up top, menu in
+   the middle). 2 rotates the wordmark to read bottom-to-top with the menu moved
+   on top; 3 sets the logo upright and centered with the menu on top. */
+[data-theme="florence"] .florence-rail[data-logobar="2"],
+[data-theme="florence"] .florence-rail[data-logobar="3"] { justify-content: flex-start; gap: 1.5rem; }
+[data-theme="florence"] .florence-rail[data-logobar="2"] .florence-rail__mid,
+[data-theme="florence"] .florence-rail[data-logobar="3"] .florence-rail__mid { order: -1; }
+[data-theme="florence"] .florence-rail[data-logobar="2"] .florence-rail__spacer,
+[data-theme="florence"] .florence-rail[data-logobar="3"] .florence-rail__spacer { display: none; }
+[data-theme="florence"] .florence-rail[data-logobar="2"] .florence-rail__logo,
+[data-theme="florence"] .florence-rail[data-logobar="3"] .florence-rail__logo { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; max-height: none; }
+[data-theme="florence"] .florence-rail[data-logobar="2"] .florence-rail__logo { writing-mode: sideways-lr; text-orientation: mixed; }
+[data-theme="florence"] .florence-rail[data-logobar="2"] .florence-rail__logo img { writing-mode: initial; transform: rotate(-90deg); }
+[data-theme="florence"] .florence-rail[data-logobar="3"] .florence-rail__logo { writing-mode: horizontal-tb; white-space: normal; text-align: center; max-width: 84px; overflow-wrap: anywhere; }
+[data-theme="florence"] .florence-rail[data-logobar="3"] .florence-rail__logo img { writing-mode: initial; transform: none; }
+
 /* The wall: horizontal scroll row of columns. */
 .florence-wall {
   flex: 1 1 auto; min-width: 0; height: 100vh;
@@ -598,13 +620,11 @@ a {
 .florence-col--text .florence-text {
   line-height: 1.6; color: var(--theme-text); white-space: pre-line; margin: 0;
 }
-/* Long copy: fill the column height, then flow into a second column so it never
-   runs past the viewport. The column widens to fit the extra columns. */
-.florence-col--text-cols { width: auto; max-width: 88vw; justify-content: flex-start; padding-top: 9vh; padding-bottom: 9vh; }
-.florence-text--cols {
-  height: 82vh; column-width: clamp(230px, 22vw, 320px); column-gap: clamp(1.6rem, 2.4vw, 2.8rem);
-  column-fill: auto; white-space: normal;
-}
+/* Long copy auto-flows into N balanced columns (count + width set inline by
+   useBalancedColumns) so it never runs past the viewport and never leaves a lonely
+   stub column. The section widens to fit and pins the block to the top margin. */
+.florence-col--text:has(.florence-text--cols) { width: auto; max-width: 92vw; justify-content: flex-start; padding-top: 9vh; padding-bottom: 9vh; }
+.florence-text--cols { white-space: normal; }
 
 /* ── Florence frames: quiet gallery framing (mat / keyline), distinct from
    Amsterdam's vintage mounts. Caption prints on the frame. ─────────────────── */
@@ -631,6 +651,14 @@ a {
 
 /* Video / media column. */
 .florence-col--media { align-items: flex-start; }
+/* Empty video block: a 16:9 frame with a play glyph, so the editor previews where
+   the video will sit (the .florence-fit.wall-placeholder box rule is photo-only). */
+.florence-video-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in oklab, currentColor 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 12%, transparent);
+  overflow: hidden; color: inherit;
+}
 
 /* Testimonial column. */
 .florence-col--testimonial { width: clamp(320px, 30vw, 500px); }
@@ -638,6 +666,17 @@ a {
 .florence-testimonial__quote { margin: 0; font-size: clamp(1.15rem, 1.6vw, 1.5rem); line-height: 1.5; color: var(--theme-text); }
 .florence-testimonial__by { display: flex; align-items: center; gap: 0.7rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.8rem; color: var(--theme-text-muted, #8b8378); }
 .florence-testimonial__avatar { width: 40px; height: 40px; object-fit: cover; }
+/* Empty testimonial: skeleton quote bars reuse .wall-text-placeholder; the byline
+   gets a round avatar blob and a short name bar in the same muted tone. */
+.florence-testimonial-placeholder__quote { width: 100%; }
+.florence-testimonial-placeholder__avatar {
+  width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
+  background: color-mix(in oklab, currentColor 16%, transparent);
+}
+.florence-testimonial-placeholder__name {
+  display: block; height: 0.7em; width: 6rem; border-radius: 999px;
+  background: color-mix(in oklab, currentColor 16%, transparent);
+}
 
 /* Contact column — restyle ContactDisplay to the theme (Fraunces heading, IBM Plex
    Mono text/inputs, and a button matching the intro / "View Music Show" button). */
@@ -734,6 +773,9 @@ a {
   width: auto !important; height: auto; border-right: none; border-bottom: 1px solid var(--fl-hairline);
   padding: 1.75rem 1.1rem;
 }
+/* Balanced columns are a desktop-wall trick; on phones text is a single full-width
+   column (override the inline column-count/width the balancer sets). */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-text--cols { column-count: 1 !important; width: 100% !important; }
 /* On phones every horizontal layout collapses to a full-width vertical stack. */
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-figure,
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-frame { height: auto !important; flex: 0 0 auto; }
@@ -780,6 +822,15 @@ a {
 [data-theme="amsterdam"] .ams-rail__foot { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 18px 0; border-top: 1px solid color-mix(in oklab, currentColor 38%, transparent); }
 [data-theme="amsterdam"] .ams-rail__tagline { writing-mode: sideways-lr; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6; max-height: 30vh; overflow: hidden; }
 
+/* Logo-bar presets. Preset 1 is the base rail above (wordmark centered, reading
+   up). 2 pins the wordmark near the top and rotates an uploaded image logo; 3
+   sets the logo upright and centered. The menu stays on top in all three. */
+[data-theme="amsterdam"] .ams-rail[data-logobar="2"] .ams-rail__logo { flex: 0 0 auto; min-height: 0; padding: 26px 0; }
+[data-theme="amsterdam"] .ams-rail[data-logobar="2"] .ams-rail__foot { margin-top: auto; }
+[data-theme="amsterdam"] .ams-rail[data-logobar="2"] .ams-rail__logo img { writing-mode: initial; transform: rotate(-90deg); }
+[data-theme="amsterdam"] .ams-rail[data-logobar="3"] .ams-rail__logo { writing-mode: horizontal-tb; text-orientation: mixed; text-align: center; padding: 0 8px; }
+[data-theme="amsterdam"] .ams-rail[data-logobar="3"] .ams-rail__logo img { writing-mode: initial; transform: none; }
+
 /* Adaptive chrome: the whole rail floods to match whichever ground (dark / light
    / ink) sits under the viewport center, so the sidebar reads as one continuous
    surface with the wall. Color rides down to the logo/btn/tagline/dividers. */
@@ -794,6 +845,15 @@ a {
 [data-theme="amsterdam"] .ams-col[data-surface="dark"] { background: var(--ams-dark); color: var(--ams-on-dark); }
 [data-theme="amsterdam"] .ams-col[data-surface="light"] { background: var(--ams-light); color: var(--ams-on-light); }
 [data-theme="amsterdam"] .ams-col[data-surface="ink"] { background: var(--ams-ink); color: var(--ams-body-on-ink); }
+/* ...but when two neighbours share a ground the color seam vanishes (a pinned ground
+   colliding with the next auto block, or two blocks pinned the same). Restore a
+   hairline there so adjacent text/testimonial/contact panels still read as separate.
+   currentColor tracks each ground, so the rule reads on dark, light, and ink alike. */
+[data-theme="amsterdam"] .ams-stage:not([data-mobile="true"]) .ams-col[data-surface="dark"] + .ams-col[data-surface="dark"],
+[data-theme="amsterdam"] .ams-stage:not([data-mobile="true"]) .ams-col[data-surface="light"] + .ams-col[data-surface="light"],
+[data-theme="amsterdam"] .ams-stage:not([data-mobile="true"]) .ams-col[data-surface="ink"] + .ams-col[data-surface="ink"] {
+  border-left: 1px solid color-mix(in oklab, currentColor 22%, transparent);
+}
 
 /* Opener: poster hero (home) */
 [data-theme="amsterdam"] .ams-col--hero { width: calc(100vw - var(--theme-rail-width, 96px)); overflow: hidden; }
@@ -852,6 +912,9 @@ a {
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-rail__foot { display: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-wall { display: block; overflow: visible; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col { width: 100% !important; height: auto; min-height: 40vh; border-right: none; border-bottom: 1px solid rgba(20, 18, 16, 0.12); }
+/* Balanced columns are a desktop-wall trick; on phones text is a single full-width
+   column (override the inline column-count/width the balancer sets). */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-text--cols { column-count: 1 !important; width: 100% !important; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--hero { height: 72vh; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-title__name { white-space: normal; font-size: clamp(64px, 18vw, 120px); overflow-wrap: break-word; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-menu { width: 100%; transition: none; }
@@ -966,27 +1029,18 @@ a {
    object; let the image show fully and drift as one with a gentle pan. */
 [data-theme="amsterdam"] .ams-mount .ams-fit img { object-fit: cover; transform: translateX(calc(var(--par, 0px) * 0.5)) scale(1.06); }
 
-/* Text panels — color comes from the column's ground (data-surface). Panel is the
-   big statement; Quiet is the small museum note. A fancy drop cap opens the copy,
-   and long passages set in two magazine columns. */
-[data-theme="amsterdam"] .ams-col--panel { width: clamp(440px, 46vw, 860px); display: flex; align-items: center; padding: 9vh 3.6vw; }
-/* Panel = one confident statement size (no size toggle). */
-[data-theme="amsterdam"] .ams-panel__text { margin: 0; max-width: 26ch; font-size: clamp(1.6rem, 2.4vw, 2.7rem); line-height: 1.14; overflow-wrap: break-word; color: inherit; }
-/* Long panel copy fills the column height then flows into more columns, so it
-   never overruns the top/bottom margins. align-self stretch = the pane height. */
-[data-theme="amsterdam"] .ams-col--panel:has(.ams-panel__text--cols) { align-items: stretch; width: clamp(520px, 58vw, 1040px); }
-[data-theme="amsterdam"] .ams-panel__text--cols { max-width: none; align-self: stretch; column-width: clamp(240px, 23vw, 340px); column-gap: clamp(1.8em, 2.6vw, 3em); column-fill: auto; text-align: left; line-height: 1.28; }
+/* Quiet museum-label text — color comes from the column's ground (data-surface).
+   A fancy drop cap opens short copy; long passages auto-flow into balanced columns. */
 [data-theme="amsterdam"] .ams-col--quiet { width: clamp(300px, 30vw, 480px); display: flex; align-items: center; padding: 6vh 2.6vw; }
-[data-theme="amsterdam"] .ams-quiet__text { margin: 0; line-height: 1.5; white-space: pre-line; color: inherit; }
+[data-theme="amsterdam"] .ams-quiet__text { margin: 0; line-height: 1.5; white-space: pre-line; color: inherit; max-width: 40ch; }
+/* Long copy auto-flows into N balanced columns (count + width set inline by
+   useBalancedColumns) so it never overruns the top/bottom margins and reads evenly.
+   The section widens to fit and pins the block to the top margin. */
+[data-theme="amsterdam"] .ams-col--quiet:has(.ams-text--cols) { align-items: flex-start; width: auto; max-width: 92vw; }
+[data-theme="amsterdam"] .ams-text--cols { white-space: normal; max-width: none; }
 
 /* Fancy drop cap: an oversized display capital the copy wraps around. */
 [data-theme="amsterdam"] .ams-dropcap { float: left; font-family: "Abril Fatface", Georgia, serif; font-weight: 400; font-size: 2.3em; line-height: 0.66; padding: 0.06em 0.14em 0 0; }
-/* Two-column magazine setting for longer copy (drop cap floats in the first column). */
-/* Two-column magazine setting keeps the block's chosen Size (inline font-size);
-   it only changes the flow + justification, so the Size control still works. */
-[data-theme="amsterdam"] .ams-text--twocol { column-gap: clamp(1.6em, 2.4vw, 2.8em); column-count: 2; max-width: 56ch; line-height: 1.4; letter-spacing: 0; text-align: justify; }
-[data-theme="amsterdam"] .ams-col--panel:has(.ams-text--twocol) { width: clamp(520px, 54vw, 980px); }
-[data-theme="amsterdam"] .ams-text--twocol .ams-dropcap { font-size: 2.9em; }
 
 /* Testimonial / contact / page links */
 [data-theme="amsterdam"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-col--contact { width: clamp(340px, 34vw, 560px); display: flex; align-items: center; padding: 6vh 2.5vw; }
@@ -999,7 +1053,7 @@ a {
 [data-theme="amsterdam"] .ams-pagelink__title { font-family: "Anton", "Arial Narrow", sans-serif; text-transform: uppercase; font-size: 18px; letter-spacing: 0.02em; }
 
 /* Mobile column adjustments */
-[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--panel, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--quiet, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--contact { width: 100%; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--quiet, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--contact { width: 100%; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row { flex-direction: column; align-items: stretch; height: auto; gap: 12px; padding: 16px 0; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-frame { height: auto !important; }
 /* On phones the plaque stacks: the label drops below the photo and fills the

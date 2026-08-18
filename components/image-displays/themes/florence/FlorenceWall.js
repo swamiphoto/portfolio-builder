@@ -62,8 +62,9 @@ export default function FlorenceWall({
   const brand = logoImage
     ? <img src={siteConfig.logo} alt={siteConfig.siteName || 'Logo'} />
     : (siteConfig.siteName || name || '')
-  // Wordmark orientation on the rail: vertical (default) or horizontal.
-  const logoOrient = siteConfig?.design?.florenceLogo === 'horizontal' ? 'horizontal' : 'vertical'
+  // Logo-bar rail layout: 1 = wordmark up the rail (default), 2 = rotated
+  // CCW with the menu on top, 3 = centered upright with the menu on top.
+  const logoBar = ['1', '2', '3'].includes(siteConfig?.design?.logoBarLayout) ? siteConfig.design.logoBarLayout : '1'
 
   const toggleMenu = () => {
     setMenuOpen(o => {
@@ -86,10 +87,10 @@ export default function FlorenceWall({
 
   return (
     <div className="florence-stage" data-mobile={mobile ? 'true' : 'false'}>
-      <nav className="florence-rail" aria-label="Site navigation">
+      <nav className="florence-rail" data-logobar={logoBar} aria-label="Site navigation">
         {onPageClick
-          ? <button className="florence-rail__logo" data-orient={logoOrient} onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
-          : <a className="florence-rail__logo" data-orient={logoOrient} href={basePath || '/'}>{brand}</a>}
+          ? <button className="florence-rail__logo" data-orient="vertical" onClick={() => onPageClick(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>{brand}</button>
+          : <a className="florence-rail__logo" data-orient="vertical" href={basePath || '/'}>{brand}</a>}
         <div className="florence-rail__mid">
           <button className="florence-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
             {menuOpen ? <IconClose /> : <IconMenu />}

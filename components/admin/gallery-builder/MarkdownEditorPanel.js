@@ -4,7 +4,9 @@ import Tip from '@/components/admin/Tip'
 import { blockToMarkdownSeed } from '@/common/markdown'
 import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode } from '@/common/markdownDom'
 
-const PANEL_WIDTH = 440
+// Article/paper width — wider than the library picker so prose has a
+// comfortable measure to write and read against.
+const PANEL_WIDTH = 680
 
 // Warm hover state for the toolbar buttons. Kept as a handler (rather than a
 // Tailwind `hover:` class) because these buttons sit next to others that carry
@@ -83,6 +85,32 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   blockRef.current = block
   const [pickerOpen, setPickerOpen] = useState(false)
 
+  // Floating, draggable panel (mirrors PhotoPickerModal). Opens beside the
+  // block being edited — right of the site + block sidebars — clamped so a
+  // narrow viewport doesn't push it off the right edge.
+  const panelRef = useRef(null)
+  const dragState = useRef(null)
+  const [pos, setPos] = useState(() => {
+    if (typeof window === 'undefined') return { x: 526, y: 80 }
+    return { x: Math.max(16, Math.min(526, window.innerWidth - PANEL_WIDTH - 16)), y: 80 }
+  })
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!dragState.current) return
+      const dx = e.clientX - dragState.current.startX
+      const dy = e.clientY - dragState.current.startY
+      setPos({ x: dragState.current.origX + dx, y: dragState.current.origY + dy })
+    }
+    const onUp = () => { dragState.current = null }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [])
+
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => { if (e.key === 'Escape' && !pickerOpen) onClose() }
@@ -104,7 +132,12 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  if (!block) return null
+  if (!block || !open) return null
+
+  const startDrag = (e) => {
+    if (e.target.closest('button,input,select,textarea,img,[contenteditable]')) return
+    dragState.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y }
+  }
 
   const emit = (extraPatch = {}) => {
     const el = editableRef.current
@@ -141,23 +174,38 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     if (!refs?.length) return
     const el = editableRef.current
     if (el) {
-      const sel = typeof window !== 'undefined' ? window.getSelection() : null
-      let range = null
-      if (sel && sel.rangeCount && el.contains(sel.anchorNode)) {
-        range = sel.getRangeAt(0)
-      } else {
-        range = document.createRange()
-        range.selectNodeContents(el)
-        range.collapse(false)
-      }
+      // An image wrapper is a block, so it must be inserted as a TOP-LEVEL
+      // child of the editable root — never inside a paragraph at the caret.
+      // serializeDomToMarkdown only walks top-level children, so a wrapper
+      // nested in a <p> is silently dropped and the photo never reaches
+      // `content` (vanishing from the preview and on reopen). Anchor off the
+      // top-level block the caret sits in and splice the images in after it.
+      let after = currentBlockElement(el) // a direct child of el, or null when empty
       refs.forEach((r) => {
         const node = createImageBlockNode(document, r.url, '')
-        range.deleteContents()
-        range.insertNode(node)
-        range.setStartAfter(node)
-        range.collapse(true)
+        if (after && after.parentElement === el) {
+          el.insertBefore(node, after.nextSibling)
+        } else {
+          el.appendChild(node)
+        }
+        after = node
       })
-      if (sel) { sel.removeAllRanges(); sel.addRange(range) }
+      // Leave an empty paragraph after the image(s) so the caret has somewhere
+      // to land and the user can keep writing below the photo.
+      let trailing = after.nextSibling
+      if (!trailing || trailing.nodeType !== 1 || trailing.tagName !== 'P') {
+        trailing = document.createElement('p')
+        trailing.appendChild(document.createElement('br'))
+        el.insertBefore(trailing, after.nextSibling)
+      }
+      const sel = typeof window !== 'undefined' ? window.getSelection() : null
+      if (sel) {
+        const range = document.createRange()
+        range.setStart(trailing, 0)
+        range.collapse(true)
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
     }
     const seen = new Set((block.images || []).map((i) => i.assetId))
     const images = [...(block.images || []), ...refs.filter((r) => r.assetId && !seen.has(r.assetId)).map((r) => ({ assetId: r.assetId, url: r.url }))]
@@ -188,22 +236,30 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   return (
     <>
       <div
-        onClick={onClose}
-        style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(20,14,8,0.25)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity 0.25s' }}
-      />
-      <div
+        ref={panelRef}
+        data-markdown-editor
+        // z-[85]: floats above the editor sidebar but below the photo picker
+        // (z-[90]) so inserting an image overlays this panel rather than hiding
+        // behind it. Shares the picker's --popover surface for visual parity.
+        className="fixed z-[85] flex flex-col rounded-xl overflow-hidden"
         style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 81,
-          width: PANEL_WIDTH, maxWidth: '92vw', background: 'var(--panel)',
-          boxShadow: open ? '-24px 0 60px rgba(20,14,8,0.4)' : 'none',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)',
-          display: 'flex', flexDirection: 'column',
+          left: pos.x,
+          top: pos.y,
+          width: PANEL_WIDTH,
+          maxWidth: 'calc(100vw - 32px)',
+          height: 'min(720px, calc(100vh - 120px))',
+          background: 'var(--popover)',
+          boxShadow: 'var(--popover-shadow)',
         }}
       >
         <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ borderBottom: '1px solid rgba(160,140,110,0.22)' }}
+          className="flex items-center px-3 cursor-grab select-none flex-shrink-0"
+          onMouseDown={startDrag}
+          style={{
+            height: 40,
+            borderBottom: '1px solid rgba(160,140,110,0.22)',
+            background: 'var(--popover)',
+          }}
         >
           <div className="flex items-center gap-1">
             {TOOLBAR.map((t) => (
@@ -212,26 +268,23 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
               </Tip>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              color: '#2c2416',
-              borderRadius: 4,
-              padding: '6px 14px',
-              fontSize: 12,
-              fontWeight: 500,
-              border: '1px solid rgba(44,36,22,0.4)',
-              cursor: 'pointer',
-            }}
-          >
-            Done
-          </button>
+          <div className="ml-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+              style={{ color: 'var(--text-muted)' }}
+              aria-label="Close"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4l8 8M12 4l-8 8" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div
           ref={editableRef}
-          className="md-editable scroll-thin flex-1 resize-none p-4 text-sm leading-relaxed outline-none"
+          className="md-editable scroll-thin flex-1 resize-none px-8 py-6 text-[15px] leading-relaxed outline-none"
           contentEditable
           suppressContentEditableWarning
           onInput={() => emit()}
@@ -240,7 +293,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           style={{ background: 'transparent', color: 'var(--text-primary)', overflowY: 'auto' }}
         />
         <div
-          className="px-4 py-2 text-[11px]"
+          className="px-8 py-2 text-[11px] flex-shrink-0"
           style={{ borderTop: '1px solid rgba(160,140,110,0.18)', color: 'var(--text-muted)' }}
         >
           The final look depends on your site&apos;s theme.
@@ -254,7 +307,6 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           blockType="photo"
           onConfirm={insertImages}
           onClose={() => setPickerOpen(false)}
-          anchorRight={PANEL_WIDTH}
         />
       )}
     </>
