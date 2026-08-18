@@ -34,10 +34,16 @@ An issue's state is derived, not stored twice:
 ## What Claude does each loop tick
 
 1. **Check for your replies first.** For any issue labeled `needs-input` or
-   `done-review-me` whose most recent comment is from **you** (not Claude):
-   remove the flag label, move the card to **In Progress**, and continue the
-   task using your comment as the new instruction. (This is the follow-up loop —
-   you revise or approve by commenting; Claude resumes.)
+   `done-review-me` whose most recent comment does **not** end with the bot
+   marker `<!-- claude-loop-bot -->`: that comment is from the human, so remove
+   the flag label, move the card to **In Progress**, and continue the task using
+   that comment as the new instruction. (This is the follow-up loop — you revise
+   or approve by commenting; Claude resumes.)
+   > **Why the marker, not the author:** Claude posts via `gh`, which is
+   > authenticated as the human's own GitHub account — so bot and human comments
+   > share the same author and can't be told apart that way. Every comment Claude
+   > posts therefore ends with `<!-- claude-loop-bot -->` (invisible in rendered
+   > markdown). "Human replied" = the latest comment lacks that marker.
 2. **Otherwise pick up new work.** Take the oldest **Todo** issue.
 3. **Move it to In Progress** on the board and post a one-line comment: "On it."
 4. **Isolate the work.** Create a branch named `task/<issue#>-<short-slug>`
@@ -94,12 +100,29 @@ gh project item-edit --id <ITEM_ID> --project-id PVT_kwHOAGe2Gs4BgwbA \
   --single-select-option-id <Todo|In Progress|Done option id>
 ```
 
+**Post a comment (ALWAYS end bot comments with the marker):**
+
+```bash
+# Every comment Claude posts must end with the marker line so the reply
+# check above can tell Claude's comments from the human's.
+gh issue comment <issue#> --repo swamiphoto/portfolio-builder \
+  --body "$(printf '%s\n\n<!-- claude-loop-bot -->' '<message>')"
+```
+
 **Flag a question / mark done:**
 
 ```bash
-gh issue comment <issue#> --repo swamiphoto/portfolio-builder --body "<message>"
 gh issue edit <issue#> --repo swamiphoto/portfolio-builder --add-label needs-input
 gh issue edit <issue#> --repo swamiphoto/portfolio-builder --remove-label needs-input --add-label done-review-me
+```
+
+**Detect a human reply on a flagged issue:**
+
+```bash
+# Prints the last comment's body; if it does NOT contain claude-loop-bot,
+# the human replied → resume the task.
+gh issue view <issue#> --repo swamiphoto/portfolio-builder \
+  --json comments -q '.comments[-1].body'
 ```
 
 ## How you run the loop
