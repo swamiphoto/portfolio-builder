@@ -21,9 +21,14 @@ jest.mock('@/common/withAuth', () => ({
 }))
 
 const mockDiscover = jest.fn()
+const mockGenericDiscover = jest.fn()
 
 let mockDetectAdapter = jest.fn(() => ({ id: 'generic', enabled: true, discover: mockDiscover }))
-let mockGetAdapter = jest.fn(() => ({ id: 'generic', enabled: true, discover: mockDiscover }))
+let mockGetAdapter = jest.fn((id) =>
+  id === 'generic'
+    ? { id: 'generic', enabled: true, discover: mockGenericDiscover }
+    : { id: 'generic', enabled: true, discover: mockDiscover }
+)
 
 jest.mock('@/common/import/adapters', () => ({
   PROVIDERS: { SMUGMUG: 'smugmug', GENERIC: 'generic' },
@@ -40,6 +45,7 @@ function mockRes() {
 describe('POST /api/admin/import/discover', () => {
   beforeEach(() => {
     mockDiscover.mockReset()
+    mockGenericDiscover.mockReset()
     mockDetectAdapter.mockClear()
     mockGetAdapter.mockClear()
   })
@@ -82,6 +88,31 @@ describe('POST /api/admin/import/discover', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: 'discovery_failed' })
     )
+  })
+
+  it('falls back to the generic adapter when a non-generic adapter throws (e.g. SmugMug API key dead/unset)', async () => {
+    mockDetectAdapter.mockReturnValueOnce({ id: 'smugmug', enabled: true, discover: mockDiscover })
+    mockDiscover.mockRejectedValue(new Error('SMUGMUG_API_KEY not configured'))
+    mockGenericDiscover.mockResolvedValue({
+      site: { title: 'Sam', url: 'https://sam.smugmug.com/' },
+      collections: [{ id: 'home', name: 'Home', assetRefs: [{ remoteUrl: 'x' }] }],
+    })
+    const res = mockRes()
+    await handler({ method: 'POST', body: { input: 'sam.smugmug.com' } }, res)
+    expect(mockGetAdapter).toHaveBeenCalledWith('generic')
+    expect(mockGenericDiscover).toHaveBeenCalledWith('sam.smugmug.com')
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ provider: 'generic', totalAssets: 1 }))
+  })
+
+  it('502 when the non-generic adapter AND the generic fallback both throw', async () => {
+    mockDetectAdapter.mockReturnValueOnce({ id: 'smugmug', enabled: true, discover: mockDiscover })
+    mockDiscover.mockRejectedValue(new Error('SMUGMUG_API_KEY not configured'))
+    mockGenericDiscover.mockRejectedValue(new Error('network timeout'))
+    const res = mockRes()
+    await handler({ method: 'POST', body: { input: 'sam.smugmug.com' } }, res)
+    expect(res.status).toHaveBeenCalledWith(502)
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'discovery_failed' }))
   })
 
   it('400 when adapter is disabled', async () => {

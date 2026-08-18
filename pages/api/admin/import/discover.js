@@ -1,5 +1,5 @@
 import { withAuth } from '@/common/withAuth'
-import { detectAdapter, getAdapter } from '@/common/import/adapters'
+import { detectAdapter, getAdapter, PROVIDERS } from '@/common/import/adapters'
 
 async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -22,15 +22,34 @@ async function handler(req, res) {
   }
 
   let result
+  let resolvedProvider = adapter.id
   try {
     result = await adapter.discover(input)
   } catch (err) {
     console.error('import discover failed', err)
-    return res.status(502).json({
-      error: 'discovery_failed',
-      message:
-        "We couldn't read that link. Double-check the URL and try again, or upload your photos manually.",
-    })
+    // Provider-specific adapters (e.g. SmugMug's API) can fail for reasons that
+    // have nothing to do with whether the site actually has photos — a missing
+    // or dead API key, rate limiting, etc. Fall back to the generic crawler
+    // (which reads the rendered HTML directly) instead of surfacing a hard error.
+    const fallback = adapter.id !== PROVIDERS.GENERIC ? getAdapter(PROVIDERS.GENERIC) : null
+    if (!fallback) {
+      return res.status(502).json({
+        error: 'discovery_failed',
+        message:
+          "We couldn't read that link. Double-check the URL and try again, or upload your photos manually.",
+      })
+    }
+    try {
+      result = await fallback.discover(input)
+      resolvedProvider = fallback.id
+    } catch (fallbackErr) {
+      console.error('import discover fallback failed', fallbackErr)
+      return res.status(502).json({
+        error: 'discovery_failed',
+        message:
+          "We couldn't read that link. Double-check the URL and try again, or upload your photos manually.",
+      })
+    }
   }
 
   const totalAssets = (result.collections || []).reduce((n, c) => n + (c.assetRefs?.length || 0), 0)
@@ -43,7 +62,7 @@ async function handler(req, res) {
   }
 
   return res.status(200).json({
-    provider: adapter.id,
+    provider: resolvedProvider,
     site: result.site,
     collections: result.collections,
     siteMap: result.siteMap || null,
