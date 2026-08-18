@@ -30,6 +30,7 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
   const queue = [startUrl]
   const imageMap = new Map() // remoteUrl -> { remoteUrl, pageUrl }
   const seenOnPages = new Map() // remoteUrl -> count
+  const imagePages = new Map() // remoteUrl -> ordered list of every pageUrl it appeared on
   let siteTitle = null
   const pageRecords = []
   let navLinks = null
@@ -50,6 +51,8 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
     const { images, links } = extractImageUrls(html, pageUrl)
     for (const img of images) {
       seenOnPages.set(img, (seenOnPages.get(img) || 0) + 1)
+      if (!imagePages.has(img)) imagePages.set(img, [])
+      imagePages.get(img).push(pageUrl)
       if (!imageMap.has(img)) imageMap.set(img, { remoteUrl: img, pageUrl })
     }
     const content = extractPageContent(html)
@@ -72,7 +75,19 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
     }
   }
 
-  let refs = [...imageMap.values()].map((v) => ({ ...v, seenOnPages: seenOnPages.get(v.remoteUrl) }))
+  // Whole-site crawl: JS-rendered sites (SmugMug et al.) often embed EVERY photo's
+  // URL in the homepage's inline JSON, so BFS (which visits root first) would claim
+  // every image for the root page. Prefer the first NON-root page an image appeared
+  // on; only images seen exclusively on root stay attributed to root.
+  const rootUrl = startUrl
+  let refs = [...imageMap.values()].map((v) => {
+    let pageUrl = v.pageUrl
+    if (!singlePage) {
+      const pages = imagePages.get(v.remoteUrl) || [v.pageUrl]
+      pageUrl = pages.find((p) => p !== rootUrl) || pages[0]
+    }
+    return { ...v, pageUrl, seenOnPages: seenOnPages.get(v.remoteUrl) }
+  })
   refs = filterJunkImages(refs, { totalPages: visited.size })
   // A specific page → one flat collection named after that page; a whole site →
   // group into a collection per page (albums).

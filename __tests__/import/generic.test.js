@@ -56,6 +56,75 @@ describe('generic.discover', () => {
   })
 })
 
+describe('generic.discover attribution (SmugMug-shaped site)', () => {
+  // Mirrors www.sankarsalvady.com (SmugMug custom domain): the homepage is
+  // JS-rendered and its inline hydration <script> JSON embeds the URLs of every
+  // photo on the ENTIRE site, not just what's visually on the homepage. Each
+  // gallery subpage also independently references its own subset (mixed between
+  // <img> tags and inline JSON, like real gallery templates). A naive "first page
+  // wins" crawler would attribute every photo to the homepage and produce one
+  // giant collection instead of Landscapes / India / USA Travel.
+  const landPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/land${n}.jpg`)
+  const indiaPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/india${n}.jpg`)
+  const usaPhotos = [1, 2, 3, 4].map((n) => `https://sam.com/photos/usa${n}.jpg`)
+  const allPhotos = [...landPhotos, ...indiaPhotos, ...usaPhotos]
+
+  const PAGES = {
+    'https://sam.com/': `<title>Sam</title>
+      <nav><a href="/landscapes">Landscapes</a><a href="/india">India</a><a href="/usa-travel">USA Travel</a></nav>
+      <img src="/hero-portrait.jpg">
+      <script>window.__DATA__ = ${JSON.stringify({ allPhotos })}</script>`,
+    // <img> tags — the subpage's own DOM markup.
+    'https://sam.com/landscapes': `<title>Landscapes</title>${landPhotos.map((u) => `<img src="${u}">`).join('')}`,
+    // inline JSON — mixes the two extraction paths per the real templates.
+    'https://sam.com/india': `<title>India</title><script>window.__DATA__ = ${JSON.stringify({ photos: indiaPhotos })}</script>`,
+    'https://sam.com/usa-travel': `<title>USA Travel</title>${usaPhotos.map((u) => `<img src="${u}">`).join('')}`,
+  }
+  const fetchPage = (url) => {
+    if (PAGES[url] == null) return Promise.reject(new Error('404'))
+    return Promise.resolve(PAGES[url])
+  }
+
+  it('attributes photos to the gallery subpage they belong to, not the root page', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+
+    const byId = Object.fromEntries(result.collections.map((c) => [c.id, c]))
+    const idsWithPhotos = Object.keys(byId).sort()
+    expect(idsWithPhotos).toEqual(['home', 'india', 'landscapes', 'usa-travel'])
+
+    expect(byId['landscapes'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...landPhotos].sort())
+    expect(byId['india'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...indiaPhotos].sort())
+    expect(byId['usa-travel'].assetRefs.map((r) => r.remoteUrl).sort()).toEqual([...usaPhotos].sort())
+
+    // No giant catch-all collection: the root page (home) only keeps the photo
+    // that is genuinely root-only (the hero portrait, never seen anywhere else).
+    expect(byId['home'].assetRefs.map((r) => r.remoteUrl)).toEqual(['https://sam.com/hero-portrait.jpg'])
+  })
+
+  it('does not let the repeat-ratio junk filter drop the reattributed album photos', async () => {
+    // 4 total pages crawled (root + 3 subpages) means the repeat-ratio rule is
+    // active. Each album photo appears on exactly 2 of the 4 pages (root's JSON
+    // dump + its own subpage) — the 50% boundary — and must still survive.
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const allUrls = result.collections.flatMap((c) => c.assetRefs.map((r) => r.remoteUrl))
+    expect(allUrls).toEqual(expect.arrayContaining(allPhotos))
+  })
+
+  it('classifies the gallery subpages as galleries in the siteMap using page-local image counts', async () => {
+    const result = await generic.discover('sam.com', { fetchPage, maxPages: 10 })
+    const bySlug = Object.fromEntries(result.siteMap.pages.map((p) => [p.slug, p]))
+    // Each subpage's imageCount reflects what's on THAT page (4 photos each), not
+    // the homepage's 12-photo full-site dump — confirming imageCount is computed
+    // per-page rather than inherited from the reattributed collection.
+    expect(bySlug['landscapes'].kind).toBe('gallery')
+    expect(bySlug['india'].kind).toBe('gallery')
+    expect(bySlug['usa-travel'].kind).toBe('gallery')
+    expect(bySlug['landscapes'].collectionId).toBe('landscapes')
+    expect(bySlug['india'].collectionId).toBe('india')
+    expect(bySlug['usa-travel'].collectionId).toBe('usa-travel')
+  })
+})
+
 describe('generic.discover siteMap', () => {
   const IMG = (n) => Array.from({ length: n }, (_, i) => `<img src="/photos/p${i}.jpg">`).join('')
   const PAGES = {
