@@ -508,20 +508,24 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               // Font follows the block's chosen slot (Manhattan defaults to sans;
               // Serif/Editorial are selectable). Line-height tightened via CSS.
               const fontFamily = resolveFont(block, themeId);
-              // Manhattan: small, description-level sizes. Other themes: size/margins
-              // keyed off the JS mobile flag so the admin Mobile preview scales truthfully.
+              // A restrained, elegant size scale shared across the vertical themes.
+              // Medium (vv 2) is the readable base; these serif/editorial themes read
+              // best a touch larger than the wall themes, so the base is ~1.125rem
+              // (~18px), Large one notch up, Small one notch down. Margins key off the
+              // JS mobile flag so the admin Mobile preview scales truthfully.
+              // (vv: 1=Large, 2=Medium, 3=Small, 4=quote.)
               const classForV = (vv) => themeId === 'manhattan'
                 ? (
-                    vv === 4 ? `text-[0.9rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
-                    : vv === 3 ? `text-[0.9rem] ${alignClass} max-w-2xl py-2`
-                    : vv === 2 ? `text-lg md:text-xl font-medium ${alignClass} max-w-2xl py-3`
-                    : `text-2xl md:text-3xl font-light ${alignClass} max-w-3xl py-5`
+                    vv === 4 ? `text-[0.95rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
+                    : vv === 3 ? `text-[0.95rem] ${alignClass} max-w-2xl py-2`
+                    : vv === 2 ? `text-[1.125rem] font-medium ${alignClass} max-w-2xl py-3`
+                    : `text-[1.375rem] font-light ${alignClass} max-w-3xl py-4`
                   )
                 : (
-                    vv === 4 ? `${isSmallScreen ? 'text-base px-6 py-5' : 'text-xl px-8 py-6'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
-                    : vv === 3 ? `${isSmallScreen ? 'text-base px-6 py-3' : 'text-lg py-4'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
-                    : vv === 2 ? `${isSmallScreen ? 'text-lg px-6 py-4' : 'text-2xl py-6'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
-                    : `${isSmallScreen ? 'text-2xl px-6 py-6' : 'text-4xl py-10'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
+                    vv === 4 ? `${isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
+                    : vv === 3 ? `${isSmallScreen ? 'text-[0.95rem] px-6 py-2' : 'text-[0.95rem] py-3'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
+                    : vv === 2 ? `${isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.125rem] py-4'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
+                    : `${isSmallScreen ? 'text-[1.25rem] px-6 py-5' : 'text-[1.375rem] py-6'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
               const variantClass = classForV(v);
               if (block.format === 'markdown') {
@@ -529,7 +533,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...hoverProps} style={{ ...hoverProps.style, fontFamily }}>
                     <MarkdownText
                       content={block.content}
-                      variantClasses={{ heading: classForV(1), body: classForV(3), quote: classForV(4) }}
+                      variantClasses={{ heading: classForV(1), body: classForV(2), quote: classForV(4) }}
                     />
                   </div>
                 );

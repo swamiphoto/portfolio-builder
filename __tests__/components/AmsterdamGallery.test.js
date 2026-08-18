@@ -10,11 +10,11 @@ jest.mock('react-responsive', () => ({ useMediaQuery: () => false }))
 describe('Amsterdam wall via Gallery', () => {
   it('short-circuits to the Amsterdam stage with the title opener', () => {
     const { container } = render(
-      <Gallery blocks={[{ type: 'text', content: 'Hello', amsterdamStyle: 'panel' }]} themeId="amsterdam" name="Iceland" siteConfig={{}} />
+      <Gallery blocks={[{ type: 'text', content: 'Hello' }]} themeId="amsterdam" name="Iceland" siteConfig={{}} />
     )
     expect(container.querySelector('.ams-stage')).toBeTruthy()
     expect(container.querySelector('.ams-col--title .ams-title__name').textContent).toBe('Iceland')
-    expect(container.querySelector('.ams-col--panel')).toBeTruthy()
+    expect(container.querySelector('.ams-col--quiet .ams-quiet__text').textContent).toBe('Hello')
   })
 
   it('renders the poster hero when cover + opener=hero are passed', () => {

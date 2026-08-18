@@ -1,24 +1,16 @@
 import { render } from '@testing-library/react'
 import DesignPopover from '@/components/admin/gallery-builder/DesignPopover'
-import { resolveAmsterdamStyle } from '@/common/themes/variants'
 
-describe('Amsterdam text Style control', () => {
-  it('resolveAmsterdamStyle: quiet by default, panel only when stored', () => {
-    expect(resolveAmsterdamStyle({ type: 'text' })).toBe('quiet')
-    expect(resolveAmsterdamStyle({ type: 'text', amsterdamStyle: 'panel' })).toBe('panel')
-    expect(resolveAmsterdamStyle({ type: 'text', amsterdamStyle: 'bogus' })).toBe('quiet')
-    expect(resolveAmsterdamStyle(undefined)).toBe('quiet')
-  })
-
-  it('offers Panel/Quiet for amsterdam text blocks only', () => {
+describe('Amsterdam text block design controls', () => {
+  it('no longer offers a Panel/Quiet Style control — every text block is the quiet label', () => {
     const anchor = document.createElement('div')
     document.body.appendChild(anchor)
     const props = { anchorEl: anchor, onClose: () => {}, onUpdate: () => {} }
     const ams = render(<DesignPopover {...props} block={{ type: 'text', content: 'x' }} themeId="amsterdam" />)
-    expect(ams.getByText('Panel')).toBeTruthy()
-    expect(ams.getByText('Quiet')).toBeTruthy()
+    expect(ams.queryByText('Panel')).toBeNull()
+    expect(ams.queryByText('Quiet')).toBeNull()
+    // The Size control (L/M/S) is always available now (it was hidden for Panel before).
+    expect(ams.getByText('Size')).toBeTruthy()
     ams.unmount()
-    const kyo = render(<DesignPopover {...props} block={{ type: 'text', content: 'x' }} themeId="kyoto" />)
-    expect(kyo.queryByText('Panel')).toBeNull()
   })
 })

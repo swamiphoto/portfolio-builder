@@ -19,3 +19,29 @@ describe('FlorenceColumn text block', () => {
     expect(text.textContent).not.toContain('**')
   })
 })
+
+describe('FlorenceColumn empty video block', () => {
+  it('previews a placeholder when showPlaceholders is on (editor)', () => {
+    const { container } = renderWall([{ type: 'video', url: '' }], {}, { showPlaceholders: true })
+    expect(container.querySelector('.florence-col--media')).toBeTruthy()
+    expect(container.querySelector('.florence-video-placeholder')).toBeTruthy()
+  })
+
+  it('renders nothing on the published site (no placeholders)', () => {
+    const { container } = renderWall([{ type: 'video', url: '' }])
+    expect(container.querySelector('.florence-col--media')).toBeFalsy()
+  })
+})
+
+describe('FlorenceColumn empty testimonial block', () => {
+  it('previews a placeholder when showPlaceholders is on (editor)', () => {
+    const { container } = renderWall([{ type: 'testimonial' }], {}, { showPlaceholders: true })
+    expect(container.querySelector('.florence-col--testimonial')).toBeTruthy()
+    expect(container.querySelector('.florence-testimonial-placeholder')).toBeTruthy()
+  })
+
+  it('renders nothing on the published site (no placeholders)', () => {
+    const { container } = renderWall([{ type: 'testimonial' }])
+    expect(container.querySelector('.florence-col--testimonial')).toBeFalsy()
+  })
+})

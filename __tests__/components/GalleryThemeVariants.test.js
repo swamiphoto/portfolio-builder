@@ -15,15 +15,16 @@ describe('Gallery variant resolution', () => {
     const block = { type: 'text', content: 'Hello world', themeState: { kyoto: { variant: 'body' } } }
     const { container } = renderGallery([block], 'kyoto')
     const el = container.querySelector('.text-block')
-    // body variant => desktop text-lg class present, not the heading size
-    expect(el.className).toMatch(/text-lg/)
-    expect(el.className).not.toMatch(/text-4xl/)
+    // body variant (Small) => 0.95rem, not the heading size (1.375rem)
+    expect(el.className).toMatch(/text-\[0\.95rem\]/)
+    expect(el.className).not.toMatch(/text-\[1\.375rem\]/)
   })
 
   it('falls back to theme default when no state for the active theme', () => {
     const block = { type: 'text', content: 'Hi', themeState: { manhattan: { variant: 'body' } } }
-    const { container } = renderGallery([block], 'kyoto') // kyoto default = subheading (medium)
-    expect(container.querySelector('.text-block').className).toMatch(/text-2xl/)
-    expect(container.querySelector('.text-block').className).not.toMatch(/text-4xl/)
+    const { container } = renderGallery([block], 'kyoto') // kyoto default = subheading (Medium)
+    // Medium base => 1.125rem, not Large (1.375rem)
+    expect(container.querySelector('.text-block').className).toMatch(/text-\[1\.125rem\]/)
+    expect(container.querySelector('.text-block').className).not.toMatch(/text-\[1\.375rem\]/)
   })
 })

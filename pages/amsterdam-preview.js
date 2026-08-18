@@ -14,7 +14,7 @@ export async function getServerSideProps() {
 
 const P = (id, w = 900, h = 1200) => `https://picsum.photos/id/${id}/${w}/${h}`
 
-const LONG = 'The seventeenth-century canals are a world-renowned location of cultural and historical significance, with a rich history spanning four hundred years of development, expansion, innovation and engineering. The city’s canal ring and its design is an early example of large-scale, coordinated urban planning and forward thinking.'
+const LONG = 'The seventeenth-century canals are a world-renowned location of cultural and historical significance, with a rich history spanning four hundred years of development, expansion, innovation and engineering. The city’s canal ring and its design is an early example of large-scale, coordinated urban planning and forward thinking. Built during the Dutch Golden Age, the concentric half-rings of the Herengracht, Keizersgracht and Prinsengracht drained the marshland and pushed the city outward in a single, deliberate gesture. Merchants raised tall, narrow houses along the water, their gables leaning toward the street so goods could be hoisted to the attics. Four centuries later the same water still holds the same light, and the same brick still keeps the same quiet.'
 
 const LONGCAP = 'In the 15 years I’ve been a photographer, I’ve tried every portfolio builder, and not one felt like it was truly made for the work.'
 
@@ -24,10 +24,11 @@ const BLOCKS = [
   // Frame styles: a single Card-mounted photo, then a Mixed-mounted set.
   { type: 'photo', image: P(1024, 1000, 1500), caption: LONGCAP, capture: { capturedAt: '1902-01-01T00:00:00Z' }, amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'photos', images: [{ url: P(1033), caption: 'Oudezijds' }, { url: P(1037), caption: 'Prinsengracht' }, { url: P(1041), caption: 'Herengracht' }], amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } } },
-  { type: 'text', content: 'Four hundred years of water, brick and light.', amsterdamStyle: 'panel' },
-  { type: 'text', content: LONG, amsterdamStyle: 'panel' },
+  { type: 'text', content: 'Four hundred years of water, brick and light.' },
+  // Long copy auto-flows into balanced columns (no Style toggle any more).
+  { type: 'text', content: LONG },
   { type: 'photos', images: [{ url: P(1039) }, { url: P(1043), caption: 'Jordaan' }, { url: P(1044) }], themeState: { amsterdam: { variant: 'row', size: 'large' } } },
-  { type: 'text', content: 'Shot over three winters along the canal ring.', amsterdamStyle: 'quiet', themeState: { amsterdam: { variant: 'body' } } },
+  { type: 'text', content: 'Shot over three winters along the canal ring.', themeState: { amsterdam: { variant: 'body' } } },
   { type: 'photos', images: [{ url: P(1050), caption: 'Singel' }, { url: P(1051), caption: 'Brouwersgracht' }, { url: P(1052), caption: 'Bloemgracht' }, { url: P(1053), caption: 'Lijnbaansgracht' }, { url: P(1054), caption: 'Leliegracht' }], themeState: { amsterdam: { variant: 'mosaic' } } },
   { type: 'photo', image: P(1056, 1200, 900), caption: 'PRINSENGRACHT', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', caption: 'PROCESS FILM' },
@@ -42,7 +43,7 @@ const EMPTY_BLOCKS = [
   { type: 'photos', themeState: { amsterdam: { variant: 'row' } } },
   { type: 'photos', amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } } },
   { type: 'photos', themeState: { amsterdam: { variant: 'mosaic' } } },
-  { type: 'text', amsterdamStyle: 'panel' },
+  { type: 'text' },
 ]
 
 const SITE = {

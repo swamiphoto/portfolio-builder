@@ -57,7 +57,9 @@ export const baseBlocks = {
     defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
   text: {
-    defaultVariant: 'heading',
+    // Medium is the default everywhere: it's the readable base size (~1rem). Large
+    // steps one notch up, Small one notch down — an elegant, restrained scale.
+    defaultVariant: 'subheading',
     variants: [
       { id: 'heading', label: 'L' },
       { id: 'subheading', label: 'M' },

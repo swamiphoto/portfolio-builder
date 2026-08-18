@@ -4,15 +4,16 @@
 // wall's left→right scroll.
 //   photo        → Fill (edge-to-edge height, default) or Centered (Size + plaque).
 //   photos       → Row (side by side, captions beneath) or Mosaic (groups of 1/2/3).
-//   text         → Panel (full-height ink column, Display type) or Quiet (cream
-//                  museum label) via block.amsterdamStyle; L/M/S from the variant.
+//   text         → a quiet cream museum label; L/M/S from the variant. Long copy
+//                  auto-flows into balanced columns when it would overrun the height.
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../../../common/assetRefs'
-import { resolveVariant, resolvePhotoSize, resolveFont, resolveButtonStyle, resolveSize, resolveQuoteStyle, resolveAmsterdamStyle, resolveAmsterdamFrame } from '../../../../common/themes/variants'
+import { resolveVariant, resolvePhotoSize, resolveFont, resolveButtonStyle, resolveSize, resolveQuoteStyle, resolveAmsterdamFrame } from '../../../../common/themes/variants'
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
 import { FitImg, FitPlaceholder, Overlays } from '../shared/WallFit'
+import { useBalancedColumns } from '../shared/useBalancedColumns'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
 import MarkdownText from '../../MarkdownText'
@@ -31,10 +32,40 @@ const ROW_HEIGHT = { large: '84vh', medium: '62vh', small: '46vh' }
 const MOSAIC_HEIGHT = { large: '84vh', medium: '66vh', small: '50vh' }
 const MOSAIC_PATTERN = [1, 2, 3, 1, 2]
 const MOSAIC_GROUP_WIDTHS = ['clamp(240px, 26vw, 400px)', 'clamp(190px, 20vw, 300px)', 'clamp(280px, 30vw, 440px)', 'clamp(210px, 23vw, 340px)']
-// Panel text is poster-scaled; Quiet matches the museum-label register.
-const PANEL_SIZE = { heading: 'clamp(2.6rem, 4.4vw, 5rem)', subheading: 'clamp(1.9rem, 3vw, 3.4rem)', body: 'clamp(1.15rem, 1.6vw, 1.5rem)' }
-const QUIET_SIZE = { heading: 'clamp(1.3rem, 1.7vw, 1.65rem)', subheading: 'clamp(1.12rem, 1.4vw, 1.32rem)', body: 'clamp(1rem, 1.2vw, 1.14rem)' }
+// One restrained text scale (museum-label register): Medium is the readable base,
+// Large/Small step one notch either way. No poster-sized display type any more.
+const TEXT_SIZE = { heading: 'clamp(1.15rem, 1.4vw, 1.25rem)', subheading: 'clamp(1rem, 1.1vw, 1.05rem)', body: 'clamp(0.85rem, 0.95vw, 0.92rem)' }
 const QUOTE_SIZE = { large: 'clamp(1.4rem, 2.2vw, 1.9rem)', medium: 'clamp(1.15rem, 1.7vw, 1.5rem)', small: 'clamp(1rem, 1.4vw, 1.2rem)' }
+// One column of quiet copy, plus the gap when it flows into several.
+const TEXT_COL_W = 'clamp(280px, 26vw, 440px)'
+const TEXT_GAP = 'clamp(1.6rem, 2.4vw, 2.8rem)'
+
+// The quiet museum label. Short copy sets in one centered column (with a fancy drop
+// cap); copy long enough to overrun the column height auto-flows into N balanced
+// columns so it stays within the top/bottom margins and reads evenly.
+function AmsterdamText({ block, fontFamily, fontSize }) {
+  const content = String(block.content)
+  const isMd = block.format === 'markdown'
+  const { ref, cols, columnStyle } = useBalancedColumns([content, fontFamily, fontSize], { colWidth: TEXT_COL_W, gap: TEXT_GAP })
+  const multi = cols > 1
+  const cls = `ams-quiet__text${multi ? ' ams-text--cols' : ''}`
+  const style = { fontFamily, fontSize, ...(columnStyle || {}) }
+  if (isMd) {
+    return (
+      <div ref={ref} className={cls} style={style}>
+        <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} />
+      </div>
+    )
+  }
+  // Split a leading capital off as an oversized drop cap; the rest flows around it.
+  // A multi-column magazine setting drops the cap — it only reads in a single column.
+  const m = content.match(/^(\s*)(\S)([\s\S]*)$/)
+  const [lead, cap, rest] = m ? [m[1], m[2], m[3]] : ['', '', content]
+  const body = (!multi && cap)
+    ? <><span className="ams-dropcap" aria-hidden>{cap}</span>{lead}{rest}</>
+    : content
+  return <p ref={ref} className={cls} style={style}>{body}</p>
+}
 
 function mosaicGroups(refs) {
   const groups = []
@@ -236,43 +267,9 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
           </div>
         ))
       }
-      // Markdown blocks carry their own structure (headings, lists, images), so
-      // the drop-cap and column tricks below stay plain-text-only. Amsterdam has
-      // no distinct heading/quote treatment beyond Panel vs Quiet — formatting
-      // (bold, links, lists) is what matters here, not new art direction.
-      if (block.format === 'markdown') {
-        if (resolveAmsterdamStyle(block) === 'quiet') {
-          const mdStyle = { fontFamily, fontSize: QUIET_SIZE[variant] || QUIET_SIZE.body }
-          return wrap('ams-col--quiet', null, (
-            <div className="ams-quiet__text" style={mdStyle}><MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} /></div>
-          ))
-        }
-        const mdStyle = { fontFamily, fontSize: PANEL_SIZE[variant] || PANEL_SIZE.body }
-        return wrap('ams-col--panel', null, (
-          <div className="ams-panel__text" style={mdStyle}><MarkdownText content={block.content} variantClasses={{ heading: '', body: '', quote: '' }} /></div>
-        ))
-      }
-      // Split a leading capital off so it can be set as an oversized drop cap;
-      // the rest flows beside/under it. Long copy sets in two columns.
-      const content = String(block.content)
-      const m = content.match(/^(\s*)(\S)([\s\S]*)$/)
-      const [lead, cap, rest] = m ? [m[1], m[2], m[3]] : ['', '', content]
-      const dropCap = cap
-        ? <><span className="ams-dropcap" aria-hidden>{cap}</span>{lead}{rest}</>
-        : content
-      // Two columns are a magazine setting for small body copy — a big heading/
-      // subheading statement stays a single column so the Size control reads true.
-      if (resolveAmsterdamStyle(block) === 'quiet') {
-        const twoCol = content.length > 240 && variant === 'body'
-        return wrap('ams-col--quiet', null, (
-          <p className={`ams-quiet__text${twoCol ? ' ams-text--twocol' : ''}`} style={{ fontFamily, fontSize: QUIET_SIZE[variant] || QUIET_SIZE.body }}>{dropCap}</p>
-        ))
-      }
-      // Panel is one fixed size; long copy flows into height-constrained columns so
-      // it respects the margins instead of overflowing the top of the viewport.
-      const long = content.length > 300
-      return wrap('ams-col--panel', null, (
-        <p className={`ams-panel__text${long ? ' ams-panel__text--cols' : ''}`} style={{ fontFamily }}>{dropCap}</p>
+      const fontSize = TEXT_SIZE[variant] || TEXT_SIZE.body
+      return wrap('ams-col--quiet', null, (
+        <AmsterdamText block={block} fontFamily={fontFamily} fontSize={fontSize} />
       ))
     }
 

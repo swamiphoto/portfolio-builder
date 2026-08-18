@@ -64,15 +64,17 @@ describe('AmsterdamColumn block treatments', () => {
     expect(container.querySelector('.ams-col--mosaic .ams-mosaic')).toBeTruthy()
   })
 
-  it('text renders as a Quiet column by default and a Panel when stored', () => {
+  it('every text block renders as a Quiet museum-label column (no Panel style)', () => {
     const { container } = renderWall([
       { type: 'text', content: 'Small words' },
+      // A stored legacy amsterdamStyle:'panel' is ignored — quiet is the only style now.
       { type: 'text', content: 'Bold words', amsterdamStyle: 'panel' },
     ])
-    const panel = container.querySelector('.ams-col--panel .ams-panel__text')
-    expect(panel.textContent).toBe('Bold words')
-    expect(panel.style.fontFamily).toContain('Abril Fatface') // Display default
-    expect(container.querySelector('.ams-col--quiet .ams-quiet__text').textContent).toBe('Small words')
+    expect(container.querySelector('.ams-col--panel')).toBeNull()
+    const quiets = container.querySelectorAll('.ams-col--quiet .ams-quiet__text')
+    expect(quiets).toHaveLength(2)
+    expect(quiets[0].textContent).toBe('Small words')
+    expect(quiets[1].textContent).toBe('Bold words')
   })
 
   it('testimonial, contact and video render their columns', () => {
@@ -137,17 +139,15 @@ describe('AmsterdamColumn block treatments', () => {
 
   it('renders markdown text blocks formatted, not as literal markdown syntax', () => {
     const { container } = renderWall([
-      { type: 'text', content: '**bold** words', format: 'markdown', amsterdamStyle: 'panel' },
-      { type: 'text', content: '**quiet bold**', format: 'markdown', amsterdamStyle: 'quiet' },
+      { type: 'text', content: '**bold** words', format: 'markdown' },
+      { type: 'text', content: '**quiet bold**', format: 'markdown' },
     ])
-    const panel = container.querySelector('.ams-col--panel .ams-panel__text')
-    expect(panel.querySelector('strong')).toBeTruthy()
-    expect(panel.querySelector('strong').textContent).toBe('bold')
-    expect(panel.textContent).not.toContain('**')
-
-    const quiet = container.querySelector('.ams-col--quiet .ams-quiet__text')
-    expect(quiet.querySelector('strong')).toBeTruthy()
-    expect(quiet.textContent).not.toContain('**')
+    const quiets = container.querySelectorAll('.ams-col--quiet .ams-quiet__text')
+    expect(quiets).toHaveLength(2)
+    quiets.forEach((q) => {
+      expect(q.querySelector('strong')).toBeTruthy()
+      expect(q.textContent).not.toContain('**')
+    })
   })
 
   it('photo captions honor photoMeta', () => {

@@ -28,6 +28,10 @@ const EMPTY_BLOCKS = [
   { type: 'photos', themeState: { florence: { variant: 'row' } } },
   { type: 'photos', florenceFrame: 'mixed', themeState: { florence: { variant: 'row' } } },
   { type: 'photos', themeState: { florence: { variant: 'mosaic' } } },
+  { type: 'text' },
+  { type: 'video' },
+  { type: 'testimonial' },
+  { type: 'testimonial', themeState: { florence: { variant: 'quote-above' } } },
 ]
 
 // ?mosaic=1 seeds mosaic + row blocks at medium/small with center/bottom anchors,
