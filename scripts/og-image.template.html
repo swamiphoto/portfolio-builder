@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--
+  Source template for public/og-image.png (the 1200x630 social share card).
+  The Sepia wordmark is the brand font Italianno (same as the splash/nav), gold
+  on a sepia ground.
+
+  To regenerate after editing this file:
+    1. copy it into public/ so the dev server can serve it (fonts need http):
+         cp scripts/og-image.template.html public/_og-tmp.html
+    2. open http://localhost:<port>/_og-tmp.html at a 1200x630 viewport,
+       wait for the Italianno webfont to load, screenshot the viewport
+    3. save the shot to public/og-image.png and delete public/_og-tmp.html
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Italianno&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  .card {
+    width: 1200px; height: 630px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    /* Warm sepia ground: a soft lift in the upper-middle falling to near-black. */
+    background:
+      radial-gradient(120% 90% at 50% 34%, #3a2c1d 0%, #271c12 45%, #180f08 100%);
+  }
+  /* Subtle vignette to frame the wordmark. */
+  .card::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(75% 60% at 50% 42%, transparent 55%, rgba(0,0,0,0.38) 100%);
+  }
+  .wordmark {
+    font-family: 'Italianno', cursive;
+    font-size: 350px; font-weight: 400;
+    /* Italianno's 'p' has a long ornamental descender. background-clip:text only
+       paints the gradient inside the element box, so the box must be tall enough
+       (roomy line-height + bottom padding) to contain that tail — otherwise the
+       descender falls outside the gradient and renders as transparent (clipped). */
+    line-height: 1.35; padding: 60px 40px;
+    /* Gold leaf: lighter at the top, deepening toward the tail. */
+    background: linear-gradient(180deg, #f7e7bf 0%, #eecf95 40%, #c79c56 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    position: relative; z-index: 2;
+    filter: drop-shadow(0 10px 40px rgba(240, 205, 140, 0.16));
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="wordmark">Sepia</div>
+  </div>
+</body>
+</html>
