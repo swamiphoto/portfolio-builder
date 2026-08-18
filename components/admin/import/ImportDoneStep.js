@@ -104,7 +104,9 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
           A few photos couldn't be copied over. You can upload those to your library anytime.
         </p>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+      {/* The two CTAs share one row (never wrapping); the quiet text action
+          sits on its own line below so it can't force the pair apart. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap', marginBottom: 14 }}>
         {canReplicate ? (
           <>
             <button
@@ -137,10 +139,10 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
             {busy ? 'Setting up…' : 'Go to my studio'}
           </button>
         )}
-        <button onClick={onImportAnother} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
-          Import from another site
-        </button>
       </div>
+      <button onClick={onImportAnother} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
+        Import from another site
+      </button>
     </div>
   )
 }
