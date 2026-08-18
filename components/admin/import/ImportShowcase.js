@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MONO } from './importFlowStyles'
+import { showcaseThumbUrl, onCoverError } from './coverThumb'
 
 // The wait, as a show — not a process. While photos import in the background, we
 // take over the screen with a calm exhibition: the photographer's own images drift
@@ -150,7 +151,7 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
               <div className="showcase-photo__anim">
                 <div style={{ ...fs, boxShadow: '0 16px 34px rgba(60,40,15,0.17), 0 3px 8px rgba(60,40,15,0.11)' }}>
                   <div style={{ width: w, height: Math.round(w * c.aspect), overflow: 'hidden', background: '#ddd3c2', borderRadius: c.format === 'bare' ? 3 : 0 }}>
-                    <img src={c.url} alt="" loading="lazy" decoding="async" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'saturate(0.96) sepia(0.05)' }} />
+                    <img src={showcaseThumbUrl(c.url, 480)} alt="" loading="lazy" decoding="async" draggable={false} onError={onCoverError(c.url)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'saturate(0.96) sepia(0.05)' }} />
                   </div>
                 </div>
               </div>
