@@ -1,4 +1,5 @@
-import { MONO, primaryBtn } from './importFlowStyles'
+import { useState } from 'react'
+import { MONO, primaryBtn, outlineBtn, primaryBtnHoverOn, primaryBtnHoverOff, outlineBtnHoverOn, outlineBtnHoverOff } from './importFlowStyles'
 
 // The subdued text-button style already used for "Import from another site",
 // reused here for the "keep photos only" choice so the two secondary actions
@@ -68,9 +69,24 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
   // Body copy is real body text: secondary color at 14px, not the muted hint
   // token this screen originally borrowed (illegible on the cream surface).
   const bodyText = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }
-  const outlineBtn = {
-    background: 'transparent', color: '#2c2416', border: '1px solid rgba(44,36,22,0.4)',
-    borderRadius: 4, padding: '6px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+
+  // onEnter's handler chain (library GET/PUT + optional page composition +
+  // site-config write) is async and was previously fire-and-forget — clicking
+  // gave zero feedback while it ran. Track a busy state, same shape as the
+  // studio's Publish button: label swaps, button disables, and we wait out
+  // the promise (if the caller returns one) before clearing it. The done
+  // screen typically unmounts once onEnter finishes (it redirects into the
+  // studio), so the finally's setBusy(false) may be a no-op on an unmounted
+  // component — harmless in React 18, no state-update warning.
+  const [busy, setBusy] = useState(false)
+  async function handleEnter(opts) {
+    if (busy) return
+    setBusy(true)
+    try {
+      await onEnter(opts)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -91,16 +107,34 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
         {canReplicate ? (
           <>
-            <button onClick={() => onEnter({ replicate: true })} style={{ ...primaryBtn(false) }}>
-              Build my pages for me
+            <button
+              onClick={() => handleEnter({ replicate: true })}
+              disabled={busy}
+              style={primaryBtn(busy)}
+              onMouseEnter={primaryBtnHoverOn}
+              onMouseLeave={primaryBtnHoverOff}
+            >
+              {busy ? 'Building your pages…' : 'Build my pages for me'}
             </button>
-            <button onClick={() => onEnter({ replicate: false })} style={outlineBtn}>
+            <button
+              onClick={() => handleEnter({ replicate: false })}
+              disabled={busy}
+              style={outlineBtn(busy)}
+              onMouseEnter={outlineBtnHoverOn}
+              onMouseLeave={outlineBtnHoverOff}
+            >
               I'll build my own
             </button>
           </>
         ) : (
-          <button onClick={() => onEnter({ replicate: false })} style={{ ...primaryBtn(false) }}>
-            Go to my studio
+          <button
+            onClick={() => handleEnter({ replicate: false })}
+            disabled={busy}
+            style={primaryBtn(busy)}
+            onMouseEnter={primaryBtnHoverOn}
+            onMouseLeave={primaryBtnHoverOff}
+          >
+            {busy ? 'Setting up…' : 'Go to my studio'}
           </button>
         )}
         <button onClick={onImportAnother} style={textBtnStyle} onMouseEnter={textBtnHoverOn} onMouseLeave={textBtnHoverOff}>
