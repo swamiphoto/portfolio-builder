@@ -109,4 +109,21 @@ describe('dedupe', () => {
     expect(fresh.map((r) => r.remoteUrl)).toEqual(['https://remote/b.jpg'])
     expect(skipped).toEqual(['https://remote/a.jpg'])
   })
+
+  it('ignores thumbUrl entirely — dedupe keys on remoteUrl only', () => {
+    const urls = new Set(['https://remote/a.jpg'])
+    // ref 1: remoteUrl matches an existing asset -> skipped, regardless of its thumbUrl.
+    // ref 2: remoteUrl is new, but its thumbUrl happens to equal an existing remoteUrl
+    //        -> must still import fresh; thumbUrl must never be consulted for dedupe.
+    const { fresh, skipped } = dedupeRefs(
+      [
+        { remoteUrl: 'https://remote/a.jpg', thumbUrl: 'https://remote/a-thumb.jpg' },
+        { remoteUrl: 'https://remote/b.jpg', thumbUrl: 'https://remote/a.jpg' },
+      ],
+      urls
+    )
+    expect(skipped).toEqual(['https://remote/a.jpg'])
+    expect(fresh.map((r) => r.remoteUrl)).toEqual(['https://remote/b.jpg'])
+    expect(fresh[0].thumbUrl).toBe('https://remote/a.jpg')
+  })
 })

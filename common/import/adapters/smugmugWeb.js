@@ -124,6 +124,19 @@ function pickCaption(img) {
   return raw ? String(raw) : null
 }
 
+// Cheap cover thumbnail for the review/showcase UI — S (200px) is preferred,
+// falling back to Th (100px). remoteUrl (picked by pickImageUrl above) stays
+// the largest USABLE size for the actual import; thumbUrl is UI-only and is
+// simply omitted when neither small size is usable.
+function pickThumbUrl(img) {
+  const sizes = img?.Sizes || {}
+  const s = sizes.S
+  if (s && s.usable && s.url) return s.url
+  const th = sizes.Th
+  if (th && th.usable && th.url) return th.url
+  return null
+}
+
 async function discover(input, { fetchPage = httpFetchPage, fetchJson = httpFetchJson, maxPages = 60, maxAlbumPages = 10 } = {}) {
   const startUrl = normalizeUrl(input)
   if (!startUrl) throw new Error('Invalid URL')
@@ -188,7 +201,12 @@ async function discover(input, { fetchPage = httpFetchPage, fetchJson = httpFetc
           const identity = imageIdentity(url)
           if (seenIdentity.has(identity)) continue
           seenIdentity.add(identity)
-          assetRefs.push({ remoteUrl: url, caption: pickCaption(img) })
+          const thumbUrl = pickThumbUrl(img)
+          assetRefs.push({
+            remoteUrl: url,
+            caption: pickCaption(img),
+            ...(thumbUrl && thumbUrl !== url ? { thumbUrl } : {}),
+          })
         }
         // Protected albums return stat:"fail" (zero images) — skip them rather
         // than creating an empty collection.

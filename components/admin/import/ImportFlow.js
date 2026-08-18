@@ -60,9 +60,12 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   async function handleImport(selectedCollections) {
     // The source photos are already in hand from discovery — feed them to the
     // showcase so it can start dropping prints immediately, shuffled for variety.
+    // Prefer the small thumbUrl variant (same cheap covers used in review) —
+    // the showcase renders these at up to ~300px, and remoteUrl is always the
+    // largest usable size post size-collapse, so it's wasted bytes/decode here too.
     const srcUrls = []
     for (const c of selectedCollections || []) {
-      for (const r of c.assetRefs || []) if (r.remoteUrl) srcUrls.push(r.remoteUrl)
+      for (const r of c.assetRefs || []) if (r.remoteUrl) srcUrls.push(r.thumbUrl || r.remoteUrl)
     }
     setPhotoUrls(shuffle(srcUrls))
     setStep('importing')

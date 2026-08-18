@@ -164,6 +164,74 @@ describe('smugmugWeb.discover — protected albums', () => {
   })
 })
 
+describe('smugmugWeb.discover — thumbUrl for cheap cover rendering', () => {
+  it('uses the S size url as thumbUrl when usable, keeping remoteUrl as the largest usable size', async () => {
+    const S_URL = 'https://photos.smugmug.com/Album/i-withS/0/abc/S/withS-S.jpg'
+    const X3_URL = 'https://photos.smugmug.com/Album/i-withS/0/abc/X3/withS-X3.jpg'
+    const withS = {
+      Caption: 'has small',
+      CaptionText: '',
+      ImageKey: 'withS',
+      ArchiveUrl: '',
+      Sizes: {
+        S: { usable: true, url: S_URL },
+        X3: { usable: true, url: X3_URL },
+      },
+    }
+    const PAGES = {
+      [`${ORIGIN}/`]: homeHtml(['/Small']),
+      [`${ORIGIN}/Small`]: albumHtml('Small', '9999', 'SMKEY'),
+    }
+    const fetchJson = async () => rpcOk([withS])
+
+    const result = await smugmugWeb.discover(ORIGIN, { fetchPage: fetchPageFor(PAGES), fetchJson })
+
+    expect(result.collections[0].assetRefs[0]).toEqual({
+      remoteUrl: X3_URL,
+      caption: 'has small',
+      thumbUrl: S_URL,
+    })
+  })
+
+  it('falls back to Th when S is not usable', async () => {
+    const TH_URL = 'https://photos.smugmug.com/Album/i-withTh/0/abc/Th/withTh-Th.jpg'
+    const X3_URL = 'https://photos.smugmug.com/Album/i-withTh/0/abc/X3/withTh-X3.jpg'
+    const withTh = {
+      Caption: '',
+      CaptionText: '',
+      ImageKey: 'withTh',
+      ArchiveUrl: '',
+      Sizes: {
+        Th: { usable: true, url: TH_URL },
+        S: { usable: false },
+        X3: { usable: true, url: X3_URL },
+      },
+    }
+    const PAGES = {
+      [`${ORIGIN}/`]: homeHtml(['/Th']),
+      [`${ORIGIN}/Th`]: albumHtml('Th', '8888', 'THKEY'),
+    }
+    const fetchJson = async () => rpcOk([withTh])
+
+    const result = await smugmugWeb.discover(ORIGIN, { fetchPage: fetchPageFor(PAGES), fetchJson })
+
+    expect(result.collections[0].assetRefs[0].thumbUrl).toBe(TH_URL)
+    expect(result.collections[0].assetRefs[0].remoteUrl).toBe(X3_URL)
+  })
+
+  it('omits thumbUrl when no usable small size exists (e.g. only O is usable)', async () => {
+    const PAGES = {
+      [`${ORIGIN}/`]: homeHtml(['/NoSmall']),
+      [`${ORIGIN}/NoSmall`]: albumHtml('NoSmall', '7777', 'NOSMALL'),
+    }
+    const fetchJson = async () => rpcOk([bulkImage(1)])
+
+    const result = await smugmugWeb.discover(ORIGIN, { fetchPage: fetchPageFor(PAGES), fetchJson })
+
+    expect(result.collections[0].assetRefs[0]).not.toHaveProperty('thumbUrl')
+  })
+})
+
 describe('smugmugWeb.discover — duplicate albumKey via two paths', () => {
   it('collapses the same album reached via two page paths into ONE collection, fetching the RPC only once', async () => {
     const PAGES = {

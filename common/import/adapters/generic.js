@@ -2,7 +2,7 @@ import { safeFetch } from '../safeFetch'
 import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls, extractPageContent, extractNavLinks, extractVideoUrls } from '../crawlerUtils'
 import { filterJunkImages, groupIntoCollections, inferCollectionName } from '../junkFilter'
 import { buildSiteMap } from '../siteMap'
-import { imageIdentity, preferLargerVariant } from '../originalUrl'
+import { imageIdentity, preferLargerVariant, preferSmallerVariant } from '../originalUrl'
 
 export const PROVIDER_ID = 'generic'
 
@@ -35,6 +35,10 @@ function collapseImageVariants(imageMap, seenOnPages, imagePages) {
   const newImagePages = new Map()
   for (const urls of groups.values()) {
     const winner = urls.reduce((best, u) => preferLargerVariant(best, u))
+    // Multiple variants of one image → keep the smallest as a cheap `thumbUrl`
+    // for UI covers, alongside `winner` (kept at full size — imports never
+    // downgrade quality). A single-URL group has nothing smaller to offer.
+    const smallest = urls.length > 1 ? urls.reduce((worst, u) => preferSmallerVariant(worst, u)) : null
     const pages = []
     const seenPages = new Set()
     for (const u of urls) {
@@ -45,7 +49,11 @@ function collapseImageVariants(imageMap, seenOnPages, imagePages) {
         }
       }
     }
-    newImageMap.set(winner, { ...imageMap.get(winner), remoteUrl: winner })
+    newImageMap.set(winner, {
+      ...imageMap.get(winner),
+      remoteUrl: winner,
+      ...(smallest && smallest !== winner ? { thumbUrl: smallest } : {}),
+    })
     newSeenOnPages.set(winner, pages.length)
     newImagePages.set(winner, pages)
   }
@@ -129,7 +137,7 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
   // A specific page → one flat collection named after that page; a whole site →
   // group into a collection per page (albums).
   const collections = singlePage
-    ? [{ ...inferCollectionName(startUrl, origin), remoteUrl: startUrl, assetRefs: refs.map((r) => ({ remoteUrl: r.remoteUrl, caption: r.caption || null })) }]
+    ? [{ ...inferCollectionName(startUrl, origin), remoteUrl: startUrl, assetRefs: refs.map((r) => ({ remoteUrl: r.remoteUrl, caption: r.caption || null, ...(r.thumbUrl ? { thumbUrl: r.thumbUrl } : {}) })) }]
     : groupIntoCollections(refs, origin)
 
   return {

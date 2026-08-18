@@ -38,7 +38,7 @@ export function groupIntoCollections(refs, origin) {
   for (const r of refs || []) {
     const { id, name } = inferCollectionName(r.pageUrl, origin)
     if (!map.has(id)) map.set(id, { id, name, remoteUrl: r.pageUrl, assetRefs: [] })
-    map.get(id).assetRefs.push({ remoteUrl: r.remoteUrl, caption: r.caption || null })
+    map.get(id).assetRefs.push({ remoteUrl: r.remoteUrl, caption: r.caption || null, ...(r.thumbUrl ? { thumbUrl: r.thumbUrl } : {}) })
   }
   return [...map.values()]
 }

@@ -115,3 +115,12 @@ export function preferLargerVariant(urlA, urlB) {
   if (areaA != null && areaB != null && areaA !== areaB) return areaA > areaB ? urlA : urlB
   return urlA
 }
+
+// The inverse of preferLargerVariant: returns whichever of the two is the
+// SMALLER (cheaper-to-decode) variant. Used to surface a lightweight `thumbUrl`
+// alongside the collapsed group's `remoteUrl` (kept at full size for import),
+// so UI cover thumbnails never have to decode a multi-MB original just to paint
+// a 40px preview.
+export function preferSmallerVariant(urlA, urlB) {
+  return preferLargerVariant(urlA, urlB) === urlA ? urlB : urlA
+}

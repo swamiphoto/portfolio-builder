@@ -210,6 +210,32 @@ describe('POST /api/admin/import/fetch-batch', () => {
     expect(payload.skipped).toEqual(['https://remote/variant-b.jpg'])
   })
 
+  it('imports by remoteUrl even when the ref carries a thumbUrl — thumbUrl is UI-only and is never fetched', async () => {
+    mockSafeFetch.mockResolvedValue(okImage())
+    mockStore.mockResolvedValue({ gcsUrl: 'https://cdn/u/photos/import/full.jpg', width: 100, height: 50 })
+
+    const res = mockRes()
+    await handler(
+      {
+        method: 'POST',
+        body: {
+          provider: 'generic',
+          assetRefs: [{ remoteUrl: 'https://remote/full.jpg', thumbUrl: 'https://remote/thumb.jpg' }],
+        },
+      },
+      res
+    )
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    // fetchImage is only ever called with remoteUrl (plus originalUrlCandidates
+    // guesses derived from it) — thumbUrl must never reach safeFetch.
+    expect(mockSafeFetch).toHaveBeenCalledWith('https://remote/full.jpg')
+    expect(mockSafeFetch).not.toHaveBeenCalledWith('https://remote/thumb.jpg')
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.imported).toHaveLength(1)
+    expect(payload.imported[0].source.sourceUrl).toBe('https://remote/full.jpg')
+  })
+
   it('400 when assetRefs is missing or not an array', async () => {
     const res = mockRes()
     await handler({ method: 'POST', body: { provider: 'generic' } }, res)

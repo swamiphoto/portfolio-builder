@@ -79,6 +79,48 @@ describe('generic.discover size-variant collapse (SmugMug CDN duplication)', () 
   })
 })
 
+describe('generic.discover size-variant collapse thumbUrl', () => {
+  // Mirrors the M/L/X3 collapse test above, but asserts the smallest surviving
+  // variant is carried through as `thumbUrl` on the ref, so review/showcase
+  // covers don't have to decode the largest (X3) size just to paint a preview.
+  const PAGES = {
+    'https://gal2.com/': `<title>Gal2</title>
+      <img src="https://photos.smugmug.com/Trip/i-Abc1/0/abc/M/sunset-M.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-Abc1/0/abc/X3/sunset-X3.jpg">
+      <img src="https://photos.smugmug.com/Trip/i-Solo1/0/abc/M/solo-M.jpg">`,
+  }
+  const fetchPage = (url) => (PAGES[url] != null ? Promise.resolve(PAGES[url]) : Promise.reject(new Error('404')))
+
+  it('keeps the smallest variant url as thumbUrl on the surviving ref; single-variant images omit it', async () => {
+    const result = await generic.discover('gal2.com/', { fetchPage, maxPages: 10 })
+    const refs = result.collections.flatMap((c) => c.assetRefs)
+
+    const sunset = refs.find((r) => r.remoteUrl.includes('i-Abc1'))
+    expect(sunset.remoteUrl).toBe('https://photos.smugmug.com/Trip/i-Abc1/0/abc/X3/sunset-X3.jpg')
+    expect(sunset.thumbUrl).toBe('https://photos.smugmug.com/Trip/i-Abc1/0/abc/M/sunset-M.jpg')
+
+    const solo = refs.find((r) => r.remoteUrl.includes('i-Solo1'))
+    expect(solo).not.toHaveProperty('thumbUrl')
+  })
+
+  it('a single-page (scoped URL) import also carries thumbUrl through', async () => {
+    // singlePage mode is a distinct code path (assetRefs.map(...) in generic.js)
+    // from the whole-site groupIntoCollections path exercised above — both must
+    // preserve thumbUrl rather than dropping it while rebuilding the ref shape.
+    const scopedPages = {
+      'https://gal3.com/gallery': `<title>Gallery</title>
+        <img src="https://photos.smugmug.com/Trip/i-Scoped1/0/abc/M/dune-M.jpg">
+        <img src="https://photos.smugmug.com/Trip/i-Scoped1/0/abc/X3/dune-X3.jpg">`,
+    }
+    const scopedFetchPage = (url) => (scopedPages[url] != null ? Promise.resolve(scopedPages[url]) : Promise.reject(new Error('404')))
+    const result = await generic.discover('gal3.com/gallery', { fetchPage: scopedFetchPage, maxPages: 10 })
+    expect(result.collections).toHaveLength(1)
+    const dune = result.collections[0].assetRefs.find((r) => r.remoteUrl.includes('i-Scoped1'))
+    expect(dune.remoteUrl).toBe('https://photos.smugmug.com/Trip/i-Scoped1/0/abc/X3/dune-X3.jpg')
+    expect(dune.thumbUrl).toBe('https://photos.smugmug.com/Trip/i-Scoped1/0/abc/M/dune-M.jpg')
+  })
+})
+
 describe('generic.discover attribution (SmugMug-shaped site)', () => {
   // Mirrors www.sankarsalvady.com (SmugMug custom domain): the homepage is
   // JS-rendered and its inline hydration <script> JSON embeds the URLs of every
