@@ -6,7 +6,6 @@ import { buildPreviewSequence, MUSIC_POOL, musicIdToUrl, musicUrlToId, randomMus
 import { resolveCaption } from '../../../common/captionResolver'
 import { THEME_LIST } from '../../../common/themes'
 import PopoverShell from './PopoverShell'
-import Tip from '../Tip'
 import ToggleSwitch from '../common/ToggleSwitch'
 import { addPackage, updatePackage, removePackage, setFeatured, dollarsToCents, centsToDollars } from './purchasePackages'
 
@@ -108,6 +107,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const [musicMode, setMusicMode] = useState(isPoolTrack || !slideshow.musicUrl ? 'pool' : 'custom')
   const [customMusicUrl, setCustomMusicUrl] = useState(!isPoolTrack ? (slideshow.musicUrl || '') : '')
   const [copied, setCopied] = useState(false)
+  const [previewingMusic, setPreviewingMusic] = useState(false)
   // Two-step remove for packages: the trash arms it, then an explicit ✓ / ✕ pair confirms or cancels.
   const [pendingRemove, setPendingRemove] = useState(null)
 
@@ -221,8 +221,30 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
 
   // ── Slideshow drill-in ────────────────────────────────────────────────────
   if (view === 'slideshow') {
+    // Effective track to preview: the selected pool track, or a parseable custom URL.
+    const previewMusicId = musicMode === 'custom' ? musicUrlToId(customMusicUrl) : currentMusicId
+    // Copy-link affordance lives in the header, next to the close button.
+    const copyLinkButton = (
+      <button
+        onClick={() => { navigator.clipboard.writeText(slideshowUrl); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+        className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
+        style={{ color: copied ? 'var(--sepia-accent)' : 'var(--text-muted)' }}
+        aria-label="Copy slideshow link"
+        title={copied ? 'Copied!' : 'Copy slideshow link'}
+      >
+        {copied ? (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+        )}
+      </button>
+    )
     return (
-      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Slideshow" onBack={() => setView('main')}>
+      <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title="Slideshow" onBack={() => { setPreviewingMusic(false); setView('main') }} headerRight={slideshow.enabled ? copyLinkButton : undefined}>
         {slideshow.enabled && <>
           <div className="px-3 pt-3 space-y-3">
             <div>
@@ -233,12 +255,39 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 onChange={(e) => updateSlideshow({ layout: e.target.value })}
               >
                 <option value="kenburns">Ken Burns</option>
-                <option value="film-stack">Film Stack</option>
-                <option value="film-single">Film Single</option>
+                <option value="film-stack">Shoebox</option>
+                <option value="film-single">Print</option>
+                <option value="polaroid">Polaroid</option>
               </select>
             </div>
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Music</div>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="font-mono text-[10px] uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>Music</div>
+                {previewMusicId && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewingMusic(v => !v)}
+                    className="inline-flex items-center gap-1 rounded-full transition-colors"
+                    style={{
+                      padding: '1.5px 7px 1.5px 5px',
+                      border: `1px solid ${previewingMusic ? 'var(--sepia-accent)' : 'rgba(160,140,110,0.35)'}`,
+                      background: previewingMusic ? 'rgba(139,111,71,0.10)' : 'transparent',
+                      color: previewingMusic ? 'var(--sepia-accent)' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => { if (!previewingMusic) e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    onMouseLeave={e => { if (!previewingMusic) e.currentTarget.style.color = 'var(--text-muted)' }}
+                    aria-label={previewingMusic ? 'Stop preview' : 'Preview music'}
+                  >
+                    {previewingMusic ? (
+                      <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                    ) : (
+                      <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5.14v13.72a1 1 0 001.5.86l11-6.86a1 1 0 000-1.72l-11-6.86A1 1 0 008 5.14z" /></svg>
+                    )}
+                    <span className="text-[9px] uppercase tracking-[0.06em] font-mono">{previewingMusic ? 'Stop' : 'Preview'}</span>
+                  </button>
+                )}
+              </div>
               <select
                 style={selectStyle}
                 value={musicMode === 'custom' ? '__custom__' : (currentMusicId || '')}
@@ -265,6 +314,18 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                   onChange={(e) => { setCustomMusicUrl(e.target.value); updateSlideshow({ musicUrl: e.target.value }) }}
                 />
               )}
+              {/* Hidden player: mounts only while previewing; remounts (and autoplays)
+                  when the selected track changes. Unmounts — and stops — when the
+                  drill-in closes or the track becomes unparseable. */}
+              {previewingMusic && previewMusicId && (
+                <iframe
+                  key={previewMusicId}
+                  title="Music preview"
+                  src={`https://www.youtube.com/embed/${previewMusicId}?autoplay=1`}
+                  allow="autoplay"
+                  style={{ position: 'absolute', width: 1, height: 1, border: 0, opacity: 0, pointerEvents: 'none' }}
+                />
+              )}
             </div>
           </div>
 
@@ -280,44 +341,66 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                 Add blocks to populate the slideshow
               </div>
             ) : (
-              <div className="flex flex-wrap gap-1">
+              <div className="space-y-0.5 overflow-y-auto -mr-1 pr-1" style={{ maxHeight: 268 }}>
                 {sequence.map((item, i) => {
-                  if (item.type === 'text') {
-                    return (
-                      <Tip key={`text-${i}`} label={item.content || 'Text slide'} side="top">
-                        <div
-                          className="w-10 h-10 rounded flex items-center justify-center cursor-default flex-shrink-0"
-                          style={{ background: 'var(--panel)', border: `1px solid ${BORDER}` }}
-                        >
+                  const isText = item.type === 'text'
+                  const excluded = !isText && item.excluded
+                  const preview = isText ? (item.content || 'Text slide') : (item.caption || '')
+                  return (
+                    <div
+                      key={isText ? `text-${i}` : `img-${item.url}-${i}`}
+                      className="flex items-center gap-2.5 rounded px-1 py-1 transition-opacity"
+                      style={{ opacity: excluded ? 0.4 : 1 }}
+                    >
+                      {/* Thumbnail, or a text-slide tile */}
+                      {isText ? (
+                        <div className="w-9 h-9 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--panel)', border: `1px solid ${BORDER}` }}>
                           <svg className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
                           </svg>
                         </div>
-                      </Tip>
-                    )
-                  }
-                  return (
-                    <Tip key={`img-${item.url}-${i}`} label={item.excluded ? 'Include in slideshow' : 'Exclude from slideshow'} side="top">
-                      <button
-                        onClick={() => toggleExcluded(item.url)}
-                        className={`relative group w-10 h-10 overflow-hidden rounded flex-shrink-0 transition-all`}
-                        style={{ opacity: item.excluded ? 0.25 : 1, border: `1px solid ${BORDER}` }}
-                      >
-                        <img src={getSizedUrl(item.url, 'thumbnail')} alt="" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none">
-                          {item.excluded ? (
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      ) : (
+                        <div className="w-9 h-9 rounded overflow-hidden flex-shrink-0" style={{ border: `1px solid ${BORDER}` }}>
+                          <img src={getSizedUrl(item.url, 'thumbnail')} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+
+                      {/* Text preview / caption */}
+                      <div className="flex-1 min-w-0">
+                        {preview ? (
+                          <div
+                            className="text-[11px] leading-snug"
+                            style={{ color: isText ? 'var(--text-secondary)' : 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                          >
+                            {preview}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] italic" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>No caption</div>
+                        )}
+                      </div>
+
+                      {/* Include / exclude toggle (images only) */}
+                      {!isText && (
+                        <button
+                          onClick={() => toggleExcluded(item.url)}
+                          className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
+                          style={{ color: excluded ? 'var(--text-muted)' : 'var(--sepia-accent)' }}
+                          aria-label={excluded ? 'Include in slideshow' : 'Exclude from slideshow'}
+                          title={excluded ? 'Include in slideshow' : 'Exclude from slideshow'}
+                        >
+                          {excluded ? (
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
                             </svg>
                           ) : (
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           )}
-                        </div>
-                      </button>
-                    </Tip>
+                        </button>
+                      )}
+                    </div>
                   )
                 })}
               </div>
@@ -325,49 +408,24 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
           </div>
 
           <div className="px-3 py-3" style={{ borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ border: `1px solid ${BORDER}`, borderRadius: 6, overflow: 'hidden' }}>
-              {/* URL row */}
-              <div className="flex items-center gap-2 px-2.5 py-2" style={{ borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,253,250,0.6)' }}>
-                <svg className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                </svg>
-                <span className="flex-1 font-mono text-[10px] truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {username}.{rootDomain}/{displaySlug}/slideshow
-                </span>
-                <Tip label={copied ? 'Copied!' : 'Copy link'} side="top">
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(slideshowUrl); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
-                    className="flex-shrink-0 transition-colors"
-                    style={{ color: copied ? 'var(--sepia-accent)' : 'var(--text-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                    onMouseEnter={e => { if (!copied) e.currentTarget.style.color = 'var(--text-secondary)' }}
-                    onMouseLeave={e => { if (!copied) e.currentTarget.style.color = 'var(--text-muted)' }}
-                  >
-                    {copied ? (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    ) : (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-                      </svg>
-                    )}
-                  </button>
-                </Tip>
-              </div>
-              {/* Preview button */}
-              <button
-                onClick={() => window.open(slideshowUrl, '_blank')}
-                className="w-full flex items-center justify-center gap-1.5 py-2 transition-colors"
-                style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.04em', color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.07)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                </svg>
-                Preview slideshow
-              </button>
-            </div>
+            <button
+              onClick={() => window.open(slideshowUrl, '_blank')}
+              className="w-full flex items-center justify-center gap-2 transition-opacity"
+              style={{
+                padding: '10px 12px', borderRadius: 6,
+                background: 'var(--sepia-accent)', border: 'none',
+                fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+                fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600,
+                color: '#f9f6f1', cursor: 'pointer',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.9' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+              Preview slideshow
+            </button>
           </div>
         </>}
 

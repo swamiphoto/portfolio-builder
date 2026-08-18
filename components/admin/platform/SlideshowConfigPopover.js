@@ -4,8 +4,9 @@ import { resolveCaption } from '../../../common/captionResolver'
 
 const SLIDESHOW_LAYOUTS = [
   { value: 'kenburns', label: 'Ken Burns' },
-  { value: 'film-stack', label: 'Film Stack' },
-  { value: 'film-single', label: 'Film Single' },
+  { value: 'film-stack', label: 'Shoebox' },
+  { value: 'film-single', label: 'Print' },
+  { value: 'polaroid', label: 'Polaroid' },
 ]
 
 export default function SlideshowConfigPopover({ page, anchorEl, assetsByUrl, onSlideshowChange, onClose }) {
