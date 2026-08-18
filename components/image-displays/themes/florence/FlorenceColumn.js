@@ -21,6 +21,7 @@ import ContactDisplay from '../../../contact/ContactDisplay'
 import MarkdownText from '../../MarkdownText'
 import FlorenceCaption from './FlorenceCaption'
 import { FitImg, FitPlaceholder, Overlays } from '../shared/WallFit'
+import { useBalancedColumns } from '../shared/useBalancedColumns'
 
 const TID = 'florence'
 const ANCHOR_JUSTIFY = { top: 'flex-start', center: 'center', bottom: 'flex-end' }
@@ -32,8 +33,31 @@ const PHOTO_HEIGHT = { large: '82vh', medium: '64vh', small: '46vh' }
 // vertical padding is the margin); Medium/Small step down so the Position control
 // (top/center/bottom) has real room to move the block.
 const WALL_HEIGHT = { large: '84vh', medium: '64vh', small: '46vh' }
-const TEXT_SIZE = { heading: 'clamp(1.3rem, 1.7vw, 1.65rem)', subheading: 'clamp(1.12rem, 1.4vw, 1.32rem)', body: 'clamp(1rem, 1.2vw, 1.14rem)' }
+// One restrained text scale: Medium is the readable base, Large/Small one notch each way.
+const TEXT_SIZE = { heading: 'clamp(1.15rem, 1.4vw, 1.25rem)', subheading: 'clamp(1rem, 1.1vw, 1.05rem)', body: 'clamp(0.85rem, 0.95vw, 0.92rem)' }
 const QUOTE_SIZE = { large: 'clamp(1.25rem, 2vw, 1.7rem)', medium: 'clamp(1.05rem, 1.6vw, 1.35rem)', small: 'clamp(0.95rem, 1.3vw, 1.1rem)' }
+// One column of copy, plus the gap when it flows into several.
+const TEXT_COL_W = 'clamp(260px, 24vw, 380px)'
+const TEXT_GAP = 'clamp(1.6rem, 2.4vw, 2.8rem)'
+
+// Florence text: one column for short copy; copy long enough to overrun the column
+// height auto-flows into N balanced columns so it never runs past the viewport and
+// never leaves a lonely stub column.
+function FlorenceText({ block, fontFamily, fontSize }) {
+  const content = String(block.content)
+  const isMd = block.format === 'markdown'
+  const { ref, cols, columnStyle } = useBalancedColumns([content, fontFamily, fontSize], { colWidth: TEXT_COL_W, gap: TEXT_GAP })
+  const cls = `florence-text${cols > 1 ? ' florence-text--cols' : ''}`
+  const style = { fontFamily, fontSize, ...(columnStyle || {}) }
+  if (isMd) {
+    return (
+      <div ref={ref} className={cls} style={style}>
+        <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} />
+      </div>
+    )
+  }
+  return <p ref={ref} className={cls} style={style}>{content}</p>
+}
 const MOSAIC_PATTERN = [1, 2, 3, 1, 2]
 // Varied widths for multi-photo groups (cycled by group index) so the wall reads
 // as a dynamic mosaic rather than uniform columns. Solo photos keep natural width.
@@ -230,28 +254,31 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
           </div>
         ))
       }
-      const content = block.content
-      // Long copy would overflow the fixed-height wall column, so it flows into a
-      // second column instead of running past the viewport.
-      const cols = String(content).length > 280
       // Florence has no distinct heading/quote treatment for text blocks — every
-      // markdown node reuses the same "florence-text" look; formatting (bold,
-      // links, lists) is what matters here, not new art direction. Markdown keeps
-      // the same long-copy column flow as plain text.
-      if (block.format === 'markdown') {
-        return wrap(`florence-col--text${cols ? ' florence-col--text-cols' : ''}`, cols ? null : { justifyContent: justify }, (
-          <div className={`florence-text${cols ? ' florence-text--cols' : ''}`} style={{ fontFamily, fontSize }}>
-            <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} />
-          </div>
-        ))
-      }
-      return wrap(`florence-col--text${cols ? ' florence-col--text-cols' : ''}`, cols ? null : { justifyContent: justify }, (
-        <p className={`florence-text${cols ? ' florence-text--cols' : ''}`} style={{ fontFamily, fontSize }}>{content}</p>
+      // markdown node reuses the same "florence-text" look; formatting (bold, links,
+      // lists) is what matters here, not new art direction. Long copy (plain or
+      // markdown) auto-flows into balanced columns via FlorenceText.
+      return wrap('florence-col--text', { justifyContent: justify }, (
+        <FlorenceText block={block} fontFamily={fontFamily} fontSize={fontSize} />
       ))
     }
 
     case 'video': {
-      if (!(block.url || '').trim()) return null
+      if (!(block.url || '').trim()) {
+        // Empty video block: preview a 16:9 frame with a play glyph (like the other
+        // themes' placeholders) so the wall shows where the video will sit.
+        if (!showPlaceholders) return null
+        return wrap('florence-col--media', { justifyContent: justify }, (
+          <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
+            <div className="florence-video-placeholder wall-placeholder" style={{ aspectRatio: '16 / 9', width: '100%' }} aria-hidden>
+              <svg viewBox="0 0 48 48" fill="none" width="48" height="48" style={{ opacity: 0.5 }}>
+                <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M20 17 L33 24 L20 31 Z" fill="currentColor" />
+              </svg>
+            </div>
+          </figure>
+        ))
+      }
       return wrap('florence-col--media', { justifyContent: justify }, (
         <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
           <VideoBlock url={block.url} caption="" variant={2} />
@@ -262,11 +289,31 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
 
     case 'testimonial': {
       const photoUrl = getImageRefUrl(block.image || block.imageUrl)
-      if (!block.text && !block.name && !photoUrl) return null
+      const photoAbove = resolveVariant(block, TID) === 'photo-above'
+      if (!block.text && !block.name && !photoUrl) {
+        // Empty testimonial: skeleton quote lines + an avatar/name blob (same
+        // layout as a filled one) so the wall previews where the quote will sit.
+        if (!showPlaceholders) return null
+        const bars = (
+          <div className="wall-text-placeholder florence-testimonial-placeholder__quote" aria-hidden>
+            <span style={{ width: '92%' }} /><span style={{ width: '78%' }} /><span style={{ width: '56%' }} />
+          </div>
+        )
+        const byline = (
+          <div className="florence-testimonial__by florence-testimonial-placeholder__by" aria-hidden>
+            <span className="florence-testimonial-placeholder__avatar" />
+            <span className="florence-testimonial-placeholder__name" />
+          </div>
+        )
+        return wrap('florence-col--text florence-col--testimonial', { justifyContent: justify }, (
+          <figure className="florence-testimonial florence-testimonial-placeholder m-0">
+            {photoAbove ? <>{byline}{bars}</> : <>{bars}{byline}</>}
+          </figure>
+        ))
+      }
       const fontFamily = resolveFont(block, TID)
       const italic = block.quoteStyle !== 'regular'
       const fontSize = QUOTE_SIZE[resolveSize(block, TID)] || QUOTE_SIZE.large
-      const photoAbove = resolveVariant(block, TID) === 'photo-above'
       const quote = block.text && (
         <blockquote className="florence-testimonial__quote" style={{ fontFamily, fontStyle: italic ? 'italic' : 'normal', fontSize }}>{block.text}</blockquote>
       )

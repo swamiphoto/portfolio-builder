@@ -1,7 +1,7 @@
 import PopoverShell from '../platform/PopoverShell'
 import { DesignSection, PillToggle } from '../platform/designControls'
 import { getBlockSpec, getTheme } from '../../../common/themes'
-import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamStyle, resolveAmsterdamFrame, resolveAmsterdamGround, resolveFlorenceFrame } from '../../../common/themes/variants'
+import { setVariant, resolveVariant, resolveAlign, resolveButtonStyle, resolvePhotoSize, resolveQuoteStyle, resolveAmsterdamFrame, resolveAmsterdamGround, resolveFlorenceFrame } from '../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../common/captionStyles'
 import Tip from '../Tip'
 
@@ -62,7 +62,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
 
   const currentFont = block.font || spec.defaultFont
 
-  // Panel order: Font → Style → Size → Layout → (image side / align / caption / button).
+  // Panel order: Font → Size → Layout → (image side / align / caption / button).
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
       {/* Amsterdam: the block's ink. The swatch the site rhythm gives this block is
@@ -123,9 +123,7 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
           <PillToggle value={sizeValue} onChange={(v) => onUpdate({ ...block, size: v })} options={sizes} />
         </DesignSection>
       )}
-      {/* Amsterdam Panel is a single fixed size (it flows into columns when long),
-          so it doesn't expose the Size toggle — only Quiet does. */}
-      {hasSize && !(themeId === 'amsterdam' && block.type === 'text' && resolveAmsterdamStyle(block) === 'panel') && (
+      {hasSize && (
         <DesignSection label={block.type === 'text' ? 'Size' : 'Layout'}>
           <PillToggle value={resolveVariant(block, themeId)} onChange={(v) => onUpdate(setVariant(block, themeId, v))} options={variants} />
         </DesignSection>
@@ -142,16 +140,6 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
       {aligns && (
         <DesignSection label="Alignment">
           <PillToggle value={resolveAlign(block, themeId)} onChange={(v) => onUpdate({ ...block, align: v })} options={aligns} />
-        </DesignSection>
-      )}
-      {/* Amsterdam: a text block is a solid ink Panel (default) or Quiet museum text. */}
-      {themeId === 'amsterdam' && block.type === 'text' && (
-        <DesignSection label="Style">
-          <PillToggle
-            value={resolveAmsterdamStyle(block)}
-            onChange={(v) => onUpdate({ ...block, amsterdamStyle: v })}
-            options={[{ value: 'quiet', label: 'Quiet' }, { value: 'panel', label: 'Panel' }]}
-          />
         </DesignSection>
       )}
       {/* Amsterdam: mount a photo (or a whole set) in a vintage frame — the caption

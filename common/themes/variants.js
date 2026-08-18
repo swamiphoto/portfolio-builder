@@ -94,13 +94,10 @@ export function resolveFlorenceAnchor() {
   return 'top'
 }
 
-// Amsterdam-only text Style: a text block renders as a full-height solid-ink
-// Panel (default) or a Quiet cream museum-label column. Stored flat on the
-// block (like florenceAnchor); ignored by every other theme.
-export function resolveAmsterdamStyle(block) {
-  // Quiet is the default; Panel is opt-in (a solid statement block).
-  return block?.amsterdamStyle === 'panel' ? 'panel' : 'quiet'
-}
+// Amsterdam text no longer has a Quiet/Panel style toggle: every text block is the
+// quiet museum label, and long copy auto-flows into balanced columns when it would
+// overrun the column height (see useBalancedColumns). Any stored `amsterdamStyle`
+// value is deliberately ignored.
 
 // Amsterdam-only photo Frame: how a photo (or each photo in a set) is mounted.
 // 'none' = the clean matted hang with a plaque beside; 'card'/'mount'/'print' =
