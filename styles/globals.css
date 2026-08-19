@@ -664,8 +664,10 @@ a {
 .florence-mount[data-caplayout="beside"] .florence-mount__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 22; line-clamp: 22; overflow: hidden; text-transform: none; }
 .florence-mount__title { font-size: var(--fs-caption); letter-spacing: 0.05em; color: inherit; }
 .florence-mount__meta { font-size: var(--fs-caption-meta); letter-spacing: 0.04em; opacity: 0.6; }
-/* Mat: a wide passe-partout with a hairline keyline; caption centered beneath. */
-.florence-mount--mat { background: #faf8f2; padding: clamp(20px, 2.4vw, 44px); box-shadow: 0 14px 36px rgba(28, 26, 23, 0.16); }
+/* Mat: a wide passe-partout with a hairline keyline; caption centered beneath.
+   The mount is the wall color itself (not a brighter white), so it reads as a
+   quiet raised mat lifted off the ground by its shadow, matching the pane. */
+.florence-mount--mat { background: var(--theme-bg); padding: clamp(20px, 2.4vw, 44px); box-shadow: 0 14px 36px rgba(28, 26, 23, 0.16); }
 .florence-mount--mat .florence-mount__photo { box-shadow: 0 0 0 1px var(--fl-hairline, rgba(28, 26, 23, 0.16)); }
 .florence-mount--mat .florence-mount__label { align-items: center; text-align: center; padding-top: clamp(14px, 1.6vw, 24px); text-transform: uppercase; letter-spacing: 0.12em; }
 /* Line: a slim keyline frame, minimal, caption lower-left. */
