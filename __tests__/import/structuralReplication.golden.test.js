@@ -45,11 +45,19 @@ describe('golden: swamiphoto/portfolio structural replication', () => {
 
   it('replicates the portfolio block sequence', () => {
     const types = portfolio.blocks.map((b) => b.type)
-    expect(types).toEqual(['text', 'text', 'photo', 'photo', 'testimonial', 'photo', 'page-gallery', 'testimonial', 'text'])
+    expect(types).toEqual(['text', 'text', 'photos', 'testimonial', 'photo', 'page-gallery', 'testimonial', 'text'])
   })
-  it('keeps the side caption as a side-by-side photo', () => {
-    const side = portfolio.blocks[5]
-    expect(side).toMatchObject({ type: 'photo', variant: 3, caption: 'Aurora Borealis in California — a rare shot.' })
+  it('groups the two captioned images into one stacked photos block with aligned captions', () => {
+    const stack = portfolio.blocks[2]
+    expect(stack.type).toBe('photos')
+    expect(stack.layout).toBe('stacked')
+    expect(stack.images.map((i) => i.caption)).toEqual(['San Francisco in fog', 'Recreating a Mac wallpaper'])
+    expect(stack.images).toHaveLength(2)
+  })
+  it('attaches the following paragraph as the Aurora photo\'s caption below it (no side-by-side variant)', () => {
+    const aurora = portfolio.blocks[4]
+    expect(aurora).toMatchObject({ type: 'photo', caption: 'Aurora Borealis in California — a rare shot.' })
+    expect(aurora.variant).toBeUndefined()
   })
   it('resolves the link cards to the imported landscapes page id', () => {
     const cards = portfolio.blocks.find((b) => b.type === 'page-gallery')

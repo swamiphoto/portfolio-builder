@@ -28,8 +28,32 @@ it('fills a photos block images/imageUrls from refs, dropping unresolved refs', 
   const assets = [asset('a', 'https://x.com/a.jpg'), asset('b', 'https://x.com/b.jpg')]
   const [b] = bindAssets(blocks, outline, assets)
   expect(b.imageUrls).toEqual(['https://gcs/a.jpg', 'https://gcs/b.jpg'])
-  expect(b.images).toEqual([{ url: 'https://gcs/a.jpg', assetId: 'a' }, { url: 'https://gcs/b.jpg', assetId: 'b' }])
+  expect(b.images).toEqual([
+    { url: 'https://gcs/a.jpg', assetId: 'a', caption: '' },
+    { url: 'https://gcs/b.jpg', assetId: 'b', caption: '' },
+  ])
   expect(b.refs).toBeUndefined()
+})
+
+it('binds per-image captions onto a photos block, dropping a caption together with its unresolved ref', () => {
+  const outline = [
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/a.jpg', caption: '' },
+    { kind: 'image', ref: 'img-2', src: 'https://x.com/missing.jpg', caption: '' },
+    { kind: 'image', ref: 'img-3', src: 'https://x.com/c.jpg', caption: '' },
+  ]
+  const blocks = [{
+    type: 'photos',
+    refs: ['img-1', 'img-2', 'img-3'],
+    layout: 'stacked',
+    captions: ['cap-a', 'cap-missing', 'cap-c'],
+  }]
+  const assets = [asset('a', 'https://x.com/a.jpg'), asset('c', 'https://x.com/c.jpg')]
+  const [b] = bindAssets(blocks, outline, assets)
+  expect(b.images).toEqual([
+    { url: 'https://gcs/a.jpg', assetId: 'a', caption: 'cap-a' },
+    { url: 'https://gcs/c.jpg', assetId: 'c', caption: 'cap-c' },
+  ])
+  expect(b.imageUrls).toEqual(['https://gcs/a.jpg', 'https://gcs/c.jpg'])
 })
 
 it('collapses a photos block to a single photo block when only one ref survives binding', () => {
@@ -41,6 +65,17 @@ it('collapses a photos block to a single photo block when only one ref survives 
   const assets = [asset('a', 'https://x.com/a.jpg')]
   const result = bindAssets(blocks, outline, assets)
   expect(result).toEqual([{ type: 'photo', imageUrl: 'https://gcs/a.jpg', caption: '' }])
+})
+
+it('collapse-to-photo carries the surviving image\'s caption when the block has a captions array', () => {
+  const outline = [
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/a.jpg', caption: '' },
+    { kind: 'image', ref: 'img-2', src: 'https://x.com/missing.jpg', caption: '' },
+  ]
+  const blocks = [{ type: 'photos', refs: ['img-1', 'img-2'], layout: 'stacked', captions: ['cap-a', 'cap-missing'] }]
+  const assets = [asset('a', 'https://x.com/a.jpg')]
+  const result = bindAssets(blocks, outline, assets)
+  expect(result).toEqual([{ type: 'photo', imageUrl: 'https://gcs/a.jpg', caption: 'cap-a' }])
 })
 
 it('drops a photo whose ref resolves to nothing', () => {
