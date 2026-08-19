@@ -49,7 +49,7 @@ export function composeGalleryBlocks(assets) {
       // Tail too small for its own block — fold into the last photos block,
       // or emit as one small masonry if none exists yet.
       const lastPhotos = [...blocks].reverse().find((b) => b.type === 'photos')
-      if (lastPhotos && lastPhotos.images.length + rest.length <= 9) {
+      if (lastPhotos && lastPhotos.images.length + rest.length <= MASONRY_RUN) {
         lastPhotos.images.push(...rest.map((a) => ({ url: a.publicUrl, assetId: a.assetId })))
         lastPhotos.imageUrls.push(...rest.map((a) => a.publicUrl))
         rest.length = 0

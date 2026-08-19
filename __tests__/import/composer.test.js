@@ -45,6 +45,20 @@ it('caps every synthesized photos block at 9 images', () => {
   }
 })
 
+it('folds an over-cap tail into a fresh block, capping at 9 and placing every asset once', () => {
+  // fixture(30): opener(1) + masonry(9) + solo(1) + stacked(6) + masonry(9) + solo(1) = 27
+  // placed, leaving rest=3 (< MIN_TAIL) while the last photos block already holds 9,
+  // so 9+3 > 9 forces the else branch to push a fresh masonry block of 3.
+  const { siteMap, collections, imported } = fixture(30)
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const blocks = pages[0].blocks
+  for (const b of blocks) {
+    if (b.type === 'photos') expect(b.imageUrls.length).toBeLessThanOrEqual(9)
+  }
+  const total = blocks.reduce((n, b) => n + (b.type === 'photo' ? 1 : b.imageUrls.length), 0)
+  expect(total).toBe(30) // every asset placed exactly once
+})
+
 it('composes about and contact pages and skips other', () => {
   const siteMap = { pages: [
     { kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about', textContent: 'Hi.\n\nI shoot.', collectionId: 'about' },
