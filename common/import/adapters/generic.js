@@ -1,5 +1,5 @@
 import { safeFetch } from '../safeFetch'
-import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls, extractPageContent, extractNavLinks, extractVideoUrls } from '../crawlerUtils'
+import { normalizeUrl, isSameDomain, extractTitle, extractImageUrls, extractPageContent, extractNavLinks, extractVideoUrls, extractPageOutline } from '../crawlerUtils'
 import { filterJunkImages, groupIntoCollections, inferCollectionName } from '../junkFilter'
 import { buildSiteMap } from '../siteMap'
 import { imageIdentity, preferLargerVariant, preferSmallerVariant } from '../originalUrl'
@@ -109,6 +109,7 @@ async function discover(input, { fetchPage = httpFetchPage, maxPages = 40 } = {}
       hasMailto: content.hasMailto,
       text: content.text,
       videoUrls: extractVideoUrls(html, pageUrl),
+      outline: extractPageOutline(html, pageUrl),
     })
     if (navLinks === null) navLinks = extractNavLinks(html, pageUrl)
     // Scoped to a single page → don't fan out across the site's other links.

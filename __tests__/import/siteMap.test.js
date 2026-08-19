@@ -65,4 +65,23 @@ describe('buildSiteMap', () => {
     const { pages } = buildSiteMap({ pageRecords: recs, origin: 'https://x.com', navLinks: [{ href: 'https://x.com/work', label: 'Work' }] })
     expect(pages[0]).toMatchObject({ kind: 'gallery', textContent: '' })
   })
+
+  it('carries a page outline onto the site-map page', () => {
+    const outline = [{ kind: 'heading', level: 1, text: 'Portfolio' }]
+    const { pages } = buildSiteMap({
+      pageRecords: [{ url: 'https://x.com/portfolio', title: 'Portfolio', wordCount: 300, imageCount: 5, text: 'hi', outline }],
+      origin: 'https://x.com',
+      navLinks: [],
+    })
+    expect(pages[0].outline).toEqual(outline)
+  })
+
+  it('defaults outline to an empty array when absent', () => {
+    const { pages } = buildSiteMap({
+      pageRecords: [{ url: 'https://x.com/g', title: 'G', wordCount: 0, imageCount: 10, text: '' }],
+      origin: 'https://x.com',
+      navLinks: [],
+    })
+    expect(pages[0].outline).toEqual([])
+  })
 })

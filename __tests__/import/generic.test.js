@@ -281,4 +281,23 @@ describe('generic.discover siteMap', () => {
     const work = result.siteMap.pages.find((p) => p.slug === 'work')
     expect(work.videoUrls).toEqual([])
   })
+
+  it('threads discovered page outline onto the siteMap pages when HTML has headings', async () => {
+    const pagesWithOutline = {
+      ...PAGES,
+      'https://x.com/work': `<html><title>Work</title><body><h1>My Portfolio</h1><h2>Recent Projects</h2>${IMG(20)}</body></html>`,
+    }
+    const fetchOutlinePage = async (url) => {
+      const clean = url.replace(/\/+$/, '') || url
+      const html = pagesWithOutline[url] || pagesWithOutline[clean] || pagesWithOutline[`${clean}/`]
+      if (!html) throw new Error('404')
+      return html
+    }
+    const result = await generic.discover('https://x.com', { fetchPage: fetchOutlinePage })
+    const work = result.siteMap.pages.find((p) => p.slug === 'work')
+    expect(work.outline).toBeTruthy()
+    expect(work.outline.length).toBeGreaterThan(0)
+    const about = result.siteMap.pages.find((p) => p.kind === 'about')
+    expect(about.outline).toBeDefined()
+  })
 })
