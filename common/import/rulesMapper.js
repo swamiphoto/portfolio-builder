@@ -7,7 +7,11 @@ function flushImages(refs, out) {
   if (!refs.length) return
   if (refs.length === 1) { out.push({ type: 'photo', ref: refs[0], caption: '' }); refs.length = 0; return }
   for (let i = 0; i < refs.length; i += MAX_PER_PHOTOS) {
-    out.push({ type: 'photos', refs: refs.slice(i, i + MAX_PER_PHOTOS), layout: 'stacked' })
+    const chunk = refs.slice(i, i + MAX_PER_PHOTOS)
+    // A size-1 chunk (e.g. the 10th of 10 images) must be a photo block, not a
+    // 1-image photos block, to stay consistent with the lone-image path above.
+    if (chunk.length === 1) { out.push({ type: 'photo', ref: chunk[0], caption: '' }) }
+    else { out.push({ type: 'photos', refs: chunk, layout: 'stacked' }) }
   }
   refs.length = 0
 }
@@ -48,7 +52,12 @@ export function mapOutlineToBlocks(outline) {
   }
   flushImages(pending, out)
 
-  const nonImage = nodes.filter((n) => n.kind !== 'image').length
-  const confidence = nodes.length === 0 ? 0 : Math.min(1, (recognized + nonImage) / Math.max(1, nodes.length))
+  // Binary invariant: confident (>= 0.5) whenever ANY non-image structure was
+  // recognized, unconfident (< 0.5) for an images-only outline. `recognized`
+  // already counts captioned photos, side captions, headings, essays, quotes,
+  // linkcards, and videos — exactly the structure worth keeping. A fractional
+  // formula diluted below 0.5 on realistic pages (many bare images + a little
+  // structure), causing a later stage to discard the mapping.
+  const confidence = nodes.length === 0 ? 0 : (recognized > 0 ? 1 : 0)
   return { blocks: out, confidence }
 }

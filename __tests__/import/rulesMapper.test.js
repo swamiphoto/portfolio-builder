@@ -60,3 +60,24 @@ it('reports high confidence when it recognized non-image structure', () => {
   ])
   expect(confidence).toBeGreaterThanOrEqual(0.5)
 })
+
+it('stays confident and keeps the testimonial when many bare images precede a little structure', () => {
+  const { blocks, confidence } = mapOutlineToBlocks([
+    { kind: 'image', ref: 'img-1', src: 'a', caption: '' },
+    { kind: 'image', ref: 'img-2', src: 'b', caption: '' },
+    { kind: 'image', ref: 'img-3', src: 'c', caption: '' },
+    { kind: 'image', ref: 'img-4', src: 'd', caption: '' },
+    { kind: 'quote', text: 'Amazing.', attribution: 'Vivek' },
+  ])
+  expect(confidence).toBeGreaterThanOrEqual(0.5)
+  expect(blocks.some((b) => b.type === 'testimonial')).toBe(true)
+})
+
+it('chunks a run of 10 bare images into photos(9) + photo(1), never a 1-image photos block', () => {
+  const outline = Array.from({ length: 10 }, (_, i) => ({ kind: 'image', ref: `img-${i + 1}`, src: 's', caption: '' }))
+  const { blocks } = mapOutlineToBlocks(outline)
+  expect(blocks).toHaveLength(2)
+  expect(blocks[0]).toEqual({ type: 'photos', refs: outline.slice(0, 9).map((n) => n.ref), layout: 'stacked' })
+  expect(blocks[1]).toEqual({ type: 'photo', ref: 'img-10', caption: '' })
+  expect(blocks.every((b) => b.type !== 'photos' || b.refs.length > 1)).toBe(true)
+})
