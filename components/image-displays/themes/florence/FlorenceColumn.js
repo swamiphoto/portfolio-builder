@@ -92,6 +92,15 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
   // The Caption style control (Sans / Serif / Accent) overrides caption typography.
   const capStyle = captionStyleCss(resolveCaptionStyle(block))
   const frame = resolveFlorenceFrame(block)
+  // Unframed photos print the caption INSIDE the image (a bottom overlay), not as a
+  // wall-label beneath it — a lone label under an edge-to-edge photo reads as loose.
+  // Framed photos keep their printed-on-the-mount label (see florenceMount).
+  const insetLabel = (cap, m) => (cap || m) ? (
+    <figcaption className="florence-fill-label">
+      {cap && <span className="florence-caption__title" style={capStyle}>{cap}</span>}
+      {m && <span className="florence-caption__meta">{m}</span>}
+    </figcaption>
+  ) : null
   // A quiet gallery frame around a photo — a wide mat or a thin keyline — with the
   // caption printed on it. 'mixed' alternates the two across a set.
   const florenceMount = (img, i, height) => {
@@ -138,28 +147,27 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
           <figure className="florence-figure florence-figure--fill">
             <div className="florence-frame" style={{ height: '100vh' }}>
               {photoBox(imgObj, 0)}
-              {(caption || meta) && (
-                <figcaption className="florence-fill-label">
-                  {caption && <span className="florence-caption__title" style={capStyle}>{caption}</span>}
-                  {meta && <span className="florence-caption__meta">{meta}</span>}
-                </figcaption>
-              )}
+              {insetLabel(caption, meta)}
             </div>
           </figure>
         ), { 'data-fit': 'full' })
       }
       // Centered: sized by Size, placed vertically by Position, plaque beneath.
       const size = resolvePhotoSize(block, TID)
+      // A framed photo is shorter than the column, so pin-to-top left a big gap and
+      // the frame kissed the top divider. Center it vertically instead (the column's
+      // own padding still keeps it off the top/bottom edges).
       if (frame !== 'none') {
-        return wrap('florence-col--photo florence-col--framed', { justifyContent: justify },
+        return wrap('florence-col--photo florence-col--framed', { justifyContent: 'center' },
           florenceMount(imgObj, 0, FL_MOUNT_HEIGHT[size] || FL_MOUNT_HEIGHT.large), { 'data-fit': 'centered' })
       }
+      // Unframed centered: sized by Size, vertically centered, caption overlaid inside.
       return wrap('florence-col--photo', { justifyContent: justify }, (
         <figure className="florence-figure" style={{ justifyContent: 'center' }}>
           <div className="florence-frame" style={{ flex: '0 0 auto', height: PHOTO_HEIGHT[size] || PHOTO_HEIGHT.large }}>
             {photoBox(imgObj, 0)}
+            {insetLabel(caption, meta)}
           </div>
-          <FlorenceCaption caption={caption} meta={meta} titleStyle={capStyle} />
         </figure>
       ), { 'data-fit': 'centered' })
     }
@@ -237,8 +245,8 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
             <figure key={i} className="florence-row__item m-0">
               <div className="florence-frame" style={{ height: rowH }}>
                 {photoBox(img, i)}
+                {!img?.placeholder && insetLabel(img.caption || '', metaFor(img))}
               </div>
-              {!img?.placeholder && <FlorenceCaption caption={img.caption || ''} meta={metaFor(img)} titleStyle={capStyle} />}
             </figure>
           ))}
         </div>
