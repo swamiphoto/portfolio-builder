@@ -100,9 +100,16 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
   // black / white / red rhythm unbroken across the whole wall.
   // data-flow rotates where matted photos sit vertically (top / middle / low) so
   // the dividerless wall reads as a free-flowing collage, not a centered grid.
-  const wrap = (cls, style, children, surface = ground, extra = {}) => (
-    <section className={`ams-col ${cls}`} data-block-index={blockIndex} data-surface={surface} data-flow={blockIndex % 3} style={style} {...extra} {...hoverProps}>{children}</section>
-  )
+  const wrap = (cls, style, children, surface = ground, extra = {}) => {
+    // Merge the editor's hoverProps style (cursor:pointer) into the column's own
+    // layout style rather than replacing it (mirrors Florence). Amsterdam columns
+    // currently pass no layout style, but this keeps a future styled column from
+    // silently losing it in the editor preview.
+    const { style: hoverStyle, ...restHover } = hoverProps
+    return (
+      <section className={`ams-col ${cls}`} data-block-index={blockIndex} data-surface={surface} data-flow={blockIndex % 3} style={{ ...style, ...hoverStyle }} {...extra} {...restHover}>{children}</section>
+    )
+  }
 
   // A vintage mount around a photo — cabinet card, archival board, or bordered
   // print — with the caption printed on the card itself (bottom). 'mixed' rotates

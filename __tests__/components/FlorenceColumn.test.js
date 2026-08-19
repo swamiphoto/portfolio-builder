@@ -45,3 +45,18 @@ describe('FlorenceColumn empty testimonial block', () => {
     expect(container.querySelector('.florence-col--testimonial')).toBeFalsy()
   })
 })
+
+describe('FlorenceColumn editor hover keeps the column layout', () => {
+  // In the editor, blocks are clickable, so the wall passes hoverProps that include
+  // style:{cursor:'pointer'}. That style must MERGE with the column's own layout
+  // style, not replace it — otherwise a framed centered photo loses its vertical
+  // centering and pins to the top of the column in the preview pane.
+  it('a clickable framed centered photo stays vertically centered (cursor + center)', () => {
+    const block = { type: 'photo', image: 'https://x/one.jpg', caption: 'Anagha', florenceFrame: 'mat', themeState: { florence: { variant: 'centered' } } }
+    const { container } = renderWall([block], {}, { onBlockClick: () => {}, onBlockHover: () => {} })
+    const section = container.querySelector('.florence-col--framed[data-fit="centered"]')
+    expect(section).toBeTruthy()
+    expect(section.style.justifyContent).toBe('center')
+    expect(section.style.cursor).toBe('pointer')
+  })
+})
