@@ -4,7 +4,7 @@ import { stableHash } from './importCore'
 import { imageIdentity } from './originalUrl'
 import { validateBlocks } from './blockSchema'
 
-const MASONRY_RUN = 10
+const MASONRY_RUN = 9
 const STACKED_RUN = 6
 const MIN_TAIL = 4
 
@@ -49,7 +49,7 @@ export function composeGalleryBlocks(assets) {
       // Tail too small for its own block — fold into the last photos block,
       // or emit as one small masonry if none exists yet.
       const lastPhotos = [...blocks].reverse().find((b) => b.type === 'photos')
-      if (lastPhotos) {
+      if (lastPhotos && lastPhotos.images.length + rest.length <= 9) {
         lastPhotos.images.push(...rest.map((a) => ({ url: a.publicUrl, assetId: a.assetId })))
         lastPhotos.imageUrls.push(...rest.map((a) => a.publicUrl))
         rest.length = 0

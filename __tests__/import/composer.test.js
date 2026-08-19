@@ -37,6 +37,14 @@ it('large collection opens with the biggest landscape as a solo photo', () => {
   expect(total).toBe(20) // every asset placed exactly once
 })
 
+it('caps every synthesized photos block at 9 images', () => {
+  const { siteMap, collections, imported } = fixture(40)
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  for (const b of pages[0].blocks) {
+    if (b.type === 'photos') expect(b.imageUrls.length).toBeLessThanOrEqual(9)
+  }
+})
+
 it('composes about and contact pages and skips other', () => {
   const siteMap = { pages: [
     { kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about', textContent: 'Hi.\n\nI shoot.', collectionId: 'about' },
