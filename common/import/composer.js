@@ -190,3 +190,18 @@ export function applyComposedPages(siteConfig, composedPages) {
   const fresh = (composedPages || []).filter((p) => !existing.has(p.id))
   return { ...siteConfig, pages: [...(siteConfig.pages || []), ...fresh] }
 }
+
+// A page is a flat "gallery" when it is essentially images only: no quotes, no
+// link-cards, no captions, and at most one lead-in paragraph before the images
+// (a gallery blurb). Anything else — interleaved prose, section headings that
+// break the images, quotes, cards — is a "designed" page we replicate.
+export function classifyLayout(outline) {
+  const nodes = outline || []
+  if (!nodes.length) return 'gallery'
+  if (nodes.some((n) => n.kind === 'quote' || n.kind === 'linkcards')) return 'designed'
+  if (nodes.some((n) => n.kind === 'image' && n.caption)) return 'designed'
+  const firstImage = nodes.findIndex((n) => n.kind === 'image')
+  const proseAfterImages = nodes.some((n, i) => (n.kind === 'paragraph' || n.kind === 'heading') && firstImage !== -1 && i > firstImage)
+  if (proseAfterImages) return 'designed'
+  return 'gallery'
+}
