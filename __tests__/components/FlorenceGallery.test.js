@@ -38,9 +38,10 @@ describe('Florence horizontal museum wall', () => {
     // Single photo defaults to Fill: edge-to-edge with an overlaid plaque.
     expect(container.querySelector('.florence-col--fill')).toBeTruthy()
     expect(container.querySelector('.florence-fill-label .florence-caption__title').textContent).toContain('UNTITLED (1940)')
-    // Row: the captioned image gets a beneath plaque, the uncaptioned one none.
+    // Row (unframed): the captioned image gets an overlaid inset plaque inside the
+    // photo, the uncaptioned one none.
     expect(container.querySelector('.florence-col--photorow .florence-row')).toBeTruthy()
-    expect(container.querySelectorAll('.florence-row .florence-caption').length).toBe(1)
+    expect(container.querySelectorAll('.florence-row .florence-fill-label').length).toBe(1)
     expect(container.textContent).toContain('OHRID (1935)')
   })
 
