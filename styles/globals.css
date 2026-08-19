@@ -616,6 +616,11 @@ a {
 .florence-col--photo[data-fit="full"] { padding: 0; }
 .florence-figure { margin: 0; display: flex; flex-direction: column; height: 100%; }
 .florence-figure--fill { height: 100%; }
+/* Fill is full-bleed: the image COVERS its box so it always reaches every edge, even
+   if the box aspect and the image aspect ever disagree (e.g. before the real aspect
+   loads). The box is sized to the image aspect, so in the settled state this crops
+   nothing — it just guarantees no letterbox gap on the image's right. */
+.florence-col--fill .florence-fit img { object-fit: cover; }
 .florence-fill-label {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
   display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;
