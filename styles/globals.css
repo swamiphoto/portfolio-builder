@@ -621,6 +621,13 @@ a {
    loads). The box is sized to the image aspect, so in the settled state this crops
    nothing — it just guarantees no letterbox gap on the image's right. */
 .florence-col--fill .florence-fit img { object-fit: cover; }
+/* The fill box is BLOCK (not the shared inline-block): as an inline box its
+   aspect-ratio×height width rounds several device-pixels narrower than its column on
+   HiDPI/2x screens (via the line box), leaving a visible gap on the image's right that
+   only shows up at devicePixelRatio > 1. Block sizing computes the width exactly, so
+   the column shrinks to the image with no gap. Scoped to fill; other variants keep
+   inline-block for their own width behavior. */
+.florence-col--fill .florence-fit { display: block; }
 .florence-fill-label {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
   display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;
