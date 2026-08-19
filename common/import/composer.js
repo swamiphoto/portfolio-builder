@@ -149,6 +149,24 @@ export function setParentIds(pages) {
   }
 }
 
+// Rewrite page-gallery cards from source URLs (pageRefs) to imported page ids.
+// Links to pages we didn't import are dropped; a card block with no surviving
+// targets is removed (no dead links).
+export function resolvePageLinks(pages) {
+  const idByPath = new Map()
+  for (const p of pages) { const path = pathOf(p.source?.sourceUrl); if (path) idByPath.set(path, p.id) }
+  for (const p of pages) {
+    p.blocks = (p.blocks || []).filter((b) => {
+      if (b.type !== 'page-gallery' || !b.pageRefs) return true
+      const pageIds = b.pageRefs.map((u) => idByPath.get(pathOf(u))).filter(Boolean)
+      if (!pageIds.length) return false
+      delete b.pageRefs
+      b.pageIds = pageIds
+      return true
+    })
+  }
+}
+
 export function composeSite({ siteMap, collections, imported, importBatchId, existingPages }) {
   const mapPages = siteMap?.pages?.filter((p) => p.kind !== 'other') || []
   if (!mapPages.length) return { pages: [] }
@@ -210,6 +228,7 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
     )
   })
   setParentIds(pages)
+  resolvePageLinks(pages)
   return { pages }
 }
 
