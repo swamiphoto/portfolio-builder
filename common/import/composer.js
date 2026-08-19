@@ -131,6 +131,24 @@ function orderPages(mapPages) {
     .map((x) => x.page)
 }
 
+function pathOf(url) {
+  try { return new URL(url).pathname.replace(/\/+$/, '') } catch { return '' }
+}
+
+// Set parentId from the source URL hierarchy: a page whose path is the immediate
+// parent of another page's path becomes its parent. Only wires parents that were
+// actually imported; otherwise the child stays top-level.
+export function setParentIds(pages) {
+  const byPath = new Map()
+  for (const p of pages) { const path = pathOf(p.source?.sourceUrl); if (path) byPath.set(path, p.id) }
+  for (const p of pages) {
+    const path = pathOf(p.source?.sourceUrl)
+    if (!path) continue
+    const parentPath = path.slice(0, path.lastIndexOf('/'))
+    if (parentPath && byPath.has(parentPath) && byPath.get(parentPath) !== p.id) p.parentId = byPath.get(parentPath)
+  }
+}
+
 export function composeSite({ siteMap, collections, imported, importBatchId, existingPages }) {
   const mapPages = siteMap?.pages?.filter((p) => p.kind !== 'other') || []
   if (!mapPages.length) return { pages: [] }
@@ -191,6 +209,7 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
       })
     )
   })
+  setParentIds(pages)
   return { pages }
 }
 
