@@ -194,18 +194,29 @@ export function extractPageOutline(html, baseUrl) {
     if (!$a.find('img').length) return
     const href = safeResolve($a.attr('href'), baseUrl)
     if (!href) return
+    // A card links to a PAGE, not an asset. Lightbox anchors that point at an
+    // image file (e.g. <a href="photo-large.jpg">) are not link cards.
+    try {
+      if (ASSET_EXT_RE.test(new URL(href).pathname)) return
+    } catch {
+      return
+    }
     const label = $a.text().replace(/\s+/g, ' ').trim()
     const parentKey = $a.parent().index() + ':' + ($a.parent().prop('tagName') || '')
     let group = cardGroups.find((g) => g.key === parentKey)
-    if (!group) { group = { key: parentKey, items: [], anchor: a }; cardGroups.push(group) }
+    if (!group) { group = { key: parentKey, items: [], anchor: a, anchors: [] }; cardGroups.push(group) }
     group.items.push({ href: href.split('#')[0], label })
+    group.anchors.push(a)
   })
   const cardAnchorSet = new Set()
-  for (const g of cardGroups) if (g.items.length >= 2) cardAnchorSet.add(g.anchor)
+  for (const g of cardGroups) if (g.items.length >= 2) for (const a of g.anchors) cardAnchorSet.add(a)
 
   scope.find('img, h1, h2, h3, p, blockquote, a').each((_, el) => {
     const tag = (el.tagName || '').toLowerCase()
     if (tag === 'img') {
+      // Link-card thumbnails belong only to their linkcards node; skip them here
+      // so they don't also render as standalone images downstream.
+      if (cardAnchorSet.has($(el).closest('a').get(0))) return
       const src = safeResolve($(el).attr('src') || $(el).attr('data-src'), baseUrl)
       if (!src || src.startsWith('data:')) return
       imgN += 1

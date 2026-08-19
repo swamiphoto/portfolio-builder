@@ -18,7 +18,9 @@ describe('extractPageOutline', () => {
 
   it('assigns sequential image refs in document order', () => {
     const imgs = nodes.filter((n) => n.kind === 'image')
-    expect(imgs.map((n) => n.ref)).toEqual(['img-1', 'img-2', 'img-3', 'img-4'])
+    // Only the two non-card images: link-card thumbnails live inside the
+    // linkcards node, not as standalone image nodes.
+    expect(imgs.map((n) => n.ref)).toEqual(['img-1', 'img-2'])
     expect(imgs[0].src).toBe('https://x.com/a.jpg')
   })
   it('captures a figcaption as the image caption', () => {
@@ -38,5 +40,16 @@ describe('extractPageOutline', () => {
       { href: 'https://x.com/portfolio/landscapes', label: 'Landscapes' },
       { href: 'https://x.com/portfolio/portraits', label: 'Portraits' },
     ])
+  })
+  it('does not treat sibling image-file lightbox links as link cards', () => {
+    const html = `<body><main>
+      <a href="/p1-large.jpg"><img src="/p1.jpg"></a>
+      <a href="/p2-large.jpg"><img src="/p2.jpg"></a>
+    </main></body>`
+    const out = extractPageOutline(html, 'https://x.com/gallery')
+    expect(out.find((n) => n.kind === 'linkcards')).toBeUndefined()
+    const imgs = out.filter((n) => n.kind === 'image')
+    expect(imgs.map((n) => n.ref)).toEqual(['img-1', 'img-2'])
+    expect(imgs.map((n) => n.src)).toEqual(['https://x.com/p1.jpg', 'https://x.com/p2.jpg'])
   })
 })
