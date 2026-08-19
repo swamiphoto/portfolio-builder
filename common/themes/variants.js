@@ -7,11 +7,13 @@ const LEGACY = {
   // theme's own default wins (kyoto→centered, provence→full-bleed). Mapping hint-less
   // photos to 'full-bleed' shadowed non-full-bleed theme defaults.
   photo: (b) =>
-    b.layout === 'Centered' || b.variant === 2
-      ? 'centered'
-      : b.layout || b.variant
-        ? 'full-bleed'
-        : null,
+    b.variant === 3
+      ? 'side-by-side'
+      : b.layout === 'Centered' || b.variant === 2
+        ? 'centered'
+        : b.layout || b.variant
+          ? 'full-bleed'
+          : null,
   // Only map an *explicit* legacy layout. With no layout hint, return null so the
   // theme's own default wins (kyoto→stacked, manhattan/provence→grid). Returning
   // 'stacked' unconditionally used to shadow those non-stacked theme defaults.
