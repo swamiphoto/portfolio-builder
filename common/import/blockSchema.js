@@ -22,7 +22,10 @@ function isEmpty(b) {
   if (b.type === 'text') return !String(b.content || '').trim()
   if (b.type === 'testimonial') return !String(b.text || '').trim()
   if (b.type === 'video') return !b.url
-  if (b.type === 'page-gallery') return !(b.pageIds && b.pageIds.length)
+  // pageIds is the resolved form; pageRefs (source URLs) is the pending form
+  // set by the mapper before resolvePageLinks runs. Either counts as non-empty
+  // — resolvePageLinks drops the block later if no refs survive resolution.
+  if (b.type === 'page-gallery') return !((b.pageIds && b.pageIds.length) || (b.pageRefs && b.pageRefs.length))
   return true
 }
 
