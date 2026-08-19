@@ -11,11 +11,11 @@ import { showcaseThumbUrl, onCoverError } from './coverThumb'
 // show starts the moment the import does.
 
 const PITCHES = [
-  { title: 'Galleries set to music.', body: 'The kind of slideshow a client actually sits through to the end.' },
-  { title: 'Built from blocks.', body: 'Add photos, video, and text, then drag them into any order you like.' },
-  { title: 'One click, a new look.', body: 'Change the whole design and your photos and captions stay exactly where they are.' },
-  { title: 'Sell prints from any photo.', body: 'A print store built in, with nothing for you to run.' },
-  { title: 'Deliver the whole shoot.', body: 'Send the gallery, collect their favorites, get paid.' },
+  { title: 'Immersive galleries set to music.', body: 'The kind of slideshow a client actually sits through to the end.' },
+  { title: 'Fast to build.', body: 'Add and rearrange blocks of photos, video, and text to create your gallery.' },
+  { title: 'One click, a new look.', body: 'Change themes as many times as you want, without ever rebuilding.' },
+  { title: 'Sell prints from any photo.', body: 'Toggle it on, and prints ship worldwide with nothing for you to run.' },
+  { title: 'Deliver the whole shoot.', body: 'Send the gallery, let clients pick their favorites, and upsell print packages.' },
   { title: 'Yours, top to bottom.', body: 'Your name on the door, and no badges but your own.' },
 ]
 
