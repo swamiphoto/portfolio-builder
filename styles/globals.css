@@ -459,6 +459,12 @@ a {
 [data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-rail,
 [data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-wall,
 [data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-col { height: 100%; min-height: 0; }
+/* The admin preview pane is shorter than 100vh, so a fill photo's inline 100vh frame
+   overflows: its intrinsic width (computed from 100vh) is wider than the image actually
+   renders at the clamped height, leaving a gap on the image's right. Pin the fill frame
+   to the pane's real height so the reserved width and the image stay in lockstep. (The
+   live site is exactly 100vh, so it never gaps and keeps its concrete height.) */
+[data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-col--fill .florence-frame { height: 100% !important; }
 
 /* Mobile admin preview: the desktop fixed-viewport fit above is desktop-only, so
    here the shell flows to its natural height and the preview pane scrolls (the
@@ -608,24 +614,19 @@ a {
 .florence-col--photo { align-items: flex-start; }
 /* Fill drops all padding so the image reaches every edge (touches both dividers). */
 .florence-col--photo[data-fit="full"] { padding: 0; }
-/* The block right after a fill also drops its left padding, so the full-bleed image
-   reads edge-to-edge into the next column instead of leaving a gap of ground beside
-   it. (Mobile stacks vertically and keeps its own padding — higher specificity.) */
-.florence-col--fill + .florence-col { padding-left: 0; }
 .florence-figure { margin: 0; display: flex; flex-direction: column; height: 100%; }
 .florence-figure--fill { height: 100%; }
 .florence-fill-label {
-  position: absolute; left: 0; right: auto; bottom: 0; z-index: 3;
-  display: flex; flex-direction: column; gap: 0.4rem;
-  /* Cap the caption to a book-legible measure (~60ch) so it wraps early instead
-     of running the full width of a wide photo. The scrim rides with the text. */
-  max-width: min(34rem, 100%);
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;
   padding: 3.5rem 1.5rem 1.25rem;
   font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.74rem; line-height: 1.55;
   color: #f6f3ec; background: linear-gradient(to top, rgba(20,16,12,0.62), rgba(20,16,12,0));
 }
-.florence-fill-label .florence-caption__title { color: #f6f3ec; white-space: pre-line; }
-.florence-fill-label .florence-caption__meta { color: rgba(246,243,236,0.82); white-space: pre-line; }
+/* The scrim spans the whole photo bottom (a seamless fade), but the caption TEXT
+   wraps at a book-legible measure instead of running edge to edge across a wide image. */
+.florence-fill-label .florence-caption__title { color: #f6f3ec; white-space: pre-line; max-width: 30rem; }
+.florence-fill-label .florence-caption__meta { color: rgba(246,243,236,0.82); white-space: pre-line; max-width: 30rem; }
 
 /* Photo Row: all photos side by side, each fills the row height (minus its plaque).
    The section grows as wide as its photos, extending the horizontal wall. */
