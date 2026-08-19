@@ -319,18 +319,25 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
     }
   }, [router.query.photo, allImages.length]);
 
+  // Keep the URL the visitor actually sees (e.g. the clean subdomain path
+  // `swamiphoto.sepia.photo/portraits`) instead of letting Next regenerate it
+  // from the internal `/sites/[username]/[slug]` route. Without an explicit
+  // `as`, a shallow push rebuilds the bar from the route pattern and leaks the
+  // rewritten `/sites/<username>/…` path that the middleware meant to hide.
+  const currentPath = () => (typeof window !== "undefined" ? window.location.pathname : router.asPath.split("?")[0]);
+
   const openLightbox = (globalIndex) => {
-    router.push({ query: { ...router.query, photo: globalIndex } }, undefined, { shallow: true });
+    router.push({ query: { ...router.query, photo: globalIndex } }, `${currentPath()}?photo=${globalIndex}`, { shallow: true });
   };
 
   const closeLightbox = () => {
     const q = { ...router.query };
     delete q.photo;
-    router.push({ query: q }, undefined, { shallow: true });
+    router.push({ query: q }, currentPath(), { shallow: true });
   };
 
   const navigateLightbox = (globalIndex) => {
-    router.push({ query: { ...router.query, photo: globalIndex } }, undefined, { shallow: true });
+    router.push({ query: { ...router.query, photo: globalIndex } }, `${currentPath()}?photo=${globalIndex}`, { shallow: true });
   };
 
   const makeClickHandler = (blockIdx) => (localIndex) => {
