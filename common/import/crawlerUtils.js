@@ -173,6 +173,64 @@ export function extractPageContent(html) {
   return { text, wordCount, hasForm, hasMailto }
 }
 
+// Ordered, typed content outline for a page — the deterministic signal the
+// structural mapper reads. Document order is preserved; image nodes get stable
+// `img-N` refs so a mapper can reference an image without handling its URL.
+export function extractPageOutline(html, baseUrl) {
+  const $ = cheerio.load(String(html || ''))
+  $('script, style, noscript, nav, header, footer, svg').remove()
+  const scope = $('main').length ? $('main').first() : $('body')
+  const nodes = []
+  let imgN = 0
+  const captionFor = (el) => {
+    const fig = $(el).closest('figure')
+    const cap = fig.length ? fig.find('figcaption').first().text() : ''
+    return (cap || $(el).attr('alt') || $(el).attr('title') || '').replace(/\s+/g, ' ').trim()
+  }
+  // A "card" is an <a> that wraps an <img> and points at a same-page-family URL.
+  const cardGroups = []
+  $('a').each((_, a) => {
+    const $a = $(a)
+    if (!$a.find('img').length) return
+    const href = safeResolve($a.attr('href'), baseUrl)
+    if (!href) return
+    const label = $a.text().replace(/\s+/g, ' ').trim()
+    const parentKey = $a.parent().index() + ':' + ($a.parent().prop('tagName') || '')
+    let group = cardGroups.find((g) => g.key === parentKey)
+    if (!group) { group = { key: parentKey, items: [], anchor: a }; cardGroups.push(group) }
+    group.items.push({ href: href.split('#')[0], label })
+  })
+  const cardAnchorSet = new Set()
+  for (const g of cardGroups) if (g.items.length >= 2) cardAnchorSet.add(g.anchor)
+
+  scope.find('img, h1, h2, h3, p, blockquote, a').each((_, el) => {
+    const tag = (el.tagName || '').toLowerCase()
+    if (tag === 'img') {
+      const src = safeResolve($(el).attr('src') || $(el).attr('data-src'), baseUrl)
+      if (!src || src.startsWith('data:')) return
+      imgN += 1
+      nodes.push({ kind: 'image', ref: `img-${imgN}`, src, caption: captionFor(el) })
+    } else if (tag === 'a') {
+      if (!cardAnchorSet.has(el)) return
+      const g = cardGroups.find((gr) => gr.anchor === el)
+      if (g && !nodes.some((n) => n.kind === 'linkcards' && n._key === g.key)) {
+        nodes.push({ kind: 'linkcards', _key: g.key, items: g.items })
+      }
+    } else if (tag === 'blockquote') {
+      const cite = $(el).find('cite').first().text().replace(/\s+/g, ' ').trim()
+      const text = $(el).clone().find('cite').remove().end().text().replace(/\s+/g, ' ').trim()
+      if (text) nodes.push({ kind: 'quote', text, attribution: cite })
+    } else if (tag === 'p') {
+      const text = $(el).text().replace(/\s+/g, ' ').trim()
+      if (text) nodes.push({ kind: 'paragraph', text })
+    } else {
+      const text = $(el).text().replace(/\s+/g, ' ').trim()
+      if (text) nodes.push({ kind: 'heading', level: Number(tag[1]), text })
+    }
+  })
+  return nodes.map(({ _key, ...n }) => n)
+}
+
 const MAX_VIDEO_URLS = 10
 
 function hostMatches(hostname, suffix) {
