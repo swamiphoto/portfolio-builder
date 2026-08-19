@@ -31,11 +31,11 @@ describe('Florence horizontal museum wall', () => {
 
   it('lays each block out as a section: single photo + a horizontal photo Row', () => {
     const blocks = [
-      { type: 'photo', image: 'https://x/one.jpg', caption: 'UNTITLED (1940)\npencil on paper' },
+      { type: 'photo', image: 'https://x/one.jpg', caption: 'UNTITLED (1940)\npencil on paper', themeState: { florence: { variant: 'full-height' } } },
       { type: 'photos', images: [{ url: 'https://x/a.jpg', caption: 'OHRID (1935)' }, { url: 'https://x/b.jpg', caption: '' }] },
     ]
     const { container } = renderGallery({ blocks, themeId: 'florence', name: 'Show' })
-    // Single photo defaults to Fill: edge-to-edge with an overlaid plaque.
+    // Fill (explicit): edge-to-edge with an overlaid plaque.
     expect(container.querySelector('.florence-col--fill')).toBeTruthy()
     expect(container.querySelector('.florence-fill-label .florence-caption__title').textContent).toContain('UNTITLED (1940)')
     // Row (unframed): the captioned image gets an overlaid inset plaque inside the
@@ -43,6 +43,13 @@ describe('Florence horizontal museum wall', () => {
     expect(container.querySelector('.florence-col--photorow .florence-row')).toBeTruthy()
     expect(container.querySelectorAll('.florence-row .florence-fill-label').length).toBe(1)
     expect(container.textContent).toContain('OHRID (1935)')
+  })
+
+  it('a photo with no saved variant defaults to Centered, not Fill', () => {
+    const blocks = [{ type: 'photo', image: 'https://x/one.jpg', caption: 'UNTITLED' }]
+    const { container } = renderGallery({ blocks, themeId: 'florence', name: 'Show' })
+    expect(container.querySelector('.florence-col--fill')).toBeNull()
+    expect(container.querySelector('.florence-col--photo[data-fit="centered"]')).toBeTruthy()
   })
 
   it('renders a Mosaic photo set as varied side-by-side groups', () => {

@@ -33,12 +33,14 @@ export const florence = {
     },
   },
   overrides: {
-    // Single photo: Full height (fills the column, default) or Centered (sized by
-    // the Size control, positioned by Position). Size applies to Centered only.
+    // Single photo: Centered (default — sized by the Size control) or Full height
+    // (fills the column edge to edge). Centered is the default so a photo carried in
+    // from another theme (no Florence variant saved yet) lands as a framed-in image
+    // rather than an abrupt full-bleed hero. Size applies to Centered only.
     photo: {
       hide: ['full-bleed', 'centered', 'side-by-side'],
       add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Centered' }],
-      defaultVariant: 'full-height',
+      defaultVariant: 'centered',
     },
     // Photo sets lay out horizontally (no vertical scroll): Row (all photos side by
     // side, captions beneath) or Mosaic (varied vertical groups of 1/2/3 side by
