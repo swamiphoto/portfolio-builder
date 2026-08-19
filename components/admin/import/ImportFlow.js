@@ -4,6 +4,7 @@ import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff, Clo
 import ReviewStep from './ReviewStep'
 import ImportShowcase from './ImportShowcase'
 import ImportDoneStep from './ImportDoneStep'
+import ImportRebuildProgress from './ImportRebuildProgress'
 
 // Warm darkroom backdrop shared by the import takeover + done screens.
 const SHOWCASE_BG = 'radial-gradient(120% 90% at 50% 8%, #efe8dc 0%, #e4dccf 45%, #d8cdba 100%)'
@@ -170,13 +171,20 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
     )
   }
 
+  if (step === 'rebuilding' && summary) {
+    return <ImportRebuildProgress summary={summary} onDone={() => onComplete({ ...summary, replicate: true })} />
+  }
+
   if (step === 'done' && summary) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: SHOWCASE_BG }}>
         <div className="rounded-xl overflow-hidden" style={{ width: 540, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))' }}>
           <ImportDoneStep
             summary={summary}
-            onEnter={(opts) => onComplete({ ...summary, replicate: !!opts?.replicate })}
+            onEnter={(opts) => {
+              if (opts?.replicate) { setStep('rebuilding'); return }
+              return onComplete({ ...summary, replicate: false })
+            }}
             onImportAnother={() => {
               setSummary(null)
               setDiscovery(null)
