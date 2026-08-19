@@ -606,15 +606,20 @@ a {
    section drops all padding so it reaches every edge (block widens to the image);
    the plaque overlays the bottom-left. Centered: sized by Size, placed by Position. */
 .florence-col--photo { align-items: flex-start; }
-/* Fill drops all padding so the image reaches every edge (touches both dividers).
-   The block AFTER a fill keeps its own left padding, so a Mosaic/Centered/Row that
-   follows a full-bleed image still holds its margin off the divider. */
+/* Fill drops all padding so the image reaches every edge (touches both dividers). */
 .florence-col--photo[data-fit="full"] { padding: 0; }
+/* The block right after a fill also drops its left padding, so the full-bleed image
+   reads edge-to-edge into the next column instead of leaving a gap of ground beside
+   it. (Mobile stacks vertically and keeps its own padding — higher specificity.) */
+.florence-col--fill + .florence-col { padding-left: 0; }
 .florence-figure { margin: 0; display: flex; flex-direction: column; height: 100%; }
 .florence-figure--fill { height: 100%; }
 .florence-fill-label {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  position: absolute; left: 0; right: auto; bottom: 0; z-index: 3;
   display: flex; flex-direction: column; gap: 0.4rem;
+  /* Cap the caption to a book-legible measure (~60ch) so it wraps early instead
+     of running the full width of a wide photo. The scrim rides with the text. */
+  max-width: min(34rem, 100%);
   padding: 3.5rem 1.5rem 1.25rem;
   font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.74rem; line-height: 1.55;
   color: #f6f3ec; background: linear-gradient(to top, rgba(20,16,12,0.62), rgba(20,16,12,0));
