@@ -29,11 +29,15 @@ describe('florence theme', () => {
     expect(resolveAlign({ type: 'text' }, 'florence')).toBe('left')
   })
 
-  it('single photo offers Full height (default) + Centered', () => {
+  it('single photo offers Full height + Centered (default)', () => {
     const photo = getBlockSpec('florence', 'photo')
     expect(photo.variants.map(v => v.id)).toEqual(['full-height', 'centered'])
-    expect(photo.defaultVariant).toBe('full-height')
-    expect(resolveVariant({ type: 'photo' }, 'florence')).toBe('full-height')
+    expect(photo.defaultVariant).toBe('centered')
+    // A photo with no saved Florence variant (e.g. carried over from another theme)
+    // defaults to Centered, not Fill.
+    expect(resolveVariant({ type: 'photo' }, 'florence')).toBe('centered')
+    // An explicitly-saved variant is preserved.
+    expect(resolveVariant({ type: 'photo', themeState: { florence: { variant: 'full-height' } } }, 'florence')).toBe('full-height')
   })
 
   it('photo sets offer Row (default) + Mosaic, with Size enabled for both', () => {
