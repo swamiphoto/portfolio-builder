@@ -3,6 +3,7 @@ import { defaultBlock } from '@/common/blocks'
 import { stableHash } from './importCore'
 import { imageIdentity } from './originalUrl'
 import { validateBlocks } from './blockSchema'
+import { mapOutlineToBlocks } from './mapper'
 
 const MASONRY_RUN = 9
 const STACKED_RUN = 6
@@ -148,7 +149,13 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
     let description = ''
     if (page.kind === 'gallery') {
       if (!assets.length) return // an empty gallery page helps no one
-      blocks = composeGalleryBlocks(assets)
+      if (classifyLayout(page.outline) === 'designed') {
+        const { blocks: plan, confidence } = mapOutlineToBlocks(page.outline)
+        const boundBlocks = bindAssets(plan, page.outline, assets)
+        blocks = confidence >= 0.5 && boundBlocks.length ? boundBlocks : composeGalleryBlocks(assets)
+      } else {
+        blocks = composeGalleryBlocks(assets)
+      }
       for (const url of videoUrls) blocks.push({ ...defaultBlock('video'), url })
       description = firstParagraphDescription(page.textContent)
     } else if (page.kind === 'about') {

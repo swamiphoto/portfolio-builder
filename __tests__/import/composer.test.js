@@ -131,6 +131,37 @@ it('gallery pages append one video block per videoUrl after the composed photo b
   expect(blocks).toHaveLength(2)
 })
 
+it('replicates a designed page structure instead of a synthesized gallery', () => {
+  const collections = [{ id: 'c1', name: 'Portfolio', assetRefs: [
+    { remoteUrl: 'https://x.com/a.jpg' }, { remoteUrl: 'https://x.com/face.jpg' },
+  ] }]
+  const imported = [
+    { assetId: 'a', publicUrl: 'https://gcs/a.jpg', source: { sourceUrl: 'https://x.com/a.jpg', externalCollectionId: 'c1' } },
+    { assetId: 'f', publicUrl: 'https://gcs/face.jpg', source: { sourceUrl: 'https://x.com/face.jpg', externalCollectionId: 'c1' } },
+  ]
+  const outline = [
+    { kind: 'heading', level: 1, text: 'Portfolio' },
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/a.jpg', caption: 'SF in fog' },
+    { kind: 'quote', text: 'Best ever.', attribution: 'Naga' },
+    { kind: 'image', ref: 'img-2', src: 'https://x.com/face.jpg', caption: '' },
+  ]
+  const siteMap = { pages: [{ kind: 'gallery', title: 'Portfolio', slug: 'portfolio', navOrder: 0, sourceUrl: 'https://x.com/portfolio', textContent: '', collectionId: 'c1', outline }] }
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const types = pages[0].blocks.map((b) => b.type)
+  expect(types).toEqual(['text', 'photo', 'testimonial', 'photo'])
+  expect(pages[0].blocks[1]).toMatchObject({ type: 'photo', imageUrl: 'https://gcs/a.jpg', caption: 'SF in fog' })
+  expect(pages[0].blocks[2]).toMatchObject({ type: 'testimonial', text: 'Best ever.', name: 'Naga' })
+})
+
+it('falls back to the capped gallery for an images-only (gallery) page', () => {
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].outline = [
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/pc10.jpg', caption: '' },
+  ]
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages[0].blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
+})
+
 it('orders galleries first (by navOrder, nulls last), then about, then contact — regardless of source nav order', () => {
   const collections = [
     { id: 'c1', name: 'Portraits', assetRefs: refs(5, 'c1') },
