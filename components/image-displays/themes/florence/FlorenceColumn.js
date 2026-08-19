@@ -125,9 +125,16 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       </figure>
     )
   }
-  const wrap = (cls, style, children, extra = {}) => (
-    <section className={`florence-col ${cls}`} data-block-index={blockIndex} data-anchor={anchor} style={style} {...extra} {...hoverProps}>{children}</section>
-  )
+  const wrap = (cls, style, children, extra = {}) => {
+    // The editor passes hoverProps with its own style (cursor:pointer). Merge it into
+    // the column's layout style instead of letting the spread replace it — otherwise
+    // a centered column (e.g. a framed photo's justifyContent:center) loses its
+    // vertical placement and pins to the top in the preview pane.
+    const { style: hoverStyle, ...restHover } = hoverProps
+    return (
+      <section className={`florence-col ${cls}`} data-block-index={blockIndex} data-anchor={anchor} style={{ ...style, ...hoverStyle }} {...extra} {...restHover}>{children}</section>
+    )
+  }
 
   switch (block.type) {
     case 'photo': {
