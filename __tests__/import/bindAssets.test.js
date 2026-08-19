@@ -18,17 +18,29 @@ it('matches by image identity across CDN size variants', () => {
   expect(b.imageUrl).toBe('https://gcs/a.jpg')
 })
 
-it('fills a photos block images/imageUrls from refs and drops unresolved refs', () => {
+it('fills a photos block images/imageUrls from refs, dropping unresolved refs', () => {
+  const outline = [
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/a.jpg', caption: '' },
+    { kind: 'image', ref: 'img-2', src: 'https://x.com/b.jpg', caption: '' },
+    { kind: 'image', ref: 'img-3', src: 'https://x.com/missing.jpg', caption: '' },
+  ]
+  const blocks = [{ type: 'photos', refs: ['img-1', 'img-2', 'img-3'], layout: 'stacked' }]
+  const assets = [asset('a', 'https://x.com/a.jpg'), asset('b', 'https://x.com/b.jpg')]
+  const [b] = bindAssets(blocks, outline, assets)
+  expect(b.imageUrls).toEqual(['https://gcs/a.jpg', 'https://gcs/b.jpg'])
+  expect(b.images).toEqual([{ url: 'https://gcs/a.jpg', assetId: 'a' }, { url: 'https://gcs/b.jpg', assetId: 'b' }])
+  expect(b.refs).toBeUndefined()
+})
+
+it('collapses a photos block to a single photo block when only one ref survives binding', () => {
   const outline = [
     { kind: 'image', ref: 'img-1', src: 'https://x.com/a.jpg', caption: '' },
     { kind: 'image', ref: 'img-2', src: 'https://x.com/missing.jpg', caption: '' },
   ]
   const blocks = [{ type: 'photos', refs: ['img-1', 'img-2'], layout: 'stacked' }]
   const assets = [asset('a', 'https://x.com/a.jpg')]
-  const [b] = bindAssets(blocks, outline, assets)
-  expect(b.imageUrls).toEqual(['https://gcs/a.jpg'])
-  expect(b.images).toEqual([{ url: 'https://gcs/a.jpg', assetId: 'a' }])
-  expect(b.refs).toBeUndefined()
+  const result = bindAssets(blocks, outline, assets)
+  expect(result).toEqual([{ type: 'photo', imageUrl: 'https://gcs/a.jpg', caption: '' }])
 })
 
 it('drops a photo whose ref resolves to nothing', () => {

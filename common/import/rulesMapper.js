@@ -48,6 +48,9 @@ export function mapOutlineToBlocks(outline) {
       recognized += 1
     } else if (n.kind === 'quote') { out.push({ type: 'testimonial', text: n.text, name: n.attribution || '', ref: null }); recognized += 1 }
     else if (n.kind === 'linkcards') { out.push({ type: 'page-gallery', source: 'manual', pageIds: [], pageRefs: n.items.map((it) => it.href) }); recognized += 1 }
+    // Reserved: extractPageOutline emits no `video` nodes today (videos are
+    // threaded separately via page.videoUrls), so this branch is currently
+    // unreachable. Kept for when/if the outline starts emitting them.
     else if (n.kind === 'video') { out.push({ type: 'video', url: n.url }); recognized += 1 }
   }
   flushImages(pending, out)

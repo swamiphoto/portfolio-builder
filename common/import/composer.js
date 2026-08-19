@@ -178,6 +178,11 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
   const ordered = orderPages(mapPages)
 
   const pages = []
+  // Gallery pages' assets, keyed by composed page id — kept around so that if
+  // resolvePageLinks (below) later strips a page-gallery block and leaves the
+  // page's blocks empty, we can backfill a safe capped gallery instead of
+  // shipping a nav entry with a blank body.
+  const galleryAssetsByPageId = new Map()
   ordered.forEach((page) => {
     const assets = assetsForCollection(collectionById.get(page.collectionId), assetBySourceUrl)
     const videoUrls = page.videoUrls || []
@@ -213,9 +218,11 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
       blocks = [defaultBlock('contact')]
     }
     const slug = uniqueSlug(page.slug, taken)
+    const id = `pg-${stableHash(`${importBatchId}:${slug}`)}`
+    if (page.kind === 'gallery') galleryAssetsByPageId.set(id, assets)
     pages.push(
       defaultPage({
-        id: `pg-${stableHash(`${importBatchId}:${slug}`)}`,
+        id,
         title: page.title,
         template: page.kind === 'gallery' ? 'gallery' : page.kind,
         slug,
@@ -229,6 +236,16 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
   })
   setParentIds(pages)
   resolvePageLinks(pages)
+  // resolvePageLinks can delete a page-gallery block whose links all point at
+  // non-imported pages; if that was a gallery page's only block, fall back to
+  // the always-safe capped gallery for that page's assets (guaranteed
+  // non-empty — the designed branch above only runs when assets.length).
+  for (const p of pages) {
+    if (!p.blocks || !p.blocks.length) {
+      const assets = galleryAssetsByPageId.get(p.id)
+      if (assets && assets.length) p.blocks = composeGalleryBlocks(assets)
+    }
+  }
   return { pages }
 }
 
@@ -263,6 +280,10 @@ export function bindAssets(blocks, outline, pageAssets) {
     } else if (b.type === 'photos') {
       const assets = (b.refs || []).map(assetForRef).filter(Boolean)
       if (!assets.length) continue
+      // A multi-ref grid that loses all but one ref to unresolved bindings
+      // collapses to a single photo block — consistent with the mapper, which
+      // never emits a 1-image photos block.
+      if (assets.length === 1) { bound.push({ type: 'photo', imageUrl: assets[0].publicUrl, caption: '' }); continue }
       bound.push({ type: 'photos', layout: b.layout || 'stacked',
         images: assets.map((a) => ({ url: a.publicUrl, assetId: a.assetId })),
         imageUrls: assets.map((a) => a.publicUrl) })

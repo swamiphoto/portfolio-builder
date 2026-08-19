@@ -10,7 +10,7 @@ const SHOWCASE_BG = 'radial-gradient(120% 90% at 50% 8%, #efe8dc 0%, #e4dccf 45%
 // the timed cadence for real per-page progress events.
 export default function ImportRebuildProgress({ summary, onDone }) {
   const [phase, setPhase] = useState(0)
-  const thumbs = (summary?.imported || []).slice(0, 6).map((a) => a.publicUrl).filter(Boolean)
+  const thumbs = (summary?.imported || []).slice(0, 3).map((a) => a.publicUrl).filter(Boolean)
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 1200)

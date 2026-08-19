@@ -28,3 +28,27 @@ describe('testimonial empty state mirrors variant', () => {
     expect(el.getAttribute('data-order')).toBe('photo-last')
   })
 })
+
+// Imported quotes almost always land with imageUrl: '' (bindAssets has no
+// avatar to bind). This must render as a clean quote + name — no empty/broken
+// avatar circle — while a testimonial WITH an avatar still renders its <img>.
+describe('testimonial with no avatar (common import case)', () => {
+  function renderFilled(block) {
+    const { container } = render(
+      <Gallery name="" description="" blocks={[block]} pages={[]} themeId="kyoto" showPlaceholders={true} />
+    )
+    return container.querySelector('.testimonial-block')
+  }
+
+  it('renders no <img> when imageUrl is empty, but still renders the quote and name', () => {
+    const el = renderFilled({ type: 'testimonial', text: 'Great work.', name: 'Naga', imageUrl: '', variant: 1 })
+    expect(el.querySelector('img')).toBeNull()
+    expect(el.textContent).toContain('Great work.')
+    expect(el.textContent).toContain('Naga')
+  })
+
+  it('still renders the <img> when imageUrl is present', () => {
+    const el = renderFilled({ type: 'testimonial', text: 'Great work.', name: 'Naga', imageUrl: 'https://gcs/face.jpg', variant: 1 })
+    expect(el.querySelector('img')).not.toBeNull()
+  })
+})

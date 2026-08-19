@@ -162,6 +162,21 @@ it('falls back to the capped gallery for an images-only (gallery) page', () => {
   expect(pages[0].blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
 })
 
+it('backfills a capped gallery when resolvePageLinks empties a designed page\'s only block', () => {
+  // Designed page (outline is a single linkcards node) whose links all point at
+  // pages that were NOT imported, so resolvePageLinks strips the page-gallery
+  // block, leaving blocks: []. The page still has imported assets, so it must
+  // not ship with an empty body.
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].outline = [
+    { kind: 'linkcards', items: [{ href: 'https://x.com/nowhere', label: 'Nowhere' }] },
+  ]
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages).toHaveLength(1)
+  expect(pages[0].blocks.length).toBeGreaterThan(0)
+  expect(pages[0].blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
+})
+
 it('orders galleries first (by navOrder, nulls last), then about, then contact — regardless of source nav order', () => {
   const collections = [
     { id: 'c1', name: 'Portraits', assetRefs: refs(5, 'c1') },
