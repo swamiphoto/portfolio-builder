@@ -1,8 +1,11 @@
 import { defaultPage } from '@/common/siteConfig'
 import { defaultBlock } from '@/common/blocks'
 import { stableHash } from './importCore'
+import { imageIdentity } from './originalUrl'
+import { validateBlocks } from './blockSchema'
+import { mapOutlineToBlocks } from './mapper'
 
-const MASONRY_RUN = 10
+const MASONRY_RUN = 9
 const STACKED_RUN = 6
 const MIN_TAIL = 4
 
@@ -47,7 +50,7 @@ export function composeGalleryBlocks(assets) {
       // Tail too small for its own block — fold into the last photos block,
       // or emit as one small masonry if none exists yet.
       const lastPhotos = [...blocks].reverse().find((b) => b.type === 'photos')
-      if (lastPhotos) {
+      if (lastPhotos && lastPhotos.images.length + rest.length <= MASONRY_RUN) {
         lastPhotos.images.push(...rest.map((a) => ({ url: a.publicUrl, assetId: a.assetId })))
         lastPhotos.imageUrls.push(...rest.map((a) => a.publicUrl))
         rest.length = 0
@@ -128,6 +131,42 @@ function orderPages(mapPages) {
     .map((x) => x.page)
 }
 
+function pathOf(url) {
+  try { return new URL(url).pathname.replace(/\/+$/, '') } catch { return '' }
+}
+
+// Set parentId from the source URL hierarchy: a page whose path is the immediate
+// parent of another page's path becomes its parent. Only wires parents that were
+// actually imported; otherwise the child stays top-level.
+export function setParentIds(pages) {
+  const byPath = new Map()
+  for (const p of pages) { const path = pathOf(p.source?.sourceUrl); if (path) byPath.set(path, p.id) }
+  for (const p of pages) {
+    const path = pathOf(p.source?.sourceUrl)
+    if (!path) continue
+    const parentPath = path.slice(0, path.lastIndexOf('/'))
+    if (parentPath && byPath.has(parentPath) && byPath.get(parentPath) !== p.id) p.parentId = byPath.get(parentPath)
+  }
+}
+
+// Rewrite page-gallery cards from source URLs (pageRefs) to imported page ids.
+// Links to pages we didn't import are dropped; a card block with no surviving
+// targets is removed (no dead links).
+export function resolvePageLinks(pages) {
+  const idByPath = new Map()
+  for (const p of pages) { const path = pathOf(p.source?.sourceUrl); if (path) idByPath.set(path, p.id) }
+  for (const p of pages) {
+    p.blocks = (p.blocks || []).filter((b) => {
+      if (b.type !== 'page-gallery' || !b.pageRefs) return true
+      const pageIds = b.pageRefs.map((u) => idByPath.get(pathOf(u))).filter(Boolean)
+      if (!pageIds.length) return false
+      delete b.pageRefs
+      b.pageIds = pageIds
+      return true
+    })
+  }
+}
+
 export function composeSite({ siteMap, collections, imported, importBatchId, existingPages }) {
   const mapPages = siteMap?.pages?.filter((p) => p.kind !== 'other') || []
   if (!mapPages.length) return { pages: [] }
@@ -139,6 +178,11 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
   const ordered = orderPages(mapPages)
 
   const pages = []
+  // Gallery pages' assets, keyed by composed page id — kept around so that if
+  // resolvePageLinks (below) later strips a page-gallery block and leaves the
+  // page's blocks empty, we can backfill a safe capped gallery instead of
+  // shipping a nav entry with a blank body.
+  const galleryAssetsByPageId = new Map()
   ordered.forEach((page) => {
     const assets = assetsForCollection(collectionById.get(page.collectionId), assetBySourceUrl)
     const videoUrls = page.videoUrls || []
@@ -146,7 +190,13 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
     let description = ''
     if (page.kind === 'gallery') {
       if (!assets.length) return // an empty gallery page helps no one
-      blocks = composeGalleryBlocks(assets)
+      if (classifyLayout(page.outline) === 'designed') {
+        const { blocks: plan, confidence } = mapOutlineToBlocks(page.outline)
+        const boundBlocks = bindAssets(plan, page.outline, assets)
+        blocks = confidence >= 0.5 && boundBlocks.length ? boundBlocks : composeGalleryBlocks(assets)
+      } else {
+        blocks = composeGalleryBlocks(assets)
+      }
       for (const url of videoUrls) blocks.push({ ...defaultBlock('video'), url })
       description = firstParagraphDescription(page.textContent)
     } else if (page.kind === 'about') {
@@ -168,9 +218,11 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
       blocks = [defaultBlock('contact')]
     }
     const slug = uniqueSlug(page.slug, taken)
+    const id = `pg-${stableHash(`${importBatchId}:${slug}`)}`
+    if (page.kind === 'gallery') galleryAssetsByPageId.set(id, assets)
     pages.push(
       defaultPage({
-        id: `pg-${stableHash(`${importBatchId}:${slug}`)}`,
+        id,
         title: page.title,
         template: page.kind === 'gallery' ? 'gallery' : page.kind,
         slug,
@@ -182,6 +234,18 @@ export function composeSite({ siteMap, collections, imported, importBatchId, exi
       })
     )
   })
+  setParentIds(pages)
+  resolvePageLinks(pages)
+  // resolvePageLinks can delete a page-gallery block whose links all point at
+  // non-imported pages; if that was a gallery page's only block, fall back to
+  // the always-safe capped gallery for that page's assets (guaranteed
+  // non-empty — the designed branch above only runs when assets.length).
+  for (const p of pages) {
+    if (!p.blocks || !p.blocks.length) {
+      const assets = galleryAssetsByPageId.get(p.id)
+      if (assets && assets.length) p.blocks = composeGalleryBlocks(assets)
+    }
+  }
   return { pages }
 }
 
@@ -189,4 +253,62 @@ export function applyComposedPages(siteConfig, composedPages) {
   const existing = new Set((siteConfig.pages || []).map((p) => p.id))
   const fresh = (composedPages || []).filter((p) => !existing.has(p.id))
   return { ...siteConfig, pages: [...(siteConfig.pages || []), ...fresh] }
+}
+
+// Resolve each block's `ref` to a real imported asset for this page. Matching is
+// by image identity (CDN size variants of the same photo collapse to one), so
+// the outline's raw <img src> still binds to the collapsed asset URL. Refs that
+// don't resolve are dropped; blocks left empty are dropped by validateBlocks.
+export function bindAssets(blocks, outline, pageAssets) {
+  const srcByRef = new Map((outline || []).filter((n) => n.kind === 'image').map((n) => [n.ref, n.src]))
+  const assetByIdentity = new Map()
+  for (const a of pageAssets || []) {
+    const u = a?.source?.sourceUrl
+    if (u) assetByIdentity.set(imageIdentity(u), a)
+  }
+  const assetForRef = (ref) => {
+    const src = srcByRef.get(ref)
+    return src ? assetByIdentity.get(imageIdentity(src)) : undefined
+  }
+
+  const bound = []
+  for (const b of blocks || []) {
+    if (b.type === 'photo') {
+      const a = assetForRef(b.ref)
+      if (!a) continue
+      bound.push({ type: 'photo', imageUrl: a.publicUrl, caption: b.caption || '', ...(b.variant ? { variant: b.variant } : {}) })
+    } else if (b.type === 'photos') {
+      const assets = (b.refs || []).map(assetForRef).filter(Boolean)
+      if (!assets.length) continue
+      // A multi-ref grid that loses all but one ref to unresolved bindings
+      // collapses to a single photo block — consistent with the mapper, which
+      // never emits a 1-image photos block.
+      if (assets.length === 1) { bound.push({ type: 'photo', imageUrl: assets[0].publicUrl, caption: '' }); continue }
+      bound.push({ type: 'photos', layout: b.layout || 'stacked',
+        images: assets.map((a) => ({ url: a.publicUrl, assetId: a.assetId })),
+        imageUrls: assets.map((a) => a.publicUrl) })
+    } else if (b.type === 'testimonial') {
+      const a = b.ref ? assetForRef(b.ref) : null
+      bound.push({ type: 'testimonial', text: b.text, name: b.name || '', imageUrl: a ? a.publicUrl : '', variant: 1 })
+    } else if (b.type === 'text' || b.type === 'video' || b.type === 'page-gallery') {
+      const { ref, refs, ...rest } = b
+      bound.push(rest)
+    }
+  }
+  return validateBlocks(bound)
+}
+
+// A page is a flat "gallery" when it is essentially images only: no quotes, no
+// link-cards, no captions, and at most one lead-in paragraph before the images
+// (a gallery blurb). Anything else — interleaved prose, section headings that
+// break the images, quotes, cards — is a "designed" page we replicate.
+export function classifyLayout(outline) {
+  const nodes = outline || []
+  if (!nodes.length) return 'gallery'
+  if (nodes.some((n) => n.kind === 'quote' || n.kind === 'linkcards')) return 'designed'
+  if (nodes.some((n) => n.kind === 'image' && n.caption)) return 'designed'
+  const firstImage = nodes.findIndex((n) => n.kind === 'image')
+  const proseAfterImages = nodes.some((n, i) => (n.kind === 'paragraph' || n.kind === 'heading') && firstImage !== -1 && i > firstImage)
+  if (proseAfterImages) return 'designed'
+  return 'gallery'
 }

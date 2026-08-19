@@ -49,6 +49,7 @@ export function buildSiteMap({ pageRecords, origin, navLinks = [] }) {
       textContent: keepText ? rec.text || '' : '',
       collectionId,
       videoUrls: rec.videoUrls || [],
+      outline: rec.outline || [],
     })
   }
   return { pages }

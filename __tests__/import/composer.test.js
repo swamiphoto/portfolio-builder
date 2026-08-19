@@ -37,6 +37,28 @@ it('large collection opens with the biggest landscape as a solo photo', () => {
   expect(total).toBe(20) // every asset placed exactly once
 })
 
+it('caps every synthesized photos block at 9 images', () => {
+  const { siteMap, collections, imported } = fixture(40)
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  for (const b of pages[0].blocks) {
+    if (b.type === 'photos') expect(b.imageUrls.length).toBeLessThanOrEqual(9)
+  }
+})
+
+it('folds an over-cap tail into a fresh block, capping at 9 and placing every asset once', () => {
+  // fixture(30): opener(1) + masonry(9) + solo(1) + stacked(6) + masonry(9) + solo(1) = 27
+  // placed, leaving rest=3 (< MIN_TAIL) while the last photos block already holds 9,
+  // so 9+3 > 9 forces the else branch to push a fresh masonry block of 3.
+  const { siteMap, collections, imported } = fixture(30)
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const blocks = pages[0].blocks
+  for (const b of blocks) {
+    if (b.type === 'photos') expect(b.imageUrls.length).toBeLessThanOrEqual(9)
+  }
+  const total = blocks.reduce((n, b) => n + (b.type === 'photo' ? 1 : b.imageUrls.length), 0)
+  expect(total).toBe(30) // every asset placed exactly once
+})
+
 it('composes about and contact pages and skips other', () => {
   const siteMap = { pages: [
     { kind: 'about', title: 'About', slug: 'about', navOrder: 0, sourceUrl: 'https://x.com/about', textContent: 'Hi.\n\nI shoot.', collectionId: 'about' },
@@ -107,6 +129,52 @@ it('gallery pages append one video block per videoUrl after the composed photo b
   expect(blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
   expect(blocks[blocks.length - 1]).toMatchObject({ type: 'video', url: 'https://vimeo.com/42' })
   expect(blocks).toHaveLength(2)
+})
+
+it('replicates a designed page structure instead of a synthesized gallery', () => {
+  const collections = [{ id: 'c1', name: 'Portfolio', assetRefs: [
+    { remoteUrl: 'https://x.com/a.jpg' }, { remoteUrl: 'https://x.com/face.jpg' },
+  ] }]
+  const imported = [
+    { assetId: 'a', publicUrl: 'https://gcs/a.jpg', source: { sourceUrl: 'https://x.com/a.jpg', externalCollectionId: 'c1' } },
+    { assetId: 'f', publicUrl: 'https://gcs/face.jpg', source: { sourceUrl: 'https://x.com/face.jpg', externalCollectionId: 'c1' } },
+  ]
+  const outline = [
+    { kind: 'heading', level: 1, text: 'Portfolio' },
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/a.jpg', caption: 'SF in fog' },
+    { kind: 'quote', text: 'Best ever.', attribution: 'Naga' },
+    { kind: 'image', ref: 'img-2', src: 'https://x.com/face.jpg', caption: '' },
+  ]
+  const siteMap = { pages: [{ kind: 'gallery', title: 'Portfolio', slug: 'portfolio', navOrder: 0, sourceUrl: 'https://x.com/portfolio', textContent: '', collectionId: 'c1', outline }] }
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  const types = pages[0].blocks.map((b) => b.type)
+  expect(types).toEqual(['text', 'photo', 'testimonial', 'photo'])
+  expect(pages[0].blocks[1]).toMatchObject({ type: 'photo', imageUrl: 'https://gcs/a.jpg', caption: 'SF in fog' })
+  expect(pages[0].blocks[2]).toMatchObject({ type: 'testimonial', text: 'Best ever.', name: 'Naga' })
+})
+
+it('falls back to the capped gallery for an images-only (gallery) page', () => {
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].outline = [
+    { kind: 'image', ref: 'img-1', src: 'https://x.com/pc10.jpg', caption: '' },
+  ]
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages[0].blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
+})
+
+it('backfills a capped gallery when resolvePageLinks empties a designed page\'s only block', () => {
+  // Designed page (outline is a single linkcards node) whose links all point at
+  // pages that were NOT imported, so resolvePageLinks strips the page-gallery
+  // block, leaving blocks: []. The page still has imported assets, so it must
+  // not ship with an empty body.
+  const { siteMap, collections, imported } = fixture(5)
+  siteMap.pages[0].outline = [
+    { kind: 'linkcards', items: [{ href: 'https://x.com/nowhere', label: 'Nowhere' }] },
+  ]
+  const { pages } = composeSite({ siteMap, collections, imported, importBatchId: 'imp_1', existingPages: [] })
+  expect(pages).toHaveLength(1)
+  expect(pages[0].blocks.length).toBeGreaterThan(0)
+  expect(pages[0].blocks[0]).toMatchObject({ type: 'photos', layout: 'masonry' })
 })
 
 it('orders galleries first (by navOrder, nulls last), then about, then contact — regardless of source nav order', () => {
