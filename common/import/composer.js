@@ -1,6 +1,8 @@
 import { defaultPage } from '@/common/siteConfig'
 import { defaultBlock } from '@/common/blocks'
 import { stableHash } from './importCore'
+import { imageIdentity } from './originalUrl'
+import { validateBlocks } from './blockSchema'
 
 const MASONRY_RUN = 10
 const STACKED_RUN = 6
@@ -189,6 +191,45 @@ export function applyComposedPages(siteConfig, composedPages) {
   const existing = new Set((siteConfig.pages || []).map((p) => p.id))
   const fresh = (composedPages || []).filter((p) => !existing.has(p.id))
   return { ...siteConfig, pages: [...(siteConfig.pages || []), ...fresh] }
+}
+
+// Resolve each block's `ref` to a real imported asset for this page. Matching is
+// by image identity (CDN size variants of the same photo collapse to one), so
+// the outline's raw <img src> still binds to the collapsed asset URL. Refs that
+// don't resolve are dropped; blocks left empty are dropped by validateBlocks.
+export function bindAssets(blocks, outline, pageAssets) {
+  const srcByRef = new Map((outline || []).filter((n) => n.kind === 'image').map((n) => [n.ref, n.src]))
+  const assetByIdentity = new Map()
+  for (const a of pageAssets || []) {
+    const u = a?.source?.sourceUrl
+    if (u) assetByIdentity.set(imageIdentity(u), a)
+  }
+  const assetForRef = (ref) => {
+    const src = srcByRef.get(ref)
+    return src ? assetByIdentity.get(imageIdentity(src)) : undefined
+  }
+
+  const bound = []
+  for (const b of blocks || []) {
+    if (b.type === 'photo') {
+      const a = assetForRef(b.ref)
+      if (!a) continue
+      bound.push({ type: 'photo', imageUrl: a.publicUrl, caption: b.caption || '', ...(b.variant ? { variant: b.variant } : {}) })
+    } else if (b.type === 'photos') {
+      const assets = (b.refs || []).map(assetForRef).filter(Boolean)
+      if (!assets.length) continue
+      bound.push({ type: 'photos', layout: b.layout || 'stacked',
+        images: assets.map((a) => ({ url: a.publicUrl, assetId: a.assetId })),
+        imageUrls: assets.map((a) => a.publicUrl) })
+    } else if (b.type === 'testimonial') {
+      const a = b.ref ? assetForRef(b.ref) : null
+      bound.push({ type: 'testimonial', text: b.text, name: b.name || '', imageUrl: a ? a.publicUrl : '', variant: 1 })
+    } else if (b.type === 'text' || b.type === 'video' || b.type === 'page-gallery') {
+      const { ref, refs, ...rest } = b
+      bound.push(rest)
+    }
+  }
+  return validateBlocks(bound)
 }
 
 // A page is a flat "gallery" when it is essentially images only: no quotes, no
