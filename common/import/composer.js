@@ -158,7 +158,7 @@ export function resolvePageLinks(pages) {
   for (const p of pages) {
     p.blocks = (p.blocks || []).filter((b) => {
       if (b.type !== 'page-gallery' || !b.pageRefs) return true
-      const pageIds = b.pageRefs.map((u) => idByPath.get(pathOf(u))).filter(Boolean)
+      const pageIds = [...new Set(b.pageRefs.map((u) => idByPath.get(pathOf(u))).filter(Boolean))]
       if (!pageIds.length) return false
       delete b.pageRefs
       b.pageIds = pageIds
@@ -278,14 +278,23 @@ export function bindAssets(blocks, outline, pageAssets) {
       if (!a) continue
       bound.push({ type: 'photo', imageUrl: a.publicUrl, caption: b.caption || '', ...(b.variant ? { variant: b.variant } : {}) })
     } else if (b.type === 'photos') {
-      const assets = (b.refs || []).map(assetForRef).filter(Boolean)
+      const refs = b.refs || []
+      const captions = b.captions || []
+      const assets = []
+      const boundCaptions = []
+      refs.forEach((ref, idx) => {
+        const a = assetForRef(ref)
+        if (!a) return // drop the ref AND its caption together, so arrays stay aligned
+        assets.push(a)
+        boundCaptions.push(captions[idx] || '')
+      })
       if (!assets.length) continue
       // A multi-ref grid that loses all but one ref to unresolved bindings
       // collapses to a single photo block — consistent with the mapper, which
-      // never emits a 1-image photos block.
-      if (assets.length === 1) { bound.push({ type: 'photo', imageUrl: assets[0].publicUrl, caption: '' }); continue }
+      // never emits a 1-image photos block. Carry that image's caption.
+      if (assets.length === 1) { bound.push({ type: 'photo', imageUrl: assets[0].publicUrl, caption: boundCaptions[0] || '' }); continue }
       bound.push({ type: 'photos', layout: b.layout || 'stacked',
-        images: assets.map((a) => ({ url: a.publicUrl, assetId: a.assetId })),
+        images: assets.map((a, idx) => ({ url: a.publicUrl, assetId: a.assetId, caption: boundCaptions[idx] })),
         imageUrls: assets.map((a) => a.publicUrl) })
     } else if (b.type === 'testimonial') {
       const a = b.ref ? assetForRef(b.ref) : null

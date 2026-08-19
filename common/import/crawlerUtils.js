@@ -225,7 +225,15 @@ export function extractPageOutline(html, baseUrl) {
       if (!cardAnchorSet.has(el)) return
       const g = cardGroups.find((gr) => gr.anchor === el)
       if (g && !nodes.some((n) => n.kind === 'linkcards' && n._key === g.key)) {
-        nodes.push({ kind: 'linkcards', _key: g.key, items: g.items })
+        // Dedupe by href (keep first occurrence) — some sites render the same
+        // card link twice (e.g. thumbnail + caption both wrapped in <a>).
+        const seenHrefs = new Set()
+        const items = g.items.filter((it) => {
+          if (seenHrefs.has(it.href)) return false
+          seenHrefs.add(it.href)
+          return true
+        })
+        nodes.push({ kind: 'linkcards', _key: g.key, items })
       }
     } else if (tag === 'blockquote') {
       const cite = $(el).find('cite').first().text().replace(/\s+/g, ' ').trim()

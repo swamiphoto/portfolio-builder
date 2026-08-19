@@ -41,6 +41,22 @@ describe('extractPageOutline', () => {
       { href: 'https://x.com/portfolio/portraits', label: 'Portraits' },
     ])
   })
+  it('dedupes linkcards items by href, keeping the first occurrence in order', () => {
+    const html = `<body><main>
+      <div class="cards">
+        <a href="/portfolio/landscapes"><img src="/l.jpg">Landscapes</a>
+        <a href="/portfolio/landscapes"><img src="/l2.jpg">Landscapes (again)</a>
+        <a href="/portfolio/portraits"><img src="/p.jpg">Portraits</a>
+      </div>
+    </main></body>`
+    const out = extractPageOutline(html, 'https://x.com/portfolio')
+    const cards = out.find((n) => n.kind === 'linkcards')
+    expect(cards.items).toEqual([
+      { href: 'https://x.com/portfolio/landscapes', label: 'Landscapes' },
+      { href: 'https://x.com/portfolio/portraits', label: 'Portraits' },
+    ])
+  })
+
   it('does not treat sibling image-file lightbox links as link cards', () => {
     const html = `<body><main>
       <a href="/p1-large.jpg"><img src="/p1.jpg"></a>
