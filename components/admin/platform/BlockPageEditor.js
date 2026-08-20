@@ -7,6 +7,7 @@ import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisp
 import { heroTitleFor } from '../../../common/pageUtils'
 import { useClientFeedback } from './useClientFeedback'
 import { EditorFeedbackProvider } from '../gallery-builder/EditorFeedbackContext'
+import { getPageTheme } from '../../../common/themes'
 import ClientFeedbackBanner from './ClientFeedbackBanner'
 
 function pageToGallery(page) {
@@ -42,6 +43,12 @@ function galleryToPage(page, gallery) {
 export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageChange }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
+
+  // Design controls (layout options, frame, etc.) must match the theme the page
+  // actually RENDERS in — which is the page's theme override when it has one, not the
+  // site theme. Otherwise an overridden page shows the wrong theme's controls (e.g. a
+  // Kyoto page under a Florence site showing "Fill" + Frame options).
+  const pageThemeId = getPageTheme(siteConfig, page)?.id || siteConfig?.design?.theme || 'kyoto'
 
   const feedback = useClientFeedback(page.id, !!page.clientFeatures?.enabled)
 
@@ -191,13 +198,13 @@ export default function BlockPageEditor({ page, siteConfig, saveStatus, onPageCh
             setsByUrl={setsByUrl}
             onToggleSet={handleToggleSet}
             onPrintChange={handlePrintChange}
-            themeId={siteConfig?.design?.theme || 'kyoto'}
+            themeId={pageThemeId}
             libraryImages={libraryImages}
             libraryConfig={libraryData}
             libraryLoading={libraryLoading}
           />
 
-          <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} assetsByUrl={assetsByUrl} printStore={siteConfig?.printStore} />
+          <GalleryPreview gallery={gallery} pages={pages} siteConfig={siteConfig} assetsByUrl={assetsByUrl} printStore={siteConfig?.printStore} themeId={pageThemeId} />
         </div>
 
         {photoPickerOpen && (
