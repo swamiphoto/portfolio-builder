@@ -292,8 +292,8 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
         // Empty video block: preview a 16:9 frame with a play glyph (like the other
         // themes' placeholders) so the wall shows where the video will sit.
         if (!showPlaceholders) return null
-        return wrap('florence-col--media', { justifyContent: justify }, (
-          <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
+        return wrap('florence-col--media', { justifyContent: 'center' }, (
+          <figure className="m-0" style={{ width: 'clamp(480px, 62vw, 1040px)' }}>
             <div className="florence-video-placeholder wall-placeholder" style={{ aspectRatio: '16 / 9', width: '100%' }} aria-hidden>
               <svg viewBox="0 0 48 48" fill="none" width="48" height="48" style={{ opacity: 0.5 }}>
                 <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="1.5" />
@@ -303,9 +303,9 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
           </figure>
         ))
       }
-      return wrap('florence-col--media', { justifyContent: justify }, (
-        <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
-          <VideoBlock url={block.url} caption="" variant={2} />
+      return wrap('florence-col--media', { justifyContent: 'center' }, (
+        <figure className="m-0" style={{ width: 'clamp(480px, 62vw, 1040px)' }}>
+          <VideoBlock url={block.url} caption="" variant={1} />
           <FlorenceCaption caption={block.caption || ''} titleStyle={capStyle} />
         </figure>
       ))

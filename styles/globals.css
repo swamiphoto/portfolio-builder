@@ -664,10 +664,10 @@ a {
 /* Long copy auto-flows into N balanced columns (count + width set inline by
    useBalancedColumns) so it never runs past the viewport and never leaves a lonely
    stub column. The section widens to fit and pins the block to the top margin. */
-/* Short text/testimonial columns center vertically (inline justifyContent:center).
-   Long copy that auto-flows into balanced columns still reads from the top with
-   breathing room, so it overrides the inline center here. */
-.florence-col--text:has(.florence-text--cols) { width: auto; max-width: 92vw; justify-content: flex-start !important; padding-top: 9vh; padding-bottom: 9vh; }
+/* Text/testimonial columns center vertically (inline justifyContent:center). When
+   long copy auto-flows into balanced columns the section widens; it stays centered
+   too (the balancer keeps it within height), with a little extra breathing room. */
+.florence-col--text:has(.florence-text--cols) { width: auto; max-width: 92vw; padding-top: 9vh; padding-bottom: 9vh; }
 .florence-text--cols { white-space: normal; }
 
 /* ── Florence frames: quiet gallery framing (mat / keyline), distinct from
@@ -702,7 +702,7 @@ a {
 .florence-mount--line .florence-mount__label { align-items: flex-start; padding-top: clamp(10px, 1.1vw, 16px); }
 
 /* Video / media column. */
-.florence-col--media { align-items: flex-start; }
+.florence-col--media { align-items: center; }
 /* Empty video block: a 16:9 frame with a play glyph, so the editor previews where
    the video will sit (the .florence-fit.wall-placeholder box rule is photo-only). */
 .florence-video-placeholder {
@@ -1037,10 +1037,11 @@ a {
 /* Amsterdam block columns */
 [data-theme="amsterdam"] .ams-col--photo, [data-theme="amsterdam"] .ams-col--photorow, [data-theme="amsterdam"] .ams-col--mosaic, [data-theme="amsterdam"] .ams-col--media, [data-theme="amsterdam"] .ams-col--pagelinks { display: flex; flex-direction: column; justify-content: center; padding: 0 2vw; }
 [data-theme="amsterdam"] .ams-col--fill { padding: 0; justify-content: flex-start; }
-/* Free-flow: matted single photos sit at rotating heights (middle / high / low)
-   so the seamless wall reads as a collage rather than a centered strip. */
-[data-theme="amsterdam"] .ams-col--photo:not(.ams-col--fill):not(.ams-col--framed)[data-flow="1"] { justify-content: flex-start; padding-top: clamp(8vh, 12vh, 16vh); }
-[data-theme="amsterdam"] .ams-col--photo:not(.ams-col--fill):not(.ams-col--framed)[data-flow="2"] { justify-content: flex-end; padding-bottom: clamp(8vh, 12vh, 16vh); }
+/* Free-flow: single photos stay centered but nudge gently above/below center
+   (rotating by position) so the seamless wall reads as a collage, not a rigid
+   centered strip — a little off-center, never pinned to the top/bottom edge. */
+[data-theme="amsterdam"] .ams-col--photo:not(.ams-col--fill):not(.ams-col--framed)[data-flow="1"] .ams-figure { transform: translateY(-7vh); }
+[data-theme="amsterdam"] .ams-col--photo:not(.ams-col--fill):not(.ams-col--framed)[data-flow="2"] .ams-figure { transform: translateY(7vh); }
 [data-theme="amsterdam"] .ams-figure { margin: 0; display: flex; flex-direction: column; justify-content: center; height: 100%; }
 [data-theme="amsterdam"] .ams-figure--fill { height: 100%; }
 [data-theme="amsterdam"] .ams-frame { position: relative; }
@@ -1171,6 +1172,7 @@ a {
    drops photos to varied vertical positions across the wall. On a vertical phone
    stack that just injects big empty gaps, so flatten it back to even spacing. */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photo[data-flow] { justify-content: flex-start; padding-top: 22px; padding-bottom: 22px; }
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photo[data-flow] .ams-figure { transform: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row--scatter .ams-mount[data-flip] { transform: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic { flex-wrap: wrap; height: auto !important; }
 /* Mosaic groups + page links stack full-width on phones (mirrors Florence's
