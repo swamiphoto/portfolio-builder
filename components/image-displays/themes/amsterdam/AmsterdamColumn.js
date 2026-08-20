@@ -137,6 +137,15 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
     )
   }
 
+  // A caption printed INSIDE the photo: a bottom-left overlay with a soft scrim
+  // (mirrors Florence's fill label) so it never hangs on the colored ground.
+  const insetLabel = (cap, m) => (cap || m) ? (
+    <figcaption className="ams-fill-label">
+      {cap && <span className="ams-caption__title" style={capStyle}>{cap}</span>}
+      {m && <span className="ams-caption__meta">{m}</span>}
+    </figcaption>
+  ) : null
+
   switch (block.type) {
     case 'photo': {
       const src = block.image || block.imageUrl
@@ -157,28 +166,27 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
         return wrap('ams-col--photo ams-col--framed', null,
           mount(imgObj, 0, frame, MOUNT_PHOTO_HEIGHT[size] || MOUNT_PHOTO_HEIGHT.large))
       }
-      // Only UNcaptioned Fill photos go edge-to-edge full-bleed. A caption always
-      // means a museum hang: the photo mats on the ground and its plaque hangs to
-      // the RIGHT (title + attributes), wrapping in columns so it never overflows.
-      if (isFill && !caption && !meta) {
+      // Fill: the photo spans the whole column height, edge to edge. Any caption is
+      // printed INSIDE the image (a bottom overlay), never hung on the colored ground.
+      if (isFill) {
         return wrap('ams-col--photo ams-col--fill', null, (
           <figure className="ams-figure ams-figure--fill">
             <div className="ams-frame" style={{ height: '100vh' }}>
               {photoBox(imgObj, 0)}
+              {insetLabel(caption, meta)}
             </div>
           </figure>
         ))
       }
+      // Centered: sized by the Size control, its caption overlaid inside the image
+      // (like Fill) rather than hung on the ground beside it.
       const size = resolvePhotoSize(block, TID)
-      // Fill keeps a tall frame (near the container height, with margin); Centered
-      // is sized by the Size control. Either way the plaque hangs on the right.
-      const frameH = isFill ? '82vh' : (PHOTO_HEIGHT[size] || PHOTO_HEIGHT.large)
       return wrap('ams-col--photo', null, (
-        <figure className="ams-figure ams-figure--plaque">
-          <div className="ams-frame" style={{ flex: '0 0 auto', height: frameH }}>
+        <figure className="ams-figure">
+          <div className="ams-frame" style={{ flex: '0 0 auto', height: PHOTO_HEIGHT[size] || PHOTO_HEIGHT.large }}>
             {photoBox(imgObj, 0)}
+            {insetLabel(caption, meta)}
           </div>
-          <AmsterdamCaption caption={caption} meta={meta} beside tag="Left" titleStyle={capStyle} />
         </figure>
       ))
     }
