@@ -674,6 +674,12 @@ a {
    Amsterdam's vintage mounts. Caption prints on the frame. ─────────────────── */
 .florence-col--framed { display: flex; flex-direction: column; padding: 0 2vw; }
 .florence-row--framed { display: flex; align-items: center; gap: clamp(28px, 3.6vw, 68px); height: 100%; padding: 0 1.5vw; }
+/* Framed Mosaic = a scrapbook scatter: mounts stagger up/down as you go (mirrors
+   Amsterdam's .ams-row--scatter). Row + frame keeps the uniform line-up above. */
+.florence-row--scatter { align-items: center; gap: clamp(20px, 2.4vw, 48px); }
+.florence-row--scatter .florence-mount[data-flip="0"] { transform: translateY(-6vh); }
+.florence-row--scatter .florence-mount[data-flip="1"] { transform: translateY(5vh); }
+.florence-row--scatter .florence-mount[data-flip="2"] { transform: translateY(-2vh); }
 .florence-mount { display: inline-flex; flex-direction: column; margin: 0; color: var(--theme-text); box-sizing: border-box; }
 .florence-mount__photo { position: relative; overflow: hidden; }
 .florence-mount__photo .florence-fit { height: 100%; }
@@ -841,6 +847,9 @@ a {
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-pagelink { width: 100% !important; height: auto !important; flex: 0 0 auto; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mosaic__cell,
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-pagelink__frame { flex: 0 0 auto; min-height: 0; overflow: visible; }
+/* The framed-Mosaic scatter is a desktop collage trick; flatten the stagger when the
+   wall stacks into a vertical column on phones (mirrors Amsterdam). */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-row--scatter .florence-mount[data-flip] { transform: none; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--photo[data-fit="full"] { padding-top: 1.75rem; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-menu {
   width: 100% !important; border-right: none; border-bottom: 1px solid var(--fl-hairline);
