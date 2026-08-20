@@ -79,3 +79,29 @@ describe('FlorenceColumn centers short text + testimonial columns', () => {
     expect(section.style.justifyContent).toBe('center')
   })
 })
+
+describe('FlorenceColumn framed Mosaic is a scatter, not a flat row', () => {
+  const imgs = [{ url: 'https://x/1.jpg' }, { url: 'https://x/2.jpg' }, { url: 'https://x/3.jpg' }]
+
+  it('a Mosaic set with a frame scatters framed mounts (varied heights), keeping the mosaic feel', () => {
+    const { container } = renderWall([{ type: 'photos', images: imgs, florenceFrame: 'mat', themeState: { florence: { variant: 'mosaic' } } }])
+    // Framed mounts present, arranged as a scatter — NOT collapsed to the raw
+    // (unframed) mosaic packing, and NOT a uniform framed row.
+    expect(container.querySelector('.florence-row--scatter')).toBeTruthy()
+    expect(container.querySelector('.florence-mount--mat')).toBeTruthy()
+    expect(container.querySelector('.florence-col--mosaic')).toBeNull()
+    const mounts = container.querySelectorAll('.florence-row--scatter .florence-mount')
+    expect(mounts.length).toBe(3)
+    // data-flip staggers the mounts up/down (0,1,2)
+    expect([...mounts].map(m => m.getAttribute('data-flip'))).toEqual(['0', '1', '2'])
+    // heights vary across the scatter (not one uniform mount height)
+    const heights = [...container.querySelectorAll('.florence-row--scatter .florence-mount__photo')].map(p => p.style.height)
+    expect(new Set(heights).size).toBeGreaterThan(1)
+  })
+
+  it('a Row set with a frame stays a uniform framed row (no scatter)', () => {
+    const { container } = renderWall([{ type: 'photos', images: imgs, florenceFrame: 'mat', themeState: { florence: { variant: 'row' } } }])
+    expect(container.querySelector('.florence-row--framed')).toBeTruthy()
+    expect(container.querySelector('.florence-row--scatter')).toBeNull()
+  })
+})

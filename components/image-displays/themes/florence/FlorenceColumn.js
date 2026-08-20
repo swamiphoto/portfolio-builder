@@ -15,6 +15,9 @@ import { captionStyleCss, resolveCaptionStyle } from '../../../../common/caption
 
 const FL_FRAME_CYCLE = ['mat', 'line']
 const FL_MOUNT_HEIGHT = { large: '58vh', medium: '48vh', small: '38vh' }
+// A framed Mosaic scatters the mounts at varied heights (scrapbook wall) rather than
+// the uniform Row line-up; heights cycle per photo. Mirrors Amsterdam's MOUNT_SCATTER.
+const FL_MOUNT_SCATTER = { large: ['58vh', '46vh', '54vh', '42vh'], medium: ['48vh', '38vh', '44vh', '34vh'], small: ['38vh', '30vh', '36vh', '28vh'] }
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import VideoBlock from '../../gallery/video-block/VideoBlock'
 import ContactDisplay from '../../../contact/ContactDisplay'
@@ -112,7 +115,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
     const beside = cap.length > 70
     const openLightbox = beside && onImageClick ? () => onImageClick(i) : undefined
     return (
-      <figure key={i} className={`florence-mount florence-mount--${style}`} data-caplayout={beside ? 'beside' : 'below'}>
+      <figure key={i} className={`florence-mount florence-mount--${style}`} data-flip={i % 3} data-caplayout={beside ? 'beside' : 'below'}>
         <div className="florence-mount__photo" style={{ height }}>
           {photoBox(img, i)}
         </div>
@@ -234,12 +237,15 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
         ))
       }
 
-      // Framed set: each photo in a gallery mat / keyline (or a rotating mix).
+      // Framed set: each photo in a gallery mat / keyline (or a rotating mix). Row →
+      // a uniform line-up; Mosaic → a scrapbook scatter of mounts at varied heights.
       if (frame !== 'none') {
+        const isMosaic = resolveVariant(block, TID) === 'mosaic'
+        const scatter = FL_MOUNT_SCATTER[size] || FL_MOUNT_SCATTER.large
         const mh = FL_MOUNT_HEIGHT[size] || FL_MOUNT_HEIGHT.large
-        return wrap('florence-col--photorow florence-col--framed', { justifyContent: justify }, (
-          <div className="florence-row florence-row--framed">
-            {refs.map((img, i) => florenceMount(img, i, mh))}
+        return wrap(`florence-col--photorow florence-col--framed${isMosaic ? ' florence-col--framed-scatter' : ''}`, { justifyContent: justify }, (
+          <div className={`florence-row florence-row--framed${isMosaic ? ' florence-row--scatter' : ''}`}>
+            {refs.map((img, i) => florenceMount(img, i, isMosaic ? scatter[i % scatter.length] : mh))}
           </div>
         ))
       }
