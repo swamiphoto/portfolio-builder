@@ -8,6 +8,7 @@ import PageSettingsPanel from './PageSettingsPanel'
 import PageSettingsPopover from './PageSettingsPopover'
 import { generatePageId } from '../../../common/siteConfig'
 import { amsterdamGroundPlan } from '../../../common/themes/variants'
+import { getPageTheme } from '../../../common/themes'
 import { resolveHomePage } from '../../../common/homePage'
 
 function pageToGallery(page) {
@@ -49,6 +50,11 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
 
   const gallery = pageToGallery(page)
   const pages = siteConfig?.pages || []
+  // The block design controls must match the theme the page RENDERS in — its theme
+  // override when set, not the site theme. Otherwise an overridden page shows the
+  // wrong theme's layout/frame options (e.g. a Kyoto-overridden page under a Florence
+  // site showing Fill + Frame).
+  const pageThemeId = getPageTheme(siteConfig, page)?.id || siteConfig?.design?.theme || 'kyoto'
 
   // Amsterdam: the default (rotation) ground each block would take on auto, so the
   // block's Ink swatches can mark which one is the site's choice. Mirrors the wall's
@@ -254,7 +260,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         onPrintChange={onPrintChange}
         assetsByUrl={assetsByUrl}
         className="flex flex-col h-full bg-stone-50 text-left font-sans"
-        themeId={siteConfig?.design?.theme || 'kyoto'}
+        themeId={pageThemeId}
         libraryImages={libraryImages}
         libraryConfig={libraryData}
         libraryLoading={libraryLoading}
