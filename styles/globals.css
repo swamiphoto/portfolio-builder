@@ -664,7 +664,10 @@ a {
 /* Long copy auto-flows into N balanced columns (count + width set inline by
    useBalancedColumns) so it never runs past the viewport and never leaves a lonely
    stub column. The section widens to fit and pins the block to the top margin. */
-.florence-col--text:has(.florence-text--cols) { width: auto; max-width: 92vw; justify-content: flex-start; padding-top: 9vh; padding-bottom: 9vh; }
+/* Short text/testimonial columns center vertically (inline justifyContent:center).
+   Long copy that auto-flows into balanced columns still reads from the top with
+   breathing room, so it overrides the inline center here. */
+.florence-col--text:has(.florence-text--cols) { width: auto; max-width: 92vw; justify-content: flex-start !important; padding-top: 9vh; padding-bottom: 9vh; }
 .florence-text--cols { white-space: normal; }
 
 /* ── Florence frames: quiet gallery framing (mat / keyline), distinct from

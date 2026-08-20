@@ -60,3 +60,22 @@ describe('FlorenceColumn editor hover keeps the column layout', () => {
     expect(section.style.cursor).toBe('pointer')
   })
 })
+
+describe('FlorenceColumn centers short text + testimonial columns', () => {
+  // The Position control was retired (resolveFlorenceAnchor always returns 'top'), so
+  // these short columns used to pin to the top of their full-height column. They
+  // should sit vertically centered like the photos — on the published site too.
+  it('a text block is vertically centered in its column', () => {
+    const { container } = renderWall([{ type: 'text', content: 'A short note.' }])
+    const section = container.querySelector('.florence-col--text')
+    expect(section).toBeTruthy()
+    expect(section.style.justifyContent).toBe('center')
+  })
+
+  it('a testimonial block is vertically centered in its column', () => {
+    const { container } = renderWall([{ type: 'testimonial', text: 'Wonderful work.', name: 'Jane' }])
+    const section = container.querySelector('.florence-col--testimonial')
+    expect(section).toBeTruthy()
+    expect(section.style.justifyContent).toBe('center')
+  })
+})

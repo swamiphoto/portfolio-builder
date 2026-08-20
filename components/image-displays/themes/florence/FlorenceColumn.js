@@ -266,7 +266,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       const fontSize = TEXT_SIZE[resolveVariant(block, TID)] || TEXT_SIZE.body
       // Empty text block: skeleton lines (like the other themes) rather than prose.
       if (!block.content) {
-        return wrap('florence-col--text', { justifyContent: justify }, (
+        return wrap('florence-col--text', { justifyContent: 'center' }, (
           <div className="wall-text-placeholder" aria-hidden>
             <span style={{ width: '82%' }} /><span style={{ width: '94%' }} /><span style={{ width: '58%' }} />
           </div>
@@ -276,7 +276,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       // markdown node reuses the same "florence-text" look; formatting (bold, links,
       // lists) is what matters here, not new art direction. Long copy (plain or
       // markdown) auto-flows into balanced columns via FlorenceText.
-      return wrap('florence-col--text', { justifyContent: justify }, (
+      return wrap('florence-col--text', { justifyContent: 'center' }, (
         <FlorenceText block={block} fontFamily={fontFamily} fontSize={fontSize} />
       ))
     }
@@ -323,7 +323,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
             <span className="florence-testimonial-placeholder__name" />
           </div>
         )
-        return wrap('florence-col--text florence-col--testimonial', { justifyContent: justify }, (
+        return wrap('florence-col--text florence-col--testimonial', { justifyContent: 'center' }, (
           <figure className="florence-testimonial florence-testimonial-placeholder m-0">
             {photoAbove ? <>{byline}{bars}</> : <>{bars}{byline}</>}
           </figure>
@@ -341,7 +341,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
           {block.name && <span>{block.name}</span>}
         </figcaption>
       )
-      return wrap('florence-col--text florence-col--testimonial', { justifyContent: justify }, (
+      return wrap('florence-col--text florence-col--testimonial', { justifyContent: 'center' }, (
         // photo-above → byline (with avatar) first, then the quote; quote-above → quote, then byline.
         <figure className="florence-testimonial m-0">
           {photoAbove ? <>{by}{quote}</> : <>{quote}{by}</>}
