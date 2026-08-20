@@ -25,31 +25,32 @@ describe('AmsterdamColumn block treatments', () => {
     expect(styles).toEqual(['card', 'mount', 'print', 'card'])
   })
 
-  it('the Caption style control drives the caption typography (plaque + framed)', () => {
+  it('the Caption style control drives the caption typography (inside label + framed card)', () => {
     const { container } = renderWall([
       { type: 'photo', image: 'https://x/a.jpg', caption: 'Herengracht', captionStyle: 'accent' },
       { type: 'photo', image: 'https://x/b.jpg', caption: 'Keizersgracht', amsterdamFrame: 'print', captionStyle: 'serif', themeState: { amsterdam: { variant: 'centered' } } },
     ])
-    // Plaque caption picks up the Accent style (uppercase + red).
-    const plaque = container.querySelector('.ams-figure--plaque .ams-caption__title')
-    expect(plaque.getAttribute('style')).toMatch(/text-transform: uppercase/)
+    // The caption printed inside the photo picks up the Accent style (uppercase + red).
+    const inside = container.querySelector('.ams-fill-label .ams-caption__title')
+    expect(inside.getAttribute('style')).toMatch(/text-transform: uppercase/)
     // Framed mount caption picks up the Serif style (Cormorant).
     const mount = container.querySelector('.ams-mount--print .ams-mount__title')
     expect(mount.getAttribute('style')).toMatch(/Cormorant/)
   })
 
-  it('an uncaptioned photo goes full-bleed; a captioned one hangs with a right-side plaque', () => {
+  it('an uncaptioned Fill goes full-bleed; a captioned photo prints its caption inside the image', () => {
     const { container } = renderWall([
       { type: 'photo', image: 'https://x/one.jpg' },
       { type: 'photo', image: 'https://x/two.jpg', caption: 'BRUG' },
       { type: 'photo', image: 'https://x/three.jpg', caption: 'GRACHT', themeState: { amsterdam: { variant: 'centered' } } },
     ])
-    // No caption => full-bleed Fill (no plaque).
+    // No caption => full-bleed Fill, no label.
     const fill = container.querySelector('.ams-col--fill')
     expect(fill).toBeTruthy()
-    expect(fill.querySelector('.ams-caption')).toBeNull()
-    // A caption => a beside plaque, whether the photo is Fill or Centered.
-    expect(container.querySelectorAll('.ams-figure--plaque .ams-caption--beside').length).toBe(2)
+    expect(fill.querySelector('.ams-fill-label')).toBeNull()
+    // A caption => an inside label (never a beside plaque), for Fill AND Centered.
+    expect(container.querySelectorAll('.ams-fill-label').length).toBe(2)
+    expect(container.querySelector('.ams-caption--beside')).toBeNull()
     expect(container.textContent).toContain('BRUG')
     expect(container.textContent).toContain('GRACHT')
   })
