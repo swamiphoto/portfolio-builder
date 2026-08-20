@@ -30,7 +30,19 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
     let raf = 0
 
     const measure = () => {
-      const avail = window.innerHeight * (availVh / 100)
+      // Available height is the COLUMN's real content box — not the window. On the
+      // published site the column is the full viewport (100vh), but in the shorter
+      // admin preview pane it isn't; measuring the window there overestimates the
+      // room, so the copy under-splits and overruns the pane. Use the column's
+      // client height minus its (viewport-based) padding so the fit is exact.
+      const col = el.closest('[data-block-index]')
+      let avail
+      if (col && col.clientHeight) {
+        const cs = window.getComputedStyle(col)
+        avail = (col.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) * 0.98
+      } else {
+        avail = window.innerHeight * (availVh / 100)
+      }
       // Freeze to a single fixed-width column to read the natural stacked height,
       // then restore the inline styles exactly (this runs before paint, so no flash).
       const s = el.style
