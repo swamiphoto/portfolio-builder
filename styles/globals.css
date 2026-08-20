@@ -1123,7 +1123,10 @@ a {
 
 /* Testimonial / contact / page links */
 [data-theme="amsterdam"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-col--contact { width: clamp(340px, 34vw, 560px); display: flex; align-items: center; padding: 6vh 2.5vw; }
-[data-theme="amsterdam"] .ams-testimonial__quote { margin: 0 0 16px; line-height: 1.3; }
+/* Flex column with a real gap so the byline sits off the quote in BOTH orders
+   (photo-above put the byline flush against the quote before). */
+[data-theme="amsterdam"] .ams-testimonial { display: flex; flex-direction: column; gap: 22px; }
+[data-theme="amsterdam"] .ams-testimonial__quote { margin: 0; line-height: 1.3; }
 [data-theme="amsterdam"] .ams-testimonial__by { display: flex; align-items: center; gap: 10px; font-family: Inter, sans-serif; font-size: var(--fs-byline); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; }
 [data-theme="amsterdam"] .ams-testimonial__avatar { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; }
 [data-theme="amsterdam"] .ams-pagelink { display: flex; flex-direction: column; gap: 8px; height: 100%; text-decoration: none; color: inherit; }
