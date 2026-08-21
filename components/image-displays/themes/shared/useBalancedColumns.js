@@ -43,19 +43,38 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
       } else {
         avail = window.innerHeight * (availVh / 100)
       }
-      // Freeze to a single fixed-width column to read the natural stacked height,
-      // then restore the inline styles exactly (this runs before paint, so no flash).
-      const s = el.style
-      const saved = { columnCount: s.columnCount, columnGap: s.columnGap, columnFill: s.columnFill, width: s.width }
-      s.columnCount = '1'
-      s.columnGap = 'normal'
-      s.columnFill = 'auto'
-      s.width = colWidth
-      const natural = el.scrollHeight
-      s.columnCount = saved.columnCount
-      s.columnGap = saved.columnGap
-      s.columnFill = saved.columnFill
-      s.width = saved.width
+      // Read the natural single-column height from an OFFSCREEN CLONE, not by mutating
+      // the live element. Mutating the live element to probe was unstable: once the
+      // copy was balanced into N columns, the probe read the wrong height (the widened
+      // multi-column parent skewed it), so a later re-measure knocked a correctly
+      // balanced block back to one overflowing column. A detached clone in the same
+      // parent (for inherited layout) with the real font metrics reads the same height
+      // every time, regardless of the live element's current state.
+      const cs0 = window.getComputedStyle(el)
+      const probe = el.cloneNode(true)
+      probe.className = el.className
+      probe.style.cssText = ''
+      probe.style.position = 'fixed'
+      probe.style.left = '0'
+      probe.style.top = '0'
+      probe.style.visibility = 'hidden'
+      probe.style.pointerEvents = 'none'
+      probe.style.zIndex = '-1'
+      probe.style.columnCount = '1'
+      probe.style.columnGap = 'normal'
+      probe.style.columnFill = 'auto'
+      probe.style.width = colWidth
+      probe.style.maxWidth = 'none'
+      probe.style.height = 'auto'
+      probe.style.fontFamily = cs0.fontFamily
+      probe.style.fontSize = cs0.fontSize
+      probe.style.fontWeight = cs0.fontWeight
+      probe.style.lineHeight = cs0.lineHeight
+      probe.style.letterSpacing = cs0.letterSpacing
+      const parent = el.parentElement || document.body
+      parent.appendChild(probe)
+      const natural = probe.scrollHeight
+      parent.removeChild(probe)
       // A little slack so a single line's rounding doesn't trip a second column.
       const n = natural > avail + 8 ? Math.min(maxCols, Math.ceil(natural / avail)) : 1
       setCols((prev) => (prev === n ? prev : n))
@@ -64,13 +83,12 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
     measure()
     const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
     window.addEventListener('resize', onResize)
-    // The initial measure runs before the web font (Playfair / Fraunces) has actually
-    // reflowed the text and before the horizontal wall's JS-driven column height has
-    // settled, so it under-counts columns and leaves long copy overflowing in one
-    // column. `fonts.ready` can resolve a hair before the reflow lands, and observers
-    // get starved by the wall's animations, so just re-measure at a few fixed delays
-    // after mount — one of them always lands after everything has settled. (measure()
-    // is idempotent; the column count converges.)
+    // The initial measure runs before the web font has reflowed the text and before
+    // the horizontal wall's JS-driven column height has settled, so it can under-count
+    // columns. `fonts.ready` can resolve a hair before the reflow lands and observers
+    // get starved by the wall's animations, so re-measure at a few fixed delays after
+    // mount — one always lands after everything settles. The clone-based measure is
+    // stable, so these can't oscillate a balanced block.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure).catch(() => {})
     const timers = [50, 250, 700, 1500].map((ms) => setTimeout(measure, ms))
     return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); timers.forEach(clearTimeout) }
