@@ -64,23 +64,16 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
     measure()
     const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
     window.addEventListener('resize', onResize)
-    // Web fonts change the measured height once they load.
+    // The initial measure runs before the web font (Playfair / Fraunces) has actually
+    // reflowed the text and before the horizontal wall's JS-driven column height has
+    // settled, so it under-counts columns and leaves long copy overflowing in one
+    // column. `fonts.ready` can resolve a hair before the reflow lands, and observers
+    // get starved by the wall's animations, so just re-measure at a few fixed delays
+    // after mount — one of them always lands after everything has settled. (measure()
+    // is idempotent; the column count converges.)
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure).catch(() => {})
-    // Re-measure when the text OR its column changes size after first paint. On the
-    // horizontal wall themes the initial measure runs before the web font (Playfair /
-    // Fraunces) has loaded and before the wall's JS-driven column height settles, so
-    // it under-counts columns and leaves long copy overflowing in one column until a
-    // resize. The font load reflows the TEXT (not the fixed-height column), so observe
-    // the text element itself; the column catches the height-settle case. onResize is
-    // rAF-debounced and the column count converges, so no measure loop.
-    let ro = null
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(onResize)
-      ro.observe(el)
-      const col = el.closest('[data-block-index]')
-      if (col) ro.observe(col)
-    }
-    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); if (ro) ro.disconnect() }
+    const timers = [50, 250, 700, 1500].map((ms) => setTimeout(measure, ms))
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); timers.forEach(clearTimeout) }
   }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Applied only when cols > 1: N balanced, equal-width columns. Height stays auto
