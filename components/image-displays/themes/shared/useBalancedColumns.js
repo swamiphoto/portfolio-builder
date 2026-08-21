@@ -66,7 +66,19 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
     window.addEventListener('resize', onResize)
     // Web fonts change the measured height once they load.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure).catch(() => {})
-    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf) }
+    // Re-measure when the COLUMN settles to its final height. The horizontal wall
+    // themes (Amsterdam especially) set column heights via layout + JS that isn't
+    // final at first paint, so the initial measure can under-count columns and leave
+    // long copy overflowing in one column until a resize. Observing the column
+    // re-measures the moment its size resolves. (The column is fixed-size, so probing
+    // the text's own width inside measure() can't feed back into a loop here.)
+    let ro = null
+    const col = el.closest('[data-block-index]')
+    if (col && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(onResize)
+      ro.observe(col)
+    }
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); if (ro) ro.disconnect() }
   }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Applied only when cols > 1: N balanced, equal-width columns. Height stays auto
