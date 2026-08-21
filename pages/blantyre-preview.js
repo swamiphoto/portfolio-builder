@@ -1,5 +1,5 @@
-// pages/tofino-preview.js
-// Dev-only playground for the Tofino surf-journal theme: one seeded page
+// pages/blantyre-preview.js
+// Dev-only playground for the Blantyre surf-journal theme: one seeded page
 // covering the top header, the offset scatter, framed photos, mono text and
 // the boxed contact form. ?empty=1 previews the placeholder furniture;
 // ?mobile=1 narrows nothing here (use the browser's device mode). 404s in prod.
@@ -29,12 +29,12 @@ const BLOCKS = [
     { url: P(1039, 1000, 1400), caption: 'Waimea Bay Beach / Hawaii' },
     { url: P(1043, 1200, 1200), caption: 'Zion National Park' },
   ] },
-  { type: 'text', content: 'Field Notes', themeState: { tofino: { variant: 'heading' } }, font: 'display' },
+  { type: 'text', content: 'Field Notes', themeState: { blantyre: { variant: 'heading' } }, font: 'display' },
   { type: 'photos', images: [
     { url: P(1050, 1400, 1000), caption: 'Surf Session Tenerife' },
     { url: P(1051, 1000, 1400), caption: 'Baja California' },
     { url: P(1052, 1200, 900), caption: 'Highway One' },
-  ], themeState: { tofino: { variant: 'masonry' } } },
+  ], themeState: { blantyre: { variant: 'masonry' } } },
   { type: 'photo', image: P(1080, 1400, 1000), caption: 'Golden hour at the point break' },
   { type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', caption: 'Process film' },
   { type: 'testimonial', text: 'The prints arrived and they feel exactly like the trip did — warm, grainy, alive.', name: 'A. Collector' },
@@ -45,29 +45,29 @@ const BLOCKS = [
 const EMPTY_BLOCKS = [
   { type: 'photo' },
   { type: 'photos' },
-  { type: 'photos', themeState: { tofino: { variant: 'masonry' } } },
+  { type: 'photos', themeState: { blantyre: { variant: 'masonry' } } },
   { type: 'text' },
   { type: 'video' },
   { type: 'testimonial' },
 ]
 
 const SITE = {
-  siteName: 'Tofino',
-  design: { theme: 'tofino' },
+  siteName: 'Blantyre',
+  design: { theme: 'blantyre' },
   pages: [
     { id: 'p1', title: 'Work', slug: 'work', showInNav: true },
     { id: 'p2', title: 'Contact', slug: 'contact', showInNav: true },
   ],
-  contact: { instagram: '@tofino' },
+  contact: { instagram: '@blantyre' },
 }
 
-export default function TofinoPreview() {
+export default function BlantyrePreview() {
   const router = useRouter()
   const empty = router.query.empty
   return (
-    <ThemeProvider themeId="tofino">
+    <ThemeProvider themeId="blantyre">
       <div className="theme-shell" data-viewport="desktop" style={{ minHeight: '100vh', background: 'var(--theme-bg)' }}>
-        <SiteNav siteConfig={SITE} username="tofino" themeId="tofino" basePath="" />
+        <SiteNav siteConfig={SITE} username="blantyre" themeId="blantyre" basePath="" />
         <Gallery
           name=""
           description=""
@@ -75,7 +75,7 @@ export default function TofinoPreview() {
           showPlaceholders={!!empty}
           pages={SITE.pages}
           siteConfig={SITE}
-          themeId="tofino"
+          themeId="blantyre"
         />
         <SiteFooter siteConfig={SITE} />
       </div>

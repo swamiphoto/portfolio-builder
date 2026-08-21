@@ -306,7 +306,7 @@ function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMo
   )
 }
 
-// A top-header nav item (Tofino): small mono link on the theme ground, active
+// A top-header nav item (Blantyre): small mono link on the theme ground, active
 // page at full ink with an underline, others muted. Children collapse behind a
 // caret into a themed dropdown panel, mirroring NavItem's behavior.
 function TopNavItem({ item, basePath, currentPath, currentPageId, onPageClick, subNavMode, linkFont }) {
@@ -357,7 +357,7 @@ function TopNavItem({ item, basePath, currentPath, currentPageId, onPageClick, s
       {open && (
         <div
           className="absolute right-0 top-full mt-3 py-2 min-w-[168px] z-40"
-          style={{ background: 'var(--theme-bg, #dadbd1)', border: '1px solid var(--tofino-frame, #b1b6a2)', boxShadow: '0 8px 28px rgba(35,37,30,0.12)' }}
+          style={{ background: 'var(--theme-bg, #dadbd1)', border: '1px solid var(--blantyre-frame, #b1b6a2)', boxShadow: '0 8px 28px rgba(35,37,30,0.12)' }}
         >
           {children.map(child => (
             <div key={child.id} className="px-5 py-1.5">
@@ -550,7 +550,7 @@ export default function SiteNav({ siteConfig, username, variant, themeId, onPage
   }
 
   if (style === 'top-header') {
-    // Tofino: quiet header row on the theme ground — serif wordmark left, small
+    // Blantyre: quiet header row on the theme ground — serif wordmark left, small
     // mono links right. Phones swap the links for the shared overlay.
     const fonts = getTheme(themeId || siteConfig?.design?.theme)?.tokens?.fonts || {}
     const brandStyle = {

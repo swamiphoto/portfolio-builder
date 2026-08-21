@@ -1,5 +1,5 @@
-// components/image-displays/themes/tofino/TofinoOffsetGallery.js
-// Tofino's signature photos layout: images pair into alternating asymmetric
+// components/image-displays/themes/blantyre/BlantyreOffsetGallery.js
+// Blantyre's signature photos layout: images pair into alternating asymmetric
 // rows — one wide, one narrow, the narrow one dropped down the page — with the
 // keyline frame (theme CSS) and a small mono caption beneath each. A trailing
 // unpaired image centers at the wide width. Desktop-only: the mobile render
@@ -14,7 +14,7 @@ import WatermarkOverlay from '../../engagement/WatermarkOverlay'
 // [wide, narrow] column widths as a % of the content row, per Size (L/M/S).
 const SCALE = { large: [58, 30], medium: [50, 26], small: [42, 22] }
 
-export default function TofinoOffsetGallery({ images = [], onImageClick, captionStyle = 'mono', size = 'large' }) {
+export default function BlantyreOffsetGallery({ images = [], onImageClick, captionStyle = 'mono', size = 'large' }) {
   const capCss = captionStyleCss(captionStyle)
   const [wide, narrow] = SCALE[size] || SCALE.large
 
@@ -45,12 +45,12 @@ export default function TofinoOffsetGallery({ images = [], onImageClick, caption
   for (let i = 0; i < images.length; i += 2) rows.push(images.slice(i, i + 2))
 
   return (
-    <div className="tofino-offset w-full max-w-6xl mx-auto px-6 md:px-10">
+    <div className="blantyre-offset w-full max-w-6xl mx-auto px-6 md:px-10">
       {rows.map((row, r) => {
         const base = r * 2
         if (row.length === 1) {
           return (
-            <div key={r} className="tofino-offset-row flex justify-center">
+            <div key={r} className="blantyre-offset-row flex justify-center">
               {cell(row[0], base, wide, 0)}
             </div>
           )
@@ -59,7 +59,7 @@ export default function TofinoOffsetGallery({ images = [], onImageClick, caption
         // image (or the trailing wide one) drops down for the staggered rhythm.
         const flip = r % 2 === 1
         return (
-          <div key={r} className="tofino-offset-row flex justify-between items-start">
+          <div key={r} className="blantyre-offset-row flex justify-between items-start">
             {flip ? (
               <>
                 {cell(row[0], base, narrow, 0)}

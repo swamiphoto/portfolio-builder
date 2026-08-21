@@ -148,9 +148,9 @@ function Copenhagen({ images, trackRef }) {
   )
 }
 
-// ---- Tofino: sage surf-journal — Marcellus wordmark, mono nav + captions,
+// ---- Blantyre: sage surf-journal — Marcellus wordmark, mono nav + captions,
 // keyline-framed photos in a staggered offset scatter that scrolls down. ----
-function Tofino({ images, trackRef }) {
+function Blantyre({ images, trackRef }) {
   const FRAME = '2px solid #b1b6a2'
   const MONO = '"Roboto Mono", ui-monospace, monospace'
   const rows = [
@@ -188,7 +188,7 @@ const PANELS = [
   { id: 'kyoto', name: 'Kyoto', accent: '#7a6b55', dir: 'y', render: (im, ref) => <Kyoto images={im} trackRef={ref} /> },
   { id: 'amsterdam', name: 'Amsterdam', accent: '#e02b20', dir: 'x', render: (im, ref) => <Amsterdam images={im} trackRef={ref} /> },
   { id: 'copenhagen', name: 'Copenhagen', accent: '#b5502e', dir: 'y', render: (im, ref) => <Copenhagen images={im} trackRef={ref} /> },
-  { id: 'tofino', name: 'Tofino', accent: '#5c6152', dir: 'y', render: (im, ref) => <Tofino images={im} trackRef={ref} /> },
+  { id: 'blantyre', name: 'Blantyre', accent: '#5c6152', dir: 'y', render: (im, ref) => <Blantyre images={im} trackRef={ref} /> },
 ]
 
 export default function ThemeShowcase({ images = [] }) {

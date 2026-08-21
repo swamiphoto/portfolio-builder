@@ -1192,36 +1192,36 @@ a {
    cropped cover images don't break when the mosaic wraps to a vertical stack. */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__cell img { position: static !important; height: auto !important; width: 100% !important; max-width: 100% !important; object-fit: contain !important; }
 
-/* ============================== Tofino ==============================
+/* ============================== Blantyre ==============================
    The surf-journal theme: sage paper, typewriter mono, Marcellus serif.
    Photos hang in a thin sage keyline frame with mono captions beneath. */
-[data-theme="tofino"] {
+[data-theme="blantyre"] {
   background: var(--theme-bg, #dadbd1);
   color: var(--theme-text, #23251e);
 }
 
 /* Every hung photo gets the keyline frame + square corners; the lightbox and
    testimonial portraits are outside these block wrappers and stay clean. */
-[data-theme="tofino"] :is(.photo-block, .photos-block, .stacked-gallery-block, .masonry-gallery-block, .photos-grid-block, .photos-square-block, .page-gallery-block) img {
-  border: 2px solid var(--tofino-frame, #b1b6a2);
+[data-theme="blantyre"] :is(.photo-block, .photos-block, .stacked-gallery-block, .masonry-gallery-block, .photos-grid-block, .photos-square-block, .page-gallery-block) img {
+  border: 2px solid var(--blantyre-frame, #b1b6a2);
   border-radius: 0;
   box-shadow: none;
   background: var(--theme-bg, #dadbd1);
 }
 
 /* Air between the staggered offset rows. */
-[data-theme="tofino"] .tofino-offset-row { margin-bottom: 5.5rem; }
-[data-theme="tofino"] .tofino-offset-row:last-child { margin-bottom: 0; }
+[data-theme="blantyre"] .blantyre-offset-row { margin-bottom: 5.5rem; }
+[data-theme="blantyre"] .blantyre-offset-row:last-child { margin-bottom: 0; }
 
 /* Gallery cover: the page title speaks Marcellus, the description typewriter.
    (The description's tight serif letter-spacing arrives inline, hence !important.) */
-[data-theme="tofino"] .gallery-container h1.font-serif2 {
+[data-theme="blantyre"] .gallery-container h1.font-serif2 {
   font-family: "Marcellus", Georgia, serif;
   font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--theme-text, #23251e);
 }
-[data-theme="tofino"] .gallery-container p.font-serif {
+[data-theme="blantyre"] .gallery-container p.font-serif {
   font-family: "Roboto Mono", "Geist Mono", ui-monospace, monospace;
   font-size: 14px !important;
   line-height: 2.1;
@@ -1230,8 +1230,8 @@ a {
   max-width: 34rem;
 }
 /* Cover CTAs (Music Show / Client Login) join the mono voice, squared. */
-[data-theme="tofino"] .gallery-container button.font-serif,
-[data-theme="tofino"] .gallery-container a.font-serif {
+[data-theme="blantyre"] .gallery-container button.font-serif,
+[data-theme="blantyre"] .gallery-container a.font-serif {
   font-family: "Roboto Mono", "Geist Mono", ui-monospace, monospace;
   font-size: 13px;
   letter-spacing: 0.06em;
@@ -1240,28 +1240,28 @@ a {
 
 /* Contact block: boxed mono form on the sage ground. ContactDisplay styles are
    inline (shared component), so the theme skin needs !important throughout. */
-[data-theme="tofino"] [data-contact-wrap] h2 {
+[data-theme="blantyre"] [data-contact-wrap] h2 {
   font-family: "Marcellus", Georgia, serif !important;
   font-weight: 400 !important;
   font-size: 2.6rem !important;
   line-height: 1.15 !important;
   color: var(--theme-text, #23251e) !important;
 }
-[data-theme="tofino"] [data-contact-wrap] > p {
+[data-theme="blantyre"] [data-contact-wrap] > p {
   font-family: "Roboto Mono", "Geist Mono", ui-monospace, monospace;
   font-size: 0.85rem;
   line-height: 2;
   color: var(--theme-text-muted, #70756a) !important;
 }
-[data-theme="tofino"] [data-contact-wrap] label {
+[data-theme="blantyre"] [data-contact-wrap] label {
   font-family: "Roboto Mono", "Geist Mono", ui-monospace, monospace !important;
   font-size: 10.5px !important;
   letter-spacing: 0.14em !important;
   color: var(--theme-text-muted, #70756a) !important;
 }
-[data-theme="tofino"] [data-contact-wrap] input,
-[data-theme="tofino"] [data-contact-wrap] textarea {
-  border: 1px solid var(--tofino-frame, #b1b6a2) !important;
+[data-theme="blantyre"] [data-contact-wrap] input,
+[data-theme="blantyre"] [data-contact-wrap] textarea {
+  border: 1px solid var(--blantyre-frame, #b1b6a2) !important;
   border-radius: 0 !important;
   background: transparent !important;
   padding: 10px 12px !important;
@@ -1269,26 +1269,26 @@ a {
   font-size: 13.5px !important;
   color: var(--theme-text, #23251e) !important;
 }
-[data-theme="tofino"] [data-contact-wrap] button[type="submit"] {
+[data-theme="blantyre"] [data-contact-wrap] button[type="submit"] {
   border-radius: 0 !important;
   font-family: "Roboto Mono", "Geist Mono", ui-monospace, monospace !important;
   font-size: 12px !important;
   letter-spacing: 0.1em !important;
   text-transform: uppercase;
 }
-[data-theme="tofino"] [data-contact-wrap] button[type="submit"][data-btn-style="solid"] {
+[data-theme="blantyre"] [data-contact-wrap] button[type="submit"][data-btn-style="solid"] {
   background: var(--theme-text, #23251e) !important;
   color: var(--theme-bg, #dadbd1) !important;
   border: 1px solid var(--theme-text, #23251e) !important;
 }
-[data-theme="tofino"] [data-contact-wrap] button[type="submit"][data-btn-style="outline"] {
+[data-theme="blantyre"] [data-contact-wrap] button[type="submit"][data-btn-style="outline"] {
   background: transparent !important;
   color: var(--theme-text, #23251e) !important;
   border: 1px solid var(--theme-text, #23251e) !important;
 }
 
 /* Square layout rounds its overflow-hidden tile wrapper, not the img — square it. */
-[data-theme="tofino"] .photos-square-block .rounded-2xl,
-[data-theme="tofino"] .page-gallery-block :is(.rounded-2xl, .rounded-3xl, .rounded-xl) {
+[data-theme="blantyre"] .photos-square-block .rounded-2xl,
+[data-theme="blantyre"] .page-gallery-block :is(.rounded-2xl, .rounded-3xl, .rounded-xl) {
   border-radius: 0;
 }

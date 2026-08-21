@@ -18,7 +18,7 @@ export const DEFAULT_CAPTION_STYLE = 'sans'
 // by default.
 export function captionStyleCss(id) {
   if (id === 'serif') return { fontFamily: CORMORANT, fontStyle: 'italic', fontWeight: 500 }
-  // Typewriter caption (Tofino's default). Muted via the theme token so it sits
+  // Typewriter caption (Blantyre's default). Muted via the theme token so it sits
   // right on any ground; upright, small, a touch of tracking.
   if (id === 'mono') return { fontFamily: '"Roboto Mono", "Geist Mono", ui-monospace, monospace', fontStyle: 'normal', fontSize: '0.8rem', letterSpacing: '0.02em', color: 'var(--theme-text-muted, #6b7280)' }
   if (id === 'accent') return { fontFamily: CORMORANT, fontStyle: 'normal', fontWeight: 700, color: 'rgb(220, 38, 38)', textTransform: 'uppercase' }
