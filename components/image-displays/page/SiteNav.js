@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { RxHamburgerMenu } from 'react-icons/rx'
 import { buildNavTree } from '../../../common/pagesTree'
 import { resolveNavStyle } from '../../../common/navStyles'
+import { getTheme } from '../../../common/themes'
 import { useIsMobile } from '../../../common/useIsMobile'
 import { logoFontStyle, resolveSubNavStyle, resolveNavMode, resolveFooterSocial, socialHref, SOCIAL_KEYS } from '../../../common/siteDesign'
 import { SOCIAL_ICONS } from './SocialIcons'
@@ -305,6 +306,70 @@ function NavMenu({ tree, basePath, currentPath, currentPageId, onPageClick, isMo
   )
 }
 
+// A top-header nav item (Blantyre): small mono link on the theme ground, active
+// page at full ink with an underline, others muted. Children collapse behind a
+// caret into a themed dropdown panel, mirroring NavItem's behavior.
+function TopNavItem({ item, basePath, currentPath, currentPageId, onPageClick, subNavMode, linkFont }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const children = item.children || []
+  const hasDropdown = subNavMode === 'dropdown' && children.length > 0
+  const ctx = { currentPageId, currentPath, basePath }
+  const active = navItemActive(item, ctx)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  const linkStyle = (isActive) => ({
+    ...linkFont,
+    color: 'var(--theme-text, #23251e)',
+    opacity: isActive ? 1 : 0.62,
+    textDecoration: isActive ? 'underline' : 'none',
+    textUnderlineOffset: 5,
+    transition: 'opacity 150ms',
+  })
+  const renderLink = (it, isActive, onClose) => {
+    const isLink = it.type === 'link'
+    const href = isLink ? (it.url || '#') : `${basePath}/${it.slug || it.id}`
+    const hover = { onMouseEnter: (e) => { e.currentTarget.style.opacity = 1 }, onMouseLeave: (e) => { e.currentTarget.style.opacity = isActive ? 1 : 0.62 } }
+    if (onPageClick && !isLink) {
+      return <button onClick={() => { onPageClick(it.id); onClose?.() }} style={linkStyle(isActive)} {...hover}>{it.title}</button>
+    }
+    return <a href={href} target={isLink ? (it.linkNewTab === false ? '_self' : '_blank') : undefined} rel={isLink ? 'noopener noreferrer' : undefined} style={linkStyle(isActive)} onClick={onClose} {...hover}>{it.title}</a>
+  }
+
+  if (!hasDropdown) return renderLink(item, active)
+
+  return (
+    <span ref={ref} className="relative inline-flex items-center gap-1">
+      {renderLink(item, active)}
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="menu" aria-expanded={open} aria-label={`${item.title} submenu`}
+        style={{ color: 'var(--theme-text, #23251e)', opacity: 0.5, lineHeight: 1, padding: '0 2px' }}
+      >
+        <Caret open={open} size={10} />
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-3 py-2 min-w-[168px] z-40"
+          style={{ background: 'var(--theme-bg, #dadbd1)', border: '1px solid var(--blantyre-frame, #b1b6a2)', boxShadow: '0 8px 28px rgba(35,37,30,0.12)' }}
+        >
+          {children.map(child => (
+            <div key={child.id} className="px-5 py-1.5">
+              {renderLink(child, navItemActive(child, ctx), () => setOpen(false))}
+            </div>
+          ))}
+        </div>
+      )}
+    </span>
+  )
+}
+
 // A single left-rail top-level item: Fraunces, sentence-case, terracotta when
 // active. Children are collapsed behind a caret and hidden until expanded; the
 // parent auto-expands when one of its children is the current page.
@@ -481,6 +546,67 @@ export default function SiteNav({ siteConfig, username, variant, themeId, onPage
           </div>
         )}
       </nav>
+    )
+  }
+
+  if (style === 'top-header') {
+    // Blantyre: quiet header row on the theme ground — serif wordmark left, small
+    // mono links right. Phones swap the links for the shared overlay.
+    const fonts = getTheme(themeId || siteConfig?.design?.theme)?.tokens?.fonts || {}
+    const brandStyle = {
+      fontFamily: fonts.display || 'Georgia, serif',
+      fontSize: isPhone ? 20 : 23,
+      letterSpacing: '0.01em',
+      color: 'var(--theme-text, #23251e)',
+      textDecoration: 'none',
+      ...(logoStyle || {}),
+    }
+    const linkFont = { fontFamily: fonts.mono || 'ui-monospace, monospace', fontSize: 13.5, letterSpacing: '0.01em' }
+    const overlayStyle = { background: 'var(--theme-bg, #dadbd1)', color: 'var(--theme-text, #23251e)' }
+
+    return (
+      <header
+        className="flex items-center justify-between gap-6 px-6 md:px-12 py-5 md:py-7"
+        style={{ background: 'var(--theme-bg, #dadbd1)', color: 'var(--theme-text, #23251e)' }}
+      >
+        {onPageClick ? (
+          <button onClick={() => onPageClick(null)} className="min-w-0 truncate text-left" style={brandStyle}>{brand}</button>
+        ) : (
+          <a href={basePath || '/'} className="min-w-0 truncate text-left" style={brandStyle}>{brand}</a>
+        )}
+
+        {navMode === 'menu' ? (
+          <NavMenu
+            tree={tree} basePath={basePath} currentPath={currentPath} currentPageId={currentPageId}
+            onPageClick={onPageClick} isMobile={isPhone}
+            triggerClass="p-2"
+            overlayStyle={overlayStyle}
+          />
+        ) : isPhone ? (
+          <>
+            <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="shrink-0 p-2"><RxHamburgerMenu className="h-5 w-5" /></button>
+            <MobileNavOverlay
+              open={isMenuOpen} onClose={() => setIsMenuOpen(false)} tree={tree} basePath={basePath}
+              currentPath={currentPath} currentPageId={currentPageId} onPageClick={onPageClick}
+              overlayStyle={overlayStyle}
+            />
+          </>
+        ) : (
+          <nav aria-label="Site navigation">
+            <ul className="flex items-center gap-10">
+              {tree.map(item => (
+                <li key={item.id} className="whitespace-nowrap">
+                  <TopNavItem
+                    item={item} basePath={basePath}
+                    currentPath={currentPath} currentPageId={currentPageId}
+                    onPageClick={onPageClick} subNavMode={subNavMode} linkFont={linkFont}
+                  />
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+      </header>
     )
   }
 

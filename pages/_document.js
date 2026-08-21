@@ -17,7 +17,7 @@ export default function Document() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Italianno&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Geist+Mono:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Abril+Fatface&family=Anton&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Italianno&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Geist+Mono:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Abril+Fatface&family=Anton&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Marcellus&family=Roboto+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
       </Head>

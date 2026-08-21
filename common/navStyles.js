@@ -3,6 +3,9 @@ const THEME_NAV_STYLES = {
   'manhattan': 'left-rail',
   'florence': 'left-rail',
   'amsterdam': 'left-rail',
+  // Blantyre's running nav is a quiet top header: serif wordmark left, mono links
+  // right, on the theme's sage ground (rendered in SiteNav).
+  'blantyre': 'top-header',
   // Provence's cover page is a bespoke split-screen (PageCover renders it); the
   // running nav on every page is the top header bar (dark serif on cream).
   'provence': 'header-dropdown',
