@@ -28,6 +28,9 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
     const el = ref.current
     if (!el || typeof window === 'undefined') return
     let raf = 0
+    // Highest column count settled for this layout; reset on a real resize (see
+    // onResize) or when the effect re-runs on a content/font change (deps).
+    let floor = 1
 
     const measure = () => {
       // Available height is the COLUMN's real content box — not the window. On the
@@ -76,12 +79,19 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
       const natural = probe.scrollHeight
       parent.removeChild(probe)
       // A little slack so a single line's rounding doesn't trip a second column.
-      const n = natural > avail + 8 ? Math.min(maxCols, Math.ceil(natural / avail)) : 1
+      const raw = natural > avail + 8 ? Math.min(maxCols, Math.ceil(natural / avail)) : 1
+      // Latch upward within a stable layout. On the wall themes the block re-renders
+      // while the wall animates, and an occasional re-measure lands mid-layout and
+      // under-counts — which was knocking a correctly-balanced block back to one
+      // overflowing column. Never step DOWN except on a real resize or a content
+      // change (which resets the floor below); this keeps the settled count stable.
+      floor = Math.max(floor, raw)
+      const n = floor
       setCols((prev) => (prev === n ? prev : n))
     }
 
     measure()
-    const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
+    const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { floor = 1; measure() }) }
     window.addEventListener('resize', onResize)
     // The initial measure runs before the web font has reflowed the text and before
     // the horizontal wall's JS-driven column height has settled, so it can under-count
