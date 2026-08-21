@@ -28,14 +28,17 @@ export default function SiteFooter({ siteConfig }) {
 
   if (!text && socials.length === 0) return null
 
+  // Tofino keeps the footer in its typewriter voice; every other theme stays serif.
+  const isTofino = theme?.id === 'tofino'
+
   return (
     <footer
       style={{
         textAlign: 'center',
         padding: '3.5rem 1.5rem',
-        fontFamily: CG,
-        fontSize: '1rem',
-        letterSpacing: '0.01em',
+        fontFamily: isTofino ? '"Roboto Mono", "Geist Mono", ui-monospace, monospace' : CG,
+        fontSize: isTofino ? '0.75rem' : '1rem',
+        letterSpacing: isTofino ? '0.05em' : '0.01em',
         color: 'var(--theme-text-muted, #7a6b55)',
       }}
     >

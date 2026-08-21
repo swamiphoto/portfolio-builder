@@ -23,6 +23,7 @@ import ManhattanPhoto from "./photo-block/ManhattanPhoto";
 import FlorenceWall from "../themes/florence/FlorenceWall";
 import AmsterdamWall from "../themes/amsterdam/AmsterdamWall";
 import PageGalleryLinks from "./page-gallery/PageGalleryLinks";
+import TofinoOffsetGallery from "../themes/tofino/TofinoOffsetGallery";
 import MarkdownText from "@/components/image-displays/MarkdownText";
 
 // Varying heights per column slot to mimic natural photo proportions
@@ -45,6 +46,10 @@ const sizeKey = (s) => (s === 'small' || s === 'medium' || s === 'large' ? s : '
 const MH_TILE = '#ececec'
 const MH_ICON = '#c4c4c4'
 const MH_BLOB = '#e6e6e6'
+
+// Tofino empty-state palette — deeper sage tiles on the sage ground.
+const TF_TILE = '#cfd2c3'
+const TF_ICON = '#a3a996'
 
 function PlaceholderIcon({ color = '#d3c6b2' }) {
   return (
@@ -69,6 +74,7 @@ function PlaceholderTile({ aspectClass = 'aspect-[4/3]', square = false, bg = '#
 // with Copenhagen's cooler tile; Kyoto warm + rounded).
 function mobilePlaceholderSkin(themeId) {
   const mh = themeId === 'manhattan'
+  if (themeId === 'tofino') return { square: true, bg: TF_TILE, iconColor: TF_ICON }
   return { square: mh || themeId === 'provence', bg: mh ? MH_TILE : '#ede7dc', iconColor: mh ? MH_ICON : undefined }
 }
 
@@ -100,6 +106,17 @@ function PlaceholderGrid({ variant = 'masonry', size = 'large', themeId = 'kyoto
             </div>
           </div>
         ))}
+      </div>
+    )
+  }
+  if (variant === 'offset') {
+    // Mirror TofinoOffsetGallery: a wide tile and a narrow one dropped down.
+    return (
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-8" data-photos-placeholder="offset">
+        <div className="flex justify-between items-start">
+          <div style={{ width: '58%' }}><PlaceholderTile aspectClass="aspect-[3/4]" square bg={TF_TILE} iconColor={TF_ICON} /></div>
+          <div style={{ width: '30%', marginTop: '16%' }}><PlaceholderTile aspectClass="aspect-[3/4]" square bg={TF_TILE} iconColor={TF_ICON} /></div>
+        </div>
       </div>
     )
   }
@@ -203,7 +220,7 @@ function PlaceholderPhoto({ variant = 'full-bleed', size = 'large', themeId = 'k
   if (variant === 'centered') {
     return (
       <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: `${PHOTO_CENTERED_PCT[sz]}%` }} data-photo-placeholder="centered">
-        <PlaceholderTile aspectClass="aspect-[3/2]" />
+        <PlaceholderTile aspectClass="aspect-[3/2]" {...(themeId === 'tofino' ? { square: true, bg: TF_TILE, iconColor: TF_ICON } : {})} />
       </div>
     )
   }
@@ -283,9 +300,9 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans', themeId
 
 const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, currentPageId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, onPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
-  // Manhattan moves its section divider into the left rail (see SiteNav); the
-  // body renders no between-section wiggles. Other themes keep them.
-  const Wiggle = () => (themeId === 'manhattan' ? null : <WiggleLine />)
+  // Manhattan moves its section divider into the left rail (see SiteNav); Tofino
+  // separates sections with air alone. Other themes keep the wiggles.
+  const Wiggle = () => (themeId === 'manhattan' || themeId === 'tofino' ? null : <WiggleLine />)
   // Caption style: the block's own choice, else the theme's default (Kyoto → serif).
   const capStyle = (block) => resolveCaptionStyle(block, getBlockSpec(themeId, block.type)?.defaultCaptionStyle)
   const isSmallScreen = useIsMobile()
@@ -456,12 +473,21 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const usemasonry = variantId === 'masonry' || isSmallScreen;
               const imageRefs = normalizeImageRefs(block.images || block.imageUrls || []);
               if (!imageRefs.length) return showPlaceholders ? <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}><PlaceholderGrid variant={variantId} size={size} themeId={themeId} mobile={isSmallScreen} /><Wiggle /></div> : null;
+              // Tofino's signature staggered scatter (desktop only — phones fall
+              // through to the single-column masonry below).
+              if (variantId === 'offset' && !isSmallScreen) {
+                return (
+                  <div key={`block-${index}`} className="photos-block" data-block-index={index} {...hoverProps}>
+                    <TofinoOffsetGallery images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={capStyle(block)} size={size} />
+                  </div>
+                );
+              }
               if (variantId === 'grid' && !isSmallScreen) {
                 return (
                   <div key={`block-${index}`} className="photos-grid-block" data-block-index={index} {...hoverProps}>
                     {themeId === 'manhattan'
                       ? <ManhattanGrid images={imageRefs} onImageClick={makeClickHandler(index)} captionStyle={capStyle(block)} />
-                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} edgeToEdge={themeId === 'provence'} rounded={themeId !== 'provence'} />}
+                      : <GridGallery images={imageRefs} onImageClick={makeClickHandler(index)} basis={GRID_BASIS[size]} edgeToEdge={themeId === 'provence'} rounded={themeId !== 'provence' && themeId !== 'tofino'} />}
                   </div>
                 );
               }
@@ -527,6 +553,16 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     : vv === 3 ? `text-[0.95rem] ${alignClass} max-w-2xl py-2`
                     : vv === 2 ? `text-[1.125rem] font-medium ${alignClass} max-w-2xl py-3`
                     : `text-[1.375rem] font-light ${alignClass} max-w-3xl py-4`
+                  )
+                : themeId === 'tofino'
+                ? (
+                    // The typewriter scale: mono body copy set small with double-ish
+                    // leading; Large steps up for the serif headline voice. Colors
+                    // inherit the theme ink (no stone tints on the sage ground).
+                    vv === 4 ? `text-[0.9rem] leading-[1.9] ${alignClass} max-w-2xl mx-auto px-6 py-3 border-l-2 border-[var(--tofino-frame,#b1b6a2)]`
+                    : vv === 3 ? `text-[0.85rem] leading-[2] ${alignClass} max-w-2xl mx-auto px-6 md:px-0 py-2`
+                    : vv === 2 ? `text-[1rem] leading-[2] ${alignClass} max-w-2xl mx-auto px-6 md:px-0 py-3`
+                    : `text-[1.7rem] md:text-[2.1rem] leading-snug ${alignClass} max-w-3xl mx-auto px-6 md:px-0 py-4`
                   )
                 : (
                     vv === 4 ? `${isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
