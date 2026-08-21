@@ -264,8 +264,8 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
             <figure key={i} className="ams-row__item m-0">
               <div className="ams-frame" style={{ height: rowH }}>
                 {photoBox(img, i)}
+                {!img?.placeholder && insetLabel(img.caption || '', metaFor(img))}
               </div>
-              {!img?.placeholder && <AmsterdamCaption caption={img.caption || ''} meta={metaFor(img)} titleStyle={capStyle} />}
             </figure>
           ))}
         </div>
