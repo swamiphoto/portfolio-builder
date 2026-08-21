@@ -540,7 +540,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...hoverProps} style={{ ...hoverProps.style, fontFamily }}>
                     <MarkdownText
                       content={block.content}
-                      variantClasses={{ heading: classForV(1), body: classForV(2), quote: classForV(4) }}
+                      variantClasses={{ heading: classForV(1), body: classForV(v), quote: classForV(4) }}
                     />
                   </div>
                 );
