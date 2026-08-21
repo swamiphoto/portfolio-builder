@@ -66,17 +66,19 @@ export function useBalancedColumns(deps, { colWidth, gap, availVh = 82, maxCols 
     window.addEventListener('resize', onResize)
     // Web fonts change the measured height once they load.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure).catch(() => {})
-    // Re-measure when the COLUMN settles to its final height. The horizontal wall
-    // themes (Amsterdam especially) set column heights via layout + JS that isn't
-    // final at first paint, so the initial measure can under-count columns and leave
-    // long copy overflowing in one column until a resize. Observing the column
-    // re-measures the moment its size resolves. (The column is fixed-size, so probing
-    // the text's own width inside measure() can't feed back into a loop here.)
+    // Re-measure when the text OR its column changes size after first paint. On the
+    // horizontal wall themes the initial measure runs before the web font (Playfair /
+    // Fraunces) has loaded and before the wall's JS-driven column height settles, so
+    // it under-counts columns and leaves long copy overflowing in one column until a
+    // resize. The font load reflows the TEXT (not the fixed-height column), so observe
+    // the text element itself; the column catches the height-settle case. onResize is
+    // rAF-debounced and the column count converges, so no measure loop.
     let ro = null
-    const col = el.closest('[data-block-index]')
-    if (col && typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(onResize)
-      ro.observe(col)
+      ro.observe(el)
+      const col = el.closest('[data-block-index]')
+      if (col) ro.observe(col)
     }
     return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); if (ro) ro.disconnect() }
   }, deps) // eslint-disable-line react-hooks/exhaustive-deps
