@@ -8,6 +8,7 @@ import PageSettingsPanel from './PageSettingsPanel'
 import PageSettingsPopover from './PageSettingsPopover'
 import { generatePageId } from '../../../common/siteConfig'
 import { amsterdamGroundPlan } from '../../../common/themes/variants'
+import { amsterdamInkColors, resolveAmsterdamInk } from '../../../common/themes/amsterdam'
 import { getPageTheme } from '../../../common/themes'
 import { resolveHomePage } from '../../../common/homePage'
 
@@ -64,6 +65,15 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     () => amsterdamGroundPlan(gallery.blocks || [], { heroOpener }).map((g) => g.def),
     [gallery.blocks, heroOpener]
   )
+
+  // The block-level Ink swatch's "ink" option paints the block in the SITE's ink
+  // ground — so its swatch must show the actual chosen ink color (red / blue /
+  // black / light), not a hardcoded red. Resolve it from the site design here.
+  const amsterdamInk = useMemo(() => {
+    const id = resolveAmsterdamInk(siteConfig?.design)
+    const names = { vermilion: 'Red', ultramarine: 'Blue', black: 'Black', light: 'Light' }
+    return { color: amsterdamInkColors(siteConfig?.design).ink, name: names[id] || 'Ink' }
+  }, [siteConfig?.design])
 
   const pagesData = useMemo(() => (siteConfig?.pages || [])
     .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
@@ -242,6 +252,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         headerLabel="PAGE"
         autoFocusTitle={titleFocusTs}
         blockGroundDefaults={blockGroundDefaults}
+        amsterdamInk={amsterdamInk}
         infoCardHidden={siteConfig?.design?.theme === 'manhattan'}
         pageSettingsSlot={
           <PageSettingsPanel

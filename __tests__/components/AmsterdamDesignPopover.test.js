@@ -13,4 +13,19 @@ describe('Amsterdam text block design controls', () => {
     expect(ams.getByText('Size')).toBeTruthy()
     ams.unmount()
   })
+
+  it('block Ink swatch reflects the site ink color + name, not a fixed red', () => {
+    const anchor = document.createElement('div')
+    document.body.appendChild(anchor)
+    const props = { anchorEl: anchor, onClose: () => {}, onUpdate: () => {} }
+    // With a blue (ultramarine) site ink, the "ink" swatch must read Blue, not Red.
+    const blue = render(<DesignPopover {...props} block={{ type: 'text', content: 'x' }} themeId="amsterdam" amsterdamInk={{ color: '#1a1690', name: 'Blue' }} />)
+    expect(blue.getByLabelText(/Blue/)).toBeTruthy()
+    expect(blue.queryByLabelText(/^Red/)).toBeNull()
+    blue.unmount()
+    // With no ink passed, it falls back to the historical red default.
+    const red = render(<DesignPopover {...props} block={{ type: 'text', content: 'x' }} themeId="amsterdam" />)
+    expect(red.getByLabelText(/Red/)).toBeTruthy()
+    red.unmount()
+  })
 })

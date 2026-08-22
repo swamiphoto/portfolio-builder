@@ -268,6 +268,7 @@ function BlockCard({
   themeId = 'kyoto',
   onOpenMarkdownEditor,
   defaultGround,
+  amsterdamInk,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -577,6 +578,7 @@ function BlockCard({
                     block={block}
                     themeId={themeId}
                     defaultGround={defaultGround}
+                    amsterdamInk={amsterdamInk}
                     onUpdate={onUpdate}
                     onClose={() => setShowDesign(false)}
                     anchorEl={designBtnRef.current}
@@ -1448,6 +1450,7 @@ export default memo(BlockCard, (prev, next) =>
   prev.expandedOverride?.ts === next.expandedOverride?.ts &&
   prev.blockIndex === next.blockIndex &&
   prev.defaultGround === next.defaultGround &&
+  prev.amsterdamInk === next.amsterdamInk &&
   prev.themeId === next.themeId &&
   prev.assetsByUrl === next.assetsByUrl &&
   // Sets data loads async (library fetch resolves after first paint). Without

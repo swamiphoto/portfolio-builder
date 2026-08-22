@@ -21,7 +21,7 @@ const IconAlignCenter = () => (
 )
 const ALIGN_LABELS = { left: <IconAlignLeft />, center: <IconAlignCenter /> }
 
-export default function DesignPopover({ block, themeId = 'kyoto', defaultGround, onUpdate, onClose, anchorEl }) {
+export default function DesignPopover({ block, themeId = 'kyoto', defaultGround, amsterdamInk, onUpdate, onClose, anchorEl }) {
   const spec = getBlockSpec(themeId, block.type)
   if (!spec) return null
 
@@ -77,7 +77,9 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
             <div style={{ display: 'flex', gap: 8 }}>
               {[
                 { value: 'light', name: 'Light', bg: '#f6efe4' },
-                { value: 'ink', name: 'Red', bg: '#e02b20' },
+                // The 'ink' ground paints the block in the site's chosen ink, so the
+                // swatch must mirror that live color + name (not a fixed red).
+                { value: 'ink', name: amsterdamInk?.name || 'Red', bg: amsterdamInk?.color || '#e02b20' },
                 { value: 'dark', name: 'Black', bg: '#141210' },
               ].map((s) => {
                 const isDefault = s.value === def

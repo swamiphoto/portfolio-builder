@@ -108,6 +108,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   libraryLoading = false,
   onMarkdownEditorOpen = () => {},
   blockGroundDefaults,
+  amsterdamInk,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -569,6 +570,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             themeId={themeId}
                             onOpenMarkdownEditor={() => { onMarkdownEditorOpen(); setMarkdownEditorIndex(index); }}
                             defaultGround={blockGroundDefaults?.[index]}
+                            amsterdamInk={amsterdamInk}
                           />
                         </div>
                       )}
