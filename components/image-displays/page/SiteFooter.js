@@ -28,14 +28,17 @@ export default function SiteFooter({ siteConfig }) {
 
   if (!text && socials.length === 0) return null
 
+  // Blantyre keeps the footer in its typewriter voice; every other theme stays serif.
+  const isBlantyre = theme?.id === 'blantyre'
+
   return (
     <footer
       style={{
         textAlign: 'center',
         padding: '3.5rem 1.5rem',
-        fontFamily: CG,
-        fontSize: '1rem',
-        letterSpacing: '0.01em',
+        fontFamily: isBlantyre ? '"Roboto Mono", "Geist Mono", ui-monospace, monospace' : CG,
+        fontSize: isBlantyre ? '0.75rem' : '1rem',
+        letterSpacing: isBlantyre ? '0.05em' : '0.01em',
         color: 'var(--theme-text-muted, #7a6b55)',
       }}
     >

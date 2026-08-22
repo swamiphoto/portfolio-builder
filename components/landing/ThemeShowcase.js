@@ -148,11 +148,47 @@ function Copenhagen({ images, trackRef }) {
   )
 }
 
+// ---- Blantyre: sage surf-journal — Marcellus wordmark, mono nav + captions,
+// keyline-framed photos in a staggered offset scatter that scrolls down. ----
+function Blantyre({ images, trackRef }) {
+  const FRAME = '2px solid #b1b6a2'
+  const MONO = '"Roboto Mono", ui-monospace, monospace'
+  const rows = [
+    { wide: images[4], narrow: images[0], wcap: 'volcom photoshoot', ncap: 'skaters, venice beach' },
+    { wide: images[2], narrow: images[6], wcap: 'west coast', ncap: 'french alps', flip: true },
+    { wide: images[1], narrow: images[7], wcap: 'vw trip', ncap: 'zion national park' },
+  ]
+  const cell = (src, cap, w, mt = 0) => (
+    <div style={{ width: w, marginTop: mt }}>
+      <div style={{ aspectRatio: '3 / 4', overflow: 'hidden', border: FRAME }}><Cover src={src} /></div>
+      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.02em', color: '#70756a', marginTop: 7 }}>{cap}</div>
+    </div>
+  )
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#dadbd1', color: '#23251e', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px 6px' }}>
+        <span style={{ fontFamily: '"Marcellus", Georgia, serif', fontSize: 17 }}>{GALLERY}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.02em', color: '#23251e', opacity: 0.7 }}>Work&nbsp;&nbsp;&nbsp;&nbsp;Contact</span>
+      </div>
+      <div ref={trackRef} style={{ willChange: 'transform', padding: '14px 24px 40px', display: 'flex', flexDirection: 'column', gap: 40 }}>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            {r.flip
+              ? <>{cell(r.narrow, r.ncap, '30%', 26)}{cell(r.wide, r.wcap, '58%', 0)}</>
+              : <>{cell(r.wide, r.wcap, '58%', 0)}{cell(r.narrow, r.ncap, '30%', 26)}</>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const PANELS = [
   { id: 'florence', name: 'Florence', accent: '#7d5a44', dir: 'x', render: (im, ref) => <Florence images={im} trackRef={ref} /> },
   { id: 'kyoto', name: 'Kyoto', accent: '#7a6b55', dir: 'y', render: (im, ref) => <Kyoto images={im} trackRef={ref} /> },
   { id: 'amsterdam', name: 'Amsterdam', accent: '#e02b20', dir: 'x', render: (im, ref) => <Amsterdam images={im} trackRef={ref} /> },
   { id: 'copenhagen', name: 'Copenhagen', accent: '#b5502e', dir: 'y', render: (im, ref) => <Copenhagen images={im} trackRef={ref} /> },
+  { id: 'blantyre', name: 'Blantyre', accent: '#5c6152', dir: 'y', render: (im, ref) => <Blantyre images={im} trackRef={ref} /> },
 ]
 
 export default function ThemeShowcase({ images = [] }) {

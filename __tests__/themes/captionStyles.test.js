@@ -2,8 +2,8 @@ import { captionStyleCss, resolveCaptionStyle, CAPTION_STYLE_OPTIONS, DEFAULT_CA
 import { getBlockSpec } from '@/common/themes'
 
 describe('caption styles', () => {
-  it('offers sans (default), serif, accent', () => {
-    expect(CAPTION_STYLE_OPTIONS.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
+  it('offers sans (default), serif, mono, accent', () => {
+    expect(CAPTION_STYLE_OPTIONS.map((c) => c.id)).toEqual(['sans', 'serif', 'mono', 'accent'])
     expect(DEFAULT_CAPTION_STYLE).toBe('sans')
   })
 
@@ -33,8 +33,8 @@ describe('caption styles', () => {
   })
 
   it('photo, photos, and video specs expose captionStyles', () => {
-    expect(getBlockSpec('kyoto', 'photo').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
-    expect(getBlockSpec('kyoto', 'photos').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
-    expect(getBlockSpec('kyoto', 'video').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'accent'])
+    expect(getBlockSpec('kyoto', 'photo').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'mono', 'accent'])
+    expect(getBlockSpec('kyoto', 'photos').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'mono', 'accent'])
+    expect(getBlockSpec('kyoto', 'video').captionStyles.map((c) => c.id)).toEqual(['sans', 'serif', 'mono', 'accent'])
   })
 })
