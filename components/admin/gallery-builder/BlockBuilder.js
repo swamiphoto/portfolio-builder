@@ -109,6 +109,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
   onMarkdownEditorOpen = () => {},
   blockGroundDefaults,
   amsterdamInk,
+  onUploadFilesToBlock,
 }, ref) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [insertAtIndex, setInsertAtIndex] = useState(null);
@@ -571,6 +572,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onOpenMarkdownEditor={() => { onMarkdownEditorOpen(); setMarkdownEditorIndex(index); }}
                             defaultGround={blockGroundDefaults?.[index]}
                             amsterdamInk={amsterdamInk}
+                            onUploadFiles={onUploadFilesToBlock ? (files) => onUploadFilesToBlock(index, files) : undefined}
                           />
                         </div>
                       )}

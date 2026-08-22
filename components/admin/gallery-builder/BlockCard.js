@@ -269,6 +269,7 @@ function BlockCard({
   onOpenMarkdownEditor,
   defaultGround,
   amsterdamInk,
+  onUploadFiles,
 }) {
   const isPhotoBlock = block.type === "photos" || block.type === "stacked" || block.type === "masonry";
   const dragPhotoIndex = useRef(null);
@@ -294,6 +295,16 @@ function BlockCard({
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [selectedIndices, setSelectedIndices] = useState(new Set());
   const [photoDropHover, setPhotoDropHover] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  // Desktop files dropped onto a photo block: upload them (to the library) and add
+  // to the block. Returns true if it consumed the drop, so URL/ref handling is skipped.
+  const consumeFileDrop = (e) => {
+    const files = Array.from(e.dataTransfer?.files || []);
+    if (!files.length || !onUploadFiles) return false;
+    setUploading(true);
+    Promise.resolve(onUploadFiles(files)).finally(() => setUploading(false));
+    return true;
+  };
   const [photoAspect, setPhotoAspect] = useState(null); // natural w/h of the single-photo thumbnail
   const [gridDropHover, setGridDropHover] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -369,6 +380,7 @@ function BlockCard({
     e.preventDefault();
     setGridDropHover(false);
     if (!isPhotoBlock) return;
+    if (consumeFileDrop(e)) return;
     const raw = e.dataTransfer.getData('application/x-photo-drag');
     let incomingRefs;
     let sourceBlockIndexFromDrop = null;
@@ -785,6 +797,7 @@ function BlockCard({
                 onDrop={(e) => {
                   setPhotoDropHover(false);
                   e.preventDefault();
+                  if (consumeFileDrop(e)) return;
                   const raw = e.dataTransfer.getData('application/x-photo-drag');
                   let url = null;
                   let srcIdx = null;
@@ -861,8 +874,8 @@ function BlockCard({
                     onMouseEnter={e => { if (!photoDropHover) e.currentTarget.style.background = '#e3d8bf' }}
                     onMouseLeave={e => { if (!photoDropHover) e.currentTarget.style.background = '#ece4d2' }}
                   >
-                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'rgba(58,54,47,0.55)' }}>{photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
-                    {!photoDropHover && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">select from library</span></span>}
+                    <span className={`text-xs ${photoDropHover ? 'text-blue-600' : ''}`} style={photoDropHover ? {} : { color: 'rgba(58,54,47,0.55)' }}>{uploading ? 'Uploading…' : photoDropHover ? 'Drop photo here' : 'Drag a photo here'}</span>
+                    {!photoDropHover && !uploading && <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>or <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">select from library</span></span>}
                   </div>
                 )}
               </div>
