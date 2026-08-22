@@ -68,7 +68,8 @@ export default function AmsterdamPreview() {
   const opener = router.query.opener === 'title' ? 'title' : 'hero'
   // ?name= lets us stress the title opener with a long word (fit / wrap check).
   const name = router.query.name || (opener === 'title' ? 'Landscapes' : 'Van der Meer')
-  const siteConfig = { ...SITE, design: { theme: themeId, amsterdamInk: ink } }
+  const headline = router.query.headline === 'editorial' ? 'editorial' : router.query.headline === 'condensed' ? 'condensed' : undefined
+  const siteConfig = { ...SITE, design: { theme: themeId, amsterdamInk: ink, amsterdamHeadline: headline } }
   const pane = router.query.pane
   const empty = router.query.empty
   const gallery = (

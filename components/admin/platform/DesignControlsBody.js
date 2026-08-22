@@ -104,6 +104,19 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
       )}
 
       {(config.design?.theme || 'kyoto') === 'amsterdam' && (
+        <DesignSection label="Headline" description="The display type on the cover and title openers.">
+          <DesignPillToggle
+            value={config.design?.amsterdamHeadline === 'editorial' ? 'editorial' : 'condensed'}
+            onChange={(v) => update({ design: { ...(config.design || {}), amsterdamHeadline: v } })}
+            options={[
+              { value: 'condensed', label: 'Condensed' },
+              { value: 'editorial', label: 'Editorial' },
+            ]}
+          />
+        </DesignSection>
+      )}
+
+      {(config.design?.theme || 'kyoto') === 'amsterdam' && (
         <DesignSection label="Photo details" description="Choose what details to show next to your photos.">
           <DesignPillToggle
             value={['off', 'date', 'exif'].includes(config.design?.amsterdamPhotoMeta) ? config.design.amsterdamPhotoMeta : 'date'}

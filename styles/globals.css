@@ -939,6 +939,11 @@ a {
 /* The condensed name fills the block but always fits: it wraps (or scales down via
    the vw term) rather than overflowing, with equal air on both sides. */
 [data-theme="amsterdam"] .ams-title__name { margin: 0 0 2.5vh 0; max-width: 100%; color: var(--ams-on-ink); font-family: "Fraunces", "Playfair Display", Georgia, serif; font-weight: 400; text-transform: uppercase; font-size: clamp(56px, 11vw, 190px); line-height: 0.9; letter-spacing: 0.005em; overflow-wrap: break-word; word-break: break-word; hyphens: auto; }
+/* Opener headline face (design.amsterdamHeadline). The base rules above set the
+   Editorial (Fraunces) treatment; Condensed swaps in the bold poster face (Anton)
+   for both the poster hero and the title panel. */
+[data-theme="amsterdam"] .ams-stage[data-headline="condensed"] .ams-hero__title,
+[data-theme="amsterdam"] .ams-stage[data-headline="condensed"] .ams-title__name { font-family: "Anton", "Arial Narrow", sans-serif; font-weight: 400; letter-spacing: 0.01em; line-height: 0.86; }
 [data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: var(--fs-text-m); line-height: 1.45; opacity: 0.92; }
 
 /* Opener actions (Music Show / Client Login) */
