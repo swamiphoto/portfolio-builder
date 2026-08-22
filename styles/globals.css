@@ -1053,8 +1053,8 @@ a {
    bottom with light text, not a loud solid label. Spans full width; the gradient
    fades up so it never reads as a hard band. Legible over any photo / ground. */
 [data-theme="amsterdam"] .ams-fill-label { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 3rem 1.4rem 1.1rem; background: linear-gradient(to top, rgba(14, 11, 9, 0.68), rgba(14, 11, 9, 0)); font-family: Inter, sans-serif; }
-[data-theme="amsterdam"] .ams-fill-label .ams-caption__title { color: #f6f3ec; font-style: italic; font-size: var(--fs-byline); max-width: 30rem; }
-[data-theme="amsterdam"] .ams-fill-label .ams-caption__meta { color: rgba(246, 243, 236, 0.82); font-size: var(--fs-byline); max-width: 30rem; }
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__title { color: #f6f3ec; font-style: italic; font-size: var(--fs-caption); max-width: 30rem; }
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__meta { color: rgba(246, 243, 236, 0.82); font-size: var(--fs-caption-meta); max-width: 30rem; }
 [data-theme="amsterdam"] .ams-row { display: flex; align-items: center; gap: 2vw; height: 100%; }
 [data-theme="amsterdam"] .ams-row__item { display: flex; flex-direction: column; }
 [data-theme="amsterdam"] .ams-mosaic { display: flex; align-items: center; gap: 1.2vw; }
