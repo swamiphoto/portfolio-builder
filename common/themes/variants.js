@@ -22,7 +22,10 @@ const LEGACY = {
   // wins (kyoto → subheading / medium).
   text: (b) => (b.variant ? ({ 1: 'heading', 2: 'subheading', 3: 'body', 4: 'quote' }[b.variant] || 'heading') : null),
   video: (b) => (b.layout === 'Centered' ? 'centered' : { 1: 'full-bleed', 2: 'centered', 3: 'side-by-side' }[b.variant] || 'centered'),
-  testimonial: (b) => (b.variant === 2 ? 'quote-above' : 'photo-above'),
+  // Map an explicit legacy variant only; with no hint, return null so the theme
+  // default wins (base/kyoto/manhattan → photo-above, amsterdam → quote-above)
+  // instead of unconditionally forcing photo-above.
+  testimonial: (b) => (b.variant === 2 ? 'quote-above' : b.variant === 1 ? 'photo-above' : null),
 }
 
 // Old theme-local ids (Manhattan) → shared base ids, for saved themeState values.

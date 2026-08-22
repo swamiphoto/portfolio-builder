@@ -2,17 +2,20 @@
 // Amsterdam — the Dutch-poster / De Stijl editorial theme. A thin left rail
 // beside a horizontally scrolling, dividerless wall whose columns march through
 // three grounds — black, warm-light, and red (ink) — with the rail flooding to
-// match whichever ground is centered (useWallChrome). A poster hero or Anton
-// condensed title panel opens; text sets in a fancy drop cap (two magazine
+// match whichever ground is centered (useWallChrome). A poster hero or a Fraunces
+// display title panel opens; text sets in a fancy drop cap (two magazine
 // columns when long); photos hang matted on the ground with a LEFT/RIGHT museum
 // plaque beside them. Ink is a curated swatch (design.amsterdamInk) — it recolors
 // the red ground and pairs a black body / white display treatment on it.
 // Rendered bespoke via AmsterdamWall (Gallery short-circuits to it; SiteNav
 // suppressed in the page files); this file supplies palette + fonts + controls.
+// A crisp, elegant set: Fraunces carries the display / headline voice (high
+// contrast, optically sized — poster presence without the fat weight of the old
+// Abril/Anton pairing), Playfair sets editorial body copy, IBM Plex Mono the
+// bookish plaque. Condensed + the fat didone display were retired.
 const AMSTERDAM_FONTS = [
   { id: 'display', label: 'Display' },
   { id: 'serif', label: 'Editorial' },
-  { id: 'condensed', label: 'Condensed' },
   { id: 'mono', label: 'Mono' },
 ]
 
@@ -54,10 +57,13 @@ export const amsterdam = {
     '--theme-rail-width': '96px',
     fonts: {
       serif: '"Playfair Display", Georgia, serif',
-      display: '"Abril Fatface", Georgia, serif',
-      condensed: '"Anton", "Arial Narrow", sans-serif',
+      // Display + headline face — Fraunces (optically-sized, crisp, elegant).
+      display: '"Fraunces", "Playfair Display", Georgia, serif',
+      // Legacy 'condensed' slot (retired from the picker) still resolves to the
+      // new display face so any block that stored it renders sanely.
+      condensed: '"Fraunces", "Playfair Display", Georgia, serif',
       // Slots stored under other themes still resolve to something sane here.
-      fraunces: '"Playfair Display", Georgia, serif',
+      fraunces: '"Fraunces", Georgia, serif',
       sans: 'Inter, -apple-system, system-ui, sans-serif',
       mono: '"IBM Plex Mono", ui-monospace, monospace',
     },
@@ -80,8 +86,8 @@ export const amsterdam = {
     },
     // Text keeps the base L/M/S variants (they ARE the size control). Every text
     // block is the quiet museum label; long copy auto-flows into balanced columns.
-    text: { defaultAlign: 'left', aligns: ['left'], defaultFont: 'display', fonts: AMSTERDAM_FONTS },
-    testimonial: { defaultFont: 'serif', fonts: AMSTERDAM_FONTS },
+    text: { defaultAlign: 'left', aligns: ['left'], defaultFont: 'serif', fonts: AMSTERDAM_FONTS },
+    testimonial: { defaultVariant: 'quote-above', defaultFont: 'serif', defaultSize: 'medium', fonts: AMSTERDAM_FONTS },
     contact: { defaultAlign: 'left', aligns: ['left'] },
   },
 }
