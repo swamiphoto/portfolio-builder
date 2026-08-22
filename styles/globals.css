@@ -465,6 +465,7 @@ a {
    to the pane's real height so the reserved width and the image stay in lockstep. (The
    live site is exactly 100vh, so it never gaps and keeps its concrete height.) */
 [data-theme="florence"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .florence-col--fill .florence-frame { height: 100% !important; }
+[data-theme="amsterdam"] .theme-shell[data-admin-preview]:not([data-viewport="mobile"]) .ams-col--fill .ams-frame { height: 100% !important; }
 
 /* Mobile admin preview: the desktop fixed-viewport fit above is desktop-only, so
    here the shell flows to its natural height and the preview pane scrolls (the
@@ -887,7 +888,7 @@ a {
    reading bottom-to-top, a small mono note at the foot (divider over it). */
 [data-theme="amsterdam"] .ams-rail { width: var(--theme-rail-width, 96px); flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; padding: 0; position: relative; z-index: 30; background: var(--ams-light); color: var(--ams-on-light); border-right: 1px solid color-mix(in oklab, currentColor 48%, transparent); transition: background-color 350ms ease, color 350ms ease; }
 [data-theme="amsterdam"] .ams-rail__top { display: flex; align-items: center; justify-content: center; padding: 20px 0; border-bottom: 1px solid color-mix(in oklab, currentColor 38%, transparent); }
-[data-theme="amsterdam"] .ams-rail__logo { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; writing-mode: sideways-lr; text-orientation: mixed; font-family: "Abril Fatface", Georgia, serif; font-size: 18px; letter-spacing: 0.06em; color: inherit; text-decoration: none; overflow: hidden; background: none; border: none; cursor: pointer; }
+[data-theme="amsterdam"] .ams-rail__logo { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; writing-mode: sideways-lr; text-orientation: mixed; font-family: "Fraunces", "Playfair Display", Georgia, serif; font-size: 18px; letter-spacing: 0.06em; color: inherit; text-decoration: none; overflow: hidden; background: none; border: none; cursor: pointer; }
 [data-theme="amsterdam"] .ams-rail__logo img { writing-mode: horizontal-tb; max-width: 56px; height: auto; }
 [data-theme="amsterdam"] .ams-rail__btn { background: none; border: none; cursor: pointer; color: inherit; padding: 8px; display: flex; }
 [data-theme="amsterdam"] .ams-rail__foot { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 18px 0; border-top: 1px solid color-mix(in oklab, currentColor 38%, transparent); }
@@ -929,7 +930,7 @@ a {
 /* Opener: poster hero (home) */
 [data-theme="amsterdam"] .ams-col--hero { width: calc(100vw - var(--theme-rail-width, 96px)); overflow: hidden; }
 [data-theme="amsterdam"] .ams-hero__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-[data-theme="amsterdam"] .ams-hero__title { position: absolute; top: 2vh; left: 3vw; right: 3vw; margin: 0; font-family: "Abril Fatface", Georgia, serif; font-weight: 400; text-transform: uppercase; color: var(--ams-ink); font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; overflow-wrap: break-word; }
+[data-theme="amsterdam"] .ams-hero__title { position: absolute; top: 2vh; left: 3vw; right: 3vw; margin: 0; font-family: "Fraunces", "Playfair Display", Georgia, serif; font-weight: 400; text-transform: uppercase; color: var(--ams-ink); font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; overflow-wrap: break-word; }
 [data-theme="amsterdam"] .ams-hero__foot { position: absolute; left: 3vw; bottom: 6vh; max-width: 40ch; }
 [data-theme="amsterdam"] .ams-hero__desc { margin: 0 0 14px; font-family: "Playfair Display", Georgia, serif; font-size: clamp(17px, 1.5vw, 23px); line-height: 1.35; color: #fff; text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45); }
 
@@ -937,7 +938,7 @@ a {
 [data-theme="amsterdam"] .ams-col--title { width: min(86vw, 1120px); background: var(--ams-ink); color: var(--ams-on-ink); display: flex; flex-direction: column; justify-content: flex-end; padding: 6vh 3.2vw; overflow: hidden; }
 /* The condensed name fills the block but always fits: it wraps (or scales down via
    the vw term) rather than overflowing, with equal air on both sides. */
-[data-theme="amsterdam"] .ams-title__name { margin: 0 0 2.5vh 0; max-width: 100%; color: var(--ams-on-ink); font-family: "Anton", "Arial Narrow", sans-serif; font-weight: 400; text-transform: uppercase; font-size: clamp(56px, 11vw, 190px); line-height: 0.9; letter-spacing: 0.005em; overflow-wrap: break-word; word-break: break-word; hyphens: auto; }
+[data-theme="amsterdam"] .ams-title__name { margin: 0 0 2.5vh 0; max-width: 100%; color: var(--ams-on-ink); font-family: "Fraunces", "Playfair Display", Georgia, serif; font-weight: 400; text-transform: uppercase; font-size: clamp(56px, 11vw, 190px); line-height: 0.9; letter-spacing: 0.005em; overflow-wrap: break-word; word-break: break-word; hyphens: auto; }
 [data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: var(--fs-text-m); line-height: 1.45; opacity: 0.92; }
 
 /* Opener actions (Music Show / Client Login) */
@@ -959,7 +960,7 @@ a {
 [data-theme="amsterdam"] .ams-menu[data-open="true"] { width: min(44vw, 480px); border-right: 1px solid rgba(20, 18, 16, 0.12); }
 [data-theme="amsterdam"] .ams-menu__inner { width: min(44vw, 480px); height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 5vh 2.5vw; box-sizing: border-box; }
 [data-theme="amsterdam"] .ams-menu__list { list-style: none; margin: 0; padding: 0; }
-[data-theme="amsterdam"] .ams-menu__link { display: block; background: none; border: none; padding: 4px 0; cursor: pointer; text-decoration: none; font-family: "Anton", "Arial Narrow", sans-serif; text-transform: uppercase; font-size: clamp(30px, 4.6vh, 52px); line-height: 1.06; color: var(--ams-on-ink); opacity: 0.82; }
+[data-theme="amsterdam"] .ams-menu__link { display: block; background: none; border: none; padding: 4px 0; cursor: pointer; text-decoration: none; font-family: "Fraunces", "Playfair Display", Georgia, serif; text-transform: uppercase; font-size: clamp(30px, 4.6vh, 52px); line-height: 1.06; color: var(--ams-on-ink); opacity: 0.82; }
 [data-theme="amsterdam"] .ams-menu__link:hover, [data-theme="amsterdam"] .ams-menu__link.is-active { opacity: 1; }
 [data-theme="amsterdam"] .ams-menu__socials { display: flex; gap: 14px; margin-top: 4vh; flex-wrap: wrap; }
 [data-theme="amsterdam"] .ams-menu__social { font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ams-on-ink); text-decoration: none; opacity: 0.75; }
@@ -1052,8 +1053,8 @@ a {
    bottom with light text, not a loud solid label. Spans full width; the gradient
    fades up so it never reads as a hard band. Legible over any photo / ground. */
 [data-theme="amsterdam"] .ams-fill-label { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 3rem 1.4rem 1.1rem; background: linear-gradient(to top, rgba(14, 11, 9, 0.68), rgba(14, 11, 9, 0)); font-family: Inter, sans-serif; }
-[data-theme="amsterdam"] .ams-fill-label .ams-caption__title { color: #f6f3ec; font-style: italic; font-size: var(--fs-byline); }
-[data-theme="amsterdam"] .ams-fill-label .ams-caption__meta { color: rgba(246, 243, 236, 0.82); font-size: var(--fs-byline); }
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__title { color: #f6f3ec; font-style: italic; font-size: var(--fs-byline); max-width: 30rem; }
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__meta { color: rgba(246, 243, 236, 0.82); font-size: var(--fs-byline); max-width: 30rem; }
 [data-theme="amsterdam"] .ams-row { display: flex; align-items: center; gap: 2vw; height: 100%; }
 [data-theme="amsterdam"] .ams-row__item { display: flex; flex-direction: column; }
 [data-theme="amsterdam"] .ams-mosaic { display: flex; align-items: center; gap: 1.2vw; }
@@ -1075,7 +1076,11 @@ a {
 [data-theme="amsterdam"] .ams-row--scatter .ams-mount[data-flip="0"] { transform: translateY(-7vh); }
 [data-theme="amsterdam"] .ams-row--scatter .ams-mount[data-flip="1"] { transform: translateY(5vh); }
 [data-theme="amsterdam"] .ams-row--scatter .ams-mount[data-flip="2"] { transform: translateY(-2vh); }
-[data-theme="amsterdam"] .ams-mount { display: inline-flex; flex-direction: column; margin: 0; box-sizing: border-box; color: #2b2620; max-width: 46vw; }
+/* The mount is height-driven (the photo box gets a fixed height; its width follows
+   the image's real aspect). A tight max-width used to clip a landscape photo square
+   inside the card — instead let the whole card widen to the photo's true width so a
+   portrait stays narrow and a landscape stays wide, aspect never changed. */
+[data-theme="amsterdam"] .ams-mount { display: inline-flex; flex-direction: column; margin: 0; box-sizing: border-box; color: #2b2620; max-width: 88vw; }
 [data-theme="amsterdam"] .ams-mount__photo { position: relative; overflow: hidden; }
 [data-theme="amsterdam"] .ams-mount__label { display: flex; flex-direction: column; gap: 3px; font-family: Inter, sans-serif; }
 /* Long caption: hang it beside the photo (right long edge) instead of widening the
@@ -1125,21 +1130,31 @@ a {
 [data-theme="amsterdam"] .ams-col--quiet:has(.ams-text--cols) { align-items: center; width: auto; max-width: 92vw; }
 [data-theme="amsterdam"] .ams-text--cols { white-space: normal; max-width: none; }
 
-/* Fancy drop cap: an oversized display capital the copy wraps around. */
-[data-theme="amsterdam"] .ams-dropcap { float: left; font-family: "Abril Fatface", Georgia, serif; font-weight: 400; font-size: 2.3em; line-height: 0.66; padding: 0.06em 0.14em 0 0; }
+/* Fancy drop cap: an oversized display capital that sinks two lines, the copy
+   wrapping down its right side. The float fallback sizes/heights the cap to span
+   ~two body lines; browsers with `initial-letter` get a pixel-perfect two-line
+   sink with correct baseline alignment. */
+[data-theme="amsterdam"] .ams-dropcap { float: left; font-family: "Fraunces", "Playfair Display", Georgia, serif; font-weight: 500; font-size: 4.2em; line-height: 0.72; padding: 0.02em 0.11em 0 0; }
 
 /* Testimonial / contact / page links */
 [data-theme="amsterdam"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-col--contact { width: clamp(340px, 34vw, 560px); display: flex; align-items: center; padding: 6vh 2.5vw; }
 /* Flex column with a real gap so the byline sits off the quote in BOTH orders
    (photo-above put the byline flush against the quote before). */
-[data-theme="amsterdam"] .ams-testimonial { display: flex; flex-direction: column; gap: 22px; }
-[data-theme="amsterdam"] .ams-testimonial__quote { margin: 0; line-height: 1.3; }
-[data-theme="amsterdam"] .ams-testimonial__by { display: flex; align-items: center; gap: 10px; font-family: Inter, sans-serif; font-size: var(--fs-byline); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; }
-[data-theme="amsterdam"] .ams-testimonial__avatar { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; }
+[data-theme="amsterdam"] .ams-testimonial { display: flex; flex-direction: column; gap: 18px; max-width: 42ch; }
+/* An editorial pull-quote: a large display quotation mark opens it (a tonal
+   flourish that reads on any ground), the quote sets in the editorial serif, and
+   the byline pairs a round portrait with the bookish mono wall-label voice. */
+[data-theme="amsterdam"] .ams-testimonial__quote { position: relative; margin: 0; line-height: 1.42; }
+[data-theme="amsterdam"] .ams-testimonial__quote::before { content: "\201C"; display: block; font-family: "Fraunces", "Playfair Display", Georgia, serif; font-weight: 600; font-size: 2.7em; line-height: 0.72; margin: 0 0 0.1em -0.03em; color: currentColor; opacity: 0.34; }
+[data-theme="amsterdam"] .ams-testimonial__by { display: flex; align-items: center; gap: 13px; margin-top: 2px; }
+/* The theme squares every image (border-radius:0 !important); the round portrait is
+   the one deliberate exception, so it must override that with !important too. */
+[data-theme="amsterdam"] .ams-testimonial__avatar { width: 48px; height: 48px; border-radius: 999px !important; object-fit: cover; flex: 0 0 auto; box-shadow: 0 0 0 1px color-mix(in oklab, currentColor 26%, transparent); }
+[data-theme="amsterdam"] .ams-testimonial__name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--fs-byline); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.72; }
 [data-theme="amsterdam"] .ams-pagelink { display: flex; flex-direction: column; gap: 8px; height: 100%; text-decoration: none; color: inherit; }
 [data-theme="amsterdam"] .ams-pagelink__frame { flex: 1; min-height: 0; width: clamp(220px, 24vw, 380px); background: rgba(127, 127, 127, 0.12); }
 [data-theme="amsterdam"] .ams-pagelink__frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
-[data-theme="amsterdam"] .ams-pagelink__title { font-family: "Anton", "Arial Narrow", sans-serif; text-transform: uppercase; font-size: 18px; letter-spacing: 0.02em; }
+[data-theme="amsterdam"] .ams-pagelink__title { font-family: "Fraunces", "Playfair Display", Georgia, serif; text-transform: uppercase; font-size: 18px; letter-spacing: 0.02em; }
 
 /* Mobile column adjustments */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--quiet, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--contact { width: 100%; }

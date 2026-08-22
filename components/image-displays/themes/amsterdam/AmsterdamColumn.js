@@ -61,9 +61,12 @@ function AmsterdamText({ block, fontFamily, fontSize }) {
   }
   // Split a leading capital off as an oversized drop cap; the rest flows around it.
   // A multi-column magazine setting drops the cap — it only reads in a single column.
+  // A drop cap only earns its place when there's enough copy to wrap around it (a
+  // two/three-line paragraph); on a short one-liner it looks stranded, so skip it.
   const m = content.match(/^(\s*)(\S)([\s\S]*)$/)
   const [lead, cap, rest] = m ? [m[1], m[2], m[3]] : ['', '', content]
-  const body = (!multi && cap)
+  const enoughForCap = content.trim().length >= 90
+  const body = (!multi && cap && enoughForCap)
     ? <><span className="ams-dropcap" aria-hidden>{cap}</span>{lead}{rest}</>
     : content
   return <p ref={ref} className={cls} style={style}>{body}</p>
@@ -305,7 +308,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       if (!block.text && !block.name && !photoUrl) return null
       const fontFamily = resolveFont(block, TID)
       const italic = resolveQuoteStyle(block, TID) === 'italic'
-      const fontSize = QUOTE_SIZE[resolveSize(block, TID)] || QUOTE_SIZE.large
+      const fontSize = QUOTE_SIZE[resolveSize(block, TID)] || QUOTE_SIZE.medium
       const photoAbove = resolveVariant(block, TID) === 'photo-above'
       const quote = block.text && (
         <blockquote className="ams-testimonial__quote" style={{ fontFamily, fontStyle: italic ? 'italic' : 'normal', fontSize }}>{block.text}</blockquote>
@@ -313,7 +316,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       const by = (photoUrl || block.name) && (
         <figcaption className="ams-testimonial__by">
           {photoUrl && <img className="ams-testimonial__avatar" src={getSizedUrl(photoUrl, 'display')} alt={block.name || ''} />}
-          {block.name && <span>{block.name}</span>}
+          {block.name && <span className="ams-testimonial__name">{block.name}</span>}
         </figcaption>
       )
       return wrap('ams-col--testimonial', null, (
