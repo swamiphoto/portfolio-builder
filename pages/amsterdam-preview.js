@@ -23,8 +23,12 @@ const BLOCKS = [
   { type: 'photo', image: P(1015, 1000, 1500), caption: LONGCAP, themeState: { amsterdam: { variant: 'centered' } } },
   // Frame styles: a single Card-mounted photo, then a Mixed-mounted set.
   { type: 'photo', image: P(1024, 1000, 1500), caption: LONGCAP, capture: { capturedAt: '1902-01-01T00:00:00Z' }, amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
+  // A LANDSCAPE framed photo: the card must widen to the photo's real ratio, never crop it square.
+  { type: 'photo', image: P(1035, 1600, 1000), caption: 'Herengracht at dusk', amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'photos', images: [{ url: P(1033), caption: 'Oudezijds' }, { url: P(1037), caption: 'Prinsengracht' }, { url: P(1041), caption: 'Herengracht' }], amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } } },
   { type: 'text', content: 'Four hundred years of water, brick and light.' },
+  // Medium single-column copy: long enough to earn a two-line drop cap.
+  { type: 'text', content: 'Sometimes the best shots are the ones you don’t plan for. I started at Trocadéro for a sunrise, but the clouds were too thick, so I wandered the quay until the light finally broke over the water.' },
   // Long copy auto-flows into balanced columns (no Style toggle any more).
   { type: 'text', content: LONG },
   { type: 'photos', images: [{ url: P(1039) }, { url: P(1043), caption: 'Jordaan' }, { url: P(1044) }], themeState: { amsterdam: { variant: 'row', size: 'large' } } },
@@ -32,7 +36,7 @@ const BLOCKS = [
   { type: 'photos', images: [{ url: P(1050), caption: 'Singel' }, { url: P(1051), caption: 'Brouwersgracht' }, { url: P(1052), caption: 'Bloemgracht' }, { url: P(1053), caption: 'Lijnbaansgracht' }, { url: P(1054), caption: 'Leliegracht' }], themeState: { amsterdam: { variant: 'mosaic' } } },
   { type: 'photo', image: P(1056, 1200, 900), caption: 'PRINSENGRACHT', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', caption: 'PROCESS FILM' },
-  { type: 'testimonial', text: 'The prints are extraordinary — the water almost moves.', name: 'A. Collector' },
+  { type: 'testimonial', text: 'The prints are extraordinary — the water almost moves.', name: 'A. Collector', image: P(1005, 400, 400) },
   { type: 'contact', heading: 'Commissions', subheading: 'Open for 2027 bookings.', buttonText: 'Write to me' },
 ]
 
