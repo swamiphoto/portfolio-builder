@@ -17,11 +17,13 @@ export const DEFAULT_CAPTION_STYLE = 'sans'
 // keeps the existing look (system sans, italic, muted gray) so nothing changes
 // by default.
 export function captionStyleCss(id) {
-  if (id === 'serif') return { fontFamily: CORMORANT, fontStyle: 'italic', fontWeight: 500 }
+  // Cormorant is a small-on-the-body face, so serif/accent set a slightly larger
+  // relative size (1.12em) to stay readable next to the sans/mono captions.
+  if (id === 'serif') return { fontFamily: CORMORANT, fontStyle: 'italic', fontWeight: 500, fontSize: '1.12em' }
   // Typewriter caption (Blantyre's default). Muted via the theme token so it sits
   // right on any ground; upright, small, a touch of tracking.
   if (id === 'mono') return { fontFamily: '"Roboto Mono", "Geist Mono", ui-monospace, monospace', fontStyle: 'normal', fontSize: '0.8rem', letterSpacing: '0.02em', color: 'var(--theme-text-muted, #6b7280)' }
-  if (id === 'accent') return { fontFamily: CORMORANT, fontStyle: 'normal', fontWeight: 700, color: 'rgb(220, 38, 38)', textTransform: 'uppercase' }
+  if (id === 'accent') return { fontFamily: CORMORANT, fontStyle: 'normal', fontWeight: 700, fontSize: '1.12em', color: 'rgb(220, 38, 38)', textTransform: 'uppercase' }
   return {}
 }
 

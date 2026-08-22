@@ -431,12 +431,14 @@ a {
 [data-theme="florence"] .florence-stage,
 [data-theme="amsterdam"] .ams-stage {
   --fs-text-s: 16px;  --fs-text-m: 18px;  --fs-text-l: 20px;
-  --fs-caption: 15px; --fs-caption-meta: 13px; --fs-byline: 12.5px; --fs-micro: 11px;
+  /* Caption/label tiers raised to a legible floor — nothing sets below ~13px, even
+     the small-caps "stamp" tier. Earlier 11–13px metas read as unreadably tiny. */
+  --fs-caption: 16px; --fs-caption-meta: 14px; --fs-byline: 14px; --fs-micro: 13px;
 }
 [data-theme="florence"] .florence-stage[data-mobile="true"],
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] {
   --fs-text-s: 15px;  --fs-text-m: 16px;  --fs-text-l: 18px;
-  --fs-caption: 14px; --fs-caption-meta: 12.5px; --fs-byline: 12px; --fs-micro: 10.5px;
+  --fs-caption: 15px; --fs-caption-meta: 13px; --fs-byline: 13px; --fs-micro: 12.5px;
 }
 
 /* ── Admin preview fit (rail themes) ───────────────────────────────────────
@@ -633,12 +635,13 @@ a {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
   display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;
   padding: 3.5rem 1.5rem 1.25rem;
-  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.74rem; line-height: 1.55;
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.92rem; line-height: 1.5;
   color: #f6f3ec; background: linear-gradient(to top, rgba(20,16,12,0.62), rgba(20,16,12,0));
 }
 /* The scrim spans the whole photo bottom (a seamless fade), but the caption TEXT
-   wraps at a book-legible measure instead of running edge to edge across a wide image. */
-.florence-fill-label .florence-caption__title { color: #f6f3ec; white-space: pre-line; max-width: 30rem; }
+   wraps at a book-legible measure instead of running edge to edge across a wide image.
+   Title sets a notch larger than the mono meta so it stays readable over a photo. */
+.florence-fill-label .florence-caption__title { color: #f6f3ec; white-space: pre-line; max-width: 30rem; font-size: 1.06rem; line-height: 1.4; }
 .florence-fill-label .florence-caption__meta { color: rgba(246,243,236,0.82); white-space: pre-line; max-width: 30rem; }
 
 /* Photo Row: all photos side by side, each fills the row height (minus its plaque).
@@ -1028,6 +1031,9 @@ a {
 [data-theme="amsterdam"] .ams-caption--beside .ams-caption__title,
 [data-theme="amsterdam"] .ams-caption--beside .ams-caption__meta { display: block; break-inside: avoid; }
 [data-theme="amsterdam"] .ams-caption--beside .ams-caption__title { margin: 4px 0 8px; }
+/* A long caption on a Centered (unframed) photo hangs beside it as ONE readable
+   column (not the museum plaque's multi-column split). */
+[data-theme="amsterdam"] .ams-col--photo .ams-caption--beside { column-width: auto; columns: 1; max-width: clamp(200px, 22vw, 340px); cursor: pointer; align-self: center; }
 
 /* .ams-fit mirrors .florence-fit: a height-driven image box whose width follows
    the image's real aspect ratio (set inline / on load by FitImg). overflow:
