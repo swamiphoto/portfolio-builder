@@ -28,4 +28,15 @@ describe('Amsterdam text block design controls', () => {
     expect(red.getByLabelText(/Red/)).toBeTruthy()
     red.unmount()
   })
+
+  it('shows a single black swatch when the site ink is black (no duplicate)', () => {
+    const anchor = document.createElement('div')
+    document.body.appendChild(anchor)
+    const props = { anchorEl: anchor, onClose: () => {}, onUpdate: () => {} }
+    const r = render(<DesignPopover {...props} block={{ type: 'text', content: 'x' }} themeId="amsterdam" amsterdamInk={{ color: '#141210', name: 'Black' }} />)
+    // Light + one black (the 'ink' swatch); the fixed 'dark' duplicate is dropped.
+    const blacks = Array.from(r.container.querySelectorAll('button[aria-label]')).filter(b => (b.getAttribute('style') || '').includes('rgb(20, 18, 16)') || (b.getAttribute('style') || '').includes('#141210'))
+    expect(blacks.length).toBe(1)
+    r.unmount()
+  })
 })
