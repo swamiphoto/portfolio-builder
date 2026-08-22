@@ -60,9 +60,10 @@ export default function AmsterdamWall({
   // Logo-bar rail layout: 1 = centered wordmark up the rail (default), 2 = the
   // same but pinned near the top (and image logos rotate), 3 = centered upright.
   const logoBar = ['1', '2', '3'].includes(siteConfig?.design?.logoBarLayout) ? siteConfig.design.logoBarLayout : '1'
-  // Opener headline face: 'condensed' = the bold poster/condensed display (default),
-  // 'editorial' = the Fraunces serif. Applies to both openers (hero + title panel).
-  const headline = siteConfig?.design?.amsterdamHeadline === 'editorial' ? 'editorial' : 'condensed'
+  // Opener headline face (per-page, set via the Hero block's Font control): 'condensed'
+  // = the bold poster/condensed display (default), 'editorial' = the Fraunces serif.
+  // Applies to whichever opener this page shows (poster hero or title panel).
+  const headline = cover?.amsterdamHeadline === 'editorial' ? 'editorial' : 'condensed'
 
   // Small uppercase-mono note at the foot of the rail: a tagline if set, else the
   // primary social handle — a quiet signature under the wordmark.

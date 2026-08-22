@@ -37,10 +37,10 @@ describe('AmsterdamWall shell', () => {
     expect(stage.style.getPropertyValue('--ams-on-ink')).toBe('#f6efe4')
   })
 
-  it('headline defaults to condensed and reflects the stored choice', () => {
+  it('opener headline defaults to condensed and reflects the cover choice', () => {
     const def = render(<AmsterdamWall name="V" siteConfig={{}} />)
     expect(def.container.querySelector('.ams-stage').getAttribute('data-headline')).toBe('condensed')
-    const ed = render(<AmsterdamWall name="V" siteConfig={{ design: { amsterdamHeadline: 'editorial' } }} />)
+    const ed = render(<AmsterdamWall name="V" siteConfig={{}} cover={{ amsterdamHeadline: 'editorial' }} />)
     expect(ed.container.querySelector('.ams-stage').getAttribute('data-headline')).toBe('editorial')
   })
 

@@ -147,9 +147,9 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
               gap: 1,
             }}
           >
-            {/* Florence and Amsterdam open on a wall with no cover-design options,
-                so there's nothing for the brush to do — hide it. */}
-            {themeId !== 'florence' && themeId !== 'amsterdam' && (
+            {/* Florence opens on a wall with no cover-design options, so its brush is
+                hidden. Amsterdam keeps it — it carries the opener Font control. */}
+            {themeId !== 'florence' && (
             <Tip label="Design">
               <button
                 ref={brushRef}

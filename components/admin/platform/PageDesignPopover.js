@@ -15,6 +15,20 @@ export default function PageDesignPopover({ page, themeId = 'kyoto', onUpdate, o
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Design">
+      {/* Amsterdam opener headline face — the display type on this page's hero /
+          title panel. Condensed = bold poster (Anton, default), Editorial = Fraunces. */}
+      {themeId === 'amsterdam' && (
+        <DesignSection label="Font">
+          <PillToggle
+            value={cover.amsterdamHeadline === 'editorial' ? 'editorial' : 'condensed'}
+            onChange={(v) => update({ amsterdamHeadline: v })}
+            options={[
+              { value: 'condensed', label: 'Condensed' },
+              { value: 'editorial', label: 'Editorial' },
+            ]}
+          />
+        </DesignSection>
+      )}
       {showHeroHeight && (
         <DesignSection label="Hero height">
           <PillToggle

@@ -69,7 +69,7 @@ export default function AmsterdamPreview() {
   // ?name= lets us stress the title opener with a long word (fit / wrap check).
   const name = router.query.name || (opener === 'title' ? 'Landscapes' : 'Van der Meer')
   const headline = router.query.headline === 'editorial' ? 'editorial' : router.query.headline === 'condensed' ? 'condensed' : undefined
-  const siteConfig = { ...SITE, design: { theme: themeId, amsterdamInk: ink, amsterdamHeadline: headline } }
+  const siteConfig = { ...SITE, design: { theme: themeId, amsterdamInk: ink } }
   const pane = router.query.pane
   const empty = router.query.empty
   const gallery = (
@@ -82,7 +82,7 @@ export default function AmsterdamPreview() {
       childPages={[{ id: 'c1', title: 'Portraits', slug: 'portraits', showInNav: true }, { id: 'c2', title: 'Landscapes', slug: 'landscapes', showInNav: true }]}
       siteConfig={siteConfig}
       themeId={themeId}
-      cover={{ imageUrl: P(1015, 2000, 1300) }}
+      cover={{ imageUrl: P(1015, 2000, 1300), amsterdamHeadline: headline }}
       opener={opener}
     />
   )
