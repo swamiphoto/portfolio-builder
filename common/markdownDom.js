@@ -120,20 +120,34 @@ function serializeInline(el) {
     }
     if (child.nodeType !== 1) return
     const tag = child.tagName.toLowerCase()
-    if (tag === 'strong' || tag === 'b') {
-      out += `**${serializeInline(child)}**`
-    } else if (tag === 'em' || tag === 'i') {
-      out += `*${serializeInline(child)}*`
-    } else if (tag === 'a') {
+    if (tag === 'br') { out += '\n'; return }
+    if (tag === 'a') {
       out += `[${serializeInline(child)}](${child.getAttribute('href') || ''})`
-    } else if (tag === 'br') {
-      out += '\n'
-    } else {
-      // Unknown inline element (should not occur from our own render path,
-      // but if something odd landed here — e.g. pasted content — fall back
-      // to its literal text rather than dropping or interpreting it).
-      out += child.textContent
+      return
     }
+    // Recurse into every other inline element so nested links/marks survive, and
+    // detect emphasis from the tag OR inline styles. Pasted rich text (docs, web)
+    // usually encodes bold/italic as <span style="font-weight:700"> /
+    // font-style:italic rather than <b>/<i>, which used to flatten to plain text.
+    const fw = String((child.style && child.style.fontWeight) || '')
+    const fs = String((child.style && child.style.fontStyle) || '')
+    const fwNum = parseInt(fw, 10)
+    // Google Docs wraps pasted content in <b style="font-weight:normal">, so an
+    // explicit normal/<600 weight must override the tag (else everything bolds).
+    const explicitNormal = fw === 'normal' || (!Number.isNaN(fwNum) && fwNum < 600)
+    const isBold = !explicitNormal && (tag === 'strong' || tag === 'b' || fw === 'bold' || fw === 'bolder' || (!Number.isNaN(fwNum) && fwNum >= 600))
+    const isItalic = fs !== 'normal' && (tag === 'em' || tag === 'i' || fs === 'italic' || fs === 'oblique')
+    let inner = serializeInline(child)
+    if ((isBold || isItalic) && inner.trim() !== '') {
+      // Keep any surrounding whitespace OUTSIDE the markers, else '** x **' won't parse.
+      const lead = (inner.match(/^\s+/) || [''])[0]
+      const trail = (inner.match(/\s+$/) || [''])[0]
+      let core = inner.trim()
+      if (isItalic) core = `*${core}*`
+      if (isBold) core = `**${core}**`
+      inner = lead + core + trail
+    }
+    out += inner
   })
   return out
 }
@@ -165,9 +179,14 @@ function blockElementToMarkdown(el) {
 // serializeDomToMarkdown(rootEl) -> string
 // Walks the editable div's direct children back into markdown, one
 // blank-line-separated block per top-level element.
-export function serializeDomToMarkdown(rootEl) {
-  if (!rootEl) return ''
-  const blocks = []
+const NESTED_BLOCK_RE = /^(p|div|section|article|header|footer|main|h[1-6]|blockquote|ul|ol|li|img|figure|pre)$/
+const LEAF_BLOCK_RE = /^(h[1-6]|blockquote|ul|ol|img)$/
+
+// Walk the tree collecting one markdown block per paragraph/heading/list/image.
+// Pasted rich text is often nested (Google Docs wraps everything in a <b>; sites
+// wrap paragraphs in <div>s), so recurse into any wrapper that holds block-level
+// children instead of flattening it into a single line.
+function collectBlocks(rootEl, blocks) {
   rootEl.childNodes.forEach((node) => {
     if (node.nodeType === 3) {
       const text = node.nodeValue.trim()
@@ -176,8 +195,20 @@ export function serializeDomToMarkdown(rootEl) {
     }
     if (node.nodeType !== 1) return
     if (node.tagName === 'BR') return
+    const tag = node.tagName.toLowerCase()
+    const isLeaf = LEAF_BLOCK_RE.test(tag) || node.hasAttribute(IMAGE_WRAPPER_ATTR)
+    if (!isLeaf && Array.from(node.children).some((c) => NESTED_BLOCK_RE.test(c.tagName.toLowerCase()))) {
+      collectBlocks(node, blocks)
+      return
+    }
     const md = blockElementToMarkdown(node)
     if (md.trim() !== '') blocks.push(md)
   })
+}
+
+export function serializeDomToMarkdown(rootEl) {
+  if (!rootEl) return ''
+  const blocks = []
+  collectBlocks(rootEl, blocks)
   return blocks.join('\n\n')
 }

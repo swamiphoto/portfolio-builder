@@ -79,7 +79,7 @@ function currentBlockElement(root) {
 // alone); after that the div owns its own DOM and every edit flows
 // DOM -> serializeDomToMarkdown -> emit, so React never touches the div's
 // children mid-edit and the caret never jumps.
-export default function MarkdownEditorPanel({ open, block, onChange, onClose, libraryImages, libraryConfig, libraryLoading }) {
+export default function MarkdownEditorPanel({ open, block, onChange, onClose, libraryImages, libraryConfig, libraryLoading, inlineOnly = false }) {
   const editableRef = useRef(null)
   const blockRef = useRef(block)
   blockRef.current = block
@@ -157,6 +157,22 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     emit()
   }
 
+  // Wrap the selection in a link (or unlink when the URL is cleared). The plain
+  // <a href> execCommand produces serializes to [text](url) by tag name.
+  const applyLink = () => {
+    const el = editableRef.current
+    if (el) el.focus()
+    const sel = typeof window !== 'undefined' ? window.getSelection() : null
+    if (!sel || sel.isCollapsed) { window.alert?.('Select some text first, then add a link.'); return }
+    const existing = sel.anchorNode && sel.anchorNode.parentElement ? sel.anchorNode.parentElement.closest('a') : null
+    const url = window.prompt('Link URL', existing?.getAttribute('href') || 'https://')
+    if (url == null) return
+    if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
+      try { document.execCommand(url.trim() ? 'createLink' : 'unlink', false, url.trim() || null) } catch { /* unsupported */ }
+    }
+    emit()
+  }
+
   const setBlockElementTag = (tagName) => {
     const el = editableRef.current
     if (!el) { emit(); return }
@@ -213,8 +229,8 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   }
 
   const onKeyDown = (e) => {
-    // "/" on an empty block opens the photo picker
-    if (e.key === '/') {
+    // "/" on an empty block opens the photo picker (disabled in inline-only mode)
+    if (e.key === '/' && !inlineOnly) {
       const el = editableRef.current
       const target = el ? currentBlockElement(el) : null
       const isEmpty = target ? (target.textContent || '').trim() === '' : (el?.textContent || '').trim() === ''
@@ -225,13 +241,20 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     }
   }
 
-  const TOOLBAR = [
-    { name: 'Bold', tip: 'Bold', act: () => applyInlineCommand('bold'), label: 'B' },
-    { name: 'Italic', tip: 'Italic', act: () => applyInlineCommand('italic'), label: 'I' },
-    { name: 'Heading', tip: 'Heading', act: () => setBlockElementTag('h3'), label: 'H' },
-    { name: 'Quote', tip: 'Quote', act: () => setBlockElementTag('blockquote'), label: '"' },
-    { name: 'Image', tip: 'Insert photo', act: () => setPickerOpen(true), label: 'Img' },
-  ]
+  const TOOLBAR = inlineOnly
+    ? [
+        { name: 'Bold', tip: 'Bold', act: () => applyInlineCommand('bold'), label: 'B' },
+        { name: 'Italic', tip: 'Italic', act: () => applyInlineCommand('italic'), label: 'I' },
+        { name: 'Link', tip: 'Link', act: applyLink, label: '↗' },
+      ]
+    : [
+        { name: 'Bold', tip: 'Bold', act: () => applyInlineCommand('bold'), label: 'B' },
+        { name: 'Italic', tip: 'Italic', act: () => applyInlineCommand('italic'), label: 'I' },
+        { name: 'Heading', tip: 'Heading', act: () => setBlockElementTag('h3'), label: 'H' },
+        { name: 'Quote', tip: 'Quote', act: () => setBlockElementTag('blockquote'), label: '"' },
+        { name: 'Link', tip: 'Link', act: applyLink, label: '↗' },
+        { name: 'Image', tip: 'Insert photo', act: () => setPickerOpen(true), label: 'Img' },
+      ]
 
   return (
     <>
@@ -245,9 +268,9 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         style={{
           left: pos.x,
           top: pos.y,
-          width: PANEL_WIDTH,
+          width: inlineOnly ? 480 : PANEL_WIDTH,
           maxWidth: 'calc(100vw - 32px)',
-          height: 'min(720px, calc(100vh - 120px))',
+          height: inlineOnly ? 'auto' : 'min(720px, calc(100vh - 120px))',
           background: 'var(--popover)',
           boxShadow: 'var(--popover-shadow)',
         }}
@@ -284,13 +307,13 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         </div>
         <div
           ref={editableRef}
-          className="md-editable scroll-thin flex-1 resize-none px-8 py-6 text-[15px] leading-relaxed outline-none"
+          className={`md-editable scroll-thin flex-1 resize-none text-[15px] leading-relaxed outline-none ${inlineOnly ? 'px-5 py-4' : 'px-8 py-6'}`}
           contentEditable
           suppressContentEditableWarning
           onInput={() => emit()}
           onKeyDown={onKeyDown}
-          data-placeholder="Write your story… Use bold, italics, headings — or type / on an empty line to add a photo."
-          style={{ background: 'transparent', color: 'var(--text-primary)', overflowY: 'auto' }}
+          data-placeholder={inlineOnly ? 'Write your intro… select text, then Bold / Italic / Link.' : 'Write your story… Use bold, italics, headings — or type / on an empty line to add a photo.'}
+          style={{ background: 'transparent', color: 'var(--text-primary)', overflowY: 'auto', ...(inlineOnly ? { minHeight: 120, maxHeight: 320 } : {}) }}
         />
         <div
           className="px-8 py-2 text-[11px] flex-shrink-0"
@@ -299,7 +322,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           The final look depends on your site&apos;s theme.
         </div>
       </div>
-      {pickerOpen && (
+      {pickerOpen && !inlineOnly && (
         <PhotoPickerModal
           images={libraryImages || []}
           libraryConfig={libraryConfig}

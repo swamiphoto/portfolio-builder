@@ -37,6 +37,13 @@ describe('AmsterdamWall shell', () => {
     expect(stage.style.getPropertyValue('--ams-on-ink')).toBe('#f6efe4')
   })
 
+  it('opener headline defaults to condensed and reflects the cover choice', () => {
+    const def = render(<AmsterdamWall name="V" siteConfig={{}} />)
+    expect(def.container.querySelector('.ams-stage').getAttribute('data-headline')).toBe('condensed')
+    const ed = render(<AmsterdamWall name="V" siteConfig={{}} cover={{ amsterdamHeadline: 'editorial' }} />)
+    expect(ed.container.querySelector('.ams-stage').getAttribute('data-headline')).toBe('editorial')
+  })
+
   it('menu column lists nav pages and marks data-open on toggle', () => {
     const pages = [{ id: 'p1', title: 'Iceland', slug: 'iceland', showInNav: true }, { id: 'p2', title: 'About', slug: 'about', showInNav: false }]
     const { container, getByLabelText, getByText } = render(<AmsterdamWall name="V" siteConfig={{ pages }} />)

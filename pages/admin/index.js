@@ -17,7 +17,7 @@ import { useClientFeedback } from '../../components/admin/platform/useClientFeed
 import { defaultPage, titleForTemplate } from '../../common/siteConfig'
 import { composeSite, applyComposedPages } from '../../common/import/composer'
 import { assignHomeOnCreate } from '../../common/homePage'
-import { COVER_FALLBACK_BG } from '../../common/coverBackground'
+import PageCover from '../../components/image-displays/page/PageCover'
 import { useRouter } from 'next/router'
 import GuidedTour from '../../components/admin/onboarding/GuidedTour'
 import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
@@ -110,6 +110,14 @@ export default function AdminIndex() {
 
   const handleScrollPreviewToBlock = useCallback((index) => {
     if (!previewContainerRef.current) return
+    // 'cover' scrolls to the opener/hero: the preview to the top and any horizontal
+    // wall (Amsterdam/Florence) back to its start.
+    if (index === 'cover') {
+      previewContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      const wall = previewContainerRef.current.querySelector('.ams-wall, .florence-wall')
+      if (wall) wall.scrollTo({ left: 0, behavior: 'smooth' })
+      return
+    }
     const block = previewContainerRef.current.querySelector(`[data-block-index="${index}"]`)
     if (!block) return
     block.scrollIntoView({ block: 'center', behavior: 'smooth' })
@@ -340,7 +348,13 @@ export default function AdminIndex() {
   const handleAssetPickerConfirm = useCallback((refs) => {
     if (!assetPickerTarget || !refs.length) return
     if (assetPickerTarget === 'coverImage') {
-      updateConfig(prev => ({ ...prev, cover: { ...(prev.cover || {}), imageUrl: refs[0].url } }))
+      // Cover images can be a set that cross-fades; append the picked ones and keep
+      // imageUrl pointing at the first (used for share thumbnails).
+      updateConfig(prev => {
+        const existing = (prev.cover?.images && prev.cover.images.length) ? prev.cover.images : (prev.cover?.imageUrl ? [prev.cover.imageUrl] : [])
+        const images = [...existing, ...refs.map(r => r.url).filter(u => !existing.includes(u))]
+        return { ...prev, cover: { ...(prev.cover || {}), images, imageUrl: images[0] } }
+      })
     } else if (assetPickerTarget === 'shareLarge') {
       updateConfig(prev => ({ ...prev, share: { ...(prev.share || {}), largeImage: refs[0].url } }))
     } else if (assetPickerTarget === 'shareSquare') {
@@ -486,43 +500,26 @@ export default function AdminIndex() {
     const themeId = siteConfig?.design?.theme
     const titleFF = fontFamilyForSlot(themeId, cover.titleFont || 'serif')
     const descFF = fontFamilyForSlot(themeId, cover.descriptionFont || 'serif')
-    const coverBtnCls = cover.buttonStyle === 'outline'
-      ? 'border border-white text-white hover:bg-white/10'
-      : 'bg-white text-stone-900 hover:bg-stone-100'
-    const bgStyle = cover.imageUrl
-      ? { backgroundImage: `url(${cover.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-      : { background: COVER_FALLBACK_BG }
     const homeTarget = siteConfig.homePageId || siteConfig.pages?.find(p => p.showInNav && p.type !== 'link')?.id
+    // The real cover renderer, so every design control (layout / overlay / logo /
+    // fonts / rich-text description) reflects live. themeId is omitted so the generic
+    // cover always renders here (Florence/Amsterdam return null from PageCover).
     content = (
-      <div className="flex-1 h-full min-w-0 flex flex-col items-center justify-center text-center px-6 relative" style={bgStyle}>
-        {cover.imageUrl && <div className="absolute inset-0 bg-black/30" />}
-        <div className="relative z-10 text-white">
-          {(logoImage || cover.heading || siteConfig.siteName || cover.subheading || siteConfig.tagline) && (
-            <div className="space-y-3 mb-9">
-              {/* A set logo stands in for the wordmark — same swap the nav rail
-                  makes — so uploading a logo reflects here immediately instead of
-                  only after navigating to a page. */}
-              {logoImage ? (
-                <img src={siteConfig.logo} alt={siteConfig.siteName || 'Logo'} className="mx-auto max-h-24 md:max-h-28 w-auto object-contain" style={{ filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.35))' }} />
-              ) : (cover.heading || siteConfig.siteName) ? (
-                <h2 className="text-4xl md:text-6xl font-light tracking-tight" style={{ fontFamily: titleFF }}>{cover.heading || siteConfig.siteName}</h2>
-              ) : null}
-              {(cover.subheading || siteConfig.tagline) && (
-                <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto" style={{ fontFamily: descFF }}>{cover.subheading || siteConfig.tagline}</p>
-              )}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => { if (homeTarget) handleSelectPage(homeTarget); else setCoverCtaHint(true) }}
-            className={`inline-flex items-center px-5 py-2.5 text-sm font-medium transition-colors ${coverBtnCls}`}
-          >
-            {cover.buttonText || 'View my portfolio'}
-          </button>
-          {coverCtaHint && !homeTarget && (
-            <p className="mt-4 text-xs text-white/70">Coming soon — add a page and it becomes your site’s home.</p>
-          )}
-        </div>
+      <div className="flex-1 h-full min-w-0 relative">
+        <PageCover
+          cover={{ ...cover, imageUrl: cover.imageUrl || '', height: cover.height || 'full', variant: 'cover' }}
+          title={cover.heading || siteConfig.siteName || ''}
+          description={cover.subheading || siteConfig.tagline || ''}
+          siteName={siteConfig.siteName}
+          logo={logoImage ? siteConfig.logo : ''}
+          titleFontFamily={titleFF}
+          descriptionFontFamily={descFF}
+          buttonFontFamily={fontFamilyForSlot(themeId, cover.buttonFont || cover.titleFont || 'sans')}
+          primaryButton={{ label: cover.buttonText || 'View my portfolio', onClick: () => { if (homeTarget) handleSelectPage(homeTarget); else setCoverCtaHint(true) } }}
+        />
+        {coverCtaHint && !homeTarget && (
+          <p className="absolute inset-x-0 bottom-8 text-center text-xs text-white/70 z-20">Coming soon — add a page and it becomes your site’s home.</p>
+        )}
       </div>
     )
   } else if (selectedPage) {
@@ -678,7 +675,7 @@ export default function AdminIndex() {
           images={libraryConfig?.images || []}
           libraryConfig={libraryConfig}
           loading={!libraryConfig}
-          blockType="photo"
+          blockType={assetPickerTarget === 'coverImage' ? 'photos' : 'photo'}
           onConfirm={handleAssetPickerConfirm}
           onClose={() => setAssetPickerTarget(null)}
         />

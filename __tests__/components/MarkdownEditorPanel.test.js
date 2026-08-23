@@ -32,6 +32,16 @@ it('seeds the editable surface from the block content as rendered markdown DOM',
   expect(el.querySelector('p').textContent).toBe('Hello world')
 })
 
+it('inlineOnly mode offers Bold / Italic / Link only (no Heading, Quote, or Image)', () => {
+  render(<MarkdownEditorPanel open inlineOnly block={block} onChange={jest.fn()} onClose={jest.fn()} />)
+  expect(screen.getByLabelText('Bold')).toBeTruthy()
+  expect(screen.getByLabelText('Italic')).toBeTruthy()
+  expect(screen.getByLabelText('Link')).toBeTruthy()
+  expect(screen.queryByLabelText('Heading')).toBeNull()
+  expect(screen.queryByLabelText('Quote')).toBeNull()
+  expect(screen.queryByLabelText('Image')).toBeNull()
+})
+
 it('typing (input event) serializes the DOM back to markdown and stamps format', () => {
   const onChange = jest.fn()
   const { container } = render(<MarkdownEditorPanel open block={block} onChange={onChange} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)

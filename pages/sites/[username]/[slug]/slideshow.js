@@ -2,7 +2,9 @@
 import { lookupUserByUsername } from '../../../../common/userProfile'
 import { readSiteConfig } from '../../../../common/siteConfig'
 import Slideshow from '../../../../components/image-displays/slideshow/Slideshow'
+import PageMeta from '../../../../components/PageMeta'
 import { pageDisplayThumbnail } from '../../../../common/assetRefs'
+import { siteUrlFor } from '../../../../common/domainUtils'
 import { buildSlideSequence, musicLabelForUrl } from '../../../../common/slideshowSync'
 
 // The music credit shown in the player: prefer the curated pool label, otherwise
@@ -33,21 +35,36 @@ export async function getServerSideProps({ params }) {
   const page = (siteConfig.pages || []).find(p => p.slug === slug || p.id === slug)
   if (!page || !page.slideshow?.enabled) return { notFound: true }
   const musicCredit = await resolveMusicCredit(page.slideshow?.musicUrl || '')
+  const siteName = siteConfig.siteName || username
+  const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
+  // Sharing a slideshow shows the page's own name / description / thumbnail.
+  const meta = {
+    title: page.title ? `${page.title} — ${siteName}` : siteName,
+    ogTitle: page.title || siteName,
+    description: page.description || siteConfig.tagline || '',
+    image: pageDisplayThumbnail(page) || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || '',
+    url: `${siteUrl}/${page.slug || page.id}/slideshow`,
+    siteName,
+    favicon: siteConfig.favicon || null,
+  }
   return {
     props: {
       page: JSON.parse(JSON.stringify(page)),
-      siteName: siteConfig.siteName || username,
+      siteName,
       musicCredit,
+      meta,
     },
   }
 }
 
-export default function PageSlideshow({ page, siteName, musicCredit }) {
+export default function PageSlideshow({ page, siteName, musicCredit, meta }) {
   const slides = buildSlideSequence(page.blocks, page.slideshow?.excluded || [])
   if (slides.length === 0) {
     return <div className="flex items-center justify-center h-screen text-stone-400">No images on this page.</div>
   }
   return (
+    <>
+    {meta && <PageMeta {...meta} />}
     <Slideshow
       slides={slides}
       layout={page.slideshow?.layout || 'kenburns'}
@@ -59,5 +76,6 @@ export default function PageSlideshow({ page, siteName, musicCredit }) {
       musicCredits={musicCredit ? [musicCredit] : []}
       initialModalOpen={false}
     />
+    </>
   )
 }

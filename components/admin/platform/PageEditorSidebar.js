@@ -1,13 +1,15 @@
 // components/admin/platform/PageEditorSidebar.js
 // Single-sidebar block editor with breadcrumb back to page list
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import BlockBuilder from '../gallery-builder/BlockBuilder'
 import PhotoPickerModal from '../gallery-builder/PhotoPickerModal'
-import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail, getPagePhotos } from '../../../common/assetRefs'
+import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisplayThumbnail, getPagePhotos, normalizeImageRef } from '../../../common/assetRefs'
+import { uploadFile } from '../UploadModal'
 import PageSettingsPanel from './PageSettingsPanel'
 import PageSettingsPopover from './PageSettingsPopover'
 import { generatePageId } from '../../../common/siteConfig'
 import { amsterdamGroundPlan } from '../../../common/themes/variants'
+import { amsterdamInkColors, resolveAmsterdamInk } from '../../../common/themes/amsterdam'
 import { getPageTheme } from '../../../common/themes'
 import { resolveHomePage } from '../../../common/homePage'
 
@@ -64,6 +66,15 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     () => amsterdamGroundPlan(gallery.blocks || [], { heroOpener }).map((g) => g.def),
     [gallery.blocks, heroOpener]
   )
+
+  // The block-level Ink swatch's "ink" option paints the block in the SITE's ink
+  // ground — so its swatch must show the actual chosen ink color (red / blue /
+  // black / light), not a hardcoded red. Resolve it from the site design here.
+  const amsterdamInk = useMemo(() => {
+    const id = resolveAmsterdamInk(siteConfig?.design)
+    const names = { vermilion: 'Red', ultramarine: 'Blue', black: 'Black', light: 'Light' }
+    return { color: amsterdamInkColors(siteConfig?.design).ink, name: names[id] || 'Ink' }
+  }, [siteConfig?.design])
 
   const pagesData = useMemo(() => (siteConfig?.pages || [])
     .map(p => ({ id: p.id, title: p.title || 'Untitled', imageUrls: getPagePhotos(p) }))
@@ -159,6 +170,32 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
     setThumbnailDefaultPageId(choosable.length > 0 ? page.id : null)
   }, [fetchLibrary, page])
 
+  // Latest page, so an async drop-upload applies onto current state (not a stale
+  // closure captured when a memoized block card last rendered).
+  const pageRef = useRef(page)
+  useEffect(() => { pageRef.current = page }, [page])
+
+  // Add image refs to a photo/testimonial (single) or a photo set (append), shared
+  // by the library picker and drag-and-drop upload. Reads the latest page via the ref
+  // so an async upload can't overwrite edits made while it was in flight.
+  const addRefsToBlock = useCallback((blockIndex, refs) => {
+    if (typeof blockIndex !== 'number' || !refs?.length) return
+    const current = pageRef.current
+    const blocks = [...(current.blocks || [])]
+    const block = blocks[blockIndex]
+    if (!block) return
+    if (block.type === 'photo' || block.type === 'testimonial') {
+      blocks[blockIndex] = {
+        ...block,
+        ...(block.type === 'testimonial' ? { imageUrl: refs[0].url } : buildSingleImageFields(refs[0])),
+      }
+    } else {
+      const merged = mergeImageRefs(block.images || block.imageUrls || [], refs)
+      blocks[blockIndex] = { ...block, ...buildMultiImageFields(merged) }
+    }
+    onPageChange({ ...current, blocks })
+  }, [onPageChange])
+
   const handlePhotoPickerConfirm = useCallback((refs) => {
     if (photoPickerBlockIndex === null) return
     if (!refs.length) return
@@ -182,25 +219,51 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
       return
     }
 
-    const blocks = [...(page.blocks || [])]
-    const block = blocks[photoPickerBlockIndex]
-    if (!block) return
-    if (block.type === 'photo' || block.type === 'testimonial') {
-      blocks[photoPickerBlockIndex] = {
-        ...block,
-        ...(block.type === 'testimonial' ? { imageUrl: refs[0].url } : buildSingleImageFields(refs[0])),
-      }
-    } else {
-      const merged = mergeImageRefs(block.images || block.imageUrls || [], refs)
-      blocks[photoPickerBlockIndex] = {
-        ...block,
-        ...buildMultiImageFields(merged),
-      }
-    }
-    onPageChange({ ...page, blocks })
+    addRefsToBlock(photoPickerBlockIndex, refs)
     setPhotoPickerOpen(false)
     setPhotoPickerBlockIndex(null)
-  }, [photoPickerBlockIndex, page, onPageChange])
+  }, [photoPickerBlockIndex, page, onPageChange, addRefsToBlock])
+
+  // Seed EXIF capture onto the uploaded assets' library records (mirrors the photo
+  // picker's registerCaptures). The upload itself already lands the file in the
+  // library's R2 store, which the library GET lists lazily — this only enriches it.
+  const registerUploadedAssets = useCallback(async (uploaded) => {
+    const withCapture = uploaded.filter((u) => u.capture)
+    if (!withCapture.length || !libraryData?.assets) return
+    try {
+      const { createAssetIdFromUrl } = await import('../../../common/adminConfig')
+      const { seedUploadedAsset } = await import('../../../common/import/uploadedAsset')
+      const now = new Date().toISOString()
+      const assets = { ...libraryData.assets }
+      for (const { url, capture } of withCapture) {
+        const id = createAssetIdFromUrl(url)
+        assets[id] = seedUploadedAsset({ url, capture, now }, { ...(libraryData.assets[id] || {}), assetId: id })
+      }
+      setLibraryData((prev) => (prev ? { ...prev, assets } : prev))
+      await fetch('/api/admin/library', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portfolios: libraryData.portfolios || {}, galleries: libraryData.galleries || {}, assets }),
+      })
+    } catch (err) { console.error('Drag-drop upload: capture registration failed', err) }
+  }, [libraryData])
+
+  // Files dropped straight onto a photo block: upload to the library, then add to
+  // the block. Returns when done so the block can clear its uploading state.
+  const handleUploadFilesToBlock = useCallback(async (blockIndex, files) => {
+    const list = Array.from(files || []).filter((f) => /\.(jpe?g|png|gif|webp)$/i.test(f.name))
+    if (!list.length) return
+    const uploaded = []
+    for (const file of list) {
+      try {
+        const { gcsUrl, capture } = await uploadFile(file, { folder: 'photos' })
+        uploaded.push({ url: gcsUrl, capture })
+      } catch (err) { console.error('Drag-drop upload failed:', file.name, err) }
+    }
+    if (!uploaded.length) return
+    await registerUploadedAssets(uploaded)
+    const refs = uploaded.map((u) => normalizeImageRef(u.url)).filter(Boolean)
+    addRefsToBlock(blockIndex, refs)
+  }, [registerUploadedAssets, addRefsToBlock])
 
   const autosaveStatus = saveStatus === 'saving' ? 'saving'
     : saveStatus === 'saved' ? 'saved'
@@ -210,7 +273,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   if (page.type === 'link') {
     return (
       <div className="flex flex-col h-full p-3">
-        <PageSettingsPanel page={page} onChange={onPageChange} themeId={siteConfig?.design?.theme || 'kyoto'} />
+        <PageSettingsPanel page={page} onChange={onPageChange} themeId={pageThemeId} />
       </div>
     )
   }
@@ -230,6 +293,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         hasDraft={false}
         isPublished={false}
         onAddPhotosToBlock={handleAddPhotosToBlock}
+        onUploadFilesToBlock={handleUploadFilesToBlock}
         onPickThumbnail={handlePickThumbnail}
         expanded={false}
         onToggleExpand={onToggleSidebarCollapse}
@@ -242,6 +306,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
         headerLabel="PAGE"
         autoFocusTitle={titleFocusTs}
         blockGroundDefaults={blockGroundDefaults}
+        amsterdamInk={amsterdamInk}
         infoCardHidden={siteConfig?.design?.theme === 'manhattan'}
         pageSettingsSlot={
           <PageSettingsPanel
@@ -249,7 +314,8 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
             onChange={onPageChange}
             onPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}
             onAddBlockBelow={(rect) => blockBuilderRef?.current?.openAddBlockMenu(0, rect)}
-            themeId={siteConfig?.design?.theme || 'kyoto'}
+            themeId={pageThemeId}
+            onScrollToHero={onScrollPreviewToBlock ? () => onScrollPreviewToBlock('cover') : undefined}
           />
         }
         onOpenPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}

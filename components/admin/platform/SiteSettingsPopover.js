@@ -7,6 +7,8 @@ import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtil
 import { THEME_LIST, getTheme } from '../../../common/themes'
 import { EditableInput } from './EditableText'
 import ToggleSwitch from '../common/ToggleSwitch'
+import MarkdownEditorPanel from '../gallery-builder/MarkdownEditorPanel'
+import { getSizedUrl } from '../../../common/imageUtils'
 
 export const themeOptions = () => THEME_LIST.filter(t => !t.hidden).map(t => ({ value: t.id, label: t.name }))
 
@@ -14,9 +16,10 @@ const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
 // Cover title/description font choices — mirrors the text block font slots
 // (which map to theme.tokens.fonts), plus Sans. See fontFamilyForSlot.
+// Display was dropped — on most themes it read the same as Editorial, so the two
+// choices made no visible difference. Serif / Editorial / Sans are distinct.
 const COVER_FONT_OPTIONS = [
   { id: 'serif', label: 'Serif' },
-  { id: 'display', label: 'Display' },
   { id: 'fraunces', label: 'Editorial' },
   { id: 'sans', label: 'Sans' },
 ]
@@ -371,6 +374,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const [coverDesignOpen, setCoverDesignOpen] = useState(false)
+  const [subheadingMdOpen, setSubheadingMdOpen] = useState(false)
   const coverBrushRef = useRef(null)
   const footer = config.footer || {}
 
@@ -412,10 +416,21 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   if (view === 'cover') {
     const cover = config.cover || {}
     const themeFonts = getTheme(config?.design?.theme)?.tokens?.fonts || {}
-    const fontOpts = COVER_FONT_OPTIONS.map(f => ({
+    // Drop options that resolve to the same font on this theme (e.g. Display and
+    // Editorial can be identical), so we never show two indistinguishable choices.
+    const seenFonts = new Set()
+    const fontOpts = COVER_FONT_OPTIONS.filter(f => {
+      const fam = themeFonts[f.id] || f.id
+      if (seenFonts.has(fam)) return false
+      seenFonts.add(fam); return true
+    }).map(f => ({
       value: f.id,
       label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span>,
     }))
+    const hasLogo = config.logoType === 'image' && !!config.logo
+    // A logo carries the brand mark, so when one is set (and no explicit cover
+    // heading), the design panel offers Logo controls instead of a Heading Font.
+    const showLogoControls = hasLogo && !cover.heading
 
     const coverBrushButton = (
       <HeaderIconButton innerRef={coverBrushRef} onClick={() => setCoverDesignOpen(v => !v)} title="Cover design">
@@ -426,12 +441,35 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Cover page" onBack={initialView === 'cover' ? undefined : () => setView('main')} headerRight={coverBrushButton}>
         <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
-          <AssetField
-            label="Background image"
-            value={cover.imageUrl || ''}
-            onChange={(v) => updateCover({ imageUrl: v })}
-            onPickFromLibrary={onPickCoverImage}
-          />
+          {(() => {
+            const coverImages = (cover.images && cover.images.length) ? cover.images : (cover.imageUrl ? [cover.imageUrl] : [])
+            return (
+              <Field label="Cover images">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {coverImages.map((url, i) => (
+                    <div key={`${url}-${i}`} style={{ position: 'relative', width: 58, height: 42 }}>
+                      <img src={getSizedUrl(url, 'thumbnail') || url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4, display: 'block' }} />
+                      <button
+                        type="button"
+                        aria-label="Remove image"
+                        onClick={() => { const next = coverImages.filter((u, j) => !(u === url && j === i)); updateCover({ images: next, imageUrl: next[0] || '' }) }}
+                        style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: 999, background: '#2c2416', color: '#fff', border: '1.5px solid var(--popover)', fontSize: 11, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    aria-label="Add cover image"
+                    onClick={onPickCoverImage}
+                    style={{ width: 58, height: 42, border: '1px dashed rgba(120,110,95,0.5)', borderRadius: 4, color: 'var(--text-muted)', background: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}
+                  >+</button>
+                </div>
+                <p style={{ fontSize: 11.5, color: 'var(--text-muted, #9e9788)', margin: '6px 0 0', lineHeight: 1.45 }}>
+                  {coverImages.length > 1 ? 'These cross-fade as a slideshow on the cover.' : 'Add more to cross-fade them as a slideshow.'}
+                </p>
+              </Field>
+            )
+          })()}
           <Field label="Heading">
             <EditableInput
               className={inputCls}
@@ -449,6 +487,13 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               value={cover.subheading || ''}
               onChange={(e) => updateCover({ subheading: e.target.value })}
             />
+            <button
+              type="button"
+              onClick={() => setSubheadingMdOpen(true)}
+              style={{ marginTop: 6, fontSize: 11.5, color: 'var(--text-secondary, #6b6355)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              Edit with formatting (bold, italic, links)
+            </button>
           </Field>
           <Field label="Button text">
             <EditableInput
@@ -462,17 +507,76 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         </div>
         {coverDesignOpen && (
           <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Cover Design">
-            <DesignSection label="Title Font">
+            <DesignSection label="Layout">
               <DesignPillToggle
-                value={cover.titleFont || 'serif'}
-                onChange={(v) => updateCover({ titleFont: v })}
-                options={fontOpts}
+                value={cover.layout || 'centered'}
+                onChange={(v) => updateCover({ layout: v })}
+                options={[
+                  { value: 'centered', label: 'Centered' },
+                  { value: 'bottom',   label: 'Bottom'   },
+                  { value: 'split',    label: 'Split'    },
+                  { value: 'minimal',  label: 'Minimal'  },
+                ]}
               />
             </DesignSection>
-            <DesignSection label="Description Font">
+            {cover.imageUrl && !['split', 'minimal'].includes(cover.layout) && (
+              <DesignSection label="Overlay">
+                <DesignPillToggle
+                  value={cover.overlay || 'medium'}
+                  onChange={(v) => updateCover({ overlay: v })}
+                  options={[
+                    { value: 'light',  label: 'Light'  },
+                    { value: 'medium', label: 'Medium' },
+                    { value: 'dark',   label: 'Dark'   },
+                  ]}
+                />
+              </DesignSection>
+            )}
+            {showLogoControls ? (
+              <>
+                <DesignSection label="Logo Size">
+                  <DesignPillToggle
+                    value={cover.logoSize || 'medium'}
+                    onChange={(v) => updateCover({ logoSize: v })}
+                    options={[
+                      { value: 'small',  label: 'S' },
+                      { value: 'medium', label: 'M' },
+                      { value: 'large',  label: 'L' },
+                    ]}
+                  />
+                </DesignSection>
+                <DesignSection label="Logo Color">
+                  <DesignPillToggle
+                    value={cover.logoColor || 'light'}
+                    onChange={(v) => updateCover({ logoColor: v })}
+                    options={[
+                      { value: 'light',    label: 'Light'    },
+                      { value: 'dark',     label: 'Dark'     },
+                      { value: 'original', label: 'Original' },
+                    ]}
+                  />
+                </DesignSection>
+              </>
+            ) : (
+              <DesignSection label="Heading Font">
+                <DesignPillToggle
+                  value={cover.titleFont || 'serif'}
+                  onChange={(v) => updateCover({ titleFont: v })}
+                  options={fontOpts}
+                />
+              </DesignSection>
+            )}
+            <DesignSection label="Subheading Font">
               <DesignPillToggle
                 value={cover.descriptionFont || 'serif'}
                 onChange={(v) => updateCover({ descriptionFont: v })}
+                options={fontOpts}
+              />
+            </DesignSection>
+            <DesignSection label="Button Font">
+              <DesignPillToggle
+                value={cover.buttonFont || 'sans'}
+                onChange={(v) => updateCover({ buttonFont: v })}
                 options={fontOpts}
               />
             </DesignSection>
@@ -488,6 +592,15 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSection>
           </PopoverShell>
         )}
+        {/* Rich-text editor for the subheading — the block markdown editor in
+            inline-only mode (bold / italic / links; no headings or images). */}
+        <MarkdownEditorPanel
+          inlineOnly
+          open={subheadingMdOpen}
+          block={{ content: cover.subheading || '', format: 'markdown' }}
+          onChange={(b) => updateCover({ subheading: b.content })}
+          onClose={() => setSubheadingMdOpen(false)}
+        />
       </PopoverShell>
     )
   }

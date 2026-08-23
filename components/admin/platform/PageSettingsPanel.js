@@ -29,7 +29,7 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   );
 }
 
-export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto' }) {
+export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto', onScrollToHero }) {
   const [expanded, setExpanded] = useState(true)
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride])
   const [designOpen, setDesignOpen] = useState(false)
@@ -118,7 +118,8 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
         </span>
 
         <button
-          onClick={() => setExpanded(v => !v)}
+          onClick={() => (onScrollToHero ? onScrollToHero() : setExpanded(v => !v))}
+          title="Scroll preview to the hero"
           className="flex-1 text-left transition-colors"
           style={{
             fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
@@ -147,9 +148,9 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
               gap: 1,
             }}
           >
-            {/* Florence and Amsterdam open on a wall with no cover-design options,
-                so there's nothing for the brush to do — hide it. */}
-            {themeId !== 'florence' && themeId !== 'amsterdam' && (
+            {/* Florence opens on a wall with no cover-design options, so its brush is
+                hidden. Amsterdam keeps it — it carries the opener Font control. */}
+            {themeId !== 'florence' && (
             <Tip label="Design">
               <button
                 ref={brushRef}

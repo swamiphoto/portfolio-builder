@@ -17,6 +17,7 @@ import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientE
 import { getPagePhotos } from '../../../common/assetRefs'
 import { resolveHomePage } from '../../../common/homePage'
 import { useIsMobile } from '../../../common/useIsMobile'
+import { fontFamilyForSlot } from '../../../common/themes/variants'
 
 function PagePreview({
   config,
@@ -44,9 +45,15 @@ function PagePreview({
     : (page.cover?.imageUrl ? undefined : 'header-dropdown')
 
   const isChildPage = !!page.parentId
-  const childPages = isChildPage
-    ? (config?.pages || []).filter(p => p.parentId === page.parentId && p.showInNav !== false)
-    : (config?.pages || []).filter(p => p.parentId === page.id && p.showInNav !== false)
+  // Mirror the live site: a parent can hide its nested pages from the sub-nav
+  // (hideChildrenInNav); the preview must honour that too, else hidden albums show
+  // in the opener here but not on the published site.
+  const subNavParent = isChildPage ? (config?.pages || []).find(p => p.id === page.parentId) : page
+  const childPages = subNavParent?.hideChildrenInNav
+    ? []
+    : isChildPage
+      ? (config?.pages || []).filter(p => p.parentId === page.parentId && p.showInNav !== false)
+      : (config?.pages || []).filter(p => p.parentId === page.id && p.showInNav !== false)
   const activeChildId = isChildPage ? page.id : null
 
   const slideshowHref = (page.slideshow?.enabled && username)
@@ -92,8 +99,18 @@ function PagePreview({
             navLinks={coverNavLinks}
             themeId={theme.id}
             siteName={config?.siteName}
+            logo={config?.logoType === 'image' ? config.logo : ''}
+            titleFontFamily={fontFamilyForSlot(theme.id, page.cover?.titleFont || 'serif')}
+            descriptionFontFamily={fontFamilyForSlot(theme.id, page.cover?.descriptionFont || 'serif')}
+            buttonFontFamily={fontFamilyForSlot(theme.id, page.cover?.buttonFont || page.cover?.titleFont || 'sans')}
           />
           <GalleryPreview
+            // Page-scoped key: the preview Gallery stays mounted across page
+            // switches, and its blocks are keyed by index — so without this, React
+            // reconciles the new page's blocks onto the previous page's instances
+            // (stale lazy-loaded images carry over until a reload). Keying by page id
+            // forces a fresh mount per page. Stable within a page (edits don't remount).
+            key={page.id}
             gallery={gallery}
             themeId={theme.id}
             pages={config?.pages}

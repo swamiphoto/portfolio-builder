@@ -21,7 +21,7 @@ const IconAlignCenter = () => (
 )
 const ALIGN_LABELS = { left: <IconAlignLeft />, center: <IconAlignCenter /> }
 
-export default function DesignPopover({ block, themeId = 'kyoto', defaultGround, onUpdate, onClose, anchorEl }) {
+export default function DesignPopover({ block, themeId = 'kyoto', defaultGround, amsterdamInk, onUpdate, onClose, anchorEl }) {
   const spec = getBlockSpec(themeId, block.type)
   if (!spec) return null
 
@@ -72,16 +72,27 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
         const pinned = resolveAmsterdamGround(block)
         const def = defaultGround || 'ink'
         const effective = pinned === 'auto' ? def : pinned
+        const colorOf = (v) => v === 'light' ? '#f6efe4' : v === 'dark' ? '#141210' : (amsterdamInk?.color || '#e02b20')
+        const effectiveColor = colorOf(effective).toLowerCase()
+        const defColor = colorOf(def).toLowerCase()
+        const swatches = [
+          { value: 'light', name: 'Light', bg: '#f6efe4' },
+          // The 'ink' ground paints the block in the site's chosen ink, so the
+          // swatch mirrors that live color + name (not a fixed red).
+          { value: 'ink', name: amsterdamInk?.name || 'Red', bg: (amsterdamInk?.color || '#e02b20') },
+          { value: 'dark', name: 'Black', bg: '#141210' },
+        ]
+        // When the site ink IS black (or paper), its swatch duplicates a fixed
+        // ground — drop the later duplicate so we never show two identical circles.
+        const shown = swatches.filter((s, i) => swatches.findIndex(o => o.bg.toLowerCase() === s.bg.toLowerCase()) === i)
         return (
           <DesignSection label="Ink">
             <div style={{ display: 'flex', gap: 8 }}>
-              {[
-                { value: 'light', name: 'Light', bg: '#f6efe4' },
-                { value: 'ink', name: 'Red', bg: '#e02b20' },
-                { value: 'dark', name: 'Black', bg: '#141210' },
-              ].map((s) => {
-                const isDefault = s.value === def
-                const isSelected = s.value === effective
+              {shown.map((s) => {
+                // Match by rendered color, so a block pinned to a de-duped ground
+                // (e.g. 'dark' when ink is black) still highlights the shown swatch.
+                const isDefault = s.bg.toLowerCase() === defColor
+                const isSelected = s.bg.toLowerCase() === effectiveColor
                 return (
                   <Tip key={s.value} label={isDefault ? 'Default' : s.name}>
                     <button

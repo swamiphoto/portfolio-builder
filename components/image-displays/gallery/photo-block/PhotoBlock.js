@@ -40,7 +40,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
   );
 
   const renderCaption = () => {
-    return <p className="my-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
+    // Sit the caption close under the photo (mt-2) to match the stacked/photos block;
+    // the larger bottom margin only spaces this block from the next.
+    return <p className="mt-2 mb-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
   };
 
   const renderImage = () => {
@@ -106,7 +108,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
         ? `${(widthPct * aspectRatio).toFixed(1)}%`
         : `${widthPct}%`;
       return (
-        <div className="w-full flex justify-center py-2">
+        <div className="w-full flex justify-center">
           <div className="relative group" style={{ width: displayWidth }}>
             <img
               ref={imgRef}

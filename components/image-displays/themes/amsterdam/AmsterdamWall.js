@@ -14,6 +14,7 @@ import useWallScroll from '../shared/useWallScroll'
 import useWallChrome from './useWallChrome'
 import AmsterdamColumn from './AmsterdamColumn'
 import MobileNavOverlay from '../../page/MobileNavOverlay'
+import { useClientEngagement } from '../../engagement/ClientEngagementContext'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
 
@@ -60,6 +61,10 @@ export default function AmsterdamWall({
   // Logo-bar rail layout: 1 = centered wordmark up the rail (default), 2 = the
   // same but pinned near the top (and image logos rotate), 3 = centered upright.
   const logoBar = ['1', '2', '3'].includes(siteConfig?.design?.logoBarLayout) ? siteConfig.design.logoBarLayout : '1'
+  // Opener headline face (per-page, set via the Hero block's Font control): 'condensed'
+  // = the bold poster/condensed display (default), 'editorial' = the Fraunces serif.
+  // Applies to whichever opener this page shows (poster hero or title panel).
+  const headline = cover?.amsterdamHeadline === 'editorial' ? 'editorial' : 'condensed'
 
   // Small uppercase-mono note at the foot of the rail: a tagline if set, else the
   // primary social handle — a quiet signature under the wordmark.
@@ -97,10 +102,23 @@ export default function AmsterdamWall({
   // Per-block grounds (pins + the black→light→red rotation), shared with the editor.
   const groundPlan = amsterdamGroundPlan(blocks, { heroOpener })
 
-  const actionButtons = actions.length > 0 && (
+  // The "View Packages" button is context-driven (like the other themes' covers):
+  // it lights up when purchase is on and packages exist — on the live site once
+  // payouts connect, and in the editor via the preview packages provider. Amsterdam
+  // renders its own opener, so append it here rather than through PageCover.
+  const engagement = useClientEngagement()
+  const showPackages = !!(engagement?.features?.purchase && (engagement.packages || []).length)
+  const allActions = showPackages
+    ? [...actions, { label: 'View Packages', onClick: () => engagement?.openPurchase?.(), style: 'outline' }]
+    : actions
+  // The Button-style control (Solid / Outline) sets the default for opener buttons
+  // that don't carry their own style (the primary "View Music Show"); utility
+  // buttons like Client Login / Packages keep their explicit outline.
+  const defaultBtnStyle = cover?.buttonStyle === 'outline' ? 'outline' : 'solid'
+  const actionButtons = allActions.length > 0 && (
     <div className="ams-opener__actions">
-      {actions.map((a, i) => (
-        <button key={i} type="button" onClick={a.onClick} className={`ams-opener__btn${a.style === 'outline' ? ' ams-opener__btn--outline' : ''}`}>{a.label}</button>
+      {allActions.map((a, i) => (
+        <button key={i} type="button" onClick={a.onClick} className={`ams-opener__btn${(a.style || defaultBtnStyle) === 'outline' ? ' ams-opener__btn--outline' : ''}`}>{a.label}</button>
       ))}
     </div>
   )
@@ -115,14 +133,16 @@ export default function AmsterdamWall({
     }
     return <a key={p.id} className={cls} href={href} {...(isLink ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{p.title}</a>
   }
+  // Sub-links can sit above the title (a horizontal row) or below it (default).
+  const linksAbove = cover?.linksPosition === 'above'
   const childLinksNav = childPages.length > 0 && (
-    <nav className="ams-opener__children" aria-label="Pages in this section">
+    <nav className={`ams-opener__children${linksAbove ? ' ams-opener__children--above' : ''}`} aria-label="Pages in this section">
       {childPages.map(renderChildLink)}
     </nav>
   )
 
   return (
-    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome={openerSurface} style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk, '--ams-body-on-ink': inks.bodyOnInk || inks.onInk, '--ams-frame-card': inks.frameCard, '--ams-frame-mount': inks.frameMount, '--ams-frame-print': inks.framePrint }}>
+    <div className="ams-stage" data-mobile={mobile ? 'true' : 'false'} data-chrome={openerSurface} data-headline={headline} style={{ '--ams-ink': inks.ink, '--ams-on-ink': inks.onInk, '--ams-body-on-ink': inks.bodyOnInk || inks.onInk, '--ams-frame-card': inks.frameCard, '--ams-frame-mount': inks.frameMount, '--ams-frame-print': inks.framePrint }}>
       <nav className="ams-rail" data-logobar={logoBar} aria-label="Site navigation">
         <div className="ams-rail__top">
           <button className="ams-rail__btn" onClick={toggleMenu} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
@@ -171,16 +191,18 @@ export default function AmsterdamWall({
             <img className="ams-hero__img" src={getSizedUrl(coverUrl, 'display')} alt="" />
             <h1 className="ams-hero__title">{name}</h1>
             <div className="ams-hero__foot">
+              {linksAbove && childLinksNav}
               {description && <p className="ams-hero__desc">{description}</p>}
-              {childLinksNav}
+              {!linksAbove && childLinksNav}
               {actionButtons}
             </div>
           </section>
         ) : (
           <section className="ams-col ams-col--title" data-surface="ink">
+            {linksAbove && childLinksNav}
             {name && <h1 className="ams-title__name">{name}</h1>}
             {description && <p className="ams-title__desc">{description}</p>}
-            {childLinksNav}
+            {!linksAbove && childLinksNav}
             {actionButtons}
           </section>
         )}

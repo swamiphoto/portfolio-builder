@@ -94,7 +94,7 @@ function Kyoto({ images, trackRef }) {
 }
 
 // ---- Amsterdam: Dutch poster wall that pans sideways — poster hero, solid
-// vermilion ink panel with Anton condensed type, photo columns, parallax. ----
+// vermilion ink panel with crisp Fraunces display type, photo columns, parallax. ----
 function Amsterdam({ images, trackRef }) {
   const INK = '#e02b20'
   return (
@@ -104,12 +104,12 @@ function Amsterdam({ images, trackRef }) {
         <div style={{ width: 420, flex: '0 0 420px', position: 'relative', background: '#141210', overflow: 'hidden' }}>
           <Cover src={images[3]} scale={1.08} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,12,0.55), rgba(20,16,12,0.05) 55%)' }} />
-          <div style={{ position: 'absolute', top: '7%', left: '6%', right: '6%', margin: 0, fontFamily: '"Abril Fatface", Georgia, serif', textTransform: 'uppercase', color: INK, fontSize: 66, lineHeight: 0.9, letterSpacing: '-0.015em', overflowWrap: 'break-word' }}>{GALLERY}</div>
+          <div style={{ position: 'absolute', top: '7%', left: '6%', right: '6%', margin: 0, fontFamily: '"Fraunces", "Playfair Display", Georgia, serif', fontWeight: 500, textTransform: 'uppercase', color: INK, fontSize: 66, lineHeight: 0.9, letterSpacing: '-0.015em', overflowWrap: 'break-word' }}>{GALLERY}</div>
           <div style={{ position: 'absolute', left: '6%', bottom: '7%', fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#f6efe4', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>Jaipur · 2015</div>
         </div>
         {/* ink panel */}
         <div style={{ width: 210, flex: '0 0 210px', background: INK, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '24px 20px' }}>
-          <div style={{ fontFamily: '"Anton", "Arial Narrow", sans-serif', textTransform: 'uppercase', fontSize: 58, lineHeight: 0.84, letterSpacing: '0.01em' }}>On<br />View</div>
+          <div style={{ fontFamily: '"Fraunces", "Playfair Display", Georgia, serif', fontWeight: 500, textTransform: 'uppercase', fontSize: 58, lineHeight: 0.84, letterSpacing: '0.01em' }}>On<br />View</div>
           <div style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 12, lineHeight: 1.4, marginTop: 14, opacity: 0.95 }}>Eighteen portraits, hung as a single wall.</div>
         </div>
         {/* photo columns */}

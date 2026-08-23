@@ -4,14 +4,9 @@ export default function Document() {
   return (
     <Html>
       <Head>
-        {/* Default favicons — the Sepia "S" mark (see scripts/gen-favicons.mjs).
-            No SVG icon here: Chrome prefers SVG over all else, which would beat
-            a published site's own custom favicon link. PNG/ICO let per-site
-            favicons (rendered later, in the page's own <Head>) win. */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        {/* Default favicons moved to _app's next/head (keyed) so a published site's
+            own custom favicon can OVERRIDE them by key — a plain <link> here can't be
+            deduped by the page and the sized PNGs would otherwise beat the custom one. */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2e1e12" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

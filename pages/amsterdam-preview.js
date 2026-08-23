@@ -19,12 +19,16 @@ const LONG = 'The seventeenth-century canals are a world-renowned location of cu
 const LONGCAP = 'In the 15 years I’ve been a photographer, I’ve tried every portfolio builder, and not one felt like it was truly made for the work.'
 
 const BLOCKS = [
-  { type: 'photo', image: P(1016, 1600, 1000), caption: LONGCAP },
+  { type: 'photo', image: P(1016, 1600, 1000), caption: LONGCAP, capture: { capturedAt: '2024-11-03T08:12:00Z', camera: 'Leica Q2', focalLength: '28mm', aperture: 'f/2.8' } },
   { type: 'photo', image: P(1015, 1000, 1500), caption: LONGCAP, themeState: { amsterdam: { variant: 'centered' } } },
   // Frame styles: a single Card-mounted photo, then a Mixed-mounted set.
   { type: 'photo', image: P(1024, 1000, 1500), caption: LONGCAP, capture: { capturedAt: '1902-01-01T00:00:00Z' }, amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
+  // A LANDSCAPE framed photo: the card must widen to the photo's real ratio, never crop it square.
+  { type: 'photo', image: P(1035, 1600, 1000), caption: 'Herengracht at dusk', amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'photos', images: [{ url: P(1033), caption: 'Oudezijds' }, { url: P(1037), caption: 'Prinsengracht' }, { url: P(1041), caption: 'Herengracht' }], amsterdamFrame: 'mixed', themeState: { amsterdam: { variant: 'row' } } },
   { type: 'text', content: 'Four hundred years of water, brick and light.' },
+  // Medium single-column copy: long enough to earn a two-line drop cap.
+  { type: 'text', content: 'Sometimes the best shots are the ones you don’t plan for. I started at Trocadéro for a sunrise, but the clouds were too thick, so I wandered the quay until the light finally broke over the water.' },
   // Long copy auto-flows into balanced columns (no Style toggle any more).
   { type: 'text', content: LONG },
   { type: 'photos', images: [{ url: P(1039) }, { url: P(1043), caption: 'Jordaan' }, { url: P(1044) }], themeState: { amsterdam: { variant: 'row', size: 'large' } } },
@@ -32,7 +36,7 @@ const BLOCKS = [
   { type: 'photos', images: [{ url: P(1050), caption: 'Singel' }, { url: P(1051), caption: 'Brouwersgracht' }, { url: P(1052), caption: 'Bloemgracht' }, { url: P(1053), caption: 'Lijnbaansgracht' }, { url: P(1054), caption: 'Leliegracht' }], themeState: { amsterdam: { variant: 'mosaic' } } },
   { type: 'photo', image: P(1056, 1200, 900), caption: 'PRINSENGRACHT', themeState: { amsterdam: { variant: 'centered' } } },
   { type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', caption: 'PROCESS FILM' },
-  { type: 'testimonial', text: 'The prints are extraordinary — the water almost moves.', name: 'A. Collector' },
+  { type: 'testimonial', text: 'The prints are extraordinary — the water almost moves.', name: 'A. Collector', image: P(1005, 400, 400) },
   { type: 'contact', heading: 'Commissions', subheading: 'Open for 2027 bookings.', buttonText: 'Write to me' },
 ]
 
@@ -64,6 +68,7 @@ export default function AmsterdamPreview() {
   const opener = router.query.opener === 'title' ? 'title' : 'hero'
   // ?name= lets us stress the title opener with a long word (fit / wrap check).
   const name = router.query.name || (opener === 'title' ? 'Landscapes' : 'Van der Meer')
+  const headline = router.query.headline === 'editorial' ? 'editorial' : router.query.headline === 'condensed' ? 'condensed' : undefined
   const siteConfig = { ...SITE, design: { theme: themeId, amsterdamInk: ink } }
   const pane = router.query.pane
   const empty = router.query.empty
@@ -74,10 +79,11 @@ export default function AmsterdamPreview() {
       blocks={empty ? EMPTY_BLOCKS : BLOCKS}
       showPlaceholders={!!empty}
       pages={siteConfig.pages}
-      childPages={[{ id: 'c1', title: 'Portraits', slug: 'portraits', showInNav: true }, { id: 'c2', title: 'Landscapes', slug: 'landscapes', showInNav: true }]}
+      childPages={[{ id: 'c1', title: 'Portraits', slug: 'portraits', showInNav: true }, { id: 'c2', title: 'Landscapes', slug: 'landscapes', showInNav: true }, { id: 'c3', title: 'Street', slug: 'street', showInNav: true }]}
+      enableSlideshow={router.query.actions ? true : undefined}
       siteConfig={siteConfig}
       themeId={themeId}
-      cover={{ imageUrl: P(1015, 2000, 1300) }}
+      cover={{ imageUrl: P(1015, 2000, 1300), amsterdamHeadline: headline, linksPosition: router.query.links === 'above' ? 'above' : undefined }}
       opener={opener}
     />
   )

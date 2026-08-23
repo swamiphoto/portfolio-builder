@@ -6,9 +6,10 @@ describe('amsterdam theme', () => {
     expect(amsterdam.id).toBe('amsterdam')
     expect(amsterdam.navStyle).toBe('left-rail')
     expect(amsterdam.tokens['--theme-bg']).toBe('#f6efe4')
-    expect(amsterdam.tokens.fonts.display).toContain('Abril Fatface')
+    expect(amsterdam.tokens.fonts.display).toContain('Fraunces')
     expect(amsterdam.tokens.fonts.serif).toContain('Playfair Display')
-    expect(amsterdam.tokens.fonts.condensed).toContain('Anton')
+    // Condensed was retired from the picker but still resolves to the new display face.
+    expect(amsterdam.tokens.fonts.condensed).toContain('Fraunces')
   })
 
   it('photo defaults to full-height Fill; photos to Row (+Mosaic)', () => {
@@ -20,11 +21,18 @@ describe('amsterdam theme', () => {
     expect(photos.variants.map(v => v.id).sort()).toEqual(['mosaic', 'row'])
   })
 
-  it('text keeps the L/M/S size variants and defaults to the Display font', () => {
+  it('text keeps the L/M/S size variants and defaults to the readable Editorial font', () => {
     const text = getBlockSpec('amsterdam', 'text')
     expect(text.variants.map(v => v.id)).toEqual(['heading', 'subheading', 'body'])
-    expect(text.defaultFont).toBe('display')
-    expect(text.fonts.map(f => f.id)).toEqual(['display', 'serif', 'condensed', 'mono'])
+    expect(text.defaultFont).toBe('serif')
+    expect(text.fonts.map(f => f.id)).toEqual(['display', 'serif', 'mono'])
+  })
+
+  it('testimonial leads with the quote, defaults to medium', () => {
+    const t = getBlockSpec('amsterdam', 'testimonial')
+    expect(t.defaultVariant).toBe('quote-above')
+    expect(t.defaultSize).toBe('medium')
+    expect(t.fonts.map(f => f.id)).toEqual(['display', 'serif', 'mono'])
   })
 
   it('resolves inks: vermilion default, invalid ids fall back', () => {

@@ -61,9 +61,12 @@ function AmsterdamText({ block, fontFamily, fontSize }) {
   }
   // Split a leading capital off as an oversized drop cap; the rest flows around it.
   // A multi-column magazine setting drops the cap — it only reads in a single column.
+  // A drop cap only earns its place when there's enough copy to wrap around it (a
+  // two/three-line paragraph); on a short one-liner it looks stranded, so skip it.
   const m = content.match(/^(\s*)(\S)([\s\S]*)$/)
   const [lead, cap, rest] = m ? [m[1], m[2], m[3]] : ['', '', content]
-  const body = (!multi && cap)
+  const enoughForCap = content.trim().length >= 90
+  const body = (!multi && cap && enoughForCap)
     ? <><span className="ams-dropcap" aria-hidden>{cap}</span>{lead}{rest}</>
     : content
   return <p ref={ref} className={cls} style={style}>{body}</p>
@@ -114,6 +117,11 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
   // A vintage mount around a photo — cabinet card, archival board, or bordered
   // print — with the caption printed on the card itself (bottom). 'mixed' rotates
   // the three styles across a set for a scrapbook feel.
+  // On the light frame cards the muted mono caption color reads dull, so drop the
+  // caption-style color there and let the frame's own dark caption color show; keep
+  // an explicit Accent (red) color though.
+  const { color: capColor, ...capNoColor } = capStyle
+  const mountCapStyle = (capColor && capColor !== 'rgb(220, 38, 38)') ? capNoColor : capStyle
   const mount = (img, i, frame, height) => {
     const style = frame === 'mixed' ? FRAME_CYCLE[i % FRAME_CYCLE.length] : frame
     const cap = img?.placeholder ? '' : (img.caption || '')
@@ -129,7 +137,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
         </div>
         {(cap || m) && (
           <figcaption className="ams-mount__label" onClick={openLightbox} {...(openLightbox ? { role: 'button', tabIndex: 0, title: cap } : {})}>
-            {cap && <span className="ams-mount__title" style={capStyle}>{cap}</span>}
+            {cap && <span className="ams-mount__title" style={mountCapStyle}>{cap}</span>}
             {m && <span className="ams-mount__meta">{m}</span>}
           </figcaption>
         )}
@@ -178,16 +186,31 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
           </figure>
         ))
       }
-      // Centered: sized by the Size control, its caption overlaid inside the image
-      // (like Fill) rather than hung on the ground beside it.
+      // Centered: sized by the Size control. A short caption overlays inside the
+      // image (like Fill); a long one (3+ lines) hangs BESIDE the photo on the right
+      // instead of burying the frame — even with no frame chosen, mirroring the mount.
       const size = resolvePhotoSize(block, TID)
+      const besideCaption = caption.length > 120
+      const frameEl = (
+        <div className="ams-frame" style={{ flex: '0 0 auto', height: PHOTO_HEIGHT[size] || PHOTO_HEIGHT.large }}>
+          {photoBox(imgObj, 0)}
+          {!besideCaption && insetLabel(caption, meta)}
+        </div>
+      )
+      if (besideCaption) {
+        const openLightbox = onImageClick ? () => onImageClick(0) : undefined
+        return wrap('ams-col--photo', null, (
+          <figure className="ams-figure ams-figure--plaque">
+            {frameEl}
+            <figcaption className="ams-caption ams-caption--beside" onClick={openLightbox} {...(openLightbox ? { role: 'button', tabIndex: 0, title: caption } : {})}>
+              {caption && <span className="ams-caption__title" style={capStyle}>{caption}</span>}
+              {meta && <span className="ams-caption__meta">{meta}</span>}
+            </figcaption>
+          </figure>
+        ))
+      }
       return wrap('ams-col--photo', null, (
-        <figure className="ams-figure">
-          <div className="ams-frame" style={{ flex: '0 0 auto', height: PHOTO_HEIGHT[size] || PHOTO_HEIGHT.large }}>
-            {photoBox(imgObj, 0)}
-            {insetLabel(caption, meta)}
-          </div>
-        </figure>
+        <figure className="ams-figure">{frameEl}</figure>
       ))
     }
 
@@ -305,7 +328,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       if (!block.text && !block.name && !photoUrl) return null
       const fontFamily = resolveFont(block, TID)
       const italic = resolveQuoteStyle(block, TID) === 'italic'
-      const fontSize = QUOTE_SIZE[resolveSize(block, TID)] || QUOTE_SIZE.large
+      const fontSize = QUOTE_SIZE[resolveSize(block, TID)] || QUOTE_SIZE.medium
       const photoAbove = resolveVariant(block, TID) === 'photo-above'
       const quote = block.text && (
         <blockquote className="ams-testimonial__quote" style={{ fontFamily, fontStyle: italic ? 'italic' : 'normal', fontSize }}>{block.text}</blockquote>
@@ -313,7 +336,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       const by = (photoUrl || block.name) && (
         <figcaption className="ams-testimonial__by">
           {photoUrl && <img className="ams-testimonial__avatar" src={getSizedUrl(photoUrl, 'display')} alt={block.name || ''} />}
-          {block.name && <span>{block.name}</span>}
+          {block.name && <span className="ams-testimonial__name">{block.name}</span>}
         </figcaption>
       )
       return wrap('ams-col--testimonial', null, (

@@ -81,10 +81,13 @@ export const baseBlocks = {
     defaultCaptionStyle: DEFAULT_CAPTION_STYLE,
   },
   testimonial: {
+    // 'photo-above' = the attribution (photo + name) sits above the quote; 'quote-above'
+    // = below it. Labelled "Attribution" (the source of a quote) rather than "Photo",
+    // since the photo is optional — only the name may be present.
     defaultVariant: 'photo-above',
     variants: [
-      { id: 'photo-above', label: 'Photo above' },
-      { id: 'quote-above', label: 'Quote above' },
+      { id: 'photo-above', label: 'Attribution above' },
+      { id: 'quote-above', label: 'Attribution below' },
     ],
     // Quote font + size. Current design is the 'large' size; medium/small step
     // down the font size and tighten the line-height progressively.
