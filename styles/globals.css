@@ -45,6 +45,13 @@
 .md-editable ul { margin: 0 0 0.75em; padding-left: 1.25em; }
 .md-editable li { margin-bottom: 0.25em; }
 .md-editable img { display: block; max-height: 120px; border-radius: 8px; margin: 0 0 0.75em; }
+/* Emphasis + links need to READ as formatted while editing — bold/italic show
+   plainly, and a link is always underlined (not just on hover), with a warm hover
+   colour so applying a link is visibly confirmed. */
+.md-editable strong, .md-editable b { font-weight: 700; }
+.md-editable em, .md-editable i { font-style: italic; }
+.md-editable a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; cursor: pointer; transition: color 0.15s ease; }
+.md-editable a:hover { color: #b0703f; }
 
 @font-face {
   font-family: "Muse";
