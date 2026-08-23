@@ -22,6 +22,12 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Keyed default favicons — a published site overrides these by the same keys
+            (in PageMeta) so its custom favicon wins instead of the sized Sepia PNGs. */}
+        <link rel="icon" href="/favicon.ico" sizes="any" key="favicon-ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" key="favicon-32" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" key="favicon-16" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" key="apple-touch" />
         <title key="title">{SITE_TITLE}</title>
         <meta name="description" content={SITE_DESC} key="description" />
         <meta property="og:type" content="website" key="og:type" />

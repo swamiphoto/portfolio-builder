@@ -13,7 +13,12 @@ export default function PageMeta({ title, ogTitle, description = '', image = '',
   return (
     <Head>
       <title key="title">{title}</title>
-      {favicon && <link rel="icon" href={favicon} key="favicon" />}
+      {/* Override every default icon slot (same keys as _app) so the site's custom
+          favicon replaces the Sepia defaults rather than competing with them. */}
+      {favicon && <link rel="icon" href={favicon} sizes="any" key="favicon-ico" />}
+      {favicon && <link rel="icon" href={favicon} key="favicon-32" />}
+      {favicon && <link rel="icon" href={favicon} key="favicon-16" />}
+      {favicon && <link rel="apple-touch-icon" href={favicon} key="apple-touch" />}
       <meta name="description" content={description} key="description" />
       <meta property="og:type" content={type} key="og:type" />
       <meta property="og:site_name" content={siteName} key="og:site_name" />

@@ -64,7 +64,7 @@ const BUTTON_STYLE_MAP_LIGHT = {
 
 function CtaButton({ label, href, onClick, style, fullWidth, fontFamily, lightSurface }) {
   if (!label) return null
-  const size = fullWidth ? 'w-full justify-center px-6 py-4 text-lg' : 'px-9 py-3.5 text-base md:text-lg'
+  const size = fullWidth ? 'w-full justify-center px-6 py-4 text-lg' : 'px-9 py-4 text-lg md:text-xl'
   const map = lightSurface ? BUTTON_STYLE_MAP_LIGHT : BUTTON_STYLE_MAP
   const cls = `inline-flex items-center ${size} font-medium transition-colors ${map[style] || map.solid}`
   const st = fontFamily ? { fontFamily } : undefined
