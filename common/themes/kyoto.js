@@ -2,16 +2,16 @@
 // Kyoto — the reference theme: warm, serif, single-column editorial scroll.
 // Inherits the full base variant menu; supplies only palette + fonts.
 
-// Kyoto's type voices: the Cormorant serif at its regular weight, the SAME
-// Cormorant at a heavier 600 ("Bold") for a headline-ier editorial voice, and
-// the Muse display face (the poster/title font). Fraunces — base's "Editorial"
-// option — is deliberately absent: it isn't part of Kyoto's palette, so it only
-// ever read as a look-alike that never fit. The Bold slot reuses the serif
-// family and leans on tokens.fontWeights (see resolveFontWeight) for its weight.
+// Kyoto's three type voices: the Cormorant serif at its regular weight, the SAME
+// Cormorant at a heavier 600 ("Editorial") for a headline-ier voice, and Geist
+// Mono for a spare, technical counterpoint. Fraunces — base's "Editorial" option
+// — is deliberately absent: it isn't part of Kyoto's palette, so it only read as
+// a look-alike. The Editorial slot reuses the serif family and leans on
+// tokens.fontWeights (see resolveFontWeight) for its weight.
 const KYOTO_FONTS = [
   { id: 'serif', label: 'Serif' },
-  { id: 'serifBold', label: 'Bold' },
-  { id: 'display', label: 'Display' },
+  { id: 'serifBold', label: 'Editorial' },
+  { id: 'mono', label: 'Mono' },
 ]
 
 export const kyoto = {

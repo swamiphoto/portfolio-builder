@@ -34,18 +34,19 @@ describe('kyoto defaults', () => {
     expect(resolveQuoteStyle({ type: 'testimonial', quoteStyle: 'italic' }, 'kyoto')).toBe('italic')
   })
 
-  it('offers three type voices — Serif, Bold (Cormorant 600), Display — no Fraunces', () => {
+  it('offers three type voices — Serif, Editorial (Cormorant 600), Mono — no Fraunces', () => {
     for (const type of ['text', 'testimonial']) {
       const ids = getBlockSpec('kyoto', type).fonts.map((f) => f.id)
-      expect(ids).toEqual(['serif', 'serifBold', 'display'])
+      expect(ids).toEqual(['serif', 'serifBold', 'mono'])
       expect(ids).not.toContain('fraunces')
     }
-    // Bold reuses the Cormorant family, just heavier
+    // Editorial reuses the Cormorant family, just heavier
     expect(resolveFont({ type: 'text', font: 'serifBold' }, 'kyoto')).toContain('Cormorant')
     expect(resolveFontWeight({ type: 'text', font: 'serifBold' }, 'kyoto')).toBe(600)
-    // Serif and Display force no weight (size scale decides)
+    // Mono is Geist Mono; Serif and Mono force no weight (size scale decides)
+    expect(resolveFont({ type: 'text', font: 'mono' }, 'kyoto')).toContain('Geist Mono')
     expect(resolveFontWeight({ type: 'text', font: 'serif' }, 'kyoto')).toBeUndefined()
-    expect(resolveFontWeight({ type: 'text', font: 'display' }, 'kyoto')).toBeUndefined()
+    expect(resolveFontWeight({ type: 'text', font: 'mono' }, 'kyoto')).toBeUndefined()
     // a block that stored the retired Fraunces slot falls back to the Serif default
     expect(resolveFont({ type: 'text', font: 'fraunces' }, 'kyoto')).toContain('Cormorant')
   })
