@@ -549,13 +549,14 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               // markdown descendants in CSS (they carry their own weight classes).
               const fontWeight = resolveFontWeight(block, themeId);
               const boldAttr = fontWeight && fontWeight >= 600 ? { 'data-bold': 'true' } : {};
-              // A restrained, elegant size scale shared across the vertical themes.
-              // Medium (vv 2) is the readable base; Cormorant sets small, so the
-              // desktop base is 1.25rem (~20px) — mobile stays 1.125rem (~18px) so
-              // it doesn't collide with Large (1.25rem on mobile). Large one notch
-              // up, Small one notch down. Margins key off the JS mobile flag so the
-              // admin Mobile preview scales truthfully.
+              // Optical size compensation: each face carries its own visual size at
+              // a given px, so the "size" setting is font-relative. Cormorant is
+              // small-on-body (Medium ~20px desktop); mono runs large, so it renders
+              // a few px smaller at every step (Medium ~16px) to read balanced next
+              // to the serif. Large is one notch up, Small one down; margins key off
+              // the JS mobile flag so the admin Mobile preview scales truthfully.
               // (vv: 1=Large, 2=Medium, 3=Small, 4=quote.)
+              const isMono = /mono/i.test(fontFamily);
               const classForV = (vv) => themeId === 'manhattan'
                 ? (
                     vv === 4 ? `text-[0.95rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
@@ -574,10 +575,10 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     : `text-[1.7rem] md:text-[2.1rem] leading-snug ${alignClass} max-w-3xl mx-auto px-6 md:px-0 py-4`
                   )
                 : (
-                    vv === 4 ? `${isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
-                    : vv === 3 ? `${isSmallScreen ? 'text-[0.95rem] px-6 py-2' : 'text-[0.95rem] py-3'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
-                    : vv === 2 ? `${isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.25rem] py-4'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
-                    : `${isSmallScreen ? 'text-[1.25rem] px-6 py-5' : 'text-[1.375rem] py-6'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
+                    vv === 4 ? `${isMono ? (isSmallScreen ? 'text-[0.85rem] px-6 py-4' : 'text-[0.9rem] px-8 py-5') : (isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5')} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
+                    : vv === 3 ? `${isMono ? (isSmallScreen ? 'text-[0.8rem] px-6 py-2' : 'text-[0.85rem] py-3') : (isSmallScreen ? 'text-[0.95rem] px-6 py-2' : 'text-[0.95rem] py-3')} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
+                    : vv === 2 ? `${isMono ? (isSmallScreen ? 'text-[0.9rem] px-6 py-3' : 'text-[1rem] py-4') : (isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.25rem] py-4')} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
+                    : `${isMono ? (isSmallScreen ? 'text-[1rem] px-6 py-5' : 'text-[1.125rem] py-6') : (isSmallScreen ? 'text-[1.25rem] px-6 py-5' : 'text-[1.375rem] py-6')} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
               const variantClass = classForV(v);
               if (block.format === 'markdown') {
