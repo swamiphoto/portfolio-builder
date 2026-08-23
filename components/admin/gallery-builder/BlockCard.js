@@ -1127,7 +1127,16 @@ function BlockCard({
                     </div>
                     <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>
                       {photoUrl
-                        ? <span className="transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Replace photo</span>
+                        ? <>
+                            <span className="transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Change</span>
+                            <span className="mx-1.5 text-[#3a362f]/30">·</span>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); onUpdate({ ...block, imageUrl: '', image: null }) }}
+                              className="transition-colors text-[#3a362f]/70 hover:text-red-600"
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+                            >Remove</button>
+                          </>
                         : <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Select from library</span>
                       }
                     </span>

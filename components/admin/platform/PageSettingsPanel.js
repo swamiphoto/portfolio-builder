@@ -29,7 +29,7 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   );
 }
 
-export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto' }) {
+export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto', onScrollToHero }) {
   const [expanded, setExpanded] = useState(true)
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride])
   const [designOpen, setDesignOpen] = useState(false)
@@ -118,7 +118,8 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
         </span>
 
         <button
-          onClick={() => setExpanded(v => !v)}
+          onClick={() => (onScrollToHero ? onScrollToHero() : setExpanded(v => !v))}
+          title="Scroll preview to the hero"
           className="flex-1 text-left transition-colors"
           style={{
             fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",

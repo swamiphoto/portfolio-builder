@@ -273,7 +273,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   if (page.type === 'link') {
     return (
       <div className="flex flex-col h-full p-3">
-        <PageSettingsPanel page={page} onChange={onPageChange} themeId={siteConfig?.design?.theme || 'kyoto'} />
+        <PageSettingsPanel page={page} onChange={onPageChange} themeId={pageThemeId} />
       </div>
     )
   }
@@ -314,7 +314,8 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
             onChange={onPageChange}
             onPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}
             onAddBlockBelow={(rect) => blockBuilderRef?.current?.openAddBlockMenu(0, rect)}
-            themeId={siteConfig?.design?.theme || 'kyoto'}
+            themeId={pageThemeId}
+            onScrollToHero={onScrollPreviewToBlock ? () => onScrollPreviewToBlock('cover') : undefined}
           />
         }
         onOpenPageSettings={(anchorEl) => setPageSettingsAnchorEl(anchorEl)}

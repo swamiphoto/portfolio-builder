@@ -110,6 +110,14 @@ export default function AdminIndex() {
 
   const handleScrollPreviewToBlock = useCallback((index) => {
     if (!previewContainerRef.current) return
+    // 'cover' scrolls to the opener/hero: the preview to the top and any horizontal
+    // wall (Amsterdam/Florence) back to its start.
+    if (index === 'cover') {
+      previewContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      const wall = previewContainerRef.current.querySelector('.ams-wall, .florence-wall')
+      if (wall) wall.scrollTo({ left: 0, behavior: 'smooth' })
+      return
+    }
     const block = previewContainerRef.current.querySelector(`[data-block-index="${index}"]`)
     if (!block) return
     block.scrollIntoView({ block: 'center', behavior: 'smooth' })
