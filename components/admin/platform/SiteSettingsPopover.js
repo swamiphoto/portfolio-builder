@@ -412,10 +412,21 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   if (view === 'cover') {
     const cover = config.cover || {}
     const themeFonts = getTheme(config?.design?.theme)?.tokens?.fonts || {}
-    const fontOpts = COVER_FONT_OPTIONS.map(f => ({
+    // Drop options that resolve to the same font on this theme (e.g. Display and
+    // Editorial can be identical), so we never show two indistinguishable choices.
+    const seenFonts = new Set()
+    const fontOpts = COVER_FONT_OPTIONS.filter(f => {
+      const fam = themeFonts[f.id] || f.id
+      if (seenFonts.has(fam)) return false
+      seenFonts.add(fam); return true
+    }).map(f => ({
       value: f.id,
       label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span>,
     }))
+    const hasLogo = config.logoType === 'image' && !!config.logo
+    // A logo carries the brand mark, so when one is set (and no explicit cover
+    // heading), the design panel offers Logo controls instead of a Heading Font.
+    const showLogoControls = hasLogo && !cover.heading
 
     const coverBrushButton = (
       <HeaderIconButton innerRef={coverBrushRef} onClick={() => setCoverDesignOpen(v => !v)} title="Cover design">
@@ -449,6 +460,9 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               value={cover.subheading || ''}
               onChange={(e) => updateCover({ subheading: e.target.value })}
             />
+            <p style={{ fontSize: 11.5, color: 'var(--text-muted, #9e9788)', margin: '6px 0 0', lineHeight: 1.45 }}>
+              Rich text: <span style={{ fontFamily: MONO }}>**bold**</span>, <span style={{ fontFamily: MONO }}>*italic*</span>, <span style={{ fontFamily: MONO }}>[link](https://…)</span>
+            </p>
           </Field>
           <Field label="Button text">
             <EditableInput
@@ -462,17 +476,74 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         </div>
         {coverDesignOpen && (
           <PopoverShell anchorEl={coverBrushRef.current} onClose={() => setCoverDesignOpen(false)} width="max-content" minWidth={272} maxWidth="calc(100vw - 24px)" title="Cover Design">
-            <DesignSection label="Title Font">
+            <DesignSection label="Layout">
               <DesignPillToggle
-                value={cover.titleFont || 'serif'}
-                onChange={(v) => updateCover({ titleFont: v })}
-                options={fontOpts}
+                value={cover.layout || 'centered'}
+                onChange={(v) => updateCover({ layout: v })}
+                options={[
+                  { value: 'centered', label: 'Centered' },
+                  { value: 'bottom',   label: 'Bottom'   },
+                ]}
               />
             </DesignSection>
-            <DesignSection label="Description Font">
+            {cover.imageUrl && (
+              <DesignSection label="Overlay">
+                <DesignPillToggle
+                  value={cover.overlay || 'medium'}
+                  onChange={(v) => updateCover({ overlay: v })}
+                  options={[
+                    { value: 'light',  label: 'Light'  },
+                    { value: 'medium', label: 'Medium' },
+                    { value: 'dark',   label: 'Dark'   },
+                  ]}
+                />
+              </DesignSection>
+            )}
+            {showLogoControls ? (
+              <>
+                <DesignSection label="Logo Size">
+                  <DesignPillToggle
+                    value={cover.logoSize || 'medium'}
+                    onChange={(v) => updateCover({ logoSize: v })}
+                    options={[
+                      { value: 'small',  label: 'S' },
+                      { value: 'medium', label: 'M' },
+                      { value: 'large',  label: 'L' },
+                    ]}
+                  />
+                </DesignSection>
+                <DesignSection label="Logo Color">
+                  <DesignPillToggle
+                    value={cover.logoColor || 'light'}
+                    onChange={(v) => updateCover({ logoColor: v })}
+                    options={[
+                      { value: 'light',    label: 'Light'    },
+                      { value: 'dark',     label: 'Dark'     },
+                      { value: 'original', label: 'Original' },
+                    ]}
+                  />
+                </DesignSection>
+              </>
+            ) : (
+              <DesignSection label="Heading Font">
+                <DesignPillToggle
+                  value={cover.titleFont || 'serif'}
+                  onChange={(v) => updateCover({ titleFont: v })}
+                  options={fontOpts}
+                />
+              </DesignSection>
+            )}
+            <DesignSection label="Subheading Font">
               <DesignPillToggle
                 value={cover.descriptionFont || 'serif'}
                 onChange={(v) => updateCover({ descriptionFont: v })}
+                options={fontOpts}
+              />
+            </DesignSection>
+            <DesignSection label="Button Font">
+              <DesignPillToggle
+                value={cover.buttonFont || 'sans'}
+                onChange={(v) => updateCover({ buttonFont: v })}
                 options={fontOpts}
               />
             </DesignSection>

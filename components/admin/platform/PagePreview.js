@@ -17,6 +17,7 @@ import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientE
 import { getPagePhotos } from '../../../common/assetRefs'
 import { resolveHomePage } from '../../../common/homePage'
 import { useIsMobile } from '../../../common/useIsMobile'
+import { fontFamilyForSlot } from '../../../common/themes/variants'
 
 function PagePreview({
   config,
@@ -92,6 +93,10 @@ function PagePreview({
             navLinks={coverNavLinks}
             themeId={theme.id}
             siteName={config?.siteName}
+            logo={config?.logoType === 'image' ? config.logo : ''}
+            titleFontFamily={fontFamilyForSlot(theme.id, page.cover?.titleFont || 'serif')}
+            descriptionFontFamily={fontFamilyForSlot(theme.id, page.cover?.descriptionFont || 'serif')}
+            buttonFontFamily={fontFamilyForSlot(theme.id, page.cover?.buttonFont || page.cover?.titleFont || 'sans')}
           />
           <GalleryPreview
             gallery={gallery}

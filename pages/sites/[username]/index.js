@@ -119,6 +119,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
         <SiteAnalytics analytics={siteConfig.analytics} />
         <PageCover
           cover={{
+            ...coverConfig,
             imageUrl: coverConfig.imageUrl || '',
             height: coverConfig.height || 'full',
             variant: 'cover',
@@ -126,8 +127,11 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
           }}
           title={coverConfig.heading || siteConfig.siteName || ''}
           description={coverConfig.subheading || siteConfig.tagline || ''}
+          siteName={siteConfig.siteName}
+          logo={siteConfig.logoType === 'image' ? siteConfig.logo : ''}
           titleFontFamily={fontFamilyForSlot(siteConfig?.design?.theme, coverConfig.titleFont || 'serif')}
           descriptionFontFamily={fontFamilyForSlot(siteConfig?.design?.theme, coverConfig.descriptionFont || 'serif')}
+          buttonFontFamily={fontFamilyForSlot(siteConfig?.design?.theme, coverConfig.buttonFont || coverConfig.titleFont || 'sans')}
           primaryButton={{
             label: coverConfig.buttonText || 'View my portfolio',
             href: initialPageHref || undefined,
