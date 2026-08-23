@@ -748,7 +748,7 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             onChange={(e) => update({ themeOverride: e.target.value || null })}
           >
             <option value="">{siteThemeName} (site theme)</option>
-            {THEME_LIST.filter((t) => t.id !== siteThemeId).map((t) => (
+            {THEME_LIST.filter((t) => t.id !== siteThemeId && (!t.hidden || t.id === page.themeOverride)).map((t) => (
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>

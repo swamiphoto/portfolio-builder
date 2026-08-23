@@ -1,6 +1,19 @@
 // common/themes/kyoto.js
 // Kyoto — the reference theme: warm, serif, single-column editorial scroll.
 // Inherits the full base variant menu; supplies only palette + fonts.
+
+// Kyoto's three type voices: the Cormorant serif at its regular weight, the SAME
+// Cormorant at a heavier 600 ("Editorial") for a headline-ier voice, and Roboto
+// Mono for a spare, technical counterpoint. Fraunces — base's "Editorial" option
+// — is deliberately absent: it isn't part of Kyoto's palette, so it only read as
+// a look-alike. The Editorial slot reuses the serif family and leans on
+// tokens.fontWeights (see resolveFontWeight) for its weight.
+const KYOTO_FONTS = [
+  { id: 'serif', label: 'Serif' },
+  { id: 'serifBold', label: 'Editorial' },
+  { id: 'mono', label: 'Mono' },
+]
+
 export const kyoto = {
   id: 'kyoto',
   name: 'Kyoto',
@@ -11,10 +24,18 @@ export const kyoto = {
     '--theme-text-muted': '#7a6b55',
     fonts: {
       serif: '"Cormorant Garamond", Georgia, serif',
+      serifBold: '"Cormorant Garamond", Georgia, serif',
       display: 'Muse',
       fraunces: '"Fraunces", Georgia, serif',
       sans: 'Inter, -apple-system, system-ui, sans-serif',
-      mono: '"Geist Mono", monospace',
+      // Same stack the mono caption/label style uses (see captionStyleCss), so a
+      // Mono text block and a Mono caption never render in two different faces.
+      mono: '"Roboto Mono", "Geist Mono", ui-monospace, monospace',
+    },
+    // Per-slot font weight (undefined = let the size scale / element decide).
+    // Cormorant's default is light, so the Bold slot lifts it to 600 for presence.
+    fontWeights: {
+      serifBold: 600,
     },
   },
   overrides: {
@@ -23,10 +44,10 @@ export const kyoto = {
     photo: { defaultVariant: 'centered', defaultCaptionStyle: 'serif' },
     photos: { defaultCaptionStyle: 'serif' },
     video: { defaultCaptionStyle: 'serif' },
-    // Text blocks default to Medium (subheading).
-    text: { defaultVariant: 'subheading' },
-    // Testimonials default to Editorial (Fraunces), Regular (not italic), Medium
-    // size, and Photo-above.
-    testimonial: { defaultVariant: 'photo-above', defaultSize: 'medium', defaultFont: 'fraunces', defaultQuoteStyle: 'regular' },
+    // Text blocks default to Medium (subheading), Serif the default voice.
+    text: { defaultVariant: 'subheading', defaultFont: 'serif', fonts: KYOTO_FONTS },
+    // Testimonials default to the Bold Cormorant — a testimonial reads better in
+    // the heavier weight — Regular (not italic), Medium size, and Photo-above.
+    testimonial: { defaultVariant: 'photo-above', defaultSize: 'medium', defaultFont: 'serifBold', defaultQuoteStyle: 'regular', fonts: KYOTO_FONTS },
   },
 }

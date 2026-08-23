@@ -25,14 +25,24 @@ function renderText(block) {
 }
 
 describe('text block font', () => {
-  it('applies the display family when font=display', () => {
+  it('sizes Medium font-relatively — mono renders smaller than the serif', () => {
+    // Both default to Medium (Kyoto's subheading). Cormorant is small-on-body so
+    // it sets ~20px; mono runs large so the same setting renders ~16px, balanced.
+    const serif = renderText({ type: 'text', content: 'Hi', font: 'serif' })
+    expect(serif.className).toMatch(/text-\[1\.25rem\]/)
+    const mono = renderText({ type: 'text', content: 'Hi', font: 'mono' })
+    expect(mono.className).toMatch(/text-\[1rem\]/)
+    expect(mono.className).not.toMatch(/text-\[1\.25rem\]/)
+  })
+
+  it('applies the mono family when font=mono', () => {
     const el = renderText({
       type: 'text',
       content: 'Hello',
-      font: 'display',
+      font: 'mono',
       themeState: { kyoto: { variant: 'body' } },
     })
-    expect(el.style.fontFamily).toMatch(/Muse/)
+    expect(el.style.fontFamily).toMatch(/Roboto Mono/)
   })
 
   it('defaults to the serif family', () => {

@@ -9,9 +9,11 @@ import HoverCaption from "../HoverCaption";
 
 const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = [], onImageClick, captionStyle = 'sans', widthPct = 72, insideCaption = false, leftAlign = false }) => {
   const capCss = captionStyleCss(captionStyle);
-  // Serif (Cormorant) has a small x-height, so bump it to a fixed, legible size —
-  // never scales, same for every image in the block.
-  const capSize = captionStyle === 'serif' ? 'text-[17px] leading-snug' : 'text-sm';
+  // captionStyleCss gives serif a relative 1.12em that overrode the size class and
+  // read too small — drop it here so the class owns the serif size: a ~20px medium
+  // (17px mobile), with max-w-xl keeping the line to a readable, wrapping measure.
+  if (captionStyle === 'serif') delete capCss.fontSize;
+  const capSize = captionStyle === 'serif' ? 'text-[17px] md:text-[20px] leading-snug max-w-xl mx-auto' : 'text-sm';
   const colWidth = `${widthPct}%`;
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps

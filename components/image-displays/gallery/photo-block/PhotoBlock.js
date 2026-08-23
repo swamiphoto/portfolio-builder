@@ -10,6 +10,10 @@ import WatermarkOverlay from "../../engagement/WatermarkOverlay";
 // widthPct scales the centered layout (small/medium/large → 44/56/72).
 const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImageClick, print, captionStyle = 'sans' }) => {
   const isMobile = useIsMobile();
+  // Drop serif's relative 1.12em so the caption's size class (text-xl = 20px) wins;
+  // its 1.12em read too small (see StackedGallery).
+  const capCss = captionStyleCss(captionStyle);
+  if (captionStyle === 'serif') delete capCss.fontSize;
   const [aspectRatio, setAspectRatio] = React.useState(null);
   const imgRef = React.useRef(null);
 
@@ -42,7 +46,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
   const renderCaption = () => {
     // Sit the caption close under the photo (mt-2) to match the stacked/photos block;
     // the larger bottom margin only spaces this block from the next.
-    return <p className="mt-2 mb-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
+    // max-w-xl caps the caption to a readable measure so it wraps rather than
+    // running the full width of a large photo (matches the stacked/photos block).
+    return <p className="mt-2 mb-4 md:mb-20 font-medium text-[17px] md:text-xl italic text-center max-w-xl mx-auto" style={capCss}>{caption}</p>;
   };
 
   const renderImage = () => {
@@ -97,7 +103,7 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
             </div>
           </div>
           <div className="w-full md:w-1/3 flex items-center">
-            {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0" style={captionStyleCss(captionStyle)}>{caption}</p>}
+            {caption && <p className="my-4 font-medium text-sm md:text-xl italic text-left mx-auto md:mx-0" style={capCss}>{caption}</p>}
           </div>
         </div>
       );

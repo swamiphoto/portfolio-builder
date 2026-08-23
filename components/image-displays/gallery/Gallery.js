@@ -11,7 +11,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize, resolvePhotoSize, resolveQuoteStyle } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont, resolveFontWeight, resolveButtonStyle, resolveSize, resolvePhotoSize, resolveQuoteStyle } from "../../../common/themes/variants";
 import { getBlockSpec } from "../../../common/themes";
 import { resolveCaptionStyle, captionStyleCss } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
@@ -544,12 +544,19 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               // Font follows the block's chosen slot (Manhattan defaults to sans;
               // Serif/Editorial are selectable). Line-height tightened via CSS.
               const fontFamily = resolveFont(block, themeId);
-              // A restrained, elegant size scale shared across the vertical themes.
-              // Medium (vv 2) is the readable base; these serif/editorial themes read
-              // best a touch larger than the wall themes, so the base is ~1.125rem
-              // (~18px), Large one notch up, Small one notch down. Margins key off the
-              // JS mobile flag so the admin Mobile preview scales truthfully.
+              // A slot may force a heavier weight (e.g. Kyoto's Bold Cormorant).
+              // Applied inline on the wrapper and, via data-bold, forced onto
+              // markdown descendants in CSS (they carry their own weight classes).
+              const fontWeight = resolveFontWeight(block, themeId);
+              const boldAttr = fontWeight && fontWeight >= 600 ? { 'data-bold': 'true' } : {};
+              // Optical size compensation: each face carries its own visual size at
+              // a given px, so the "size" setting is font-relative. Cormorant is
+              // small-on-body (Medium ~20px desktop); mono runs large, so it renders
+              // a few px smaller at every step (Medium ~16px) to read balanced next
+              // to the serif. Large is one notch up, Small one down; margins key off
+              // the JS mobile flag so the admin Mobile preview scales truthfully.
               // (vv: 1=Large, 2=Medium, 3=Small, 4=quote.)
+              const isMono = /mono/i.test(fontFamily);
               const classForV = (vv) => themeId === 'manhattan'
                 ? (
                     vv === 4 ? `text-[0.95rem] italic ${alignClass} max-w-2xl px-6 py-3 border-l-2 border-stone-300`
@@ -568,15 +575,15 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     : `text-[1.7rem] md:text-[2.1rem] leading-snug ${alignClass} max-w-3xl mx-auto px-6 md:px-0 py-4`
                   )
                 : (
-                    vv === 4 ? `${isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
-                    : vv === 3 ? `${isSmallScreen ? 'text-[0.95rem] px-6 py-2' : 'text-[0.95rem] py-3'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
-                    : vv === 2 ? `${isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.125rem] py-4'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
-                    : `${isSmallScreen ? 'text-[1.25rem] px-6 py-5' : 'text-[1.375rem] py-6'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
+                    vv === 4 ? `${isMono ? (isSmallScreen ? 'text-[0.85rem] px-6 py-4' : 'text-[0.9rem] px-8 py-5') : (isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5')} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
+                    : vv === 3 ? `${isMono ? (isSmallScreen ? 'text-[0.8rem] px-6 py-2' : 'text-[0.85rem] py-3') : (isSmallScreen ? 'text-[0.95rem] px-6 py-2' : 'text-[0.95rem] py-3')} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
+                    : vv === 2 ? `${isMono ? (isSmallScreen ? 'text-[0.9rem] px-6 py-3' : 'text-[1rem] py-4') : (isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.25rem] py-4')} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
+                    : `${isMono ? (isSmallScreen ? 'text-[1rem] px-6 py-5' : 'text-[1.125rem] py-6') : (isSmallScreen ? 'text-[1.25rem] px-6 py-5' : 'text-[1.375rem] py-6')} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
               const variantClass = classForV(v);
               if (block.format === 'markdown') {
                 return (
-                  <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...hoverProps} style={{ ...hoverProps.style, fontFamily }}>
+                  <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...boldAttr} {...hoverProps} style={{ ...hoverProps.style, fontFamily, ...(fontWeight ? { fontWeight } : {}) }}>
                     <MarkdownText
                       content={block.content}
                       variantClasses={{ heading: classForV(1), body: classForV(v), quote: classForV(4) }}
@@ -589,8 +596,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   key={`block-${index}`}
                   className={`text-block ${variantClass}`}
                   data-block-index={index}
+                  {...boldAttr}
                   {...hoverProps}
-                  style={{ ...hoverProps.style, fontFamily }}
+                  style={{ ...hoverProps.style, fontFamily, ...(fontWeight ? { fontWeight } : {}) }}
                 >
                   {block.content}
                 </div>
@@ -711,13 +719,14 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               // Quote font follows the block's chosen slot (default serif); size
               // steps the font size down and tightens line-height progressively.
               const tFont = resolveFont(block, themeId)
+              const tWeight = resolveFontWeight(block, themeId) || 400
               const tScale = {
                 large:  { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 },
                 medium: { fs: 'clamp(1.05rem, 2vw, 1.3rem)',   lh: 1.5 },
                 small:  { fs: 'clamp(0.95rem, 1.5vw, 1.1rem)', lh: 1.4 },
               }[resolveSize(block, themeId)] || { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 }
               const quote = block.text && (
-                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: resolveQuoteStyle(block, themeId) === 'regular' ? 'normal' : 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
+                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: resolveQuoteStyle(block, themeId) === 'regular' ? 'normal' : 'italic', fontWeight: tWeight, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
                   &#8220;{block.text}&#8221;
                 </blockquote>
               )

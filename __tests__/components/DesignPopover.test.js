@@ -75,13 +75,13 @@ describe('DesignPopover write wiring', () => {
     )
   })
 
-  it('font write: clicking Editorial calls onUpdate with font: "fraunces"', () => {
+  it('font write: clicking Mono calls onUpdate with font: "mono"', () => {
     const onUpdate = jest.fn()
     setup({ type: 'text', content: 'hi' }, onUpdate)
-    // "Editorial" is the Fraunces slot's category label; unique in this render.
-    fireEvent.click(screen.getByText('Editorial'))
+    // Kyoto offers three type voices — Serif, Editorial (bold Cormorant), Mono.
+    fireEvent.click(screen.getByText('Mono'))
     expect(onUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'text', font: 'fraunces' })
+      expect.objectContaining({ type: 'text', font: 'mono' })
     )
   })
 

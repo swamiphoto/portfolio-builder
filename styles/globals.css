@@ -53,6 +53,14 @@
 .md-editable a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; cursor: pointer; transition: color 0.15s ease; }
 .md-editable a:hover { color: #b0703f; }
 
+/* A text block on a Bold font slot (e.g. Kyoto's Bold Cormorant). The wrapper's
+   inline font-weight styles plain content, but markdown descendants carry their
+   own Tailwind weight classes (font-light/font-medium) — force them heavier here
+   so the whole block reads bold, while emphasis stays a notch above the base. */
+.text-block[data-bold="true"],
+.text-block[data-bold="true"] :is(h1, h2, h3, h4, p, blockquote, li, em, i) { font-weight: 600 !important; }
+.text-block[data-bold="true"] :is(strong, b) { font-weight: 700 !important; }
+
 @font-face {
   font-family: "Muse";
   src: url("/fonts/Muse/hv_muse_regular-webfont.woff2") format("woff2"), url("/fonts/Muse/hv_muse_regular-webfont.woff") format("woff");
