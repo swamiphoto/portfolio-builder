@@ -15,9 +15,10 @@ const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
 // Cover title/description font choices — mirrors the text block font slots
 // (which map to theme.tokens.fonts), plus Sans. See fontFamilyForSlot.
+// Display was dropped — on most themes it read the same as Editorial, so the two
+// choices made no visible difference. Serif / Editorial / Sans are distinct.
 const COVER_FONT_OPTIONS = [
   { id: 'serif', label: 'Serif' },
-  { id: 'display', label: 'Display' },
   { id: 'fraunces', label: 'Editorial' },
   { id: 'sans', label: 'Sans' },
 ]

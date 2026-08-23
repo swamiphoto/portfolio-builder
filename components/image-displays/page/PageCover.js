@@ -34,7 +34,7 @@ const BUTTON_STYLE_MAP = {
 
 function CtaButton({ label, href, onClick, style, fullWidth, fontFamily }) {
   if (!label) return null
-  const size = fullWidth ? 'w-full justify-center px-5 py-3 text-base' : 'px-6 py-2.5 text-sm'
+  const size = fullWidth ? 'w-full justify-center px-6 py-4 text-lg' : 'px-9 py-3.5 text-base md:text-lg'
   const cls = `inline-flex items-center ${size} font-medium transition-colors ${BUTTON_STYLE_MAP[style] || BUTTON_STYLE_MAP.solid}`
   const st = fontFamily ? { fontFamily } : undefined
   if (onClick) {
