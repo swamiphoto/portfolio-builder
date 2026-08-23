@@ -3,7 +3,7 @@
 // Inherits the full base variant menu; supplies only palette + fonts.
 
 // Kyoto's three type voices: the Cormorant serif at its regular weight, the SAME
-// Cormorant at a heavier 600 ("Editorial") for a headline-ier voice, and Geist
+// Cormorant at a heavier 600 ("Editorial") for a headline-ier voice, and Roboto
 // Mono for a spare, technical counterpoint. Fraunces — base's "Editorial" option
 // — is deliberately absent: it isn't part of Kyoto's palette, so it only read as
 // a look-alike. The Editorial slot reuses the serif family and leans on
@@ -28,7 +28,9 @@ export const kyoto = {
       display: 'Muse',
       fraunces: '"Fraunces", Georgia, serif',
       sans: 'Inter, -apple-system, system-ui, sans-serif',
-      mono: '"Geist Mono", monospace',
+      // Same stack the mono caption/label style uses (see captionStyleCss), so a
+      // Mono text block and a Mono caption never render in two different faces.
+      mono: '"Roboto Mono", "Geist Mono", ui-monospace, monospace',
     },
     // Per-slot font weight (undefined = let the size scale / element decide).
     // Cormorant's default is light, so the Bold slot lifts it to 600 for presence.

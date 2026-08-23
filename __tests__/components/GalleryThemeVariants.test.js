@@ -23,8 +23,8 @@ describe('Gallery variant resolution', () => {
   it('falls back to theme default when no state for the active theme', () => {
     const block = { type: 'text', content: 'Hi', themeState: { manhattan: { variant: 'body' } } }
     const { container } = renderGallery([block], 'kyoto') // kyoto default = subheading (Medium)
-    // Medium base => 1.125rem, not Large (1.375rem)
-    expect(container.querySelector('.text-block').className).toMatch(/text-\[1\.125rem\]/)
+    // Medium base => 1.25rem (desktop), not Large (1.375rem)
+    expect(container.querySelector('.text-block').className).toMatch(/text-\[1\.25rem\]/)
     expect(container.querySelector('.text-block').className).not.toMatch(/text-\[1\.375rem\]/)
   })
 })

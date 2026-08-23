@@ -550,10 +550,11 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const fontWeight = resolveFontWeight(block, themeId);
               const boldAttr = fontWeight && fontWeight >= 600 ? { 'data-bold': 'true' } : {};
               // A restrained, elegant size scale shared across the vertical themes.
-              // Medium (vv 2) is the readable base; these serif/editorial themes read
-              // best a touch larger than the wall themes, so the base is ~1.125rem
-              // (~18px), Large one notch up, Small one notch down. Margins key off the
-              // JS mobile flag so the admin Mobile preview scales truthfully.
+              // Medium (vv 2) is the readable base; Cormorant sets small, so the
+              // desktop base is 1.25rem (~20px) — mobile stays 1.125rem (~18px) so
+              // it doesn't collide with Large (1.25rem on mobile). Large one notch
+              // up, Small one notch down. Margins key off the JS mobile flag so the
+              // admin Mobile preview scales truthfully.
               // (vv: 1=Large, 2=Medium, 3=Small, 4=quote.)
               const classForV = (vv) => themeId === 'manhattan'
                 ? (
@@ -575,7 +576,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 : (
                     vv === 4 ? `${isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5'} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
                     : vv === 3 ? `${isSmallScreen ? 'text-[0.95rem] px-6 py-2' : 'text-[0.95rem] py-3'} text-stone-700 leading-relaxed ${alignClass} max-w-2xl mx-auto`
-                    : vv === 2 ? `${isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.125rem] py-4'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
+                    : vv === 2 ? `${isSmallScreen ? 'text-[1.125rem] px-6 py-3' : 'text-[1.25rem] py-4'} font-medium text-stone-700 ${alignClass} max-w-2xl mx-auto`
                     : `${isSmallScreen ? 'text-[1.25rem] px-6 py-5' : 'text-[1.375rem] py-6'} font-light leading-snug text-stone-800 ${alignClass} max-w-3xl mx-auto`
                   );
               const variantClass = classForV(v);

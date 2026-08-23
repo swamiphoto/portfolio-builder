@@ -43,8 +43,9 @@ describe('kyoto defaults', () => {
     // Editorial reuses the Cormorant family, just heavier
     expect(resolveFont({ type: 'text', font: 'serifBold' }, 'kyoto')).toContain('Cormorant')
     expect(resolveFontWeight({ type: 'text', font: 'serifBold' }, 'kyoto')).toBe(600)
-    // Mono is Geist Mono; Serif and Mono force no weight (size scale decides)
-    expect(resolveFont({ type: 'text', font: 'mono' }, 'kyoto')).toContain('Geist Mono')
+    // Mono matches the caption/label mono stack (Roboto Mono) so a Mono text
+    // block and a Mono caption never diverge; Serif/Mono force no weight.
+    expect(resolveFont({ type: 'text', font: 'mono' }, 'kyoto')).toContain('Roboto Mono')
     expect(resolveFontWeight({ type: 'text', font: 'serif' }, 'kyoto')).toBeUndefined()
     expect(resolveFontWeight({ type: 'text', font: 'mono' }, 'kyoto')).toBeUndefined()
     // a block that stored the retired Fraunces slot falls back to the Serif default
