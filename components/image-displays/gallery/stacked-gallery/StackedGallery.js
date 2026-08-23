@@ -150,7 +150,10 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   {insideCaption && <HoverCaption caption={getCaptionForUrl(entry.src)} captionStyle={captionStyle} />}
                 </div>
                 {getCaptionForUrl(entry.src) && !insideCaption && (
-                  <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={{ ...capCss, maxWidth: colWidth }}>{getCaptionForUrl(entry.src)}</p>
+                  // No maxWidth:colWidth here — that pinned the caption to the photo
+                  // width (up to 72vw); let the capSize class (max-w-md) cap it to a
+                  // readable measure so it wraps narrower than the photo.
+                  <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>
             )}
