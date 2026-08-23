@@ -99,6 +99,12 @@ function PagePreview({
             buttonFontFamily={fontFamilyForSlot(theme.id, page.cover?.buttonFont || page.cover?.titleFont || 'sans')}
           />
           <GalleryPreview
+            // Page-scoped key: the preview Gallery stays mounted across page
+            // switches, and its blocks are keyed by index — so without this, React
+            // reconciles the new page's blocks onto the previous page's instances
+            // (stale lazy-loaded images carry over until a reload). Keying by page id
+            // forces a fresh mount per page. Stable within a page (edits don't remount).
+            key={page.id}
             gallery={gallery}
             themeId={theme.id}
             pages={config?.pages}
