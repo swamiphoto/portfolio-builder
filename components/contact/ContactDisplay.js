@@ -1,7 +1,11 @@
 import { useState } from 'react'
+import { useTheme } from '../image-displays/ThemeProvider'
 
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
-const SERIF = "'Fraunces', Georgia, serif"
+// Fallback only — the heading serif follows the active theme (Cormorant in
+// Kyoto, Playfair in Amsterdam, Fraunces in Florence) so it never looks pasted
+// in from another theme's typeface.
+const SERIF_FALLBACK = "'Cormorant Garamond', Georgia, serif"
 
 const labelStyle = {
   display: 'block',
@@ -38,6 +42,8 @@ function Field({ label, children }) {
 }
 
 export default function ContactDisplay({ heading, subheading, buttonText, username, align = 'left', buttonStyle = 'solid' }) {
+  const theme = useTheme()
+  const serif = theme?.tokens?.fonts?.serif || SERIF_FALLBACK
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
 
@@ -67,7 +73,7 @@ export default function ContactDisplay({ heading, subheading, buttonText, userna
   if (status === 'sent') {
     return (
       <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '5rem 2rem', textAlign: 'center' }}>
-        <div style={{ fontFamily: SERIF, fontSize: '1.6rem', fontWeight: 300, color: '#2c2416', marginBottom: '0.75rem' }}>
+        <div style={{ fontFamily: serif, fontSize: '1.6rem', fontWeight: 300, color: '#2c2416', marginBottom: '0.75rem' }}>
           Message sent
         </div>
         <p style={{ color: '#7a6b55', fontSize: '1rem' }}>Thank you for reaching out. I'll be in touch soon.</p>
@@ -82,7 +88,7 @@ export default function ContactDisplay({ heading, subheading, buttonText, userna
   return (
     <div data-contact-wrap style={{ maxWidth: '32rem', margin: '0 auto', padding: '3rem 2rem', textAlign: align }}>
       {heading && (
-        <h2 style={{ fontFamily: SERIF, fontSize: '2rem', fontWeight: 300, color: '#1a1410', lineHeight: 1.15, marginBottom: subheading ? '0.75rem' : '2rem', marginTop: 0 }}>
+        <h2 style={{ fontFamily: serif, fontSize: '2rem', fontWeight: 300, color: '#1a1410', lineHeight: 1.15, marginBottom: subheading ? '0.75rem' : '2rem', marginTop: 0 }}>
           {heading}
         </h2>
       )}

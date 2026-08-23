@@ -1,6 +1,16 @@
 // common/themes/kyoto.js
 // Kyoto — the reference theme: warm, serif, single-column editorial scroll.
 // Inherits the full base variant menu; supplies only palette + fonts.
+
+// Kyoto speaks in two type voices, no more: the Cormorant serif (its editorial
+// default) and the Muse display face (the poster/title font). Fraunces —
+// base's "Editorial" option — is deliberately absent here: it isn't part of
+// Kyoto's palette, so offering it just added a look-alike that never fit.
+const KYOTO_FONTS = [
+  { id: 'serif', label: 'Serif' },
+  { id: 'display', label: 'Display' },
+]
+
 export const kyoto = {
   id: 'kyoto',
   name: 'Kyoto',
@@ -23,10 +33,10 @@ export const kyoto = {
     photo: { defaultVariant: 'centered', defaultCaptionStyle: 'serif' },
     photos: { defaultCaptionStyle: 'serif' },
     video: { defaultCaptionStyle: 'serif' },
-    // Text blocks default to Medium (subheading).
-    text: { defaultVariant: 'subheading' },
-    // Testimonials default to Editorial (Fraunces), Regular (not italic), Medium
-    // size, and Photo-above.
-    testimonial: { defaultVariant: 'photo-above', defaultSize: 'medium', defaultFont: 'fraunces', defaultQuoteStyle: 'regular' },
+    // Text blocks default to Medium (subheading), Serif/Display the only choices.
+    text: { defaultVariant: 'subheading', fonts: KYOTO_FONTS },
+    // Testimonials default to Serif (Cormorant), Regular (not italic), Medium
+    // size, and Photo-above — same two-voice menu as text.
+    testimonial: { defaultVariant: 'photo-above', defaultSize: 'medium', defaultFont: 'serif', defaultQuoteStyle: 'regular', fonts: KYOTO_FONTS },
   },
 }

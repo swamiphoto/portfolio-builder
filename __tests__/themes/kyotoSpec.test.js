@@ -23,14 +23,24 @@ describe('kyoto defaults', () => {
     expect(resolveCaptionStyle({ captionStyle: 'sans' }, 'serif')).toBe('sans')
   })
 
-  it('testimonials default to Editorial (Fraunces) · Regular · Medium · Photo-above', () => {
+  it('testimonials default to Serif (Cormorant) · Regular · Medium · Photo-above', () => {
     const b = { type: 'testimonial' }
     expect(resolveVariant(b, 'kyoto')).toBe('photo-above')
     expect(resolveSize(b, 'kyoto')).toBe('medium')
-    expect(resolveFont(b, 'kyoto')).toContain('Fraunces')
+    expect(resolveFont(b, 'kyoto')).toContain('Cormorant')
     expect(resolveQuoteStyle(b, 'kyoto')).toBe('regular')
     // explicit choices still win
     expect(resolveQuoteStyle({ type: 'testimonial', quoteStyle: 'italic' }, 'kyoto')).toBe('italic')
+  })
+
+  it('offers only two type voices — Serif + Display, no Fraunces "Editorial"', () => {
+    for (const type of ['text', 'testimonial']) {
+      const ids = getBlockSpec('kyoto', type).fonts.map((f) => f.id)
+      expect(ids).toEqual(['serif', 'display'])
+      expect(ids).not.toContain('fraunces')
+    }
+    // a block that stored the retired Fraunces slot falls back to the Serif default
+    expect(resolveFont({ type: 'text', font: 'fraunces' }, 'kyoto')).toContain('Cormorant')
   })
 
   it('other themes are unaffected (manhattan/florence testimonial stays italic)', () => {
