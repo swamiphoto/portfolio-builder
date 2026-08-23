@@ -934,7 +934,7 @@ a {
 [data-theme="amsterdam"] .ams-col--hero { width: calc(100vw - var(--theme-rail-width, 96px)); overflow: hidden; }
 [data-theme="amsterdam"] .ams-hero__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 [data-theme="amsterdam"] .ams-hero__title { position: absolute; top: 2vh; left: 3vw; right: 3vw; margin: 0; font-family: "Fraunces", "Playfair Display", Georgia, serif; font-weight: 400; text-transform: uppercase; color: var(--ams-ink); font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; overflow-wrap: break-word; }
-[data-theme="amsterdam"] .ams-hero__foot { position: absolute; left: 3vw; bottom: 6vh; max-width: 40ch; }
+[data-theme="amsterdam"] .ams-hero__foot { position: absolute; left: 3vw; bottom: 6vh; max-width: 46ch; }
 [data-theme="amsterdam"] .ams-hero__desc { margin: 0 0 14px; font-family: "Playfair Display", Georgia, serif; font-size: clamp(17px, 1.5vw, 23px); line-height: 1.35; color: #fff; text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45); }
 
 /* Opener: condensed title panel (gallery pages / hero fallback) */
@@ -946,7 +946,7 @@ a {
    Editorial (Fraunces) treatment; Condensed swaps in the bold poster face (Anton)
    for both the poster hero and the title panel. */
 [data-theme="amsterdam"] .ams-stage[data-headline="condensed"] .ams-hero__title,
-[data-theme="amsterdam"] .ams-stage[data-headline="condensed"] .ams-title__name { font-family: "Anton", "Arial Narrow", sans-serif; font-weight: 400; letter-spacing: 0.01em; line-height: 0.86; }
+[data-theme="amsterdam"] .ams-stage[data-headline="condensed"] .ams-title__name { font-family: "Anton", "Arial Narrow", sans-serif; font-weight: 400; letter-spacing: 0.01em; line-height: 0.98; }
 [data-theme="amsterdam"] .ams-title__desc { margin: 0; max-width: 44ch; font-family: "Playfair Display", Georgia, serif; font-size: var(--fs-text-m); line-height: 1.45; opacity: 0.92; }
 
 /* Opener actions (Music Show / Client Login) */
@@ -1066,8 +1066,11 @@ a {
 [data-theme="amsterdam"] .ams-fill-label { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 3rem 1.4rem 1.1rem; background: linear-gradient(to top, rgba(14, 11, 9, 0.68), rgba(14, 11, 9, 0)); font-family: Inter, sans-serif; }
 /* The inset caption sets a notch larger than the shared caption size — at this
    italic face 15px reads small over a photo, so pin a readable 17px (meta 14px). */
-[data-theme="amsterdam"] .ams-fill-label .ams-caption__title { color: #f6f3ec; font-style: italic; font-size: 17px; max-width: 30rem; }
-[data-theme="amsterdam"] .ams-fill-label .ams-caption__meta { color: rgba(246, 243, 236, 0.82); font-size: 14px; max-width: 30rem; }
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__title { color: #f6f3ec; font-style: italic; font-size: 18px; line-height: 1.4; display: block; max-width: 36ch; }
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__meta { color: rgba(246, 243, 236, 0.82); font-size: 15px; display: block; max-width: 36ch; }
+/* The date/EXIF meta harmonizes with the italic caption when it sits beneath one; a
+   lone date (no caption above it) keeps its upright roman face. */
+[data-theme="amsterdam"] .ams-fill-label .ams-caption__title + .ams-caption__meta { font-style: italic; }
 [data-theme="amsterdam"] .ams-row { display: flex; align-items: center; gap: 2vw; height: 100%; }
 [data-theme="amsterdam"] .ams-row__item { display: flex; flex-direction: column; }
 [data-theme="amsterdam"] .ams-mosaic { display: flex; align-items: center; gap: 1.2vw; }

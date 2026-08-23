@@ -19,7 +19,7 @@ const LONG = 'The seventeenth-century canals are a world-renowned location of cu
 const LONGCAP = 'In the 15 years I’ve been a photographer, I’ve tried every portfolio builder, and not one felt like it was truly made for the work.'
 
 const BLOCKS = [
-  { type: 'photo', image: P(1016, 1600, 1000), caption: LONGCAP },
+  { type: 'photo', image: P(1016, 1600, 1000), caption: LONGCAP, capture: { capturedAt: '2024-11-03T08:12:00Z', camera: 'Leica Q2', focalLength: '28mm', aperture: 'f/2.8' } },
   { type: 'photo', image: P(1015, 1000, 1500), caption: LONGCAP, themeState: { amsterdam: { variant: 'centered' } } },
   // Frame styles: a single Card-mounted photo, then a Mixed-mounted set.
   { type: 'photo', image: P(1024, 1000, 1500), caption: LONGCAP, capture: { capturedAt: '1902-01-01T00:00:00Z' }, amsterdamFrame: 'card', themeState: { amsterdam: { variant: 'centered' } } },
