@@ -490,10 +490,12 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
                 options={[
                   { value: 'centered', label: 'Centered' },
                   { value: 'bottom',   label: 'Bottom'   },
+                  { value: 'split',    label: 'Split'    },
+                  { value: 'minimal',  label: 'Minimal'  },
                 ]}
               />
             </DesignSection>
-            {cover.imageUrl && (
+            {cover.imageUrl && !['split', 'minimal'].includes(cover.layout) && (
               <DesignSection label="Overlay">
                 <DesignPillToggle
                   value={cover.overlay || 'medium'}

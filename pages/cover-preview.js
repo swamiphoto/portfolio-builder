@@ -32,7 +32,7 @@ export default function CoverPreview() {
     subheading: DESC,
     buttonText: 'View My Work',
     buttonStyle: q.buttonStyle === 'outline' ? 'outline' : 'solid',
-    layout: q.layout === 'bottom' ? 'bottom' : 'centered',
+    layout: ['bottom', 'split', 'minimal'].includes(q.layout) ? q.layout : 'centered',
     overlay: ['light', 'dark'].includes(q.overlay) ? q.overlay : 'medium',
     logoSize: ['small', 'large'].includes(q.logoSize) ? q.logoSize : 'medium',
     logoColor: ['original', 'dark'].includes(q.logoColor) ? q.logoColor : 'light',
