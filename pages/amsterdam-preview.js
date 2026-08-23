@@ -79,7 +79,8 @@ export default function AmsterdamPreview() {
       blocks={empty ? EMPTY_BLOCKS : BLOCKS}
       showPlaceholders={!!empty}
       pages={siteConfig.pages}
-      childPages={[{ id: 'c1', title: 'Portraits', slug: 'portraits', showInNav: true }, { id: 'c2', title: 'Landscapes', slug: 'landscapes', showInNav: true }]}
+      childPages={[{ id: 'c1', title: 'Portraits', slug: 'portraits', showInNav: true }, { id: 'c2', title: 'Landscapes', slug: 'landscapes', showInNav: true }, { id: 'c3', title: 'Street', slug: 'street', showInNav: true }]}
+      enableSlideshow={router.query.actions ? true : undefined}
       siteConfig={siteConfig}
       themeId={themeId}
       cover={{ imageUrl: P(1015, 2000, 1300), amsterdamHeadline: headline }}
