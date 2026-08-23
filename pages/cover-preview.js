@@ -26,6 +26,7 @@ export default function CoverPreview() {
   const q = router.query
   const cover = {
     imageUrl: IMG,
+    images: q.slideshow ? [IMG, 'https://picsum.photos/id/1018/2400/1500', 'https://picsum.photos/id/1016/2400/1500'] : undefined,
     variant: 'cover',
     height: 'full',
     heading: typeof q.heading === 'string' ? q.heading : '',

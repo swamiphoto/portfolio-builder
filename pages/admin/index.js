@@ -340,7 +340,13 @@ export default function AdminIndex() {
   const handleAssetPickerConfirm = useCallback((refs) => {
     if (!assetPickerTarget || !refs.length) return
     if (assetPickerTarget === 'coverImage') {
-      updateConfig(prev => ({ ...prev, cover: { ...(prev.cover || {}), imageUrl: refs[0].url } }))
+      // Cover images can be a set that cross-fades; append the picked ones and keep
+      // imageUrl pointing at the first (used for share thumbnails).
+      updateConfig(prev => {
+        const existing = (prev.cover?.images && prev.cover.images.length) ? prev.cover.images : (prev.cover?.imageUrl ? [prev.cover.imageUrl] : [])
+        const images = [...existing, ...refs.map(r => r.url).filter(u => !existing.includes(u))]
+        return { ...prev, cover: { ...(prev.cover || {}), images, imageUrl: images[0] } }
+      })
     } else if (assetPickerTarget === 'shareLarge') {
       updateConfig(prev => ({ ...prev, share: { ...(prev.share || {}), largeImage: refs[0].url } }))
     } else if (assetPickerTarget === 'shareSquare') {
@@ -661,7 +667,7 @@ export default function AdminIndex() {
           images={libraryConfig?.images || []}
           libraryConfig={libraryConfig}
           loading={!libraryConfig}
-          blockType="photo"
+          blockType={assetPickerTarget === 'coverImage' ? 'photos' : 'photo'}
           onConfirm={handleAssetPickerConfirm}
           onClose={() => setAssetPickerTarget(null)}
         />

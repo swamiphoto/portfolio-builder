@@ -8,6 +8,7 @@ import { THEME_LIST, getTheme } from '../../../common/themes'
 import { EditableInput } from './EditableText'
 import ToggleSwitch from '../common/ToggleSwitch'
 import MarkdownEditorPanel from '../gallery-builder/MarkdownEditorPanel'
+import { getSizedUrl } from '../../../common/imageUtils'
 
 export const themeOptions = () => THEME_LIST.filter(t => !t.hidden).map(t => ({ value: t.id, label: t.name }))
 
@@ -440,12 +441,35 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
     return (
       <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Cover page" onBack={initialView === 'cover' ? undefined : () => setView('main')} headerRight={coverBrushButton}>
         <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
-          <AssetField
-            label="Background image"
-            value={cover.imageUrl || ''}
-            onChange={(v) => updateCover({ imageUrl: v })}
-            onPickFromLibrary={onPickCoverImage}
-          />
+          {(() => {
+            const coverImages = (cover.images && cover.images.length) ? cover.images : (cover.imageUrl ? [cover.imageUrl] : [])
+            return (
+              <Field label="Cover images">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {coverImages.map((url, i) => (
+                    <div key={`${url}-${i}`} style={{ position: 'relative', width: 58, height: 42 }}>
+                      <img src={getSizedUrl(url, 'thumbnail') || url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4, display: 'block' }} />
+                      <button
+                        type="button"
+                        aria-label="Remove image"
+                        onClick={() => { const next = coverImages.filter((u, j) => !(u === url && j === i)); updateCover({ images: next, imageUrl: next[0] || '' }) }}
+                        style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: 999, background: '#2c2416', color: '#fff', border: '1.5px solid var(--popover)', fontSize: 11, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    aria-label="Add cover image"
+                    onClick={onPickCoverImage}
+                    style={{ width: 58, height: 42, border: '1px dashed rgba(120,110,95,0.5)', borderRadius: 4, color: 'var(--text-muted)', background: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}
+                  >+</button>
+                </div>
+                <p style={{ fontSize: 11.5, color: 'var(--text-muted, #9e9788)', margin: '6px 0 0', lineHeight: 1.45 }}>
+                  {coverImages.length > 1 ? 'These cross-fade as a slideshow on the cover.' : 'Add more to cross-fade them as a slideshow.'}
+                </p>
+              </Field>
+            )
+          })()}
           <Field label="Heading">
             <EditableInput
               className={inputCls}

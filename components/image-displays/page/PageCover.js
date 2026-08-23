@@ -1,4 +1,5 @@
 // components/image-displays/page/PageCover.js
+import { useState, useEffect } from 'react'
 import { getSizedUrl } from '../../../common/imageUtils'
 import { secondaryButtonStyle } from '../../../common/coverButtons'
 import { COVER_FALLBACK_BG } from '../../../common/coverBackground'
@@ -26,6 +27,29 @@ const OVERLAY_SCRIM = {
   dark: { base: 0.42, grad: 0.74 },
 }
 const LOGO_HEIGHT = { small: 'clamp(34px, 4.5vw, 48px)', medium: 'clamp(48px, 6.5vw, 84px)', large: 'clamp(68px, 9vw, 128px)' }
+
+// Multiple cover images cross-fade into each other (a slow ~6s dwell, 1.4s fade).
+// One image renders as a plain <img>; the deps key on the set length so editing the
+// set restarts the timer without thrashing on unrelated re-renders.
+function CoverMedia({ images, alt }) {
+  const [idx, setIdx] = useState(0)
+  useEffect(() => {
+    if (!images || images.length < 2) return undefined
+    const t = setInterval(() => setIdx((i) => (i + 1) % images.length), 6000)
+    return () => clearInterval(t)
+  }, [images.length])
+  if (!images || !images.length) return null
+  if (images.length === 1) {
+    return <img src={getSizedUrl(images[0], 'display') || images[0]} alt={alt} className="absolute inset-0 w-full h-full object-cover" />
+  }
+  return (
+    <>
+      {images.map((src, i) => (
+        <img key={`${src}-${i}`} src={getSizedUrl(src, 'display') || src} alt={i === 0 ? alt : ''} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: i === idx ? 1 : 0, transition: 'opacity 1400ms ease-in-out' }} />
+      ))}
+    </>
+  )
+}
 
 const BUTTON_STYLE_MAP = {
   solid: 'bg-white text-stone-900 hover:bg-stone-100',
@@ -93,7 +117,10 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
   // over a warm color blend instead of a blank panel. Inner pages with no cover
   // image render nothing, as before.
   const isCoverContext = cover?.variant === 'cover'
-  const hasImage = !!cover?.imageUrl
+  // A cover can carry a set of images that cross-fade; falls back to the single
+  // imageUrl. The first image is the primary (used for share thumbnails elsewhere).
+  const coverImages = (cover?.images && cover.images.length) ? cover.images.filter(Boolean) : (cover?.imageUrl ? [cover.imageUrl] : [])
+  const hasImage = coverImages.length > 0
   if (!cover || (!hasImage && !isCoverContext)) return null
   const isFull = cover.height === 'full'
   const heightClass = isFull ? 'h-screen' : 'h-[60vh]'
@@ -172,8 +199,8 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
   if (isSplit) {
     return (
       <section className={`relative w-full ${heightClass} overflow-hidden flex flex-col md:flex-row`}>
-        <div className="relative w-full md:w-1/2 h-1/2 md:h-full" style={{ background: panelBg }}>
-          {hasImage && <img src={getSizedUrl(cover.imageUrl, 'display') || cover.imageUrl} alt={cover.overlayText || brandText || ''} className="absolute inset-0 w-full h-full object-cover" />}
+        <div className="relative w-full md:w-1/2 h-1/2 md:h-full overflow-hidden" style={{ background: panelBg }}>
+          {hasImage && <CoverMedia images={coverImages} alt={cover.overlayText || brandText || ''} />}
         </div>
         <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col justify-center px-8 md:px-[5vw] py-10" style={{ background: panelBg }}>{contentGroup(true)}</div>
       </section>
@@ -190,11 +217,7 @@ export default function PageCover({ cover, title, description, slideshowHref, cl
     >
       {hasImage && (
         <>
-          <img
-            src={getSizedUrl(cover.imageUrl, 'display') || cover.imageUrl}
-            alt={cover.overlayText || brandText || ''}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          <CoverMedia images={coverImages} alt={cover.overlayText || brandText || ''} />
           <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${scrim.base})` }} />
           <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(0,0,0,${scrim.grad}), rgba(0,0,0,0) 62%)` }} />
         </>
