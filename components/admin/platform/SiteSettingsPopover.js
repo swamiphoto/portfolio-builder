@@ -7,6 +7,7 @@ import { normalizeCustomDomain, subdomainHost } from '../../../common/domainUtil
 import { THEME_LIST, getTheme } from '../../../common/themes'
 import { EditableInput } from './EditableText'
 import ToggleSwitch from '../common/ToggleSwitch'
+import MarkdownEditorPanel from '../gallery-builder/MarkdownEditorPanel'
 
 export const themeOptions = () => THEME_LIST.filter(t => !t.hidden).map(t => ({ value: t.id, label: t.name }))
 
@@ -371,6 +372,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   const [designOpen, setDesignOpen] = useState(false)
   const brushRef = useRef(null)
   const [coverDesignOpen, setCoverDesignOpen] = useState(false)
+  const [subheadingMdOpen, setSubheadingMdOpen] = useState(false)
   const coverBrushRef = useRef(null)
   const footer = config.footer || {}
 
@@ -460,9 +462,13 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
               value={cover.subheading || ''}
               onChange={(e) => updateCover({ subheading: e.target.value })}
             />
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted, #9e9788)', margin: '6px 0 0', lineHeight: 1.45 }}>
-              Rich text: <span style={{ fontFamily: MONO }}>**bold**</span>, <span style={{ fontFamily: MONO }}>*italic*</span>, <span style={{ fontFamily: MONO }}>[link](https://…)</span>
-            </p>
+            <button
+              type="button"
+              onClick={() => setSubheadingMdOpen(true)}
+              style={{ marginTop: 6, fontSize: 11.5, color: 'var(--text-secondary, #6b6355)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              Edit with formatting (bold, italic, links)
+            </button>
           </Field>
           <Field label="Button text">
             <EditableInput
@@ -559,6 +565,15 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
             </DesignSection>
           </PopoverShell>
         )}
+        {/* Rich-text editor for the subheading — the block markdown editor in
+            inline-only mode (bold / italic / links; no headings or images). */}
+        <MarkdownEditorPanel
+          inlineOnly
+          open={subheadingMdOpen}
+          block={{ content: cover.subheading || '', format: 'markdown' }}
+          onChange={(b) => updateCover({ subheading: b.content })}
+          onClose={() => setSubheadingMdOpen(false)}
+        />
       </PopoverShell>
     )
   }
