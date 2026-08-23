@@ -27,6 +27,26 @@ describe('renderMarkdownToElement <-> serializeDomToMarkdown round trip', () => 
   })
 })
 
+describe('serializeDomToMarkdown handles pasted rich text', () => {
+  it('reads emphasis from inline-styled spans (as pasted), not just <b>/<i>', () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<p>Hello <span style="font-weight:700">bold</span> and <span style="font-style:italic">ital</span> and <a href="https://x.com">link</a>.</p>'
+    expect(serializeDomToMarkdown(host)).toBe('Hello **bold** and *ital* and [link](https://x.com).')
+  })
+
+  it('preserves a link nested inside a styled span', () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<p><span style="font-weight:600"><a href="https://y.com">boldlink</a></span></p>'
+    expect(serializeDomToMarkdown(host)).toBe('**[boldlink](https://y.com)**')
+  })
+
+  it('does not bold a Google-Docs <b style="font-weight:normal"> wrapper', () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<b style="font-weight:normal">plain <span style="font-weight:700">bold</span></b>'
+    expect(serializeDomToMarkdown(host)).toBe('plain **bold**')
+  })
+})
+
 describe('renderMarkdownToElement', () => {
   it('builds real elements for headings, quotes, lists, emphasis and images', () => {
     const el = renderMarkdownToElement(
