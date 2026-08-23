@@ -264,6 +264,15 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
     onUpdate({ ...(siteConfig || {}), contact: { ...contact, ...patch } })
   }
 
+  // Nothing else populates contact.email, and the public contact block has no
+  // recipient without it — so every submission would 400. Seed it with the
+  // account email the first time settings open (only when truly unset, so a user
+  // who deliberately cleared it isn't overridden).
+  useEffect(() => {
+    if (email && siteConfig && contact.email == null) updateContact({ email })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, siteConfig])
+
   async function commitProfile(fields) {
     const slug = slugify(usernameDraft)
     if (!slug) return
@@ -446,6 +455,24 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
               </div>
             )
           })()}
+        </Section>
+
+        {/* The public contact block delivers messages here. Defaults to the
+            account email (seeded on open) so the form works out of the box. */}
+        <Section label="Contact form">
+          <Field label="Send messages to">
+            <input
+              className={inputCls}
+              style={inputStyle}
+              type="email"
+              placeholder={email || 'you@example.com'}
+              value={contact.email || ''}
+              onChange={(e) => updateContact({ email: e.target.value })}
+            />
+            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4, fontFamily: MONO, letterSpacing: '0.04em' }}>
+              Where your contact block sends visitor messages.
+            </div>
+          </Field>
         </Section>
       </>}
 
