@@ -20,9 +20,9 @@ const clampAspect = (value) => {
 
 const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, captionStyle = 'sans', insideCaption = false, bleed = false, mobile = false }) => {
   const capCss = captionStyleCss(captionStyle);
-  // Serif (Cormorant) has a small x-height, so bump it to a fixed, legible size —
-  // never scales, same for every image in the block.
-  // Serif (Cormorant) lifted to a ~20px medium; readable measure via max-w-xl.
+  // Drop serif's relative 1.12em so the class owns the size (see StackedGallery):
+  // a ~20px medium (17px mobile), readable measure via max-w-xl.
+  if (captionStyle === 'serif') delete capCss.fontSize;
   const capSize = captionStyle === 'serif' ? 'text-[17px] md:text-[20px] leading-snug max-w-xl mx-auto' : 'text-sm';
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   // Gallery always passes an explicit column count (1 on mobile); fall back to 2.
