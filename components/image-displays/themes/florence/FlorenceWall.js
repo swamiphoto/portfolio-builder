@@ -36,8 +36,10 @@ export default function FlorenceWall({
   siteConfig = {}, name, description, blocks = [], basePath = '', makeClickHandler,
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
-  childPages = [], activeChildId = null, onChildPageClick, showPlaceholders = false,
+  childPages = [], activeChildId = null, onChildPageClick, showPlaceholders = false, cover = null,
 }) {
+  // Sub-links can sit above the museum title (a horizontal row) or below it (default).
+  const linksAbove = cover?.linksPosition === 'above'
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -130,9 +132,14 @@ export default function FlorenceWall({
         )}
 
         <section className="florence-col florence-col--intro">
+          {linksAbove && childPages.length > 0 && (
+            <nav className="florence-intro__children florence-intro__children--above" aria-label="Pages in this section">
+              {childPages.map(renderChildLink)}
+            </nav>
+          )}
           {name && <h1 className="florence-intro__title">{name}</h1>}
           {description && <p className="florence-intro__desc">{description}</p>}
-          {childPages.length > 0 && (
+          {!linksAbove && childPages.length > 0 && (
             <nav className="florence-intro__children" aria-label="Pages in this section">
               {childPages.map(renderChildLink)}
             </nav>

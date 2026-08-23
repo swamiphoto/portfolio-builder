@@ -404,6 +404,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             currentPageId={currentPageId}
             onPageClick={onPageClick || onChildPageClick}
             showPlaceholders={showPlaceholders}
+            cover={cover}
           />
         </div>
         {lightboxIndex !== null && (

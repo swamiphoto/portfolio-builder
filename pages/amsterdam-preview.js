@@ -83,7 +83,7 @@ export default function AmsterdamPreview() {
       enableSlideshow={router.query.actions ? true : undefined}
       siteConfig={siteConfig}
       themeId={themeId}
-      cover={{ imageUrl: P(1015, 2000, 1300), amsterdamHeadline: headline }}
+      cover={{ imageUrl: P(1015, 2000, 1300), amsterdamHeadline: headline, linksPosition: router.query.links === 'above' ? 'above' : undefined }}
       opener={opener}
     />
   )

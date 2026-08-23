@@ -53,7 +53,7 @@ export default function FlorencePreview() {
   const pane = q.pane
   const empty = q.empty
   const blocks = empty ? EMPTY_BLOCKS : (q.mosaic ? MOSAIC_BLOCKS : BLOCKS)
-  const gallery = <Gallery name="Florence Test" description="Position test." blocks={blocks} showPlaceholders={!!empty} pages={SITE.pages} childPages={CHILD_PAGES} siteConfig={SITE} themeId="florence" cover={{ imageUrl: P(1015, 2000, 1300) }} opener="hero" />
+  const gallery = <Gallery name="Florence Test" description="Position test." blocks={blocks} showPlaceholders={!!empty} pages={SITE.pages} childPages={CHILD_PAGES} siteConfig={SITE} themeId="florence" cover={{ imageUrl: P(1015, 2000, 1300), linksPosition: q.links === 'above' ? 'above' : undefined }} opener="hero" />
   const inner = (
     <ThemeProvider themeId="florence">
       <div className="theme-shell" data-viewport="desktop" data-admin-preview={pane ? 'true' : undefined}>

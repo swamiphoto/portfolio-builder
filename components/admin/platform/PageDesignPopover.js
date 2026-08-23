@@ -29,6 +29,20 @@ export default function PageDesignPopover({ page, themeId = 'kyoto', onUpdate, o
           />
         </DesignSection>
       )}
+      {/* Where the page's sub-links sit relative to the opener title (Amsterdam +
+          Florence show a horizontal row above, or the default column below). */}
+      {(themeId === 'amsterdam' || themeId === 'florence') && (
+        <DesignSection label="Links">
+          <PillToggle
+            value={cover.linksPosition === 'above' ? 'above' : 'below'}
+            onChange={(v) => update({ linksPosition: v })}
+            options={[
+              { value: 'below', label: 'Below title' },
+              { value: 'above', label: 'Above title' },
+            ]}
+          />
+        </DesignSection>
+      )}
       {showHeroHeight && (
         <DesignSection label="Hero height">
           <PillToggle

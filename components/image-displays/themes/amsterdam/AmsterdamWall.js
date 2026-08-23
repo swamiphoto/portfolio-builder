@@ -129,8 +129,10 @@ export default function AmsterdamWall({
     }
     return <a key={p.id} className={cls} href={href} {...(isLink ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{p.title}</a>
   }
+  // Sub-links can sit above the title (a horizontal row) or below it (default).
+  const linksAbove = cover?.linksPosition === 'above'
   const childLinksNav = childPages.length > 0 && (
-    <nav className="ams-opener__children" aria-label="Pages in this section">
+    <nav className={`ams-opener__children${linksAbove ? ' ams-opener__children--above' : ''}`} aria-label="Pages in this section">
       {childPages.map(renderChildLink)}
     </nav>
   )
@@ -185,16 +187,18 @@ export default function AmsterdamWall({
             <img className="ams-hero__img" src={getSizedUrl(coverUrl, 'display')} alt="" />
             <h1 className="ams-hero__title">{name}</h1>
             <div className="ams-hero__foot">
+              {linksAbove && childLinksNav}
               {description && <p className="ams-hero__desc">{description}</p>}
-              {childLinksNav}
+              {!linksAbove && childLinksNav}
               {actionButtons}
             </div>
           </section>
         ) : (
           <section className="ams-col ams-col--title" data-surface="ink">
+            {linksAbove && childLinksNav}
             {name && <h1 className="ams-title__name">{name}</h1>}
             {description && <p className="ams-title__desc">{description}</p>}
-            {childLinksNav}
+            {!linksAbove && childLinksNav}
             {actionButtons}
           </section>
         )}

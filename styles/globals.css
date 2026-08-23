@@ -564,6 +564,8 @@ a {
 /* Nested pages listed under the description, in the same mono voice — an arrow
    marker gives them a quiet, stylish index feel. */
 .florence-intro__children { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-top: 1.5rem; }
+/* Above the title (design option): a horizontal row instead of a column. */
+.florence-intro__children--above { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 1.35rem; margin: 0 0 1.35rem; }
 .florence-intro__childlink {
   font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.72rem; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--theme-text); text-decoration: none; background: none; border: none;
