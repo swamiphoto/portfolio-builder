@@ -1109,37 +1109,52 @@ function BlockCard({
               <div className="space-y-5">
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.07em] mb-1" style={{ color: 'var(--text-muted)' }}>Photo</div>
-                  <div
-                    onClick={onAddPhotos}
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={e => {
-                      e.preventDefault()
-                      let url = null
-                      const raw = e.dataTransfer.getData('application/x-photo-drag')
-                      if (raw) { try { url = JSON.parse(raw).imageRefs?.[0]?.url ?? null } catch {} }
-                      if (!url) url = e.dataTransfer.getData('text/plain')
-                      if (url) onUpdate({ ...block, imageUrl: url })
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', padding: '3px 0' }}
-                  >
-                    <div style={{ width: 36, height: 36, borderRadius: 3, flexShrink: 0, overflow: photoUrl ? 'hidden' : undefined, background: photoUrl ? undefined : '#ece4d2', boxShadow: 'inset 0 0 0 1px rgba(26,18,10,0.07)' }}>
-                      {photoUrl && <img src={getSizedUrl(photoUrl, 'thumbnail')} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                    </div>
-                    <span className="text-xs" style={{ color: 'rgba(58,54,47,0.45)' }}>
+                  {/* Same format as the site-settings logo field: a framed thumbnail
+                      with stacked Change… / Remove actions beside it. */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label={photoUrl ? 'Change photo' : 'Select photo'}
+                      onClick={onAddPhotos}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAddPhotos() } }}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => {
+                        e.preventDefault()
+                        let url = null
+                        const raw = e.dataTransfer.getData('application/x-photo-drag')
+                        if (raw) { try { url = JSON.parse(raw).imageRefs?.[0]?.url ?? null } catch {} }
+                        if (!url) url = e.dataTransfer.getData('text/plain')
+                        if (url) onUpdate({ ...block, imageUrl: url })
+                      }}
+                      className="flex-shrink-0 overflow-hidden flex items-center justify-center"
+                      style={{ width: 44, height: 44, background: 'rgba(255,253,248,0.6)', border: '1px solid rgba(160,140,110,0.22)', borderRadius: 4, cursor: 'pointer', transition: 'border-color 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139,111,71,0.5)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(160,140,110,0.22)'}
+                    >
                       {photoUrl
-                        ? <>
-                            <span className="transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Change</span>
-                            <span className="mx-1.5 text-[#3a362f]/30">·</span>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); onUpdate({ ...block, imageUrl: '', image: null }) }}
-                              className="transition-colors text-[#3a362f]/70 hover:text-red-600"
-                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
-                            >Remove</button>
-                          </>
-                        : <span className="underline underline-offset-2 transition-colors text-[#3a362f]/70 hover:text-[#3a362f]">Select from library</span>
-                      }
-                    </span>
+                        ? <img src={getSizedUrl(photoUrl, 'thumbnail')} className="w-full h-full object-cover" alt="" />
+                        : <span style={{ color: 'rgba(168,150,122,0.55)', fontSize: 18, fontWeight: 300 }}>+</span>}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={onAddPhotos}
+                        style={{ fontSize: 12, color: '#7a6b55', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer', transition: 'color 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#7a6b55'}
+                      >{photoUrl ? 'Change…' : 'Select image'}</button>
+                      {photoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => onUpdate({ ...block, imageUrl: '', image: null })}
+                          className="font-mono uppercase"
+                          style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'left', letterSpacing: '0.08em', background: 'none', border: 'none', padding: 0, cursor: 'pointer', transition: 'color 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#c14a4a'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                        >Remove</button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div>

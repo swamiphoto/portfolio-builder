@@ -182,7 +182,7 @@ export default function GalleryPreview({ gallery, themeId: themeIdProp, pages, c
       />
     </ThemeProvider>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [debouncedGallery, resolvedBlocks, themeId, designSig, printStore, pagesThumbSig, childNavSig, currentPageId, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, cover?.amsterdamHeadline, opener]);
+  ), [debouncedGallery, resolvedBlocks, themeId, designSig, printStore, pagesThumbSig, childNavSig, currentPageId, hasCover, coverHeight, coverButtonStyle, cover?.imageUrl, cover?.amsterdamHeadline, cover?.linksPosition, cover?.buttonStyle, opener]);
 
   const content = (feedbackCtx?.showFeedback && feedbackCtx.hasFeedback)
     ? <ReviewFeedbackProvider feedbackByPhoto={feedbackCtx.feedbackByPhoto} onOpenPhoto={feedbackCtx.openPhoto}>{inner}</ReviewFeedbackProvider>
