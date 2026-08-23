@@ -179,9 +179,14 @@ function blockElementToMarkdown(el) {
 // serializeDomToMarkdown(rootEl) -> string
 // Walks the editable div's direct children back into markdown, one
 // blank-line-separated block per top-level element.
-export function serializeDomToMarkdown(rootEl) {
-  if (!rootEl) return ''
-  const blocks = []
+const NESTED_BLOCK_RE = /^(p|div|section|article|header|footer|main|h[1-6]|blockquote|ul|ol|li|img|figure|pre)$/
+const LEAF_BLOCK_RE = /^(h[1-6]|blockquote|ul|ol|img)$/
+
+// Walk the tree collecting one markdown block per paragraph/heading/list/image.
+// Pasted rich text is often nested (Google Docs wraps everything in a <b>; sites
+// wrap paragraphs in <div>s), so recurse into any wrapper that holds block-level
+// children instead of flattening it into a single line.
+function collectBlocks(rootEl, blocks) {
   rootEl.childNodes.forEach((node) => {
     if (node.nodeType === 3) {
       const text = node.nodeValue.trim()
@@ -190,8 +195,20 @@ export function serializeDomToMarkdown(rootEl) {
     }
     if (node.nodeType !== 1) return
     if (node.tagName === 'BR') return
+    const tag = node.tagName.toLowerCase()
+    const isLeaf = LEAF_BLOCK_RE.test(tag) || node.hasAttribute(IMAGE_WRAPPER_ATTR)
+    if (!isLeaf && Array.from(node.children).some((c) => NESTED_BLOCK_RE.test(c.tagName.toLowerCase()))) {
+      collectBlocks(node, blocks)
+      return
+    }
     const md = blockElementToMarkdown(node)
     if (md.trim() !== '') blocks.push(md)
   })
+}
+
+export function serializeDomToMarkdown(rootEl) {
+  if (!rootEl) return ''
+  const blocks = []
+  collectBlocks(rootEl, blocks)
   return blocks.join('\n\n')
 }

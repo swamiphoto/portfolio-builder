@@ -45,6 +45,18 @@ describe('serializeDomToMarkdown handles pasted rich text', () => {
     host.innerHTML = '<b style="font-weight:normal">plain <span style="font-weight:700">bold</span></b>'
     expect(serializeDomToMarkdown(host)).toBe('plain **bold**')
   })
+
+  it('keeps separate paragraphs nested inside a wrapper', () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<div><p>First paragraph.</p><p>Second paragraph.</p></div>'
+    expect(serializeDomToMarkdown(host)).toBe('First paragraph.\n\nSecond paragraph.')
+  })
+
+  it('preserves headings, paragraphs and images pasted as a nested doc', () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<b style="font-weight:normal"><h2>My Trip</h2><p>Shot in <span style="font-style:italic">Norway</span>.</p><p><img src="https://gcs/a.jpg"></p></b>'
+    expect(serializeDomToMarkdown(host)).toBe('# My Trip\n\nShot in *Norway*.\n\n![](https://gcs/a.jpg)')
+  })
 })
 
 describe('renderMarkdownToElement', () => {
