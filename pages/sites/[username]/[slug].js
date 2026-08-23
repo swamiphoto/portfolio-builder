@@ -20,6 +20,7 @@ import SiteAnalytics from '../../../components/image-displays/SiteAnalytics'
 import { getPageTheme } from '../../../common/themes'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
+import { getSizedUrl } from '../../../common/imageUtils'
 
 function resolveBlock(block, assetsByUrl) {
   if (!assetsByUrl) return block
@@ -95,7 +96,10 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   // Share card image is THIS page's own image, not the site cover:
   // pageDisplayThumbnail resolves its cover / nav thumbnail / first photo (same
   // helper the slideshow share uses), then falls back to the site share/cover.
-  const ogImage = pageDisplayThumbnail(page) || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
+  // Serve the resized display variant (~250KB), not the full-res original —
+  // WhatsApp/iMessage only reliably show the large preview under ~300KB and
+  // otherwise drop it, falling back to the apple-touch-icon (the favicon).
+  const ogImage = getSizedUrl(pageDisplayThumbnail(page) || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || '', 'display')
   // Share card = this gallery's own name / description / thumbnail; browser tab =
   // "Gallery — Site" so the page reads first with the site brand after it.
   const siteName = siteConfig.siteName || 'Sepia'

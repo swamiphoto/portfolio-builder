@@ -4,6 +4,7 @@ import { readSiteConfig } from '../../../../common/siteConfig'
 import Slideshow from '../../../../components/image-displays/slideshow/Slideshow'
 import PageMeta from '../../../../components/PageMeta'
 import { pageDisplayThumbnail } from '../../../../common/assetRefs'
+import { getSizedUrl } from '../../../../common/imageUtils'
 import { siteUrlFor } from '../../../../common/domainUtils'
 import { buildSlideSequence, musicLabelForUrl } from '../../../../common/slideshowSync'
 
@@ -42,7 +43,7 @@ export async function getServerSideProps({ params }) {
     title: page.title ? `${page.title} — ${siteName}` : siteName,
     ogTitle: page.title || siteName,
     description: page.description || siteConfig.tagline || '',
-    image: pageDisplayThumbnail(page) || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || '',
+    image: getSizedUrl(pageDisplayThumbnail(page) || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || '', 'display'),
     url: `${siteUrl}/${page.slug || page.id}/slideshow`,
     siteName,
     favicon: siteConfig.favicon || null,
