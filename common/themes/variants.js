@@ -84,6 +84,21 @@ export function resolveFont(block, themeId) {
   return fonts[slot] || fonts.serif || '"Cormorant Garamond", Georgia, serif'
 }
 
+// The font weight a block's chosen slot forces, or undefined to let the size
+// scale / element decide. Themes opt in per slot via tokens.fontWeights (e.g.
+// Kyoto's Bold slot → 600). Mirrors resolveFont's slot-resolution so an invalid
+// stored slot falls back to the block's default.
+export function resolveFontWeight(block, themeId) {
+  const theme = getTheme(themeId)
+  const weights = theme.tokens?.fontWeights || {}
+  const spec = getBlockSpec(themeId, block.type)
+  const validIds = (spec?.fonts || []).map((f) => f.id)
+  const slot = (block.font && (!validIds.length || validIds.includes(block.font)))
+    ? block.font
+    : (spec?.defaultFont || 'serif')
+  return weights[slot]
+}
+
 // Resolve a bare font-slot id (e.g. 'serif' | 'display' | 'fraunces' | 'sans')
 // to a CSS font-family for the given theme. Used outside the block system, e.g.
 // the cover page's title/description font toggles.

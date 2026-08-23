@@ -1,5 +1,5 @@
 import { getBlockSpec } from '@/common/themes'
-import { resolveVariant, resolveFont, resolveSize, resolveQuoteStyle } from '@/common/themes/variants'
+import { resolveVariant, resolveFont, resolveFontWeight, resolveSize, resolveQuoteStyle } from '@/common/themes/variants'
 import { resolveCaptionStyle } from '@/common/captionStyles'
 
 // The theme default a block uses when it hasn't overridden the caption itself.
@@ -23,22 +23,29 @@ describe('kyoto defaults', () => {
     expect(resolveCaptionStyle({ captionStyle: 'sans' }, 'serif')).toBe('sans')
   })
 
-  it('testimonials default to Serif (Cormorant) · Regular · Medium · Photo-above', () => {
+  it('testimonials default to Bold Cormorant (weight 600) · Regular · Medium · Photo-above', () => {
     const b = { type: 'testimonial' }
     expect(resolveVariant(b, 'kyoto')).toBe('photo-above')
     expect(resolveSize(b, 'kyoto')).toBe('medium')
     expect(resolveFont(b, 'kyoto')).toContain('Cormorant')
+    expect(resolveFontWeight(b, 'kyoto')).toBe(600)
     expect(resolveQuoteStyle(b, 'kyoto')).toBe('regular')
     // explicit choices still win
     expect(resolveQuoteStyle({ type: 'testimonial', quoteStyle: 'italic' }, 'kyoto')).toBe('italic')
   })
 
-  it('offers only two type voices — Serif + Display, no Fraunces "Editorial"', () => {
+  it('offers three type voices — Serif, Bold (Cormorant 600), Display — no Fraunces', () => {
     for (const type of ['text', 'testimonial']) {
       const ids = getBlockSpec('kyoto', type).fonts.map((f) => f.id)
-      expect(ids).toEqual(['serif', 'display'])
+      expect(ids).toEqual(['serif', 'serifBold', 'display'])
       expect(ids).not.toContain('fraunces')
     }
+    // Bold reuses the Cormorant family, just heavier
+    expect(resolveFont({ type: 'text', font: 'serifBold' }, 'kyoto')).toContain('Cormorant')
+    expect(resolveFontWeight({ type: 'text', font: 'serifBold' }, 'kyoto')).toBe(600)
+    // Serif and Display force no weight (size scale decides)
+    expect(resolveFontWeight({ type: 'text', font: 'serif' }, 'kyoto')).toBeUndefined()
+    expect(resolveFontWeight({ type: 'text', font: 'display' }, 'kyoto')).toBeUndefined()
     // a block that stored the retired Fraunces slot falls back to the Serif default
     expect(resolveFont({ type: 'text', font: 'fraunces' }, 'kyoto')).toContain('Cormorant')
   })

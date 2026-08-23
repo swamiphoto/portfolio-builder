@@ -42,7 +42,9 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
   const renderCaption = () => {
     // Sit the caption close under the photo (mt-2) to match the stacked/photos block;
     // the larger bottom margin only spaces this block from the next.
-    return <p className="mt-2 mb-4 md:mb-20 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
+    // max-w-xl caps the caption to a readable measure so it wraps rather than
+    // running the full width of a large photo (matches the stacked/photos block).
+    return <p className="mt-2 mb-4 md:mb-20 font-medium text-[17px] md:text-xl italic text-center max-w-xl mx-auto" style={captionStyleCss(captionStyle)}>{caption}</p>;
   };
 
   const renderImage = () => {

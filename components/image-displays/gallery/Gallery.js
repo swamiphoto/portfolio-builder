@@ -11,7 +11,7 @@ import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
-import { resolveVariant, resolveAlign, resolveFont, resolveButtonStyle, resolveSize, resolvePhotoSize, resolveQuoteStyle } from "../../../common/themes/variants";
+import { resolveVariant, resolveAlign, resolveFont, resolveFontWeight, resolveButtonStyle, resolveSize, resolvePhotoSize, resolveQuoteStyle } from "../../../common/themes/variants";
 import { getBlockSpec } from "../../../common/themes";
 import { resolveCaptionStyle, captionStyleCss } from "../../../common/captionStyles";
 import { resolveSubNavStyle } from '../../../common/siteDesign';
@@ -544,6 +544,11 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               // Font follows the block's chosen slot (Manhattan defaults to sans;
               // Serif/Editorial are selectable). Line-height tightened via CSS.
               const fontFamily = resolveFont(block, themeId);
+              // A slot may force a heavier weight (e.g. Kyoto's Bold Cormorant).
+              // Applied inline on the wrapper and, via data-bold, forced onto
+              // markdown descendants in CSS (they carry their own weight classes).
+              const fontWeight = resolveFontWeight(block, themeId);
+              const boldAttr = fontWeight && fontWeight >= 600 ? { 'data-bold': 'true' } : {};
               // A restrained, elegant size scale shared across the vertical themes.
               // Medium (vv 2) is the readable base; these serif/editorial themes read
               // best a touch larger than the wall themes, so the base is ~1.125rem
@@ -576,7 +581,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               const variantClass = classForV(v);
               if (block.format === 'markdown') {
                 return (
-                  <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...hoverProps} style={{ ...hoverProps.style, fontFamily }}>
+                  <div className={`text-block ${alignClass}`} key={`block-${index}`} data-block-index={index} {...boldAttr} {...hoverProps} style={{ ...hoverProps.style, fontFamily, ...(fontWeight ? { fontWeight } : {}) }}>
                     <MarkdownText
                       content={block.content}
                       variantClasses={{ heading: classForV(1), body: classForV(v), quote: classForV(4) }}
@@ -589,8 +594,9 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   key={`block-${index}`}
                   className={`text-block ${variantClass}`}
                   data-block-index={index}
+                  {...boldAttr}
                   {...hoverProps}
-                  style={{ ...hoverProps.style, fontFamily }}
+                  style={{ ...hoverProps.style, fontFamily, ...(fontWeight ? { fontWeight } : {}) }}
                 >
                   {block.content}
                 </div>
@@ -711,13 +717,14 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
               // Quote font follows the block's chosen slot (default serif); size
               // steps the font size down and tightens line-height progressively.
               const tFont = resolveFont(block, themeId)
+              const tWeight = resolveFontWeight(block, themeId) || 400
               const tScale = {
                 large:  { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 },
                 medium: { fs: 'clamp(1.05rem, 2vw, 1.3rem)',   lh: 1.5 },
                 small:  { fs: 'clamp(0.95rem, 1.5vw, 1.1rem)', lh: 1.4 },
               }[resolveSize(block, themeId)] || { fs: 'clamp(1.25rem, 2.5vw, 1.6rem)', lh: 1.65 }
               const quote = block.text && (
-                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: resolveQuoteStyle(block, themeId) === 'regular' ? 'normal' : 'italic', fontWeight: 400, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
+                <blockquote style={{ fontFamily: tFont, fontSize: tScale.fs, fontStyle: resolveQuoteStyle(block, themeId) === 'regular' ? 'normal' : 'italic', fontWeight: tWeight, color: '#2c2416', lineHeight: tScale.lh, margin: 0, padding: 0 }}>
                   &#8220;{block.text}&#8221;
                 </blockquote>
               )

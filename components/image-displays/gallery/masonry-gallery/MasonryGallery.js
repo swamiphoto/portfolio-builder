@@ -22,7 +22,8 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
   const capCss = captionStyleCss(captionStyle);
   // Serif (Cormorant) has a small x-height, so bump it to a fixed, legible size —
   // never scales, same for every image in the block.
-  const capSize = captionStyle === 'serif' ? 'text-[17px] leading-snug' : 'text-sm';
+  // Serif (Cormorant) lifted to a ~20px medium; readable measure via max-w-xl.
+  const capSize = captionStyle === 'serif' ? 'text-[17px] md:text-[20px] leading-snug max-w-xl mx-auto' : 'text-sm';
   const items = images.length > 0 ? images : imageUrls.map(url => ({ url, caption: '' }));
   // Gallery always passes an explicit column count (1 on mobile); fall back to 2.
   const columnCount = columns != null ? Math.max(1, columns) : 2;
