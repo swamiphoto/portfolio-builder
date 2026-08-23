@@ -14,6 +14,7 @@ import useWallScroll from '../shared/useWallScroll'
 import useWallChrome from './useWallChrome'
 import AmsterdamColumn from './AmsterdamColumn'
 import MobileNavOverlay from '../../page/MobileNavOverlay'
+import { useClientEngagement } from '../../engagement/ClientEngagementContext'
 
 const SOCIAL_KEYS = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'website']
 
@@ -101,9 +102,18 @@ export default function AmsterdamWall({
   // Per-block grounds (pins + the black→light→red rotation), shared with the editor.
   const groundPlan = amsterdamGroundPlan(blocks, { heroOpener })
 
-  const actionButtons = actions.length > 0 && (
+  // The "View Packages" button is context-driven (like the other themes' covers):
+  // it lights up when purchase is on and packages exist — on the live site once
+  // payouts connect, and in the editor via the preview packages provider. Amsterdam
+  // renders its own opener, so append it here rather than through PageCover.
+  const engagement = useClientEngagement()
+  const showPackages = !!(engagement?.features?.purchase && (engagement.packages || []).length)
+  const allActions = showPackages
+    ? [...actions, { label: 'View Packages', onClick: () => engagement?.openPurchase?.(), style: 'outline' }]
+    : actions
+  const actionButtons = allActions.length > 0 && (
     <div className="ams-opener__actions">
-      {actions.map((a, i) => (
+      {allActions.map((a, i) => (
         <button key={i} type="button" onClick={a.onClick} className={`ams-opener__btn${a.style === 'outline' ? ' ams-opener__btn--outline' : ''}`}>{a.label}</button>
       ))}
     </div>

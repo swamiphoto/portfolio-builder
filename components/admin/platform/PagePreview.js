@@ -45,9 +45,15 @@ function PagePreview({
     : (page.cover?.imageUrl ? undefined : 'header-dropdown')
 
   const isChildPage = !!page.parentId
-  const childPages = isChildPage
-    ? (config?.pages || []).filter(p => p.parentId === page.parentId && p.showInNav !== false)
-    : (config?.pages || []).filter(p => p.parentId === page.id && p.showInNav !== false)
+  // Mirror the live site: a parent can hide its nested pages from the sub-nav
+  // (hideChildrenInNav); the preview must honour that too, else hidden albums show
+  // in the opener here but not on the published site.
+  const subNavParent = isChildPage ? (config?.pages || []).find(p => p.id === page.parentId) : page
+  const childPages = subNavParent?.hideChildrenInNav
+    ? []
+    : isChildPage
+      ? (config?.pages || []).filter(p => p.parentId === page.parentId && p.showInNav !== false)
+      : (config?.pages || []).filter(p => p.parentId === page.id && p.showInNav !== false)
   const activeChildId = isChildPage ? page.id : null
 
   const slideshowHref = (page.slideshow?.enabled && username)
