@@ -1,6 +1,6 @@
 // pages/sites/[username]/[slug].js
 import { useState } from 'react'
-import Head from 'next/head'
+import PageMeta from '../../../components/PageMeta'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -93,7 +93,11 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   }
 
   const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
-  const ogTitle = page.title || siteConfig.siteName || 'Portfolio'
+  // Share card = this gallery's own name / description / thumbnail; browser tab =
+  // "Gallery — Site" so the page reads first with the site brand after it.
+  const siteName = siteConfig.siteName || 'Sepia'
+  const ogTitle = page.title || siteName
+  const browserTitle = page.title ? `${page.title} — ${siteName}` : siteName
   const ogDescription = page.description || siteConfig.tagline || ''
   const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
   const pageUrl = `${siteUrl}/${page.slug || page.id}`
@@ -131,20 +135,15 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   return (
     <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative theme-shell">
-      <Head>
-        <title>{ogTitle}</title>
-        {siteConfig.favicon && <link rel="icon" href={siteConfig.favicon} />}
-        <meta name="description" content={ogDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:title" content={ogTitle} />
-        <meta property="og:description" content={ogDescription} />
-        {ogImage && <meta property="og:image" content={ogImage} />}
-        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
-        <meta name="twitter:title" content={ogTitle} />
-        <meta name="twitter:description" content={ogDescription} />
-        {ogImage && <meta name="twitter:image" content={ogImage} />}
-      </Head>
+      <PageMeta
+        title={browserTitle}
+        ogTitle={ogTitle}
+        description={ogDescription}
+        image={ogImage}
+        url={pageUrl}
+        siteName={siteName}
+        favicon={siteConfig.favicon}
+      />
       <SiteAnalytics analytics={siteConfig.analytics} />
       {!isProvence && !isFlorence && !isAmsterdam && <SiteNav siteConfig={siteConfig} username={username} basePath={basePath} variant={navVariant} themeId={theme.id} currentPageId={page.id} />}
       <main className="theme-content">

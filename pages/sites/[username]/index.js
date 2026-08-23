@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Head from 'next/head'
+import PageMeta from '../../../components/PageMeta'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { resolveHomePage } from '../../../common/homePage'
 import { readSiteConfig } from '../../../common/siteConfig'
@@ -92,9 +92,13 @@ export async function getServerSideProps({ params, req }) {
 
 export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, username, basePath }) {
   const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
-  const ogTitle = siteConfig.siteName || 'Portfolio'
+  const siteName = siteConfig.siteName || 'Sepia'
+  const ogTitle = siteName
   const ogDescription = siteConfig.tagline || ''
   const siteUrl = siteUrlFor(siteConfig, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
+  const metaTag = (
+    <PageMeta title={siteName} ogTitle={siteName} description={ogDescription} image={ogImage} url={siteUrl} siteName={siteName} favicon={siteConfig.favicon} />
+  )
 
   const homePage = resolveHomePage(siteConfig)
   const hasCoverPage = siteConfig.hasCoverPage !== false
@@ -111,19 +115,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   if (hasCoverPage) {
     return (
       <div className="min-h-screen bg-[#33261a] font-sans relative">
-        <Head>
-          <title>{ogTitle}</title>
-          <meta name="description" content={ogDescription} />
-          <meta property="og:type" content="website" />
-          <meta property="og:url" content={siteUrl} />
-          <meta property="og:title" content={ogTitle} />
-          <meta property="og:description" content={ogDescription} />
-          {ogImage && <meta property="og:image" content={ogImage} />}
-          <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
-          <meta name="twitter:title" content={ogTitle} />
-          <meta name="twitter:description" content={ogDescription} />
-          {ogImage && <meta name="twitter:image" content={ogImage} />}
-        </Head>
+        {metaTag}
         <SiteAnalytics analytics={siteConfig.analytics} />
         <PageCover
           cover={{
@@ -170,20 +162,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   return (
     <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
-      <Head>
-        <title>{ogTitle}</title>
-        {siteConfig.favicon && <link rel="icon" href={siteConfig.favicon} />}
-        <meta name="description" content={ogDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={siteUrl} />
-        <meta property="og:title" content={ogTitle} />
-        <meta property="og:description" content={ogDescription} />
-        {ogImage && <meta property="og:image" content={ogImage} />}
-        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
-        <meta name="twitter:title" content={ogTitle} />
-        <meta name="twitter:description" content={ogDescription} />
-        {ogImage && <meta name="twitter:image" content={ogImage} />}
-      </Head>
+      {metaTag}
       <SiteAnalytics analytics={siteConfig.analytics} />
       {/* On mobile every theme uses the shared hamburger nav. Provence keeps its
           bespoke split-cover header only on desktop. */}

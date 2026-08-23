@@ -16,21 +16,24 @@ const OG_IMAGE = `${SITE_URL}/og-image.png?v=3`
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (
     <SessionProvider session={session}>
+      {/* Default Sepia metadata. Every overridable tag carries a `key` so a
+          published site page (via <PageMeta>) dedupes and overrides it, instead of
+          both tags rendering and scrapers picking this default card. */}
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{SITE_TITLE}</title>
-        <meta name="description" content={SITE_DESC} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content={SITE_NAME} />
-        <meta property="og:title" content={SITE_TITLE} />
-        <meta property="og:description" content={SITE_DESC} />
-        <meta property="og:url" content={SITE_URL} />
-        <meta property="og:image" content={OG_IMAGE} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={SITE_TITLE} />
-        <meta name="twitter:description" content={SITE_DESC} />
-        <meta name="twitter:image" content={OG_IMAGE} />
+        <title key="title">{SITE_TITLE}</title>
+        <meta name="description" content={SITE_DESC} key="description" />
+        <meta property="og:type" content="website" key="og:type" />
+        <meta property="og:site_name" content={SITE_NAME} key="og:site_name" />
+        <meta property="og:title" content={SITE_TITLE} key="og:title" />
+        <meta property="og:description" content={SITE_DESC} key="og:description" />
+        <meta property="og:url" content={SITE_URL} key="og:url" />
+        <meta property="og:image" content={OG_IMAGE} key="og:image" />
+        <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
+        <meta name="twitter:title" content={SITE_TITLE} key="twitter:title" />
+        <meta name="twitter:description" content={SITE_DESC} key="twitter:description" />
+        <meta name="twitter:image" content={OG_IMAGE} key="twitter:image" />
       </Head>
       <Component {...pageProps} />
     </SessionProvider>
