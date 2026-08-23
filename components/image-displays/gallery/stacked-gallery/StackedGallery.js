@@ -13,7 +13,9 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
   // read too small — drop it here so the class owns the serif size: a ~20px medium
   // (17px mobile), with max-w-xl keeping the line to a readable, wrapping measure.
   if (captionStyle === 'serif') delete capCss.fontSize;
-  const capSize = captionStyle === 'serif' ? 'text-[17px] md:text-[20px] leading-snug max-w-xl mx-auto' : 'text-sm';
+  // Every caption caps to a readable measure (max-w-md, ~448px) and centers, so it
+  // wraps instead of running the full width of a large photo — regardless of style.
+  const capSize = (captionStyle === 'serif' ? 'text-[17px] md:text-[20px] leading-snug ' : 'text-sm ') + 'max-w-md mx-auto';
   const colWidth = `${widthPct}%`;
   const urlsKey = (imagesProp.length > 0 ? imagesProp.map(i => i.url) : imageUrlsProp).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps
