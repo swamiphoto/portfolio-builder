@@ -37,7 +37,7 @@ function Field({ label, children }) {
   )
 }
 
-export default function ContactDisplay({ heading, subheading, buttonText, toEmail, align = 'left', buttonStyle = 'solid' }) {
+export default function ContactDisplay({ heading, subheading, buttonText, username, align = 'left', buttonStyle = 'solid' }) {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
 
@@ -55,7 +55,7 @@ export default function ContactDisplay({ heading, subheading, buttonText, toEmai
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, toEmail }),
+        body: JSON.stringify({ ...form, username }),
       })
       if (!res.ok) throw new Error('send failed')
       setStatus('sent')

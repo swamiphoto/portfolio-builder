@@ -42,7 +42,7 @@ export default function AmsterdamWall({
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
   childPages = [], activeChildId = null, onChildPageClick,
-  cover = null, opener = 'title', showPlaceholders = false,
+  cover = null, opener = 'title', showPlaceholders = false, username,
 }) {
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -217,6 +217,7 @@ export default function AmsterdamWall({
             siteConfig={siteConfig}
             pages={pages}
             basePath={basePath}
+            username={username}
             showPlaceholders={showPlaceholders}
             onImageClick={makeClickHandler ? makeClickHandler(index) : undefined}
             hoverProps={{

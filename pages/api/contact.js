@@ -1,4 +1,25 @@
 import { sendMail } from '../../common/email/mailer'
+import { lookupUserByUsername, readUserProfile } from '../../common/userProfile'
+import { readSiteConfig } from '../../common/siteConfig'
+
+// Resolve the recipient SERVER-SIDE from the site's username. The client must not
+// be able to name an arbitrary recipient — trusting a client-supplied address
+// would turn this endpoint into an open relay for spam sent from our domain.
+// Prefer the site's configured contact email; fall back to the owner's account
+// email so the form works even when nothing was configured.
+async function resolveRecipient(username) {
+  if (!username) return null
+  const lookup = await lookupUserByUsername(username).catch(() => null)
+  if (!lookup?.userId) return null
+  const [siteConfig, profile] = await Promise.all([
+    readSiteConfig(lookup.userId).catch(() => null),
+    readUserProfile(lookup.userId).catch(() => null),
+  ])
+  const configured = siteConfig?.contact?.email
+  if (configured && String(configured).trim()) return String(configured).trim()
+  if (profile?.email && String(profile.email).trim()) return String(profile.email).trim()
+  return null
+}
 
 function esc(s) {
   return String(s ?? '')
@@ -11,11 +32,12 @@ function esc(s) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { name, email, subject, message, toEmail } = req.body || {}
+  const { name, email, subject, message, username } = req.body || {}
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
+  const toEmail = await resolveRecipient(username)
   if (!toEmail) {
     return res.status(400).json({ error: 'No recipient email configured for this site' })
   }
