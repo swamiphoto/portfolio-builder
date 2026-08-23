@@ -26,10 +26,13 @@ export default function DesignPopover({ block, themeId = 'kyoto', defaultGround,
   if (!spec) return null
 
   const variants = (spec.variants || []).map(v => ({ value: v.id, label: v.label }))
-  // Font pills preview their own face (family from the active theme's tokens).
+  // Font pills preview their own face — family AND weight from the active theme's
+  // tokens, so a bold slot (e.g. Kyoto's "Editorial" Cormorant 600) reads bold in
+  // the toggle, matching how it renders in the block.
   const themeFonts = getTheme(themeId).tokens?.fonts || {}
+  const themeWeights = getTheme(themeId).tokens?.fontWeights || {}
   const fonts = spec.fonts
-    ? spec.fonts.map(f => ({ value: f.id, label: <span style={{ fontFamily: themeFonts[f.id], fontSize: 13 }}>{f.label}</span> }))
+    ? spec.fonts.map(f => ({ value: f.id, label: <span style={{ fontFamily: themeFonts[f.id], fontWeight: themeWeights[f.id], fontSize: 13 }}>{f.label}</span> }))
     : null
   const aligns = spec.aligns && spec.aligns.length > 1 ? spec.aligns.map(a => ({ value: a, label: ALIGN_LABELS[a] || a })) : null
   const buttonStyles = spec.buttonStyles ? spec.buttonStyles.map(b => ({ value: b.id, label: b.label })) : null
