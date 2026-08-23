@@ -92,7 +92,10 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
     return <PasswordGate pageTitle={page.title} message={page.passwordGateMessage} onUnlock={(v) => { if (v === page.password) { setUnlocked(true); return true } return false }} />
   }
 
-  const ogImage = page.thumbnail?.imageUrl || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
+  // Share card image is THIS page's own image, not the site cover:
+  // pageDisplayThumbnail resolves its cover / nav thumbnail / first photo (same
+  // helper the slideshow share uses), then falls back to the site share/cover.
+  const ogImage = pageDisplayThumbnail(page) || siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
   // Share card = this gallery's own name / description / thumbnail; browser tab =
   // "Gallery — Site" so the page reads first with the site brand after it.
   const siteName = siteConfig.siteName || 'Sepia'

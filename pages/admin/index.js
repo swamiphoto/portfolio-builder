@@ -359,6 +359,20 @@ export default function AdminIndex() {
       updateConfig(prev => ({ ...prev, share: { ...(prev.share || {}), largeImage: refs[0].url } }))
     } else if (assetPickerTarget === 'shareSquare') {
       updateConfig(prev => ({ ...prev, share: { ...(prev.share || {}), squareImage: refs[0].url } }))
+    } else if (assetPickerTarget === 'favicon') {
+      // A favicon must be square or the browser squishes it. Crop the picked
+      // image to a centred square server-side, then store that URL. Show the raw
+      // pick immediately for feedback; swap to the cropped square when it's ready.
+      const src = refs[0].url
+      updateConfig(prev => ({ ...prev, favicon: src }))
+      fetch('/api/admin/favicon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceUrl: src }),
+      })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { if (data?.url) updateConfig(prev => ({ ...prev, favicon: data.url })) })
+        .catch(() => {})
     } else {
       updateConfig(prev => ({ ...prev, [assetPickerTarget]: refs[0].url }))
     }

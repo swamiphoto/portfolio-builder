@@ -37,7 +37,9 @@ export default function BlantyreOffsetGallery({ images = [], onImageClick, capti
           <EngagementActions imageUrl={img.url} />
         </div>
       </div>
-      {img.caption && <p className="mt-3 text-left" style={capCss}>{img.caption}</p>}
+      {/* Cap the caption to a readable measure so it wraps under the photo instead
+          of running the full width of the offset column. */}
+      {img.caption && <p className="mt-3 text-left max-w-md" style={capCss}>{img.caption}</p>}
     </div>
   )
 

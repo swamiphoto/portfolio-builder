@@ -566,13 +566,14 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                   )
                 : themeId === 'blantyre'
                 ? (
-                    // The typewriter scale: mono body copy set small with double-ish
-                    // leading; Large steps up for the serif headline voice. Colors
+                    // The typewriter scale: mono body copy with double-ish leading.
+                    // Mono runs optically large, so the steps stay tight — Large is
+                    // one notch over Medium, not a dramatic headline jump. Colors
                     // inherit the theme ink (no stone tints on the sage ground).
                     vv === 4 ? `text-[0.9rem] leading-[1.9] ${alignClass} max-w-2xl mx-auto px-6 py-3 border-l-2 border-[var(--blantyre-frame,#b1b6a2)]`
                     : vv === 3 ? `text-[0.85rem] leading-[2] ${alignClass} max-w-2xl mx-auto px-6 md:px-0 py-2`
                     : vv === 2 ? `text-[1rem] leading-[2] ${alignClass} max-w-2xl mx-auto px-6 md:px-0 py-3`
-                    : `text-[1.7rem] md:text-[2.1rem] leading-snug ${alignClass} max-w-3xl mx-auto px-6 md:px-0 py-4`
+                    : `text-[1.15rem] md:text-[1.25rem] leading-snug ${alignClass} max-w-3xl mx-auto px-6 md:px-0 py-4`
                   )
                 : (
                     vv === 4 ? `${isMono ? (isSmallScreen ? 'text-[0.85rem] px-6 py-4' : 'text-[0.9rem] px-8 py-5') : (isSmallScreen ? 'text-[1rem] px-6 py-4' : 'text-[1.05rem] px-8 py-5')} italic text-stone-600 leading-relaxed ${alignClass} max-w-2xl mx-auto border-l-2 border-stone-300`
