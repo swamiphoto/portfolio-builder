@@ -21,6 +21,7 @@ import { getPageTheme } from '../../../common/themes'
 import { fontFamilyForSlot } from '../../../common/themes/variants'
 import { ClientEngagementProvider } from '../../../components/image-displays/engagement/ClientEngagementContext'
 import { pageDisplayThumbnail } from '../../../common/assetRefs'
+import { getSizedUrl } from '../../../common/imageUtils'
 import { useIsMobile } from '../../../common/useIsMobile'
 
 function resolveBlock(block, assetsByUrl) {
@@ -91,7 +92,9 @@ export async function getServerSideProps({ params, req }) {
 }
 
 export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, username, basePath }) {
-  const ogImage = siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || ''
+  // Resized display variant (~250KB) so WhatsApp/iMessage show the large preview
+  // instead of dropping the full-res original and falling back to the favicon.
+  const ogImage = getSizedUrl(siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || '', 'display')
   const siteName = siteConfig.siteName || 'Sepia'
   const ogTitle = siteName
   const ogDescription = siteConfig.tagline || ''
