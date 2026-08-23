@@ -66,7 +66,10 @@ function CtaButton({ label, href, onClick, style, fullWidth, fontFamily, lightSu
   if (!label) return null
   const size = fullWidth ? 'w-full justify-center px-6 py-4 text-lg' : 'px-9 py-4 text-lg md:text-xl'
   const map = lightSurface ? BUTTON_STYLE_MAP_LIGHT : BUTTON_STYLE_MAP
-  const cls = `inline-flex items-center ${size} font-medium transition-colors ${map[style] || map.solid}`
+  // no-underline + hover:no-underline defeats the global `a:hover { underline }`
+  // rule — the CTA renders as an <a>, and hover should change the button color,
+  // never underline the label.
+  const cls = `inline-flex items-center no-underline hover:no-underline ${size} font-medium transition-colors ${map[style] || map.solid}`
   const st = fontFamily ? { fontFamily } : undefined
   if (onClick) {
     return <button type="button" onClick={onClick} className={cls} style={st}>{label}</button>
