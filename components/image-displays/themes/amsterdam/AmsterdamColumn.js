@@ -83,7 +83,7 @@ function mosaicGroups(refs) {
   return groups
 }
 
-export default function AmsterdamColumn({ block, blockIndex, ground = 'light', onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', showPlaceholders = false }) {
+export default function AmsterdamColumn({ block, blockIndex, ground = 'light', onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', username, showPlaceholders = false }) {
   // A photo box that renders a placeholder when the image is a placeholder marker,
   // so empty blocks preview the wall layout before any photos are added.
   const photoBox = (img, i, fitClass = 'ams-fit') => (
@@ -352,7 +352,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
           heading={block.heading}
           subheading={block.subheading}
           buttonText={block.buttonText}
-          toEmail={siteConfig?.contact?.email}
+          username={username}
           align="left"
           buttonStyle={resolveButtonStyle(block, TID)}
         />

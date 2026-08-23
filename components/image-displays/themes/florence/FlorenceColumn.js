@@ -80,7 +80,7 @@ function mosaicGroups(refs) {
   return groups
 }
 
-export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', showPlaceholders = false }) {
+export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', username, showPlaceholders = false }) {
   const anchor = resolveFlorenceAnchor(block)
   const justify = ANCHOR_JUSTIFY[anchor]
   const metaFor = (o) => formatCaptureMeta(o?.capture, photoMeta, o?.uploadedAt)
@@ -361,7 +361,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
           heading={block.heading}
           subheading={block.subheading}
           buttonText={block.buttonText}
-          toEmail={siteConfig?.contact?.email}
+          username={username}
           align="left"
           buttonStyle={resolveButtonStyle(block, TID)}
         />

@@ -37,6 +37,7 @@ export default function FlorenceWall({
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
   childPages = [], activeChildId = null, onChildPageClick, showPlaceholders = false, cover = null,
+  username,
 }) {
   // Sub-links can sit above the museum title (a horizontal row) or below it (default).
   const linksAbove = cover?.linksPosition === 'above'
@@ -162,6 +163,7 @@ export default function FlorenceWall({
             siteConfig={siteConfig}
             pages={pages}
             basePath={basePath}
+            username={username}
             showPlaceholders={showPlaceholders}
             onImageClick={makeClickHandler ? makeClickHandler(index) : undefined}
             hoverProps={{
