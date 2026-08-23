@@ -111,10 +111,14 @@ export default function AmsterdamWall({
   const allActions = showPackages
     ? [...actions, { label: 'View Packages', onClick: () => engagement?.openPurchase?.(), style: 'outline' }]
     : actions
+  // The Button-style control (Solid / Outline) sets the default for opener buttons
+  // that don't carry their own style (the primary "View Music Show"); utility
+  // buttons like Client Login / Packages keep their explicit outline.
+  const defaultBtnStyle = cover?.buttonStyle === 'outline' ? 'outline' : 'solid'
   const actionButtons = allActions.length > 0 && (
     <div className="ams-opener__actions">
       {allActions.map((a, i) => (
-        <button key={i} type="button" onClick={a.onClick} className={`ams-opener__btn${a.style === 'outline' ? ' ams-opener__btn--outline' : ''}`}>{a.label}</button>
+        <button key={i} type="button" onClick={a.onClick} className={`ams-opener__btn${(a.style || defaultBtnStyle) === 'outline' ? ' ams-opener__btn--outline' : ''}`}>{a.label}</button>
       ))}
     </div>
   )
