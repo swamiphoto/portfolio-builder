@@ -2,6 +2,7 @@
 import crypto from 'crypto'
 import { downloadJSON, uploadJSON } from './gcsClient'
 import { getInviteLookupPath } from './gcsUser'
+import { INVITE_ERRORS } from './inviteMessages'
 
 const DEFAULT_TRIAL_DAYS = 60
 
@@ -53,4 +54,42 @@ export async function createInvite({ code, label = '', maxUses = null, expiresAt
   }
   await writeInvite(invite)
   return invite
+}
+
+export class InviteError extends Error {
+  constructor(code, message) {
+    super(message || code)
+    this.name = 'InviteError'
+    this.code = code
+  }
+}
+
+/**
+ * Validates and records an invite redemption.
+ * Idempotent per user: a repeat redemption by the same userId succeeds without
+ * bumping `uses`, which neutralizes the common double-submit race. NOTE: R2 has
+ * no transactions, so two *different* users redeeming the last slot of a
+ * maxUses-limited code concurrently could both succeed — acceptable for the
+ * low-volume Phase-1 beta.
+ */
+export async function redeemInvite(rawCode, userId) {
+  const code = normalizeInviteCode(rawCode)
+  const invite = await readInvite(code)
+  if (!invite) throw new InviteError(INVITE_ERRORS.NOT_FOUND)
+
+  const alreadyRedeemed = (invite.redeemedBy || []).some((r) => r.userId === userId)
+
+  if (!alreadyRedeemed) {
+    if (invite.expiresAt && Date.parse(invite.expiresAt) < Date.now()) {
+      throw new InviteError(INVITE_ERRORS.EXPIRED)
+    }
+    if (invite.maxUses != null && (invite.uses || 0) >= invite.maxUses) {
+      throw new InviteError(INVITE_ERRORS.EXHAUSTED)
+    }
+    invite.uses = (invite.uses || 0) + 1
+    invite.redeemedBy = [...(invite.redeemedBy || []), { userId, at: new Date().toISOString() }]
+    await writeInvite(invite)
+  }
+
+  return { code: invite.code, trialDays: Number(invite.trialDays) || 60 }
 }
