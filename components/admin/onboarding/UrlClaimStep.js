@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
-export default function UrlClaimStep({ rootDomain, username, setUsername, slug, error, saving, onSubmit }) {
+export default function UrlClaimStep({ rootDomain, username, setUsername, slug, inviteCode, setInviteCode, error, saving, onSubmit }) {
   const [focused, setFocused] = useState(false)
   const showSlugHint = slug && slug !== username.toLowerCase()
 
@@ -68,23 +68,42 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
           Lowercase letters, numbers, and hyphens. You can change it anytime.
         </p>
 
+        <div style={{ marginTop: 30, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
+          <label htmlFor="claim-invite" style={{ display: 'block', fontFamily: MONO, fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#a8967a', marginBottom: 8 }}>
+            Invite code
+          </label>
+          <input
+            id="claim-invite"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            placeholder="SEPIA-XXXX"
+            autoComplete="off"
+            spellCheck={false}
+            style={{
+              width: '100%', padding: '11px 13px', border: '1px solid rgba(120,100,70,0.3)',
+              borderRadius: 6, background: 'rgba(255,255,255,0.5)', outline: 'none',
+              fontFamily: MONO, fontSize: 14, letterSpacing: '0.06em', color: '#2c2416',
+            }}
+          />
+        </div>
+
         {error && (
           <p style={{ fontSize: 13.5, color: '#a0451e', marginTop: 12 }}>{error}</p>
         )}
 
         <button
           type="submit"
-          disabled={!slug || saving}
+          disabled={!slug || !inviteCode || saving}
           style={{
             marginTop: 34, padding: '14px 30px',
-            background: !slug || saving ? 'rgba(60,40,15,0.16)' : '#2c2416',
-            color: !slug || saving ? 'rgba(246,243,236,0.5)' : '#f6f3ec',
+            background: !slug || !inviteCode || saving ? 'rgba(60,40,15,0.16)' : '#2c2416',
+            color: !slug || !inviteCode || saving ? 'rgba(246,243,236,0.5)' : '#f6f3ec',
             fontFamily: MONO, fontSize: 12, fontWeight: 500, letterSpacing: '0.10em', textTransform: 'uppercase',
             borderRadius: 6, border: 'none',
-            cursor: !slug || saving ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
+            cursor: !slug || !inviteCode || saving ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
           }}
-          onMouseEnter={(e) => { if (slug && !saving) e.currentTarget.style.background = '#3d2d18' }}
-          onMouseLeave={(e) => { if (slug && !saving) e.currentTarget.style.background = '#2c2416' }}
+          onMouseEnter={(e) => { if (slug && inviteCode && !saving) e.currentTarget.style.background = '#3d2d18' }}
+          onMouseLeave={(e) => { if (slug && inviteCode && !saving) e.currentTarget.style.background = '#2c2416' }}
         >
           {saving ? 'Claiming…' : 'Claim your address'}
         </button>

@@ -5,6 +5,7 @@ import ImportFlow from '../components/admin/import/ImportFlow'
 import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
 import { composeSite, applyComposedPages, resolveComposableAssets } from '../common/import/composer'
+import { inviteErrorMessage } from '../common/inviteMessages'
 
 function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
@@ -22,6 +23,7 @@ export default function Onboarding() {
   const [step, setStep] = useState('url') // 'url' | 'import-offer'
   const [isReturning, setIsReturning] = useState(false)
   const [username, setUsername] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [claimedSlug, setClaimedSlug] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -49,10 +51,16 @@ export default function Onboarding() {
       const res = await fetch('/api/admin/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: slug, displayName: session?.user?.name || '' }),
+        body: JSON.stringify({ username: slug, displayName: session?.user?.name || '', inviteCode: inviteCode.trim() }),
       })
       if (res.status === 409) {
         setError('That username is taken. Try another.')
+        setSaving(false)
+        return
+      }
+      if (res.status === 400 || res.status === 403) {
+        const body = await res.json().catch(() => ({}))
+        setError(inviteErrorMessage(body.error))
         setSaving(false)
         return
       }
@@ -236,6 +244,8 @@ export default function Onboarding() {
       username={username}
       setUsername={(v) => { setUsername(v); setError('') }}
       slug={slug}
+      inviteCode={inviteCode}
+      setInviteCode={(v) => { setInviteCode(v); setError('') }}
       error={error}
       saving={saving}
       onSubmit={handleSubmit}
