@@ -22,6 +22,11 @@ it('throws NOT_FOUND for a missing code', async () => {
   await expect(redeemInvite('nope', 'u1')).rejects.toMatchObject({ code: INVITE_ERRORS.NOT_FOUND })
 })
 
+it('throws NOT_FOUND for a code that normalizes to empty, without attempting a download', async () => {
+  await expect(redeemInvite('!!!', 'u1')).rejects.toMatchObject({ code: INVITE_ERRORS.NOT_FOUND })
+  expect(mockDownload).not.toHaveBeenCalled()
+})
+
 it('throws EXPIRED when past expiresAt', async () => {
   mockDownload.mockResolvedValue(invite({ expiresAt: '2000-01-01T00:00:00.000Z' }))
   await expect(redeemInvite('SEPIA-EARLY', 'u1')).rejects.toMatchObject({ code: INVITE_ERRORS.EXPIRED })

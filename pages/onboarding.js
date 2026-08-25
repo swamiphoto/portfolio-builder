@@ -5,7 +5,7 @@ import ImportFlow from '../components/admin/import/ImportFlow'
 import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
 import { composeSite, applyComposedPages, resolveComposableAssets } from '../common/import/composer'
-import { inviteErrorMessage } from '../common/inviteMessages'
+import { inviteErrorMessage, INVITE_ERRORS } from '../common/inviteMessages'
 
 function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005'
@@ -60,7 +60,8 @@ export default function Onboarding() {
       }
       if (res.status === 400 || res.status === 403) {
         const body = await res.json().catch(() => ({}))
-        setError(inviteErrorMessage(body.error))
+        const isInvite = Object.values(INVITE_ERRORS).includes(body.error)
+        setError(isInvite ? inviteErrorMessage(body.error) : 'Something went wrong. Please try again.')
         setSaving(false)
         return
       }

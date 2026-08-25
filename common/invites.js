@@ -26,7 +26,9 @@ function generateCode(len = 8) {
 }
 
 export async function readInvite(code) {
-  const key = getInviteLookupPath(normalizeInviteCode(code))
+  const normalized = normalizeInviteCode(code)
+  if (!normalized) return null
+  const key = getInviteLookupPath(normalized)
   try {
     return await downloadJSON(key)
   } catch (err) {
@@ -74,6 +76,7 @@ export class InviteError extends Error {
  */
 export async function redeemInvite(rawCode, userId) {
   const code = normalizeInviteCode(rawCode)
+  if (!code) throw new InviteError(INVITE_ERRORS.NOT_FOUND)
   const invite = await readInvite(code)
   if (!invite) throw new InviteError(INVITE_ERRORS.NOT_FOUND)
 
@@ -91,5 +94,5 @@ export async function redeemInvite(rawCode, userId) {
     await writeInvite(invite)
   }
 
-  return { code: invite.code, trialDays: Number(invite.trialDays) || 60 }
+  return { code: invite.code, trialDays: Number(invite.trialDays) || DEFAULT_TRIAL_DAYS }
 }
