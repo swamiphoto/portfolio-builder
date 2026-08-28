@@ -83,7 +83,7 @@ test('clicking first image in masonry block calls router.push with photo=0', () 
   fireEvent.click(screen.getByText('img0'));
   expect(mockPush).toHaveBeenCalledWith(
     expect.objectContaining({ query: expect.objectContaining({ photo: 0 }) }),
-    undefined,
+    expect.any(String), // clean-URL as-path (PR #54)
     { shallow: true }
   );
 });
@@ -93,7 +93,7 @@ test('clicking second image in masonry block calls router.push with photo=1', ()
   fireEvent.click(screen.getByText('img1'));
   expect(mockPush).toHaveBeenCalledWith(
     expect.objectContaining({ query: expect.objectContaining({ photo: 1 }) }),
-    undefined,
+    expect.any(String), // clean-URL as-path (PR #54)
     { shallow: true }
   );
 });
@@ -103,7 +103,7 @@ test('clicking photo block calls router.push with photo=2 (offset by masonry blo
   fireEvent.click(screen.getByTestId('photoblock'));
   expect(mockPush).toHaveBeenCalledWith(
     expect.objectContaining({ query: expect.objectContaining({ photo: 2 }) }),
-    undefined,
+    expect.any(String), // clean-URL as-path (PR #54)
     { shallow: true }
   );
 });
@@ -114,7 +114,7 @@ test('closing lightbox calls router.push without photo param', () => {
   fireEvent.click(screen.getByText('close'));
   expect(mockPush).toHaveBeenCalledWith(
     expect.objectContaining({ query: expect.not.objectContaining({ photo: expect.anything() }) }),
-    undefined,
+    expect.any(String), // clean-URL as-path (PR #54)
     { shallow: true }
   );
 });
@@ -125,7 +125,7 @@ test('preserves other query params when closing lightbox', () => {
   fireEvent.click(screen.getByText('close'));
   expect(mockPush).toHaveBeenCalledWith(
     expect.objectContaining({ query: expect.objectContaining({ someOther: 'param' }) }),
-    undefined,
+    expect.any(String), // clean-URL as-path (PR #54)
     { shallow: true }
   );
 });

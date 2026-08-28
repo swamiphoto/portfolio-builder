@@ -3,6 +3,7 @@
 // content width (same span as every other block — height varies by aspect),
 // sharp corners, caption inside on hover.
 import { getSizedUrl } from '../../../../common/imageUtils'
+import { captionStyleCss } from '../../../../common/captionStyles'
 import HoverCaption from '../HoverCaption'
 import WatermarkOverlay from '../../engagement/WatermarkOverlay'
 import BuyPrintButton from '../../print/BuyPrintButton'
@@ -28,6 +29,13 @@ export default function ManhattanPhoto({ imageUrl, caption = '', onImageClick, c
         </div>
         <HoverCaption caption={caption} captionStyle={captionStyle} />
       </div>
+      {/* Mobile: no hover exists, and an overlay would cover the photo — the
+          caption sits beneath instead (HoverCaption is hidden below md). */}
+      {caption && (
+        <figcaption data-mobile-caption className="min-[769px]:hidden mt-2 text-[14px] italic text-center text-gray-500 max-w-md mx-auto" style={captionStyleCss(captionStyle)}>
+          {caption}
+        </figcaption>
+      )}
     </figure>
   )
 }

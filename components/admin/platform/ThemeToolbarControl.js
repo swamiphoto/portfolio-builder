@@ -104,8 +104,10 @@ export default function ThemeToolbarControl({ config, onChange, onEditHandles })
         </PopoverShell>
       )}
 
+      {/* Settings panel is max-content, not a fixed width: rows like the Logo
+          font pills vary by theme and must never clip against the panel edge. */}
       {settingsOpen && (
-        <PopoverShell anchorEl={brushRef.current} onClose={() => setSettingsOpen(false)} width={300} maxWidth="calc(100vw - 24px)" title={`${current} settings`}>
+        <PopoverShell anchorEl={brushRef.current} onClose={() => setSettingsOpen(false)} width="max-content" minWidth={300} maxWidth="calc(100vw - 24px)" title={`${current} settings`}>
           <DesignControlsBody config={config} onChange={onChange} onEditHandles={onEditHandles} />
         </PopoverShell>
       )}

@@ -6,9 +6,6 @@ import ImportShowcase from './ImportShowcase'
 import ImportDoneStep from './ImportDoneStep'
 import ImportRebuildProgress from './ImportRebuildProgress'
 
-// Warm darkroom backdrop shared by the import takeover + done screens.
-const SHOWCASE_BG = 'radial-gradient(120% 90% at 50% 8%, #efe8dc 0%, #e4dccf 45%, #d8cdba 100%)'
-
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -161,44 +158,53 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
 
   // The import wait + the success screen take over the whole viewport on a shared
   // warm backdrop, so the flow feels like one continuous moment rather than a bar
-  // in a small box.
-  if (step === 'importing') {
+  // in a small box. The showcase stays mounted across the importing → done
+  // transition (same element position), so the drifting prints never restart:
+  // on "done" it switches to ambient (no pitch, no progress) and the card floats
+  // over the still-running show behind a light scrim.
+  if (step === 'importing' || (step === 'done' && summary)) {
     return (
-      <ImportShowcase
-        progress={progress}
-        photos={photoUrls}
-        sourceLabel={hostOf(input)}
-        onCancel={onClose}
-      />
+      <>
+        <ImportShowcase
+          progress={progress}
+          photos={photoUrls}
+          sourceLabel={hostOf(input)}
+          onCancel={step === 'importing' ? onClose : undefined}
+          ambient={step === 'done'}
+        />
+        {step === 'done' && (
+          <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 60, background: 'rgba(44,36,22,0.22)' }}>
+            <div className="rounded-xl overflow-hidden" style={{ width: 540, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))', animation: 'doneCardRise 0.5s ease both' }}>
+              <ImportDoneStep
+                summary={summary}
+                onEnter={(opts) => {
+                  if (opts?.replicate) { setStep('rebuilding'); return }
+                  return onComplete({ ...summary, replicate: false })
+                }}
+                onImportAnother={() => {
+                  setSummary(null)
+                  setDiscovery(null)
+                  setError(null)
+                  setInput('')
+                  setPhotoUrls([])
+                  setStep('source')
+                }}
+              />
+            </div>
+            <style>{`
+              @keyframes doneCardRise {
+                0%   { opacity: 0; transform: translateY(14px); }
+                100% { opacity: 1; transform: translateY(0); }
+              }
+            `}</style>
+          </div>
+        )}
+      </>
     )
   }
 
   if (step === 'rebuilding' && summary) {
     return <ImportRebuildProgress summary={summary} onDone={() => onComplete({ ...summary, replicate: true })} />
-  }
-
-  if (step === 'done' && summary) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: SHOWCASE_BG }}>
-        <div className="rounded-xl overflow-hidden" style={{ width: 540, maxWidth: '90vw', background: 'var(--popover, #faf7f2)', boxShadow: 'var(--popover-shadow, 0 24px 64px rgba(60,40,15,0.28))' }}>
-          <ImportDoneStep
-            summary={summary}
-            onEnter={(opts) => {
-              if (opts?.replicate) { setStep('rebuilding'); return }
-              return onComplete({ ...summary, replicate: false })
-            }}
-            onImportAnother={() => {
-              setSummary(null)
-              setDiscovery(null)
-              setError(null)
-              setInput('')
-              setPhotoUrls([])
-              setStep('source')
-            }}
-          />
-        </div>
-      </div>
-    )
   }
 
   if (variant === 'fullscreen') {

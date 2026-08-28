@@ -68,7 +68,7 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
 
   // Body copy is real body text: secondary color at 14px, not the muted hint
   // token this screen originally borrowed (illegible on the cream surface).
-  const bodyText = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }
+  const bodyText = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55, textWrap: 'pretty' }
 
   // onEnter's handler chain (library GET/PUT + optional page composition +
   // site-config write) is async and was previously fire-and-forget — clicking

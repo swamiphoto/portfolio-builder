@@ -5,6 +5,8 @@ import {
   claimUsername,
   lookupUserByUsername,
 } from '../../../common/userProfile'
+import { redeemInvite, InviteError } from '../../../common/invites'
+import { INVITE_ERRORS } from '../../../common/inviteMessages'
 
 export default withAuth(async (req, res, user) => {
   if (req.method === 'GET') {
@@ -13,7 +15,7 @@ export default withAuth(async (req, res, user) => {
   }
 
   if (req.method === 'PUT') {
-    const { username, displayName, bio } = req.body
+    const { username, displayName, bio, inviteCode } = req.body || {}
     if (!username) return res.status(400).json({ error: 'username is required' })
 
     const slug = username.toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -26,6 +28,27 @@ export default withAuth(async (req, res, user) => {
     }
 
     const existingProfile = await readUserProfile(user.id)
+    // Grandfather anyone who already has a site: they never need a code and keep
+    // whatever trial state they had (usually none). Only brand-new tenants are gated.
+    const isNewTenant = !existingProfile?.username
+
+    let trialEndsAt = existingProfile?.trialEndsAt || null
+    let invite = existingProfile?.invite || null
+
+    if (isNewTenant) {
+      if (!inviteCode) return res.status(400).json({ error: INVITE_ERRORS.REQUIRED })
+      let redemption
+      try {
+        redemption = await redeemInvite(inviteCode, user.id)
+      } catch (err) {
+        if (err instanceof InviteError) return res.status(403).json({ error: err.code })
+        throw err
+      }
+      const now = new Date()
+      trialEndsAt = new Date(now.getTime() + redemption.trialDays * 86400000).toISOString()
+      invite = { code: redemption.code, redeemedAt: now.toISOString() }
+    }
+
     const profile = {
       userId: user.id,
       username: slug,
@@ -34,6 +57,8 @@ export default withAuth(async (req, res, user) => {
       email: user.email || '',
       updatedAt: new Date().toISOString(),
       createdAt: existingProfile?.createdAt || new Date().toISOString(),
+      ...(trialEndsAt ? { trialEndsAt } : {}),
+      ...(invite ? { invite } : {}),
     }
 
     await writeUserProfile(user.id, profile)

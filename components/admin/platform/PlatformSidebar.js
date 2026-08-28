@@ -908,8 +908,11 @@ export default function PlatformSidebar({
           />
         </div>
 
-        {/* Pages section header */}
-        <div data-tour="pages-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Pages section — the tour anchor wraps the header AND the list, so the
+            spotlight frames the whole section (with any existing pages), not
+            just the heading row. */}
+        <div data-tour="pages-section">
+        <div style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
               Pages
             </span>
@@ -939,9 +942,12 @@ export default function PlatformSidebar({
           droppableId="main-nav"
           emptyHint={<EmptyHint active={pageDropTarget?.type === 'root'}>No pages yet. What you add here will appear on your site&rsquo;s menu.</EmptyHint>}
         />
+        </div>
 
-        {/* Hidden section — always rendered so it's a valid drop target, even when empty */}
-        <div data-tour="hidden-section" style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Hidden section — always rendered so it's a valid drop target, even when
+            empty. Wrapped like Pages so the tour spotlights the whole section. */}
+        <div data-tour="hidden-section">
+        <div style={{ padding: '14px 18px 6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textFaint, fontWeight: 500 }}>
             Hidden
           </span>
@@ -971,6 +977,7 @@ export default function PlatformSidebar({
           droppableId="other-pages"
           emptyHint={<EmptyHint active={pageDropTarget?.type === 'other'}>Nothing hidden. Pages here get a direct link you can share, but won&rsquo;t show up on your site&rsquo;s menu.</EmptyHint>}
         />
+        </div>
 
         {/* Add Page button */}
         <div ref={addMenuRef} style={{ margin: '10px 8px 0' }}>
