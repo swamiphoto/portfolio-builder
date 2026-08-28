@@ -76,10 +76,13 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans', bleed = 
         <>
           <div className={`group ${videoStyle} ${videoWrapperStyle}`}>
             <ReactPlayer key={cleanUrl} {...playerProps} />
-            {/* Manhattan: caption inside on hover (same as photos), not below. */}
+            {/* Manhattan: caption inside on hover (same as photos), not below —
+                desktop only; on mobile the caption sits beneath like every theme. */}
             {bleed && <HoverCaption caption={caption} captionStyle={captionStyle} />}
           </div>
-          {caption && !bleed && <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={capCss}>{caption}</p>}
+          {caption && (
+            <p {...(bleed ? { 'data-mobile-caption': '' } : {})} className={`${bleed ? 'min-[769px]:hidden ' : ''}my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto`} style={capCss}>{caption}</p>
+          )}
         </>
       )}
     </div>

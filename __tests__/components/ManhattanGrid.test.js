@@ -14,10 +14,13 @@ describe('ManhattanGrid', () => {
   })
 })
 
-it('renders an inside hover caption when an image has a caption', () => {
+it('renders a hover caption plus a mobile below-caption when an image has one', () => {
   const images = [{ url: 'https://x/a.jpg', caption: 'On the bridge' }]
-  const { container, getByText } = render(<ManhattanGrid images={images} />)
-  expect(getByText('On the bridge').closest('[data-hover-caption]')).toBeTruthy()
+  const { getAllByText } = render(<ManhattanGrid images={images} />)
+  const caps = getAllByText('On the bridge')
+  expect(caps).toHaveLength(2)
+  expect(caps.some((el) => el.closest('[data-hover-caption]'))).toBe(true)
+  expect(caps.some((el) => !el.closest('[data-hover-caption]') && el.hasAttribute('data-mobile-caption'))).toBe(true)
 })
 
 it('renders sharp-cornered tiles (no rounded utility on the image)', () => {

@@ -317,7 +317,10 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       if (!(block.url || '').trim()) return null
       return wrap('ams-col--media', null, (
         <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
-          <VideoBlock url={block.url} caption="" variant={2} />
+          {/* variant 1: flush to the figure (so the caption below aligns with the
+              video's left edge) and square-cornered — the poster wall has no
+              rounded cards. */}
+          <VideoBlock url={block.url} caption="" variant={1} />
           <AmsterdamCaption caption={block.caption || ''} />
         </figure>
       ))

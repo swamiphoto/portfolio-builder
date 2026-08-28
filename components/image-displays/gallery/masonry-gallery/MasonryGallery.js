@@ -91,8 +91,10 @@ const MasonryGallery = ({ images = [], imageUrls = [], onImageClick, columns, ca
           </div>
           {insideCaption && <HoverCaption caption={caption} captionStyle={captionStyle} />}
         </div>
-        {caption && !insideCaption && (
-          <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{caption}</p>
+        {/* insideCaption themes overlay on hover (desktop only) — on mobile the
+            caption always sits beneath the photo instead. */}
+        {caption && (
+          <p {...(insideCaption ? { 'data-mobile-caption': '' } : {})} className={`${insideCaption ? 'min-[769px]:hidden ' : ''}mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{caption}</p>
         )}
       </div>
     );
