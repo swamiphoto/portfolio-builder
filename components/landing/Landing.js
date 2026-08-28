@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
+import GallerySampler from './GallerySampler'
+import HeroShot from './HeroShot'
 
 // Deliberately understated, text-only landing. No hero image, no screenshots,
 // no borrowed bigness — just a small wordmark, a plain headline, a scannable
@@ -48,12 +50,13 @@ const FONT = {
 }
 
 // The list grows as the product does — keep each line short enough to scan.
+// tilt/lift scatter the cards like prints on a desk; float staggers the idle bob.
 const ITEMS = [
-  ['gorgeous galleries', 'clean, museum-style displays for your photos'],
-  ['fast to build', 'assemble blocks of photos, video, and text, like Lego'],
-  ['emotional slideshows', 'reel-like music slideshows that move clients to tears'],
-  ['one-click print store', 'sell prints from any photo, no store to run'],
-  ['client galleries', 'deliver shoots, collect favorites, get paid'],
+  { label: 'gorgeous galleries', desc: 'clean, museum-style displays for your photos', tilt: -2, lift: 6, float: 0 },
+  { label: 'fast to build', desc: 'assemble blocks of photos, video, and text, like Lego', tilt: 1.4, lift: -10, float: -2.1 },
+  { label: 'emotional slideshows', desc: 'reel-like music slideshows that move clients to tears', tilt: -1, lift: 12, float: -4.4 },
+  { label: 'one-click print store', desc: 'sell prints from any photo, no store to run', tilt: 2.2, lift: -6, float: -1.2 },
+  { label: 'client galleries', desc: 'deliver shoots, collect favorites, get paid', tilt: -1.6, lift: 8, float: -3.3 },
 ]
 
 function Eyebrow({ children }) {
@@ -134,16 +137,16 @@ export default function Landing() {
             textWrap: 'balance',
           }}
         >
-          Your beautiful photography portfolio, built in minutes.
+          Make them <em style={{ fontStyle: 'italic', fontWeight: 400 }}>feel</em> your photography.
         </h1>
 
-        {/* One plain line saying who made it */}
-        <p style={{ fontFamily: FONT.mono, fontSize: 13, letterSpacing: '0.02em', color: T.muted, margin: '16px 0 0' }}>
-          built by a photographer
+        {/* What Sepia is — a point of view, not a feature list */}
+        <p style={{ fontFamily: FONT.sans, fontSize: 16, lineHeight: 1.6, color: T.body, margin: '18px 0 0', maxWidth: 560, textWrap: 'balance' }}>
+          Sepia is a refreshing new take on building photography portfolios: museum-style galleries, slideshows cut to music, and prints and client delivery built in.
         </p>
 
         {/* Single clear action + a quiet sign-in for returning users */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28 }}>
+        <div className="cta-row" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28 }}>
           <button
             onClick={handleSignIn}
             onMouseEnter={() => setBtnHover(true)}
@@ -187,21 +190,63 @@ export default function Landing() {
           </button>
         </div>
 
-        {/* Why it's magical — a scannable spec of what's good */}
-        <div style={{ width: '100%', marginTop: 'clamp(44px, 9vh, 76px)' }}>
+        {/* The product itself, tilted in perspective and straightening as you
+            scroll to it. */}
+        <div style={{ marginTop: 'clamp(40px, 8vh, 68px)', display: 'flex', justifyContent: 'center', width: '100vw' }}>
+          <HeroShot src="/home-editor-shot.jpg" />
+        </div>
+
+        {/* Why it's magical — small cards scattered like notes on a desk,
+            each bobbing gently on its own rhythm. */}
+        {/* The section is itself the wide flex item (not a 100%-wide wrapper
+            with an overflowing child) — the column's alignItems centers it
+            over the viewport; auto margins on an overflowing child would
+            collapse to 0 and shove the row off to the right. */}
+        <div style={{ width: 'min(880px, 94vw)', marginTop: 'clamp(52px, 10vh, 88px)' }}>
           <Eyebrow>why it's magical</Eyebrow>
-          <div style={{ marginTop: 20, borderBottom: `1px solid ${T.border}`, textAlign: 'left' }}>
-            {ITEMS.map(([label, desc]) => (
-              <div key={label} style={{ padding: '14px 2px', borderTop: `1px solid ${T.border}` }}>
-                <div style={{ fontFamily: FONT.mono, fontSize: 14.5, color: T.ink, letterSpacing: '0.01em' }}>{label}</div>
-                <div style={{ fontFamily: FONT.sans, fontSize: 14, color: T.muted, marginTop: 4 }}>{desc}</div>
+          {/* Width caps at three cards per row, so five cards break 3 + 2 —
+              a 4 + 1 wrap leaves a lonely straggler. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'clamp(16px, 2.5vw, 26px)', marginTop: 34, maxWidth: 700, marginLeft: 'auto', marginRight: 'auto' }}>
+            {ITEMS.map(({ label, desc, tilt, lift, float }) => (
+              // Outer layer floats (transform-only, so siblings never shift);
+              // inner layer carries the static desk-scatter tilt.
+              <div key={label} className="magic-card" style={{ '--float-delay': `${float}s`, '--card-lift': `${lift}px` }}>
+                <div
+                  style={{
+                    width: 196,
+                    padding: '20px 18px 18px',
+                    textAlign: 'left',
+                    background: MODE === 'light' ? '#fbf7ee' : '#211d16',
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 10,
+                    boxShadow: '0 16px 26px -20px rgba(26,18,10,0.4), 0 2px 5px rgba(26,18,10,0.06)',
+                    transform: `rotate(${tilt}deg)`,
+                  }}
+                >
+                  <div style={{ fontFamily: FONT.mono, fontSize: 15, fontWeight: 700, color: T.ink, letterSpacing: '0.01em', lineHeight: 1.35 }}>{label}</div>
+                  <div style={{ fontFamily: FONT.sans, fontSize: 13, color: T.muted, marginTop: 8, lineHeight: 1.5 }}>{desc}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
+        <style jsx global>{`
+          .magic-card { animation: magicFloat 7s ease-in-out var(--float-delay, 0s) infinite alternate; }
+          @keyframes magicFloat {
+            from { transform: translateY(var(--card-lift, 0px)); }
+            to { transform: translateY(calc(var(--card-lift, 0px) - 7px)); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .magic-card { animation: none; }
+          }
+        `}</style>
+
         {/* Founder note — frank about being early */}
         <div style={{ width: '100%', marginTop: 'clamp(34px, 7vh, 58px)', textAlign: 'left' }}>
+          <div style={{ marginBottom: 16 }}>
+            <Eyebrow>built by a photographer</Eyebrow>
+          </div>
           <p style={{ fontFamily: FONT.serif, fontSize: 17, lineHeight: 1.62, color: T.body, margin: 0, textWrap: 'pretty' }}>
             In the 15 years I’ve been a photographer, I’ve tried every portfolio builder, and not one felt like it was truly
             made for photographers. Pixieset came close. I sweated the details on Sepia only another photographer would
@@ -220,6 +265,15 @@ export default function Landing() {
             </a>
             , Founder of Sepia
           </p>
+        </div>
+
+        {/* A sampling of Sepia sites, drifting by full-bleed — after the
+            founder note, so the quote reads first. No heading: the screens
+            speak for themselves. The column is a centered flex container, so a
+            100vw item is centered over the viewport by alignItems alone (a
+            margin offset here would double-shift the section off-center). */}
+        <div style={{ width: '100vw', marginTop: 'clamp(44px, 9vh, 72px)', overflow: 'hidden' }}>
+          <GallerySampler />
         </div>
 
         {/* Minimal footer */}
