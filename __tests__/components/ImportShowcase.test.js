@@ -9,7 +9,7 @@ describe('ImportShowcase', () => {
 
   it('shows a value-prop pitch, leading with music slideshows', () => {
     const { getByText } = render(<ImportShowcase progress={{ done: 12, total: 40 }} photos={photos} />)
-    expect(getByText('Galleries set to music.')).toBeTruthy()
+    expect(getByText('Immersive galleries set to music.')).toBeTruthy()
     expect(getByText(/sits through to the end/)).toBeTruthy()
   })
 
