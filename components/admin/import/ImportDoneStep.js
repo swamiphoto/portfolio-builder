@@ -104,9 +104,10 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
           A few photos couldn't be copied over. You can upload those to your library anytime.
         </p>
       )}
-      {/* The two CTAs share one row (never wrapping); the quiet text action
-          sits on its own line below so it can't force the pair apart. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap', marginBottom: 14 }}>
+      {/* The two CTAs share one row on desktop (both fit in the 540px card); on a
+          phone-width card they wrap and stack instead of squishing. The quiet text
+          action sits on its own line below. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
         {canReplicate ? (
           <>
             <button

@@ -6,6 +6,7 @@ import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getP
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import ThemeToolbarControl from '../../components/admin/platform/ThemeToolbarControl'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
+import StudioMobileGate from '../../components/admin/platform/StudioMobileGate'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
 import PhotoPickerModal from '../../components/admin/gallery-builder/PhotoPickerModal'
 import AdminLibrary from '../../components/admin/AdminLibrary'
@@ -24,6 +25,7 @@ import { useOnboarding } from '../../components/admin/onboarding/useOnboarding'
 import { buildTourSteps, WELCOME, BLOCKS_TOUR_STEPS } from '../../components/admin/onboarding/tourSteps'
 import { fontFamilyForSlot } from '../../common/themes/variants'
 import { THEME_LIST } from '../../common/themes'
+import { useIsPhone } from '../../common/useIsPhone'
 
 const AUTOSAVE_DELAY = 1500
 const themeName = (id) => (THEME_LIST.find((t) => t.id === id) || {}).name || id
@@ -79,6 +81,9 @@ export default function AdminIndex() {
   const [lastPublishedAt, setLastPublishedAt] = useState(null)
   const [previewViewport, setPreviewViewport] = useState('desktop') // 'desktop' | 'mobile'
   const autosaveTimer = useRef(null)
+  // Real device width (not the preview toggle): the studio editor is a wide,
+  // three-column workspace, so on a phone we show a gate instead. See below.
+  const isPhone = useIsPhone()
 
   // Hover highlight sync
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null)
@@ -440,6 +445,10 @@ export default function AdminIndex() {
   }
 
   if (!session || !siteConfig) return null
+
+  // The studio can't be used on a phone-width screen — send them to a desktop.
+  // Keyed off real device width, so flipping the preview to Mobile never trips it.
+  if (isPhone) return <StudioMobileGate email={session?.user?.email} />
 
   // Resolved above the early returns (so the client-feedback hook can key off it).
   const selectedPage = editingPage

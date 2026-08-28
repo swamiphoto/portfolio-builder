@@ -117,7 +117,9 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
             onChange={(e) => { setInput(e.target.value); setError(null) }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleDiscover() }}
             placeholder="yourwebsite.com"
-            className="w-full text-[15px] outline-none bg-transparent border-b py-2 text-[#2c2416] placeholder:text-[#a8967a] focus:border-[#8b6f47]"
+            // 16px, not smaller: iOS Safari auto-zooms into any input under 16px on
+            // focus, which shifts the whole onboarding screen on a phone.
+            className="w-full text-[16px] outline-none bg-transparent border-b py-2 text-[#2c2416] placeholder:text-[#a8967a] focus:border-[#8b6f47]"
             style={{ borderColor: 'rgba(160,140,110,0.3)' }}
           />
           {error && <p style={{ marginTop: 10, fontSize: 12.5, color: '#a15c4a' }}>{error}</p>}
@@ -208,7 +210,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
   if (variant === 'fullscreen') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'var(--desk)' }}>
-        <div className="rounded-xl overflow-hidden" style={{ width: 520, maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ width: 520, maxWidth: 'calc(100vw - 24px)', maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}>
           {body}
         </div>
       </div>
@@ -229,7 +231,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
       <div
         onClick={e => e.stopPropagation()}
         className="flex flex-col rounded-xl overflow-hidden"
-        style={{ width: 520, maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}
+        style={{ width: 520, maxWidth: 'calc(100vw - 24px)', maxHeight: '86vh', background: 'var(--popover)', boxShadow: 'var(--popover-shadow)' }}
       >
         <div className="flex items-center px-4 flex-shrink-0" style={{ height: 44, borderBottom: '1px solid rgba(160,140,110,0.22)' }}>
           <span style={{ ...monoLabel, flex: 1 }}>Import from your other sites</span>

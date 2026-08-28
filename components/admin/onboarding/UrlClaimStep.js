@@ -12,7 +12,7 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
   const showSlugHint = slug && slug !== username.toLowerCase()
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen font-sans" style={{ background: 'var(--desk, #e8e2d9)', padding: '0 24px', position: 'relative' }}>
+    <div className="flex flex-col items-center justify-center font-sans" style={{ minHeight: '100dvh', background: 'var(--desk, #e8e2d9)', padding: '0 24px', position: 'relative' }}>
       {/* Sepia logo, top-left — same script wordmark as the home page and step 2 */}
       <div style={{ position: 'absolute', top: 0, left: 0, padding: '22px 28px' }}>
         <span style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: '#2c2416' }}>Sepia</span>
