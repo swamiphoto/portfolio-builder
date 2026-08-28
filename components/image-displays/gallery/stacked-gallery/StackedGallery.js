@@ -118,8 +118,10 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                           </div>
                           {insideCaption && <HoverCaption caption={getCaptionForUrl(image.src)} captionStyle={captionStyle} />}
                         </div>
-                        {getCaptionForUrl(image.src) && !insideCaption && (
-                          <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{getCaptionForUrl(image.src)}</p>
+                        {/* insideCaption themes overlay on hover (desktop only) —
+                            on mobile the caption always sits beneath the photo. */}
+                        {getCaptionForUrl(image.src) && (
+                          <p {...(insideCaption ? { 'data-mobile-caption': '' } : {})} className={`${insideCaption ? 'min-[769px]:hidden ' : ''}mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{getCaptionForUrl(image.src)}</p>
                         )}
                       </div>
                     ) : null
@@ -149,11 +151,13 @@ const StackedGallery = ({ images: imagesProp = [], imageUrls: imageUrlsProp = []
                   </div>
                   {insideCaption && <HoverCaption caption={getCaptionForUrl(entry.src)} captionStyle={captionStyle} />}
                 </div>
-                {getCaptionForUrl(entry.src) && !insideCaption && (
+                {getCaptionForUrl(entry.src) && (
                   // No maxWidth:colWidth here — that pinned the caption to the photo
                   // width (up to 72vw); let the capSize class (max-w-md) cap it to a
                   // readable measure so it wraps narrower than the photo.
-                  <p className={`mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{getCaptionForUrl(entry.src)}</p>
+                  // insideCaption themes overlay on hover (desktop only) — on
+                  // mobile the caption always sits beneath the photo.
+                  <p {...(insideCaption ? { 'data-mobile-caption': '' } : {})} className={`${insideCaption ? 'min-[769px]:hidden ' : ''}mt-2 ${capSize} italic text-center text-gray-500`} style={capCss}>{getCaptionForUrl(entry.src)}</p>
                 )}
               </div>
             )}
