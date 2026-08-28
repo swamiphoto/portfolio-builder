@@ -43,6 +43,10 @@ export function PillToggle({ value, onChange, options }) {
         padding: 2,
         borderRadius: 7,
         gap: 1,
+        // In a container narrower than the pills (options vary per theme), wrap
+        // to a second row — options must never clip against the panel edge.
+        flexWrap: 'wrap',
+        maxWidth: '100%',
       }}
     >
       {options.map(({ value: v, label }) => {
