@@ -42,6 +42,11 @@ export function getDomainLookupPath(hostname) {
   return `domains/${hostname}.json`
 }
 
+export function getInviteLookupPath(code) {
+  if (!code) throw new Error('code is required')
+  return `invites/${code}.json`
+}
+
 export function getUserPrintMasterPath(userId, filename) {
   if (!filename) throw new Error('filename is required')
   return `${getUserPhotosPrefix(userId)}print-masters/${filename}`

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 
-// The first thing a new photographer does is claim their address — so make it a
-// moment, not a form field. The address itself is the hero: as they type, their
-// name fills a big serif line, "yourname.sepia.photo", the way it'll read on a card.
+// The first thing a new photographer does after the invite gate is claim their
+// address — so make it a moment, not a form field. The address itself is the
+// hero: as they type, their name fills a big serif line, "yourname.sepia.photo",
+// the way it'll read on a card.
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 
@@ -11,13 +12,15 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
   const showSlugHint = slug && slug !== username.toLowerCase()
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen font-sans" style={{ background: 'var(--desk, #e8e2d9)', padding: '0 24px' }}>
+    <div className="flex flex-col items-center justify-center h-screen font-sans" style={{ background: 'var(--desk, #e8e2d9)', padding: '0 24px', position: 'relative' }}>
+      {/* Sepia logo, top-left — same script wordmark as the home page and step 2 */}
+      <div style={{ position: 'absolute', top: 0, left: 0, padding: '22px 28px' }}>
+        <span style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: '#2c2416' }}>Sepia</span>
+      </div>
+
       <form onSubmit={onSubmit} style={{ width: '100%', maxWidth: 860, textAlign: 'center' }}>
-        <p className="font-fraunces" style={{ fontSize: 21, fontStyle: 'italic', color: '#5a4a36', marginBottom: 8 }}>
-          Set your studio URL
-        </p>
-        <p style={{ fontSize: 12.5, color: '#a8967a', marginBottom: 28 }}>
-          (You can set a custom domain later)
+        <p className="font-fraunces" style={{ fontSize: 21, color: '#5a4a36', marginBottom: 30 }}>
+          Now, pick your portfolio&rsquo;s address.
         </p>
 
         {/* the hero: a live, oversized address */}
@@ -64,8 +67,8 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
           </p>
         )}
 
-        <p style={{ fontSize: 16, color: '#8a7a62', marginTop: showSlugHint ? 14 : 26, lineHeight: 1.6, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance' }}>
-          Lowercase letters, numbers, and hyphens. You can change it anytime.
+        <p style={{ fontSize: 14, color: '#8a7a62', marginTop: showSlugHint ? 14 : 24, lineHeight: 1.6, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance' }}>
+          You can change it anytime, or set up a custom domain later.
         </p>
 
         {error && (
@@ -89,6 +92,28 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
           {saving ? 'Claiming…' : 'Claim your address'}
         </button>
       </form>
+
+      {/* Beta note — quiet, honest, at the moment they commit to an address */}
+      <p
+        style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '20px 24px', textAlign: 'center',
+          fontSize: 13, color: '#a8967a', lineHeight: 1.5,
+          maxWidth: 640, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance',
+        }}
+      >
+        Sepia is in beta, and its design is still evolving.
+        <br />
+        Your site&rsquo;s look may shift as we refine things.
+      </p>
+
+      {/* Browser-default placeholder gray reads cold against the warm palette */}
+      <style jsx global>{`
+        #claim-username::placeholder {
+          color: #c6b89e;
+          opacity: 1;
+        }
+      `}</style>
     </div>
   )
 }
