@@ -294,6 +294,13 @@ a {
 [data-theme="manhattan"] .theme-shell[data-viewport="mobile"] .theme-content { padding-left: 0; padding-right: 0; }
 [data-theme="manhattan"] .theme-shell[data-viewport="mobile"] .manhattan-actionbar { left: 0; }
 
+/* Admin phone preview: caption visibility is driven by Tailwind breakpoint
+   classes, which read the real window width — not the preview toggle. Force the
+   phone treatment (hover overlay off, below-caption on) so the editor's Mobile
+   preview matches what a phone will actually render. */
+.theme-shell[data-viewport="mobile"] [data-hover-caption] { display: none !important; }
+.theme-shell[data-viewport="mobile"] [data-mobile-caption] { display: block !important; }
+
 /* Provence theme — warm ivory ground with a romantic serif. The .theme-shell
    ships bg-white, so paint the cream over it; the split-screen cover + justified
    galleries otherwise reuse the shared renderers. */
@@ -855,6 +862,12 @@ a {
 /* Balanced columns are a desktop-wall trick; on phones text is a single full-width
    column (override the inline column-count/width the balancer sets). */
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-text--cols { column-count: 1 !important; width: 100% !important; }
+/* The desktop wall caps multi-column text blocks at 92vw and sizes them to their
+   text (width:auto). On phones that cap leaves a bare strip on the right where
+   the neighbouring column peeks through — text columns span the full width like
+   every other stacked block. */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--text,
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--text:has(.florence-text--cols) { width: 100% !important; max-width: 100%; }
 /* On phones every horizontal layout collapses to a full-width vertical stack. */
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-figure,
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-frame { height: auto !important; flex: 0 0 auto; }
@@ -890,6 +903,20 @@ a {
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount[data-caplayout="beside"] { flex-direction: column; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount[data-caplayout="beside"] .florence-mount__label { width: 100%; align-self: auto; padding: clamp(12px, 2.5vh, 20px) 0 0 0; overflow: visible; }
 [data-theme="florence"] .florence-stage[data-mobile="true"] .florence-mount[data-caplayout="beside"] .florence-mount__title { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+/* Captions never sit inside the photo on phones — a long caption under a scrim can
+   swallow most of a small screen's image. The bottom-overlay label drops into
+   normal flow beneath the photo, in the museum wall-label voice (ink on ground,
+   no gradient). Fill photos run edge-to-edge, so their label keeps side padding. */
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-fill-label {
+  position: static; background: none; padding: 0.85rem 0 0; gap: 0.5rem;
+}
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-col--fill .florence-fill-label { padding: 0.85rem 1.25rem 0; }
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-fill-label .florence-caption__title {
+  color: var(--theme-text-muted, #8b8378); font-size: var(--fs-caption); line-height: 1.6;
+}
+[data-theme="florence"] .florence-stage[data-mobile="true"] .florence-fill-label .florence-caption__meta {
+  color: var(--theme-text-muted, #8b8378); opacity: 0.72;
+}
 
 /* ---------- Amsterdam: Dutch-poster horizontal wall ---------- */
 [data-theme="amsterdam"] { background: var(--theme-bg, #f6efe4); color: var(--theme-text, #141210); }
@@ -1197,6 +1224,11 @@ a {
 
 /* Mobile column adjustments */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--quiet, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--testimonial, [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--contact { width: 100%; }
+/* The desktop wall caps multi-column text blocks at 92vw and sizes them to their
+   text (.ams-col--quiet:has(.ams-text--cols) above). On phones that cap leaves a
+   bare strip on the right of an ink block where the neighbouring column peeks
+   through — text blocks span the full width like every other stacked block. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--quiet:has(.ams-text--cols) { width: 100%; max-width: 100%; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row { flex-direction: column; align-items: stretch; height: auto; gap: 12px; padding: 16px 0; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-frame { height: auto !important; }
 /* On phones the plaque stacks: the label drops below the photo and fills the
@@ -1233,6 +1265,23 @@ a {
    stack that just injects big empty gaps, so flatten it back to even spacing. */
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photo[data-flow] { justify-content: flex-start; padding-top: 22px; padding-bottom: 22px; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-col--photo[data-flow] .ams-figure { transform: none; }
+/* Captions never sit inside the photo on phones (mirrors Florence): the gradient
+   fill label and the mosaic ink chip both drop into normal flow beneath their
+   photo, in the theme's below-photo caption voice. currentColor keeps them
+   legible on light and ink grounds alike. */
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fill-label {
+  position: static; background: none; padding: 12px 0 0;
+}
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fill-label .ams-caption__title {
+  color: inherit; font-size: var(--fs-caption);
+}
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-fill-label .ams-caption__meta {
+  color: inherit; opacity: 0.62; font-size: var(--fs-caption-meta);
+}
+[data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic__cap {
+  position: static; max-width: 100%; margin: 0; padding: 8px 0 10px;
+  background: none; color: inherit; backdrop-filter: none;
+}
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-row--scatter .ams-mount[data-flip] { transform: none; }
 [data-theme="amsterdam"] .ams-stage[data-mobile="true"] .ams-mosaic { flex-wrap: wrap; height: auto !important; }
 /* Mosaic groups + page links stack full-width on phones (mirrors Florence's
