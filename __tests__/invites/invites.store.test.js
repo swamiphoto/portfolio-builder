@@ -60,6 +60,24 @@ describe('createInvite', () => {
     expect(doc.expiresAt).toBe('2027-01-01T00:00:00.000Z')
     expect(doc.trialDays).toBe(30)
   })
+  it('refuses to overwrite an existing code (would wipe uses/redeemedBy)', async () => {
+    mockDownload.mockResolvedValue({ code: 'SEPIA-EARLY', uses: 3, redeemedBy: [{ userId: 'u1' }] })
+    await expect(createInvite({ code: 'sepia-early' })).rejects.toMatchObject({ code: 'CODE_EXISTS' })
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+  it('rejects garbage numerics instead of silently minting an unlimited code', async () => {
+    mockDownload.mockRejectedValue({ name: 'NoSuchKey' }) // no existing code
+    // Number('abc') is NaN, which JSON-serializes to null — i.e. unlimited uses.
+    await expect(createInvite({ code: 'A', maxUses: 'abc' })).rejects.toThrow(/maxUses/)
+    await expect(createInvite({ code: 'A', expiresAt: 'next week' })).rejects.toThrow(/expiresAt/)
+    await expect(createInvite({ code: 'A', trialDays: 0 })).rejects.toThrow(/trialDays/)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+  it('caps hostile code length so it cannot become a huge storage key', async () => {
+    mockDownload.mockRejectedValue({ name: 'NoSuchKey' }) // no existing code
+    const doc = await createInvite({ code: 'X'.repeat(500) })
+    expect(doc.code.length).toBe(64)
+  })
 })
 
 describe('writeInvite', () => {

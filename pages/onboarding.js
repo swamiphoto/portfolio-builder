@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import ImportFlow from '../components/admin/import/ImportFlow'
+import InviteGateStep from '../components/admin/onboarding/InviteGateStep'
 import UrlClaimStep from '../components/admin/onboarding/UrlClaimStep'
 import { applyImportToConfig } from '../common/import/importClient'
 import { composeSite, applyComposedPages, resolveComposableAssets } from '../common/import/composer'
@@ -20,7 +21,7 @@ function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
 export default function Onboarding() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [step, setStep] = useState('url') // 'url' | 'import-offer'
+  const [step, setStep] = useState('invite') // 'invite' | 'url' | 'import-offer'
   const [isReturning, setIsReturning] = useState(false)
   const [username, setUsername] = useState('')
   const [inviteCode, setInviteCode] = useState('')
@@ -31,7 +32,7 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/auth/signin')
-    if (status === 'authenticated' && session?.user?.username && step === 'url') {
+    if (status === 'authenticated' && session?.user?.username && step === 'invite') {
       // They already have a username — post-login sent them here because they
       // have no photos yet, so go straight to the import offer.
       setClaimedSlug(session.user.username)
@@ -41,6 +42,31 @@ export default function Onboarding() {
   }, [status, session, router, step])
 
   const slug = username.toLowerCase().replace(/[^a-z0-9-]/g, '')
+
+  async function handleInviteCheck(e) {
+    e.preventDefault()
+    if (!inviteCode.trim()) return
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch('/api/invite-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: inviteCode.trim() }),
+      })
+      if (res.ok) {
+        setStep('url')
+      } else {
+        const body = await res.json().catch(() => ({}))
+        const isInvite = Object.values(INVITE_ERRORS).includes(body.error)
+        setError(isInvite ? inviteErrorMessage(body.error) : 'Something went wrong. Please try again.')
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -62,6 +88,9 @@ export default function Onboarding() {
         const body = await res.json().catch(() => ({}))
         const isInvite = Object.values(INVITE_ERRORS).includes(body.error)
         setError(isInvite ? inviteErrorMessage(body.error) : 'Something went wrong. Please try again.')
+        // A code that passed the gate but failed redemption (e.g. exhausted in
+        // the gap) is a gate problem — send them back to the door to sort it out.
+        if (isInvite) setStep('invite')
         setSaving(false)
         return
       }
@@ -93,10 +122,10 @@ export default function Onboarding() {
         </div>
 
         <div style={{ width: '100%', maxWidth: 860, textAlign: 'center' }}>
-          <p className="font-fraunces" style={{ fontSize: 21, fontStyle: 'italic', color: '#5a4a36', marginBottom: 22 }}>
+          <p className="font-fraunces" style={{ fontSize: 21, color: '#5a4a36', marginBottom: 22 }}>
             {isReturning
               ? `Welcome back${firstName ? `, ${firstName}` : ''}.`
-              : `Welcome${firstName ? `, ${firstName}` : ''}.`}
+              : `It's yours${firstName ? `, ${firstName}` : ''}.`}
           </p>
 
           {/* the hero: the studio address, big — the way it'll read on a card */}
@@ -238,18 +267,30 @@ export default function Onboarding() {
     )
   }
 
-  // ── Step 1: choose URL ────────────────────────────────────────────────────
+  // ── Step 2: choose URL ────────────────────────────────────────────────────
+  if (step === 'url') {
+    return (
+      <UrlClaimStep
+        rootDomain={rootDomain}
+        username={username}
+        setUsername={(v) => { setUsername(v); setError('') }}
+        slug={slug}
+        error={error}
+        saving={saving}
+        onSubmit={handleSubmit}
+      />
+    )
+  }
+
+  // ── Step 1: the invite gate ───────────────────────────────────────────────
   return (
-    <UrlClaimStep
-      rootDomain={rootDomain}
-      username={username}
-      setUsername={(v) => { setUsername(v); setError('') }}
-      slug={slug}
+    <InviteGateStep
+      firstName={firstName}
       inviteCode={inviteCode}
       setInviteCode={(v) => { setInviteCode(v); setError('') }}
       error={error}
-      saving={saving}
-      onSubmit={handleSubmit}
+      checking={saving}
+      onSubmit={handleInviteCheck}
     />
   )
 }

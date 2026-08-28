@@ -15,7 +15,7 @@ export default withAuth(async (req, res, user) => {
   }
 
   if (req.method === 'PUT') {
-    const { username, displayName, bio, inviteCode } = req.body
+    const { username, displayName, bio, inviteCode } = req.body || {}
     if (!username) return res.status(400).json({ error: 'username is required' })
 
     const slug = username.toLowerCase().replace(/[^a-z0-9-]/g, '')

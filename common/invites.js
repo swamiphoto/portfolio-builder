@@ -12,7 +12,9 @@ function isNotFound(err) {
 
 export function normalizeInviteCode(raw) {
   if (!raw) return ''
-  return String(raw).trim().toUpperCase().replace(/[^A-Z0-9-]/g, '')
+  // Length cap keeps hostile input from becoming a multi-KB storage key (the
+  // code is used verbatim in the lookup path) — real codes are ≤ ~20 chars.
+  return String(raw).trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 64)
 }
 
 // Ambiguous characters (0/O, 1/I) left out so hand-typed codes are unambiguous.
@@ -44,15 +46,41 @@ export async function writeInvite(invite) {
 export async function createInvite({ code, label = '', maxUses = null, expiresAt = null, trialDays = DEFAULT_TRIAL_DAYS } = {}) {
   const normalized = code ? normalizeInviteCode(code) : generateCode()
   if (!normalized) throw new Error('Invalid invite code')
+
+  // Never blind-write over an existing code: that would zero `uses`/`redeemedBy`
+  // (destroying the audit trail) and revive exhausted or expired codes.
+  const existing = await readInvite(normalized)
+  if (existing) {
+    const err = new Error('Invite code already exists')
+    err.code = 'CODE_EXISTS'
+    throw err
+  }
+
+  // Sanitize numerics at the trust boundary: `Number('abc')` is NaN, which
+  // JSON-serializes to null — i.e. garbage input silently minting an UNLIMITED
+  // code. Same guard for dates ("next week" → NaN → never expires).
+  const parsedMaxUses = maxUses == null || maxUses === '' ? null : Number(maxUses)
+  if (parsedMaxUses !== null && (!Number.isInteger(parsedMaxUses) || parsedMaxUses < 1)) {
+    throw new Error('maxUses must be a positive integer')
+  }
+  const parsedExpiresAt = expiresAt || null
+  if (parsedExpiresAt !== null && Number.isNaN(Date.parse(parsedExpiresAt))) {
+    throw new Error('expiresAt must be a valid date')
+  }
+  const parsedTrialDays = Number(trialDays)
+  if (!Number.isInteger(parsedTrialDays) || parsedTrialDays < 1) {
+    throw new Error('trialDays must be a positive integer')
+  }
+
   const invite = {
     code: normalized,
-    label,
+    label: String(label ?? '').slice(0, 200),
     createdAt: new Date().toISOString(),
-    maxUses: maxUses == null ? null : Number(maxUses),
+    maxUses: parsedMaxUses,
     uses: 0,
     redeemedBy: [],
-    expiresAt: expiresAt || null,
-    trialDays: Number(trialDays) || DEFAULT_TRIAL_DAYS,
+    expiresAt: parsedExpiresAt,
+    trialDays: parsedTrialDays,
   }
   await writeInvite(invite)
   return invite
@@ -64,6 +92,30 @@ export class InviteError extends Error {
     this.name = 'InviteError'
     this.code = code
   }
+}
+
+/**
+ * Validates a code without redeeming it — for the onboarding gate screen, which
+ * checks the ticket at the door while actual redemption stays on the profile
+ * save. Mirrors redeemInvite's checks exactly, including treating a code this
+ * user already redeemed as valid (so a refresh mid-onboarding doesn't lock
+ * them out).
+ */
+export async function checkInvite(rawCode, userId) {
+  const code = normalizeInviteCode(rawCode)
+  if (!code) throw new InviteError(INVITE_ERRORS.NOT_FOUND)
+  const invite = await readInvite(code)
+  if (!invite) throw new InviteError(INVITE_ERRORS.NOT_FOUND)
+  const alreadyRedeemed = (invite.redeemedBy || []).some((r) => r.userId === userId)
+  if (!alreadyRedeemed) {
+    if (invite.expiresAt && Date.parse(invite.expiresAt) < Date.now()) {
+      throw new InviteError(INVITE_ERRORS.EXPIRED)
+    }
+    if (invite.maxUses != null && (invite.uses || 0) >= invite.maxUses) {
+      throw new InviteError(INVITE_ERRORS.EXHAUSTED)
+    }
+  }
+  return { code: invite.code }
 }
 
 /**

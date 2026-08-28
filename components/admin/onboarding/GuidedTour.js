@@ -141,11 +141,13 @@ export default function GuidedTour({ steps = [], welcome, onFinish }) {
             {step.title}
           </div>
           <div style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 18 }}>{step.body}</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {!isLast && steps.length > 1
-              ? <button onClick={() => onFinish?.('skip')} style={skipBtn}>Skip tour</button>
-              : <span />}
+          {/* Primary action first, quiet escape to its right — same order as the
+              modal buttons elsewhere (the heavier control leads). */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button onClick={advance} style={primaryBtn}>{isLast ? 'Got it' : 'Next'}</button>
+            {!isLast && steps.length > 1 && (
+              <button onClick={() => onFinish?.('skip')} style={skipBtn}>Skip tour</button>
+            )}
           </div>
         </div>
       </div>
