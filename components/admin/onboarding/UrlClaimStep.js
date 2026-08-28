@@ -11,7 +11,7 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
   const showSlugHint = slug && slug !== username.toLowerCase()
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen font-sans" style={{ background: 'var(--desk, #e8e2d9)', padding: '0 24px' }}>
+    <div className="flex flex-col items-center justify-center font-sans" style={{ minHeight: '100dvh', background: 'var(--desk, #e8e2d9)', padding: '0 24px' }}>
       <form onSubmit={onSubmit} style={{ width: '100%', maxWidth: 860, textAlign: 'center' }}>
         <p className="font-fraunces" style={{ fontSize: 21, fontStyle: 'italic', color: '#5a4a36', marginBottom: 8 }}>
           Set your studio URL

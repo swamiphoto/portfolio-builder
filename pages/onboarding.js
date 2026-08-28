@@ -75,8 +75,8 @@ export default function Onboarding() {
   if (step === 'import-offer') {
     return (
       <div
-        className="flex flex-col items-center justify-center h-screen font-sans"
-        style={{ background: 'var(--desk, #e8e2d9)', position: 'relative', padding: '0 24px' }}
+        className="flex flex-col items-center justify-center font-sans"
+        style={{ minHeight: '100dvh', background: 'var(--desk, #e8e2d9)', position: 'relative', padding: '0 24px' }}
       >
         {/* Sepia logo, top-left — same script wordmark as the home page */}
         <div style={{ position: 'absolute', top: 0, left: 0, padding: '22px 28px' }}>
