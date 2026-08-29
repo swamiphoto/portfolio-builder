@@ -155,7 +155,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       <div
         className="relative flex-1 overflow-hidden cursor-pointer"
         style={{ background: placeholderColor(asset.assetId) }}
-        onClick={() => { if (selectionActive) { onToggleSelect?.(); } else { onImageClick && onImageClick(); } }}
+        onClick={(e) => { if (selectionActive) { onToggleSelect?.(e); } else { onImageClick && onImageClick(); } }}
         draggable
         onDragStart={(e) => {
           // Drag the whole selection when this tile is part of it, else just this one.
@@ -184,7 +184,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       >
         {/* Select checkbox — top-left, shown on hover or while selecting */}
         <button
-          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(e); }}
           className={`absolute top-2 left-2 z-10 rounded-full flex items-center justify-center transition-opacity ${selectionActive || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
           style={{
             width: 20, height: 20,

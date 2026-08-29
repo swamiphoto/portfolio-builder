@@ -363,6 +363,14 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
       return next;
     });
   }, []);
+  // Shift-click range select: union a whole range of urls into the selection.
+  const selectRange = useCallback((urls) => {
+    setSelectedUrls(prev => {
+      const next = new Set(prev);
+      for (const u of urls) next.add(u);
+      return next;
+    });
+  }, []);
   const clearSelection = useCallback(() => setSelectedUrls(new Set()), []);
   // Drop the selection whenever the viewed album/filter changes.
   useEffect(() => { setSelectedUrls(new Set()); }, [selectedAlbum]);
@@ -883,6 +891,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
         onToggleSet={handleToggleSet}
         selectedUrls={selectedUrls}
         onToggleSelect={toggleSelect}
+        onSelectRange={selectRange}
         selectionActive={selectionActive}
         onDropFiles={handleDropUpload}
         dropUploading={dropUploading}
