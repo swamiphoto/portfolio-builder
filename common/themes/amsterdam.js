@@ -76,6 +76,11 @@ export const amsterdam = {
       add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Fit' }],
       defaultVariant: 'full-height',
     },
+    video: {
+      hide: ['full-bleed', 'centered', 'side-by-side'],
+      add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Fit' }],
+      defaultVariant: 'full-height',
+    },
     // Photo sets lay out horizontally: Row (side by side, captions beneath) or
     // Mosaic (varied groups of 1/2/3). Size scales the height.
     photos: {
