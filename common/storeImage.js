@@ -3,10 +3,12 @@
 // return { gcsUrl, objectPath, width, height }.
 // Used by upload-file.js (manual upload) and fetch-batch (web import).
 
+import crypto from 'crypto'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
-import { s3, BUCKET, PUBLIC_URL } from './gcsClient'
+import { s3, BUCKET, PUBLIC_URL, downloadBuffer } from './gcsClient'
 import { getUserPhotoPath, getUserPhotosPrefix } from './gcsUser'
+import { extractCapture } from './exifCapture'
 
 /**
  * Resolve the R2 object key for an upload.
@@ -47,8 +49,6 @@ export function resolveUploadKey(userId, filename, folder) {
  */
 export async function storeImageBuffer(userId, { buffer, filename, contentType, folder }) {
   const key = resolveUploadKey(userId, filename, folder)
-  const thumbKey = key.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg')
-  const displayKey = key.replace('/photos/', '/display/').replace(/\.[^.]+$/, '.jpg')
 
   // The PutObject ETag is the object's MD5 (single-part upload) — the same value
   // the object listing returns, so it's our exact-duplicate fingerprint and it's
@@ -57,6 +57,23 @@ export async function storeImageBuffer(userId, { buffer, filename, contentType, 
   const put = await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }))
   const hash = String(put?.ETag || '').replace(/"/g, '') || null
 
+  const { width, height } = await generateDerivatives(key, buffer)
+  return { gcsUrl: `${PUBLIC_URL}/${key}`, objectPath: key, width, height, hash }
+}
+
+/**
+ * Generate the thumbnail (600px) + display (1800px) variants for an object that
+ * already lives in R2 at `key`, from its `buffer`. Returns { width, height }.
+ * Thumbnail/display failure is non-fatal (returns nulls) so it never fails an
+ * upload — but the display variant is required by page galleries and the library
+ * lightbox (getSizedUrl(url,'display')), so a failure there shows blanks.
+ * @param {string} key - the ORIGINAL object key (contains '/photos/')
+ * @param {Buffer} buffer
+ * @returns {Promise<{ width: number|null, height: number|null }>}
+ */
+export async function generateDerivatives(key, buffer) {
+  const thumbKey = key.replace('/photos/', '/thumbnails/').replace(/\.[^.]+$/, '.jpg')
+  const displayKey = key.replace('/photos/', '/display/').replace(/\.[^.]+$/, '.jpg')
   let width = null
   let height = null
   try {
@@ -69,13 +86,41 @@ export async function storeImageBuffer(userId, { buffer, filename, contentType, 
     const thumbBuffer = await img.clone().resize(600, null, { withoutEnlargement: true }).jpeg({ quality: 82 }).toBuffer()
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: thumbKey, Body: thumbBuffer, ContentType: 'image/jpeg' }))
 
-    // 1800px display variant — consumed by page galleries and the library lightbox
-    // via getSizedUrl(url, 'display'). Without it those surfaces 404 and show blank.
     const displayBuffer = await img.clone().resize(1800, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer()
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: displayKey, Body: displayBuffer, ContentType: 'image/jpeg' }))
   } catch {
     // thumbnail / display failure is non-fatal
   }
+  return { width, height }
+}
 
-  return { gcsUrl: `${PUBLIC_URL}/${key}`, objectPath: key, width, height, hash }
+/**
+ * Finalize a DIRECT-to-R2 upload: the browser already PUT the original straight
+ * to `objectPath` via a presigned URL (bypassing the function's 4.5 MB request
+ * cap). The bytes never passed through us, so here we download the original,
+ * fingerprint it, generate the thumbnail/display variants, and extract EXIF —
+ * returning the same shape storeImageBuffer does, plus `capture`.
+ *
+ * SECURITY: `objectPath` comes from the client, so we reject anything outside the
+ * caller's own photos prefix before touching it.
+ *
+ * @param {string} userId
+ * @param {{ objectPath: string, contentType?: string }} opts
+ * @returns {Promise<{ gcsUrl, objectPath, width, height, hash, capture }>}
+ */
+export async function finalizeStoredImage(userId, { objectPath, contentType }) {
+  const prefix = getUserPhotosPrefix(userId) // users/{id}/photos/
+  if (!objectPath || !objectPath.startsWith(prefix)) {
+    const err = new Error('Forbidden: objectPath is outside your storage')
+    err.code = 'FORBIDDEN'
+    throw err
+  }
+
+  const buffer = await downloadBuffer(objectPath)
+  const hash = crypto.createHash('md5').update(buffer).digest('hex')
+  const { width, height } = await generateDerivatives(objectPath, buffer)
+  // EXIF is best-effort — extractCapture never throws — and must never fail the upload.
+  const capture = (contentType || '').startsWith('image/') ? await extractCapture(buffer) : null
+
+  return { gcsUrl: `${PUBLIC_URL}/${objectPath}`, objectPath, width, height, hash, capture }
 }
