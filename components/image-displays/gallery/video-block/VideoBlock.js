@@ -18,6 +18,20 @@ export function posterUrl(url) {
   return null;
 }
 
+/**
+ * Extract the Instagram shortcode from a reel/post/tv URL, or null if it's not an
+ * Instagram link. Handles /reel/, /reels/, /p/, and /tv/.
+ * react-player can't play Instagram, so these render as a vertical embed instead.
+ */
+export function instagramShortcode(url) {
+  const m = (url || "").match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+export function isInstagramVideo(url) {
+  return !!instagramShortcode(url);
+}
+
 // variant: 'full-bleed' (1) | 'centered' (2) | 'side' (3)
 // bleed: Manhattan — full content width, square corners, left-aligned caption
 // (same treatment as photos), regardless of variant.
@@ -58,6 +72,38 @@ const VideoBlock = ({ url, caption, variant = 2, captionStyle = 'sans', bleed = 
   };
 
   if (!cleanUrl) return null;
+
+  // Instagram reels are vertical and react-player can't play them, so render the
+  // official /embed card in a portrait frame, with the details caption below.
+  const igCode = instagramShortcode(cleanUrl);
+  if (igCode) {
+    const frameCorners = (bleed || variant === 1) ? "rounded-none shadow-none" : "rounded-3xl shadow-lg";
+    return (
+      <div className="w-full px-[10px] md:px-0">
+        <div className="mx-auto w-full" style={{ maxWidth: 400 }}>
+          <div
+            className={`relative w-full overflow-hidden ${frameCorners}`}
+            style={{ aspectRatio: "9 / 16", background: "#000" }}
+          >
+            <iframe
+              key={cleanUrl}
+              src={`https://www.instagram.com/reel/${igCode}/embed`}
+              title="Instagram reel"
+              loading="lazy"
+              scrolling="no"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+              style={{ border: 0 }}
+            />
+          </div>
+          {caption && (
+            <p className="my-4 font-medium text-sm md:text-xl italic text-center max-w-3xl mx-auto" style={capCss}>{caption}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={videoContainerStyle}>

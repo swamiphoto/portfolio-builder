@@ -1057,7 +1057,7 @@ function BlockCard({
             <>
               <EditableInput
                 className={INPUT}
-                placeholder="YouTube URL"
+                placeholder="YouTube or Instagram Reel URL"
                 value={block.url || ""}
                 onChange={(e) => onUpdate({ ...block, url: e.target.value })}
               />

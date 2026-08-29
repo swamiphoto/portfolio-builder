@@ -39,7 +39,7 @@ export const florence = {
     // rather than an abrupt full-bleed hero. Size applies to Centered only.
     photo: {
       hide: ['full-bleed', 'centered', 'side-by-side'],
-      add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Centered' }],
+      add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Fit' }],
       defaultVariant: 'centered',
     },
     // Photo sets lay out horizontally (no vertical scroll): Row (all photos side by
