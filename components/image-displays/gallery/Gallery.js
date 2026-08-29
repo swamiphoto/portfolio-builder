@@ -9,6 +9,7 @@ import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
 import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
+import { getSizedUrl } from "../../../common/imageUtils";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
 import { resolveVariant, resolveAlign, resolveFont, resolveFontWeight, resolveButtonStyle, resolveSize, resolvePhotoSize, resolveQuoteStyle } from "../../../common/themes/variants";
@@ -714,7 +715,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
 
               const avatar = photoUrl && (
                 <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, boxShadow: '0 2px 8px rgba(26,18,10,0.12)' }}>
-                  <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getSizedUrl(photoUrl, 'thumbnail')} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               )
               // Quote font follows the block's chosen slot (default serif); size
@@ -745,7 +746,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                 const mFont = resolveFont(block, themeId)
                 const mAvatar = photoUrl && (
                   <div style={{ width: 38, height: 38, overflow: 'hidden', flexShrink: 0 }}>
-                    <img src={photoUrl} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={getSizedUrl(photoUrl, 'thumbnail')} alt={block.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )
                 const mQuote = block.text && (
