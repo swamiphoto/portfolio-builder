@@ -91,6 +91,7 @@ export default function PhotoGrid({
   onToggleSet,
   selectedUrls,
   onToggleSelect,
+  onSelectRange,
   selectionActive = false,
   onDropFiles,
   dropUploading = false,
@@ -171,6 +172,25 @@ export default function PhotoGrid({
     () => computeLayout(processedAssets, containerSize.width - PADDING * 2),
     [processedAssets, containerSize.width]
   );
+
+  // Shift-click range select. Anchor is tracked by URL (not index) so it survives
+  // re-sorts/filters; a plain click toggles one tile and moves the anchor, while a
+  // shift-click selects everything between the anchor and the clicked tile in the
+  // current display order.
+  const anchorUrlRef = useRef(null);
+  const handleTileToggle = useCallback((url, e) => {
+    if (e?.shiftKey && anchorUrlRef.current && onSelectRange) {
+      const anchorIdx = processedAssets.findIndex(a => a.publicUrl === anchorUrlRef.current);
+      const clickIdx = processedAssets.findIndex(a => a.publicUrl === url);
+      if (anchorIdx !== -1 && clickIdx !== -1) {
+        const [lo, hi] = anchorIdx <= clickIdx ? [anchorIdx, clickIdx] : [clickIdx, anchorIdx];
+        onSelectRange(processedAssets.slice(lo, hi + 1).map(a => a.publicUrl));
+        return; // keep the anchor where it was, like a file manager
+      }
+    }
+    onToggleSelect?.(url);
+    anchorUrlRef.current = url;
+  }, [processedAssets, onToggleSelect, onSelectRange]);
 
   const visibleItems = useMemo(() => {
     const top = scrollTop - OVERSCAN;
@@ -612,7 +632,7 @@ export default function PhotoGrid({
                     onImageClick={() => setLightboxIndex(index)}
                     selected={!!selectedUrls?.has(asset.publicUrl)}
                     selectionActive={selectionActive}
-                    onToggleSelect={() => onToggleSelect?.(asset.publicUrl)}
+                    onToggleSelect={(e) => handleTileToggle(asset.publicUrl, e)}
                     selectedUrls={selectedUrls}
                     deleting={!!deletingUrls?.has(asset.publicUrl)}
                   />
