@@ -35,17 +35,32 @@ export async function uploadFile(file, { folder, onProgress } = {}) {
     xhr.send(file)
   })
 
-  // 3. finalize — server builds thumbnail/display variants and extracts EXIF
-  const finRes = await fetch('/api/admin/upload-finalize', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ objectPath, contentType: file.type }),
-  })
-  if (!finRes.ok) {
+  // 3. finalize — server builds thumbnail/display variants and extracts EXIF.
+  // Retry on network drops / 5xx: the object is already in R2, so a lost finalize
+  // request would otherwise orphan it (finalize is idempotent, so retrying is safe).
+  // If the server returns PROCESS_FAILED (502) it has already deleted the orphan.
+  let lastErr = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    let finRes
+    try {
+      finRes = await fetch('/api/admin/upload-finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objectPath, contentType: file.type }),
+      })
+    } catch (e) {
+      lastErr = new Error('Network error while finalizing upload')
+      if (attempt < 3) { await new Promise(r => setTimeout(r, attempt * 500)); continue }
+      throw lastErr
+    }
+    if (finRes.ok) return finRes.json() // { gcsUrl, objectPath, width, height, hash, capture }
     const e = await finRes.json().catch(() => ({}))
-    throw new Error(e.error || `Finalize failed: ${finRes.status}`)
+    lastErr = new Error(e.error || `Finalize failed: ${finRes.status}`)
+    // 5xx is retryable (transient/large-file); 4xx is not (won't change on retry).
+    if (finRes.status >= 500 && attempt < 3) { await new Promise(r => setTimeout(r, attempt * 500)); continue }
+    throw lastErr
   }
-  return finRes.json() // { gcsUrl, objectPath, width, height, hash, capture }
+  throw lastErr
 }
 
 export default function UploadModal({ sets = [], defaultSet = null, onClose, onUploaded }) {

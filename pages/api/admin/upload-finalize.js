@@ -19,6 +19,8 @@ export async function handler(req, res, user) {
     return res.status(200).json(result)
   } catch (err) {
     if (err.code === 'FORBIDDEN') return res.status(403).json({ error: err.message })
+    // PROCESS_FAILED: the orphan was already cleaned up in finalizeStoredImage.
+    if (err.code === 'PROCESS_FAILED') return res.status(502).json({ error: err.message })
     console.error('upload-finalize: failed', err)
     return res.status(500).json({ error: err.message })
   }

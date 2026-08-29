@@ -6,7 +6,7 @@
 import crypto from 'crypto'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
-import { s3, BUCKET, PUBLIC_URL, downloadBuffer } from './gcsClient'
+import { s3, BUCKET, PUBLIC_URL, downloadBuffer, deleteFile } from './gcsClient'
 import { getUserPhotoPath, getUserPhotosPrefix } from './gcsUser'
 import { extractCapture } from './exifCapture'
 
@@ -116,11 +116,38 @@ export async function finalizeStoredImage(userId, { objectPath, contentType }) {
     throw err
   }
 
-  const buffer = await downloadBuffer(objectPath)
-  const hash = crypto.createHash('md5').update(buffer).digest('hex')
-  const { width, height } = await generateDerivatives(objectPath, buffer)
-  // EXIF is best-effort — extractCapture never throws — and must never fail the upload.
-  const capture = (contentType || '').startsWith('image/') ? await extractCapture(buffer) : null
+  // The original is already in R2 (the browser PUT it directly), independent of
+  // this call. If we can't finalize it, we must NOT leave it behind: the library
+  // is listed straight from R2, so an un-finalized object would show up untagged
+  // and metadata-less (the set-association happens client-side only for files
+  // finalize returns successfully). So: retry, and on hard failure DELETE the
+  // orphan and throw, restoring the old all-or-nothing behavior.
+  const fail = async (msg) => {
+    await deleteFile(objectPath).catch(() => {}) // best-effort cleanup
+    const err = new Error(`Could not process the upload (${msg}). It was removed — please retry.`)
+    err.code = 'PROCESS_FAILED'
+    throw err
+  }
 
-  return { gcsUrl: `${PUBLIC_URL}/${objectPath}`, objectPath, width, height, hash, capture }
+  let buffer = null
+  let lastErr = null
+  for (let attempt = 1; attempt <= 3 && !buffer; attempt++) {
+    try {
+      buffer = await downloadBuffer(objectPath)
+    } catch (e) {
+      lastErr = e
+      if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 400))
+    }
+  }
+  if (!buffer) return fail(lastErr?.message || 'download failed')
+
+  try {
+    const hash = crypto.createHash('md5').update(buffer).digest('hex')
+    const { width, height } = await generateDerivatives(objectPath, buffer)
+    // EXIF is best-effort — extractCapture never throws — and must never fail the upload.
+    const capture = (contentType || '').startsWith('image/') ? await extractCapture(buffer) : null
+    return { gcsUrl: `${PUBLIC_URL}/${objectPath}`, objectPath, width, height, hash, capture }
+  } catch (e) {
+    return fail(e.message)
+  }
 }
