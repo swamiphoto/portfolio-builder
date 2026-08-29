@@ -1,0 +1,154 @@
+<!doctype html><html><head><meta charset=utf-8>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --desk:#e7eaec;--panel:#f2f4f6;--rail:#edf0f2;--surface:#fbfcfd;--popover:#f5f7f8;--preview:#fbfcfd;
+ --text:#1c2126;--sec:#545c64;--muted:#929aa2;--accent:#43606f;--ink:#1c2126;--inkText:#f2f5f7;
+ --selbg:rgba(67,96,111,0.13);--border:rgba(28,40,52,0.13);--card:#fbfcfd;--cardBorder:rgba(28,40,52,0.11);--shadow:0 0 0 1px rgba(28,40,52,0.06), 0 2px 6px rgba(28,40,52,0.07), 0 10px 30px rgba(28,40,52,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#c9ccce;font-family:"SF Mono",Menlo,Monaco,Consolas,monospace;-webkit-font-smoothing:antialiased}
+.wrap{width:1440px;margin:0 auto;padding:28px}
+.cap{font-family:"SF Mono",Menlo,monospace;color:#2b2f33;margin-bottom:14px}
+.cap b{font-size:15px;letter-spacing:.02em}
+.cap p{font-size:12px;color:#565b60;margin-top:5px;max-width:1180px;line-height:1.5}
+.mono{font-family:"SF Mono",Menlo,Monaco,Consolas,monospace}
+.frn{font-family:"Fraunces",Georgia,serif}
+.ul{text-transform:uppercase;letter-spacing:.13em}
+
+.frame{position:relative;width:1440px;height:900px;background:var(--desk);border-radius:10px;
+ overflow:hidden;box-shadow:var(--shadow);display:flex}
+
+/* site sidebar */
+.side{width:250px;background:var(--panel);height:100%;padding:18px 14px;display:flex;flex-direction:column;
+ border-right:1px solid var(--border)}
+.side .lbl{font-size:9.5px;color:var(--muted);margin:2px 4px 10px}
+.side .title{font-size:19px;color:var(--text);margin:0 4px 20px;font-weight:600}
+.row{font-family:"Fraunces",Georgia,serif;font-size:13.5px;color:var(--sec);padding:8px 10px;border-radius:7px;margin-bottom:2px}
+.row.sel{background:var(--selbg);color:var(--text);font-weight:500}
+.spacer{flex:1}
+.pub{background:var(--ink);color:var(--inkText);font-size:10px;padding:10px;border-radius:8px;text-align:center;letter-spacing:.12em}
+
+/* block rail */
+.rail{width:236px;background:var(--rail);height:100%;padding:18px 14px;border-right:1px solid var(--border)}
+.rail .lbl{font-size:9.5px;color:var(--muted);margin:2px 2px 12px}
+.bcard{background:var(--card);border:1px solid var(--cardBorder);border-radius:9px;padding:12px 12px;margin-bottom:9px;
+ box-shadow:0 1px 2px rgba(20,28,36,0.04)}
+.bcard .bt{font-size:9px;color:var(--muted);margin-bottom:6px}
+.bcard .bn{font-family:"Fraunces",Georgia,serif;font-size:13px;color:var(--text)}
+.bcard .mini{height:34px;margin-top:9px;border-radius:5px;background:linear-gradient(135deg,#d3d9dd,#c8ced3)}
+
+/* main */
+.main{flex:1;height:100%;display:flex;flex-direction:column}
+.tb{height:46px;flex:none;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:1px solid var(--border);background:var(--panel)}
+.pill{height:26px;display:flex;align-items:center;padding:0 12px;border-radius:13px;background:var(--surface);
+ border:1px solid var(--border);font-size:10.5px;color:var(--sec)}
+.tbspace{flex:1}
+.ibtn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface)}
+.themepill{height:26px;display:flex;align-items:center;padding:0 12px;border-radius:13px;background:var(--surface);
+ border:1px solid var(--border);font-size:9.5px;color:var(--sec)}
+.prev{flex:1;background:var(--preview);padding:34px 40px;overflow:hidden}
+.prevh{font-family:"Fraunces",Georgia,serif;font-size:30px;color:var(--text);margin-bottom:4px;font-weight:500}
+.prevs{font-size:11px;color:var(--muted);margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g{height:150px;border-radius:6px}
+
+/* modal */
+.scrim{position:absolute;inset:0;background:rgba(18,22,26,0.42);display:flex;align-items:center;justify-content:center}
+.modal{width:720px;background:var(--popover);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.mh{height:46px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border)}
+.mh .t{font-size:10.5px;color:var(--sec)}
+.mh .x{margin-left:auto;width:24px;height:24px;border-radius:6px;border:1px solid var(--border);color:var(--muted);
+ display:flex;align-items:center;justify-content:center;font-size:13px}
+.mb{padding:16px}
+.search{height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);
+ display:flex;align-items:center;padding:0 12px;font-size:11px;color:var(--muted);margin-bottom:14px}
+.searchF{border:1.5px solid var(--accent)}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mt{height:96px;border-radius:7px;position:relative}
+.mt.sel{outline:2.5px solid var(--accent);outline-offset:2px}
+.chk{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--accent);
+ color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.mf{height:56px;display:flex;align-items:center;padding:0 16px;border-top:1px solid var(--border);gap:10px}
+.mf .cnt{font-size:9.5px;color:var(--muted)}
+.mf .sp{flex:1}
+.btnsec{height:32px;padding:0 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);
+ color:var(--sec);font-size:10px;display:flex;align-items:center;letter-spacing:.08em}
+.btnpri{height:32px;padding:0 18px;border-radius:8px;background:var(--ink);color:var(--inkText);font-size:10px;
+ display:flex;align-items:center;letter-spacing:.1em}
+</style></head><body><div class=wrap>
+<div class=cap><b>B — Cool Slate (desaturated slate-blue accent)</b><p>Mid-cool greys with a muted slate-blue for selection, focus and the active state. Balanced and modern without the bright shadcn/Vercel blue that screams template.</p></div>
+<div class=frame>
+
+ <div class=side>
+   <div class="lbl mono ul">Site</div>
+   <div class="title frn">Swami Venkataramani</div>
+   <div class="lbl mono ul">Pages</div>
+   <div class=row>Home</div>
+   <div class="row sel">Portraits</div>
+   <div class=row>Weddings</div>
+   <div class=row>Travel</div>
+   <div class=row>About</div>
+   <div class=row>Store</div>
+   <div class=spacer></div>
+   <div class="pub mono ul">Publish</div>
+ </div>
+
+ <div class=rail>
+   <div class="lbl mono ul">Blocks</div>
+   <div class=bcard><div class="bt mono ul">Cover</div><div class=bn>Full-bleed hero</div><div class=mini></div></div>
+   <div class=bcard><div class="bt mono ul">Masonry</div><div class=bn>Portrait set</div><div class=mini></div></div>
+   <div class=bcard><div class="bt mono ul">Text</div><div class=bn>Statement</div></div>
+   <div class=bcard><div class="bt mono ul">Slideshow</div><div class=bn>Music reel</div><div class=mini></div></div>
+ </div>
+
+ <div class=main>
+   <div class=tb>
+     <div class="pill mono">swamiphoto.sepia.photo/portraits</div>
+     <div class=tbspace></div>
+     <div class=ibtn></div><div class=ibtn></div>
+     <div class="themepill mono ul">Theme · Florence</div>
+   </div>
+   <div class=prev>
+     <div class="prevh frn">Portraits</div>
+     <div class="prevs mono ul">24 photographs</div>
+     <div class=grid>
+       <div class=g style="background:linear-gradient(135deg,#d3d9dd,#c8ced3)"></div>
+       <div class=g style="background:linear-gradient(135deg,#dfe4e8,#d3d9dd)"></div>
+       <div class=g style="background:linear-gradient(135deg,#c8ced3,#dae0e4)"></div>
+       <div class=g style="background:linear-gradient(135deg,#dae0e4,#dfe4e8)"></div>
+       <div class=g style="background:linear-gradient(135deg,#dfe4e8,#c8ced3)"></div>
+       <div class=g style="background:linear-gradient(135deg,#d3d9dd,#dae0e4)"></div>
+       <div class=g style="background:linear-gradient(135deg,#dae0e4,#c8ced3)"></div>
+       <div class=g style="background:linear-gradient(135deg,#c8ced3,#d3d9dd)"></div>
+     </div>
+   </div>
+ </div>
+
+ <div class=scrim>
+   <div class=modal>
+     <div class=mh><div class="t mono ul">Select Photos</div><div class="x mono">✕</div></div>
+     <div class=mb>
+       <div class="search searchF mono">Search library…</div>
+       <div class=mgrid>
+         <div class=mt style="background:linear-gradient(135deg,#d3d9dd,#c8ced3)"></div>
+         <div class="mt sel" style="background:linear-gradient(135deg,#dfe4e8,#d3d9dd)"><div class="chk mono">✓</div></div>
+         <div class=mt style="background:linear-gradient(135deg,#c8ced3,#dae0e4)"></div>
+         <div class=mt style="background:linear-gradient(135deg,#dae0e4,#dfe4e8)"></div>
+         <div class="mt sel" style="background:linear-gradient(135deg,#dfe4e8,#c8ced3)"><div class="chk mono">✓</div></div>
+         <div class=mt style="background:linear-gradient(135deg,#d3d9dd,#dae0e4)"></div>
+         <div class="mt sel" style="background:linear-gradient(135deg,#dae0e4,#c8ced3)"><div class="chk mono">✓</div></div>
+         <div class=mt style="background:linear-gradient(135deg,#c8ced3,#d3d9dd)"></div>
+       </div>
+     </div>
+     <div class=mf>
+       <div class="cnt mono ul">3 selected</div>
+       <div class=sp></div>
+       <div class="btnsec mono ul">Cancel</div>
+       <div class="btnpri mono ul">Add to gallery</div>
+     </div>
+   </div>
+ </div>
+
+</div></div></body></html>
