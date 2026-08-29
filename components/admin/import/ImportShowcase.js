@@ -221,7 +221,7 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
           {/* the message, centered and quiet */}
           <div style={{ position: 'absolute', top: '46%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 3, width: 'min(460px, 82vw)', textAlign: 'center', pointerEvents: 'none' }}>
             <div key={pitch} style={{ animation: 'pitchRise 1.4s ease both' }}>
-              <h2 className="font-fraunces" style={{ fontSize: 27, fontStyle: 'italic', fontWeight: 300, color: '#2c2416', marginBottom: 12, lineHeight: 1.15 }}>
+              <h2 className="font-schibsted" style={{ fontSize: 27, fontStyle: 'italic', fontWeight: 300, color: '#2c2416', marginBottom: 12, lineHeight: 1.15 }}>
                 {active.title}
               </h2>
               <p style={{ fontSize: 16, color: '#7a6b55', lineHeight: 1.6, maxWidth: 400, margin: '0 auto' }}>

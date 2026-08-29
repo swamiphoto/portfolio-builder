@@ -21,7 +21,7 @@ const C = {
 }
 
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif"
 const WIDTH = 340
 
 const DotIcon = () => (

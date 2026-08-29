@@ -14,6 +14,7 @@ module.exports = {
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
         serif2: ["Muse"],
         fraunces: ['"Fraunces"', 'Georgia', 'serif'],
+        schibsted: ['"Schibsted Grotesk"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       fontWeight: {
         normal: 400,

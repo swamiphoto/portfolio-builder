@@ -1,6 +1,6 @@
 // components/admin/onboarding/CanvasEmptyState.js
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif"
 
 export default function CanvasEmptyState({ onAddPage }) {
   return (

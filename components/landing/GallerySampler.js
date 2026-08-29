@@ -11,7 +11,7 @@ import SlideshowStack from './SlideshowStack'
 // pauses on hover. Everything holds still under prefers-reduced-motion.
 
 const HAIR = '1px solid rgba(28,26,23,0.16)'
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif"
 const MONO = "'IBM Plex Mono', ui-monospace, monospace"
 
 // Real photographs, resized through the same free proxy the import covers use.

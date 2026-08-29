@@ -19,14 +19,14 @@ export default function UrlClaimStep({ rootDomain, username, setUsername, slug, 
       </div>
 
       <form onSubmit={onSubmit} style={{ width: '100%', maxWidth: 860, textAlign: 'center' }}>
-        <p className="font-fraunces" style={{ fontSize: 21, color: '#5a4a36', marginBottom: 30 }}>
+        <p className="font-schibsted" style={{ fontSize: 21, color: '#5a4a36', marginBottom: 30 }}>
           Now, pick your portfolio&rsquo;s address.
         </p>
 
         {/* the hero: a live, oversized address */}
         <label htmlFor="claim-username" className="sr-only">Your username</label>
         <div
-          className="font-fraunces"
+          className="font-schibsted"
           style={{
             display: 'inline-flex', alignItems: 'baseline', maxWidth: '100%',
             fontSize: 'clamp(34px, 7vw, 68px)', fontWeight: 400, lineHeight: 1.05, color: '#2c2416',

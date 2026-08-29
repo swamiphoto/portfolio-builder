@@ -43,7 +43,7 @@ const PALETTES = {
 const T = PALETTES[MODE]
 
 const FONT = {
-  serif: "'Fraunces', Georgia, serif",
+  serif: "'Schibsted Grotesk', system-ui, sans-serif",
   script: "'Italianno', cursive",
   sans: "'Inter', system-ui, sans-serif",
   mono: "'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace",

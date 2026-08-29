@@ -210,7 +210,7 @@ function PickerTile({ asset, isSelected, onToggle, onPreview, isMulti }) {
           }}
         >
           {asset.caption && (
-            <div className="truncate" style={{ fontSize: 10.5, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif', color: '#fdf8ec', lineHeight: 1.25 }}>
+            <div className="truncate" style={{ fontSize: 10.5, fontStyle: 'italic', fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", color: '#fdf8ec', lineHeight: 1.25 }}>
               {asset.caption}
             </div>
           )}
@@ -978,7 +978,7 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
                 className="absolute left-0 right-0 bottom-0 px-3 py-2 truncate"
                 style={{
                   background: 'linear-gradient(to top, rgba(20,12,4,0.78) 0%, rgba(20,12,4,0) 100%)',
-                  fontFamily: 'Cormorant Garamond, serif',
+                  fontFamily: "'Schibsted Grotesk', system-ui, sans-serif",
                   fontSize: 14,
                   fontStyle: 'italic',
                   color: '#fdf8ec',

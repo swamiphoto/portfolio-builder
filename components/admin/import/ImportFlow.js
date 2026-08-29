@@ -105,7 +105,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
     <>
       {step === 'source' && (
         <div style={{ padding: '28px 28px 24px' }}>
-          <h2 className="font-fraunces" style={{ fontSize: 22, color: 'var(--text-primary)', marginBottom: 6 }}>
+          <h2 className="font-schibsted" style={{ fontSize: 22, color: 'var(--text-primary)', marginBottom: 6 }}>
             Bring in your existing photos
           </h2>
           <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>

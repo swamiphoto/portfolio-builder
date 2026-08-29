@@ -332,7 +332,7 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           {/* Clean phase */}
           {phase === PHASE_CLEAN && (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 18, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+              <p style={{ fontFamily: 'Schibsted Grotesk, system-ui, sans-serif', fontSize: 18, color: 'var(--text-primary)', lineHeight: 1.4 }}>
                 No duplicates found. Your library is clean.
               </p>
             </div>
@@ -376,7 +376,7 @@ export default function DuplicateFinder({ libraryData, siteConfig, onClose, onCo
           {/* Done phase */}
           {phase === PHASE_DONE && (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 18, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: summary?.failedDeletes > 0 ? 8 : 20 }}>
+              <p style={{ fontFamily: 'Schibsted Grotesk, system-ui, sans-serif', fontSize: 18, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: summary?.failedDeletes > 0 ? 8 : 20 }}>
                 {summary
                   ? `Merged ${summary.mergedCount} ${summary.mergedCount === 1 ? 'duplicate' : 'duplicates'} into ${summary.groupCount} ${summary.groupCount === 1 ? 'photo' : 'photos'}.`
                   : 'Done.'}

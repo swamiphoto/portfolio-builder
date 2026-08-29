@@ -238,7 +238,7 @@ export default function PhotoGrid({
       {(dropActive || dropUploading) && (
         <div style={{ position: 'absolute', inset: 8, zIndex: 40, borderRadius: 10, border: '2px dashed #8b6f47', background: 'rgba(244,239,232,0.86)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           <div style={{ textAlign: 'center', color: '#5c4f3a' }}>
-            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 20, marginBottom: 4 }}>{dropUploading ? 'Uploading…' : 'Drop photos to upload'}</div>
+            <div style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontSize: 20, marginBottom: 4 }}>{dropUploading ? 'Uploading…' : 'Drop photos to upload'}</div>
             {!dropUploading && <div style={{ fontFamily: MONO, fontSize: 11, color: '#8b6f47', letterSpacing: '0.04em' }}>{inAlbum ? `Into ${slugToTitle(selectedAlbum.key.split('/').pop())}` : 'To your library'}</div>}
           </div>
         </div>
@@ -544,7 +544,7 @@ export default function PhotoGrid({
                   <path d="M26 41 l8-8 a2 2 0 0 1 2.8 0 l5 5 a2 2 0 0 0 2.8 0 l4-4 a2 2 0 0 1 2.8 0 L62 41" stroke="#c9b48f" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                 </g>
               </svg>
-              <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 22, color: '#3f372c', marginBottom: 7 }}>
+              <div style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontSize: 22, color: '#3f372c', marginBottom: 7 }}>
                 {inAlbum ? 'No photos in this set yet' : 'No photos yet'}
               </div>
               <div style={{ fontSize: 13.5, color: '#8b7d68', maxWidth: 320, lineHeight: 1.55, marginBottom: 20, textWrap: 'balance' }}>

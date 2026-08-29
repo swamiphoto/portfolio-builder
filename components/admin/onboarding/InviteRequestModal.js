@@ -114,7 +114,7 @@ export default function InviteRequestModal({ onClose }) {
       >
         {sent ? (
           <>
-            <h2 id="invite-request-title" className="font-fraunces" style={{ fontSize: 24, fontWeight: 400, color: '#2c2416', marginBottom: 12 }}>
+            <h2 id="invite-request-title" className="font-schibsted" style={{ fontSize: 24, fontWeight: 400, color: '#2c2416', marginBottom: 12 }}>
               Thanks{name.trim() ? `, ${name.trim().split(' ')[0]}` : ''}.
             </h2>
             <p style={{ fontSize: 14.5, color: '#7a6b55', lineHeight: 1.6, marginBottom: 24 }}>
@@ -135,7 +135,7 @@ export default function InviteRequestModal({ onClose }) {
           </>
         ) : (
           <>
-            <h2 id="invite-request-title" className="font-fraunces" style={{ fontSize: 24, fontWeight: 400, color: '#2c2416', marginBottom: 10 }}>
+            <h2 id="invite-request-title" className="font-schibsted" style={{ fontSize: 24, fontWeight: 400, color: '#2c2416', marginBottom: 10 }}>
               Ask for an invite
             </h2>
             <p style={{ fontSize: 14.5, color: '#7a6b55', lineHeight: 1.6, marginBottom: 24, textWrap: 'balance' }}>

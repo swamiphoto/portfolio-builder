@@ -162,7 +162,7 @@ export default function ReviewStep({ discovery, onBack, onImport }) {
 
   return (
     <div style={{ padding: '24px 28px 0' }}>
-      <h2 className="font-fraunces" style={{ fontSize: 20, color: 'var(--text-primary)', marginBottom: multi ? 6 : 18 }}>
+      <h2 className="font-schibsted" style={{ fontSize: 20, color: 'var(--text-primary)', marginBottom: multi ? 6 : 18 }}>
         We found {totalAssets} {totalAssets === 1 ? 'photo' : 'photos'}{multi ? ` across ${collections.length} galleries` : ''}.
       </h2>
       {multi && (

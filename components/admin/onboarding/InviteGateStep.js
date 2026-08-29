@@ -20,7 +20,7 @@ export default function InviteGateStep({ firstName, inviteCode, setInviteCode, e
 
       <form onSubmit={onSubmit} style={{ width: '100%', maxWidth: 620, textAlign: 'center' }}>
         {/* On this screen the welcome itself is the hero */}
-        <h1 className="font-fraunces" style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, lineHeight: 1.2, color: '#2c2416', marginBottom: 14 }}>
+        <h1 className="font-schibsted" style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, lineHeight: 1.2, color: '#2c2416', marginBottom: 14 }}>
           Welcome to Sepia{firstName ? `, ${firstName}` : ''}.
         </h1>
         <p style={{ fontSize: 15.5, color: '#8a7a62', lineHeight: 1.6, marginBottom: 40, textWrap: 'balance' }}>

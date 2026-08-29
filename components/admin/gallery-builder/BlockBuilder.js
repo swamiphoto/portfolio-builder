@@ -369,7 +369,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
             spellCheck={false}
             className="w-full bg-transparent border-none outline-none p-0 placeholder:text-[#b8ab97]"
             style={{
-              fontFamily: "'Fraunces', Georgia, serif",
+              fontFamily: "'Schibsted Grotesk', system-ui, sans-serif",
               fontSize: 22,
               color: '#1d1b17',
               lineHeight: 1.2,
