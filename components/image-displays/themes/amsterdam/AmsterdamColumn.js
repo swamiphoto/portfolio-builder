@@ -315,11 +315,14 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
 
     case 'video': {
       if (!(block.url || '').trim()) return null
+      // Fill vs Fit changes the figure width (Fit = matted with more air); the
+      // video itself stays flush + square-cornered via variant={1} so the poster
+      // wall keeps its rounded-card-free look. The caption is Amsterdam's own,
+      // rendered below (so VideoBlock's internal caption stays empty).
+      const isFit = resolveVariant(block, TID) === 'centered'
+      const figW = isFit ? 'clamp(300px, 34vw, 520px)' : 'clamp(360px, 52vw, 860px)'
       return wrap('ams-col--media', null, (
-        <figure className="m-0" style={{ width: 'clamp(320px, 40vw, 640px)' }}>
-          {/* variant 1: flush to the figure (so the caption below aligns with the
-              video's left edge) and square-cornered — the poster wall has no
-              rounded cards. */}
+        <figure className="m-0" style={{ width: figW }}>
           <VideoBlock url={block.url} caption="" variant={1} />
           <AmsterdamCaption caption={block.caption || ''} />
         </figure>
