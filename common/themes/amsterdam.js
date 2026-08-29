@@ -73,7 +73,7 @@ export const amsterdam = {
     // Size, positioned on cream with its caption).
     photo: {
       hide: ['full-bleed', 'centered', 'side-by-side'],
-      add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Centered' }],
+      add: [{ id: 'full-height', label: 'Fill' }, { id: 'centered', label: 'Fit' }],
       defaultVariant: 'full-height',
     },
     // Photo sets lay out horizontally: Row (side by side, captions beneath) or
