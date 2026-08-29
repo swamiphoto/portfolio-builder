@@ -122,7 +122,7 @@ export default function Onboarding() {
         </div>
 
         <div style={{ width: '100%', maxWidth: 860, textAlign: 'center' }}>
-          <p className="font-fraunces" style={{ fontSize: 21, color: '#5a4a36', marginBottom: 22 }}>
+          <p className="font-schibsted" style={{ fontSize: 21, color: '#5a4a36', marginBottom: 22 }}>
             {isReturning
               ? `Welcome back${firstName ? `, ${firstName}` : ''}.`
               : `It's yours${firstName ? `, ${firstName}` : ''}.`}
@@ -130,7 +130,7 @@ export default function Onboarding() {
 
           {/* the hero: the studio address, big — the way it'll read on a card */}
           <div
-            className="font-fraunces"
+            className="font-schibsted"
             style={{
               fontSize: 'clamp(34px, 7vw, 68px)', fontWeight: 400, lineHeight: 1.05, color: '#2c2416',
               wordBreak: 'break-word',

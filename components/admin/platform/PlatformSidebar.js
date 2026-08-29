@@ -31,7 +31,7 @@ const C = {
   borderStrong: 'rgba(26,18,10,0.14)',
 }
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif"
 
 function countPagePhotos(page) {
   if (!page.blocks) return 0

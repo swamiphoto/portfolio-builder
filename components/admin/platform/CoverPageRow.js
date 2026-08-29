@@ -2,7 +2,7 @@ import { COVER_FALLBACK_BG } from '../../../common/coverBackground'
 import ToggleSwitch from '../common/ToggleSwitch'
 import Tip from '../Tip'
 
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif"
 
 function IconGear(p) {
   return (

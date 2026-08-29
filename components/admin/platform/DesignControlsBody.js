@@ -33,7 +33,7 @@ export default function DesignControlsBody({ config, onChange, onEditHandles, in
             options={[
               { value: 'theme',     label: <span style={{ fontFamily: 'Muse', fontSize: 15, lineHeight: 1 }}>Signature</span> },
               { value: 'modern',    label: <span style={{ fontFamily: 'Inter, -apple-system, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, fontSize: 11 }}>Modern</span> },
-              { value: 'editorial', label: <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 13 }}>Editorial</span> },
+              { value: 'editorial', label: <span style={{ fontFamily: '"Schibsted Grotesk", system-ui, sans-serif', fontSize: 13 }}>Editorial</span> },
               { value: 'cormorant', label: <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 12 }}>Classic</span> },
             ]}
           />

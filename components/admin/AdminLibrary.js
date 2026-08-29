@@ -908,7 +908,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     <div className="flex h-full w-full overflow-hidden font-sans">
       {libraryData && (libraryData.images || []).length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ padding: 40 }}>
-          <h2 className="font-fraunces" style={{ fontSize: 24, color: 'var(--text-primary)', marginBottom: 8 }}>
+          <h2 className="font-schibsted" style={{ fontSize: 24, color: 'var(--text-primary)', marginBottom: 8 }}>
             Bring in your existing photos
           </h2>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 360, lineHeight: 1.55, marginBottom: 22 }}>
@@ -967,7 +967,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
             onMouseDown={e => e.stopPropagation()}
             style={{ width: 360, maxWidth: '100%', background: '#faf7f1', borderRadius: 12, boxShadow: '0 20px 60px rgba(26,18,10,0.35)', padding: '20px 20px 16px' }}
           >
-            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 18, fontWeight: 500, color: '#2c2416', marginBottom: 8 }}>Clear library</div>
+            <div style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontSize: 18, fontWeight: 500, color: '#2c2416', marginBottom: 8 }}>Clear library</div>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
               This permanently deletes every photo you have uploaded. Any page still using those photos will show blanks. This cannot be undone.
             </p>

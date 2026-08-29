@@ -118,7 +118,7 @@ export default function AdminInvites() {
   if (loadState === 'forbidden') {
     return (
       <Shell>
-        <h1 className="font-fraunces" style={{ fontSize: 28, color: INK, marginBottom: 10 }}>Not authorized</h1>
+        <h1 className="font-schibsted" style={{ fontSize: 28, color: INK, marginBottom: 10 }}>Not authorized</h1>
         <p style={{ color: '#8a7a62', fontSize: 15, maxWidth: 380, textAlign: 'center', lineHeight: 1.6 }}>
           This screen is for platform operators. Ask an admin to add your email to <code style={{ fontFamily: MONO }}>SEPIA_ADMIN_EMAILS</code>.
         </p>
@@ -137,7 +137,7 @@ export default function AdminInvites() {
   return (
     <Shell align="stretch">
       <div style={{ width: '100%', maxWidth: 680, margin: '0 auto' }}>
-        <h1 className="font-fraunces" style={{ fontSize: 30, color: INK, marginBottom: 6 }}>Invite codes</h1>
+        <h1 className="font-schibsted" style={{ fontSize: 30, color: INK, marginBottom: 6 }}>Invite codes</h1>
         <p style={{ fontFamily: MONO, fontSize: 12, color: '#a8967a', letterSpacing: '0.04em', marginBottom: 30 }}>
           Mint a code, share it, and new photographers can create a site with it.
         </p>

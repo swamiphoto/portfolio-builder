@@ -91,7 +91,7 @@ export default function ImportDoneStep({ summary, onEnter, onImportAnother }) {
 
   return (
     <div style={{ padding: '32px 28px 28px' }}>
-      <h2 className="font-fraunces" style={{ fontSize: 21, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
+      <h2 className="font-schibsted" style={{ fontSize: 21, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
         You're all set.
       </h2>
       <p style={{ ...bodyText, marginBottom: summary?.failedCount > 0 ? 6 : 22 }}>

@@ -26,7 +26,7 @@ export default function StudioMobileGate({ email }) {
           <path d="M8 21h8M12 17v4" />
         </svg>
 
-        <h1 className="font-fraunces" style={{ fontSize: 26, fontWeight: 400, lineHeight: 1.25, color: '#2c2416', marginBottom: 14 }}>
+        <h1 className="font-schibsted" style={{ fontSize: 26, fontWeight: 400, lineHeight: 1.25, color: '#2c2416', marginBottom: 14 }}>
           The studio works best on a bigger screen
         </h1>
 

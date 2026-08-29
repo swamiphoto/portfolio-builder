@@ -587,7 +587,7 @@ export default function AccountPopover({ siteConfig, username, email, anchorEl, 
             onMouseDown={e => e.stopPropagation()}
             style={{ width: 360, maxWidth: '100%', background: '#faf7f1', borderRadius: 12, boxShadow: '0 20px 60px rgba(26,18,10,0.35)', padding: '20px 20px 16px' }}
           >
-            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 18, fontWeight: 500, color: danger === 'account' ? '#c14a4a' : '#2c2416', marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontSize: 18, fontWeight: 500, color: danger === 'account' ? '#c14a4a' : '#2c2416', marginBottom: 8 }}>
               {dcfg.title}
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>{dcfg.body}</p>

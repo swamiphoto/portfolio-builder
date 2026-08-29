@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react
 import { createPortal } from 'react-dom'
 
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif"
 const DIM = 'rgba(20,12,4,0.55)'
 const CARD_W = 304
 
