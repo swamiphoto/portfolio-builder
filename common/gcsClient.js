@@ -1,6 +1,7 @@
 // common/gcsClient.js
 // Server-side only — never import from client components.
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 export const s3 = new S3Client({
   region: 'auto',
@@ -25,6 +26,32 @@ export function getSizedUrl(publicUrl, size = 'display') {
   return publicUrl
     .replace('/photos/', `/${folder}/`)
     .replace(/\.[^.]+$/, '.jpg')
+}
+
+/**
+ * Mint a short-lived presigned PUT URL so the browser can upload a file straight
+ * to R2, bypassing the serverless function (and Vercel's 4.5 MB request-body cap
+ * that returns 413 for large photos). R2 does NOT support presigned POST policies
+ * (501 NotImplemented), so we sign a PUT. The browser must PUT with the same
+ * Content-Type it's signed with, or the signature won't match.
+ * @param {string} key - R2 object key
+ * @param {string} contentType
+ * @param {number} expiresIn - seconds (default 10 min)
+ * @returns {Promise<string>} the presigned URL
+ */
+export async function createPresignedPutUrl(key, contentType, expiresIn = 600) {
+  return getSignedUrl(s3, new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType }), { expiresIn })
+}
+
+/**
+ * Download an object from R2 into a Buffer.
+ * @param {string} key
+ * @returns {Promise<Buffer>}
+ */
+export async function downloadBuffer(key) {
+  const { Body } = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
+  const bytes = await Body.transformToByteArray()
+  return Buffer.from(bytes)
 }
 
 /**

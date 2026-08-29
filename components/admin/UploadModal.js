@@ -4,23 +4,48 @@ import SetPillsPicker from "./gallery-builder/SetPillsPicker";
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
 
 
-export function uploadFile(file, { folder, onProgress } = {}) {
-  return new Promise((resolve, reject) => {
-    const params = new URLSearchParams({ filename: file.name, contentType: file.type })
-    if (folder) params.set('folder', folder)
+// Direct-to-R2 upload in three steps so large originals never pass through the
+// serverless function — Vercel caps request bodies at 4.5 MB and returns 413 for
+// bigger photos, which is most camera files:
+//   1. ask the server for a short-lived presigned PUT URL
+//   2. PUT the file straight to R2 (progress is tracked here — the big transfer)
+//   3. tell the server to finalize (thumbnail/display + EXIF) and return metadata
+// Same signature and return shape as before, so callers are unchanged.
+export async function uploadFile(file, { folder, onProgress } = {}) {
+  // 1. presigned URL
+  const params = new URLSearchParams({ filename: file.name, contentType: file.type })
+  if (folder) params.set('folder', folder)
+  const urlRes = await fetch(`/api/admin/upload-url?${params}`, { method: 'GET' })
+  if (!urlRes.ok) {
+    const e = await urlRes.json().catch(() => ({}))
+    throw new Error(e.error || `Upload init failed: ${urlRes.status}`)
+  }
+  const { uploadUrl, objectPath } = await urlRes.json()
+
+  // 2. PUT straight to R2 (bypasses the function; no size cap)
+  await new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)) }
-    xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText)
-        xhr.status >= 200 && xhr.status < 300 ? resolve(data) : reject(new Error(data.error || `Upload failed: ${xhr.status}`))
-      } catch { reject(new Error(`Upload failed: ${xhr.status}`)) }
-    }
-    xhr.onerror = () => reject(new Error('Network error'))
-    xhr.open('POST', `/api/admin/upload-file?${params}`)
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300)
+      ? resolve()
+      : reject(new Error(`Upload failed: ${xhr.status}`))
+    xhr.onerror = () => reject(new Error('Network error during upload'))
+    xhr.open('PUT', uploadUrl)
     xhr.setRequestHeader('Content-Type', file.type)
     xhr.send(file)
   })
+
+  // 3. finalize — server builds thumbnail/display variants and extracts EXIF
+  const finRes = await fetch('/api/admin/upload-finalize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ objectPath, contentType: file.type }),
+  })
+  if (!finRes.ok) {
+    const e = await finRes.json().catch(() => ({}))
+    throw new Error(e.error || `Finalize failed: ${finRes.status}`)
+  }
+  return finRes.json() // { gcsUrl, objectPath, width, height, hash, capture }
 }
 
 export default function UploadModal({ sets = [], defaultSet = null, onClose, onUploaded }) {
