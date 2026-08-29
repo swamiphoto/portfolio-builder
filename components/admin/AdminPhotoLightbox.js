@@ -5,7 +5,7 @@ import { resolveSellableAsset } from "../../common/print/sellAsset";
 import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
-const SERIF = '"Cormorant Garamond", "Muse", Georgia, serif';
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif";
 const BORDER = 'rgba(160,140,110,0.18)';
 
 // Inline underlined link inside a note — matches the "profile" link in the site

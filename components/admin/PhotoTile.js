@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace';
-const SERIF = '"Cormorant Garamond", "Muse", Georgia, serif';
+const SERIF = "'Schibsted Grotesk', system-ui, sans-serif";
 
 function formatCardDate(asset) {
   const raw = asset.capture?.capturedAt || asset.createdAt;
@@ -219,7 +219,7 @@ export default function PhotoTile({ asset, albumType, onRemove, onDelete, onAddT
       </button>
 
       <div style={{ background: '#f4efe8' }}>
-        {/* Caption — editorial italic serif */}
+        {/* Caption — editorial italic (Schibsted sans) */}
         <input
           type="text"
           value={captionValue}
