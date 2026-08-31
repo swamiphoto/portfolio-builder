@@ -219,6 +219,7 @@ function HeaderIconButton({ children, onClick, title, innerRef }) {
 function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   const [connectStatus, setConnectStatus] = useState(null) // null = loading, true = connected, false = not connected
   const [connecting, setConnecting] = useState(false)
+  const [connectError, setConnectError] = useState(null)
 
   useEffect(() => {
     fetch('/api/admin/print/connect/status')
@@ -229,15 +230,18 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
 
   async function handleConnect() {
     setConnecting(true)
+    setConnectError(null)
     try {
       const res = await fetch('/api/admin/print/connect', { method: 'POST' })
-      const data = await res.json()
-      if (data.url) {
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.url) {
         window.location = data.url
         return
       }
+      setConnectError(data.error || 'Could not start Stripe onboarding. Please try again.')
       setConnecting(false)
     } catch (_) {
+      setConnectError('Network error. Check your connection and try again.')
       setConnecting(false)
     }
   }
@@ -350,6 +354,11 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                     <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
                       Get paid through Stripe. Required before you can sell.
                     </p>
+                    {connectError && (
+                      <p style={{ fontSize: 11, color: '#b3261e', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
+                        {connectError}
+                      </p>
+                    )}
                   </>
                 )}
               </div>

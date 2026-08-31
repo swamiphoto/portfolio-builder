@@ -10,7 +10,19 @@ async function handler(req, res, user) {
     const accountId = config.printStore.stripeConnectAccountId
     if (!accountId) return res.status(200).json({ connected: false, chargesEnabled: false })
 
-    const account = await getStripe().accounts.retrieve(accountId)
+    let account
+    try {
+      account = await getStripe().accounts.retrieve(accountId)
+    } catch (err) {
+      // Stored account id no longer resolvable (test/live key switch, deleted
+      // account). Clear it so the next "Connect payouts" starts a fresh account.
+      if (err?.code === 'resource_missing') {
+        config = { ...config, printStore: { ...config.printStore, stripeConnectAccountId: null, chargesEnabled: false } }
+        await writeSiteConfig(user.id, config)
+        return res.status(200).json({ connected: false, chargesEnabled: false })
+      }
+      throw err
+    }
     const chargesEnabled = !!account.charges_enabled
     if (chargesEnabled !== config.printStore.chargesEnabled) {
       config = { ...config, printStore: { ...config.printStore, chargesEnabled } }
