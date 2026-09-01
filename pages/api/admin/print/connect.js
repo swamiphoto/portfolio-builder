@@ -53,7 +53,15 @@ async function handler(req, res, user) {
     return res.status(200).json({ url: link.url })
   } catch (err) {
     console.error('print connect error', err)
-    return res.status(500).json({ error: 'Could not start Stripe onboarding' })
+    // This endpoint is owner-only (withAuth), so surface the real reason. Stripe's
+    // own message — Connect not enabled on the platform, an unsigned platform
+    // agreement, a pending account activation, a missing capability — is exactly
+    // what the store owner needs to act on, instead of a dead-end generic error.
+    const detail = err?.raw?.message || err?.message || ''
+    return res.status(500).json({
+      error: detail ? `Could not start Stripe onboarding: ${detail}` : 'Could not start Stripe onboarding',
+      code: err?.code || err?.raw?.code || null,
+    })
   }
 }
 
