@@ -28,7 +28,15 @@ async function handler(req, res, user) {
       config = { ...config, printStore: { ...config.printStore, chargesEnabled } }
       await writeSiteConfig(user.id, config)
     }
-    return res.status(200).json({ connected: true, chargesEnabled })
+    // detailsSubmitted tells us the owner finished the Stripe form even when
+    // charges aren't live yet (Stripe still verifying), so the UI can show a
+    // "pending" state instead of falling back to "not connected".
+    return res.status(200).json({
+      connected: true,
+      chargesEnabled,
+      payoutsEnabled: !!account.payouts_enabled,
+      detailsSubmitted: !!account.details_submitted,
+    })
   } catch (err) {
     console.error('print connect status error', err)
     return res.status(500).json({ error: 'Could not fetch payout status' })

@@ -228,7 +228,8 @@ function withLinks(text) {
 }
 
 function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
-  const [connectStatus, setConnectStatus] = useState(null) // null = loading, true = connected, false = not connected
+  // null = loading; otherwise { connected, chargesEnabled, detailsSubmitted }
+  const [payoutStatus, setPayoutStatus] = useState(null)
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState(null)
   const [showPayoutHelp, setShowPayoutHelp] = useState(false)
@@ -236,9 +237,18 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   useEffect(() => {
     fetch('/api/admin/print/connect/status')
       .then(r => r.ok ? r.json() : Promise.reject(r))
-      .then(data => setConnectStatus(!!data.chargesEnabled))
-      .catch(() => setConnectStatus(false))
+      .then(data => setPayoutStatus({
+        connected: !!data.connected,
+        chargesEnabled: !!data.chargesEnabled,
+        detailsSubmitted: !!data.detailsSubmitted,
+      }))
+      .catch(() => setPayoutStatus({ connected: false, chargesEnabled: false, detailsSubmitted: false }))
   }, [])
+
+  // Four states: still loading, active (charges live), pending (form submitted
+  // but Stripe still verifying), and not-yet-connected.
+  const payoutsActive = payoutStatus?.chargesEnabled
+  const payoutsPending = payoutStatus && payoutStatus.connected && !payoutStatus.chargesEnabled
 
   async function handleConnect() {
     setConnecting(true)
@@ -326,7 +336,9 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
           <div style={sectionHeader}>Payouts</div>
           <div style={{ marginTop: 12 }}>
-            {connectStatus === true ? (
+            {payoutStatus === null ? (
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0 }}>Checking payout status…</p>
+            ) : payoutsActive ? (
               <>
                 <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
                 <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
@@ -335,6 +347,9 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               </>
             ) : (
               <>
+                {payoutsPending && (
+                  <p style={{ fontSize: 13, color: '#9a7b2e', margin: '0 0 8px' }}>Verifying your details…</p>
+                )}
                 <button
                   type="button"
                   disabled={connecting}
@@ -356,10 +371,12 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                   onMouseEnter={e => { if (!connecting) { e.currentTarget.style.background = 'rgba(255,253,248,1)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.6)' } }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,253,248,0.7)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.4)' }}
                 >
-                  {connecting ? 'Redirecting…' : 'Connect payouts'}
+                  {connecting ? 'Redirecting…' : payoutsPending ? 'Resume setup' : 'Connect payouts'}
                 </button>
                 <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
-                  Get paid through Stripe. Required before you can sell.{' '}
+                  {payoutsPending
+                    ? 'Stripe is still verifying your account — this can take a few minutes. Resume setup if anything’s outstanding.'
+                    : 'Get paid through Stripe. Required before you can sell.'}{' '}
                   <button
                     type="button"
                     onClick={() => setShowPayoutHelp(v => !v)}
