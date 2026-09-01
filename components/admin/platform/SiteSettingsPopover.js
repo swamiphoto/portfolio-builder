@@ -216,10 +216,22 @@ function HeaderIconButton({ children, onClick, title, innerRef }) {
   )
 }
 
+// Render a plain string with any http(s) URLs turned into links, so a Stripe
+// error that points the owner at their dashboard is actually clickable.
+function withLinks(text) {
+  const parts = String(text || '').split(/(https?:\/\/[^\s]+)/g)
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part)
+      ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>{part}</a>
+      : part
+  )
+}
+
 function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   const [connectStatus, setConnectStatus] = useState(null) // null = loading, true = connected, false = not connected
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState(null)
+  const [showPayoutHelp, setShowPayoutHelp] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/print/connect/status')
@@ -329,25 +341,39 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                   onClick={handleConnect}
                   style={{
                     fontSize: 12,
-                    color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
-                    border: '1px solid rgba(160,140,110,0.32)',
-                    borderRadius: 4,
+                    color: connecting ? 'var(--text-muted)' : '#2c2416',
+                    border: '1px solid rgba(160,140,110,0.4)',
+                    borderRadius: 5,
                     padding: '5px 12px',
-                    background: 'transparent',
+                    background: 'rgba(255,253,248,0.7)',
                     cursor: connecting ? 'default' : 'pointer',
-                    transition: 'color 0.15s, border-color 0.15s',
+                    transition: 'background 0.15s, border-color 0.15s',
                   }}
-                  onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
+                  onMouseEnter={e => { if (!connecting) { e.currentTarget.style.background = 'rgba(255,253,248,1)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.6)' } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,253,248,0.7)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.4)' }}
                 >
                   {connecting ? 'Redirecting…' : 'Connect payouts'}
                 </button>
                 <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
-                  Get paid through Stripe. Required before you can sell.
+                  Get paid through Stripe. Required before you can sell.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowPayoutHelp(v => !v)}
+                    style={{ color: '#8b6f47', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', font: 'inherit' }}
+                  >
+                    How do payouts work?
+                  </button>
                 </p>
+                {showPayoutHelp && (
+                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, padding: '10px 12px', background: 'rgba(255,253,248,0.6)', border: DIVIDER_SOFT, borderRadius: 6 }}>
+                    <p style={{ margin: '0 0 6px' }}>Sepia pays you through Stripe, the same service that processes the payment.</p>
+                    <p style={{ margin: '0 0 6px' }}>Click <strong style={{ color: 'var(--text-secondary)' }}>Connect payouts</strong> and Stripe opens a short, secure form to confirm your details and bank account. It takes a couple of minutes.</p>
+                    <p style={{ margin: 0 }}>Once you’re connected, earnings from every print sale are deposited to your account automatically, minus Sepia’s commission.</p>
+                  </div>
+                )}
                 {connectError && (
-                  <p style={{ fontSize: 11, color: '#b3261e', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
-                    {connectError}
+                  <p style={{ fontSize: 10.5, color: '#b03030', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
+                    {withLinks(connectError)}
                   </p>
                 )}
               </>
