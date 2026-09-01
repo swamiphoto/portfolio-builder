@@ -246,7 +246,6 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
     }
   }
 
-  const enabled = !!ps.enabled
   const markup = ps.markup ?? 3
   const feePct = Number(process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT || 0)
   const exampleCost = 20
@@ -262,116 +261,106 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
           Sell prints of your photos. We print and ship worldwide. You set the markup and keep the difference.
         </p>
 
-        {/* Enable */}
-        <div className="flex items-center justify-between">
-          <span style={{ fontSize: 13, color: '#2c2416' }}>Enable print store</span>
-          <ToggleSwitch on={enabled} onChange={() => updatePrintStore({ enabled: !enabled })} />
+        {/* Pricing */}
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+          <div style={sectionHeader}>Pricing</div>
+          <div className="space-y-4" style={{ marginTop: 13 }}>
+            <Field label="Your markup (× lab cost)">
+              <input
+                className={inputCls}
+                style={inputStyle}
+                type="number"
+                min="1"
+                step="0.1"
+                placeholder="3"
+                value={markup}
+                onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
+              />
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
+                You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
+                <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>, you keep{' '}
+                <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>
+                {feePct > 0 ? ` after Sepia’s ${feePct}% commission` : ''}.
+              </p>
+            </Field>
+
+            <Field label="Currency">
+              <select
+                className={inputCls}
+                style={inputStyle}
+                value={ps.currency || 'USD'}
+                onChange={(e) => updatePrintStore({ currency: e.target.value })}
+              >
+                {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
+                Used for prints and package sales.
+              </p>
+            </Field>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
+                <ToggleSwitch on={!!ps.showPriceOnImage} onChange={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+                Displays “From $X” on photos that are for sale.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {enabled && (
-          <>
-            {/* Pricing */}
-            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
-              <div style={sectionHeader}>Pricing</div>
-              <div className="space-y-4" style={{ marginTop: 13 }}>
-                <Field label="Your markup (× lab cost)">
-                  <input
-                    className={inputCls}
-                    style={inputStyle}
-                    type="number"
-                    min="1"
-                    step="0.1"
-                    placeholder="3"
-                    value={markup}
-                    onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
-                  />
-                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
-                    You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
-                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>, you keep{' '}
-                    <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>
-                    {feePct > 0 ? ` after Sepia’s ${feePct}% commission` : ''}.
+        {/* Payouts */}
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+          <div style={sectionHeader}>Payouts</div>
+          <div style={{ marginTop: 12 }}>
+            {connectStatus === true ? (
+              <>
+                <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
+                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
+                  Earnings go to your Stripe account.
+                </p>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  disabled={connecting}
+                  onClick={handleConnect}
+                  style={{
+                    fontSize: 12,
+                    color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
+                    border: '1px solid rgba(160,140,110,0.32)',
+                    borderRadius: 4,
+                    padding: '5px 12px',
+                    background: 'transparent',
+                    cursor: connecting ? 'default' : 'pointer',
+                    transition: 'color 0.15s, border-color 0.15s',
+                  }}
+                  onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
+                >
+                  {connecting ? 'Redirecting…' : 'Connect payouts'}
+                </button>
+                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
+                  Get paid through Stripe. Required before you can sell.
+                </p>
+                {connectError && (
+                  <p style={{ fontSize: 11, color: '#b3261e', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
+                    {connectError}
                   </p>
-                </Field>
-
-                <Field label="Currency">
-                  <select
-                    className={inputCls}
-                    style={inputStyle}
-                    value={ps.currency || 'USD'}
-                    onChange={(e) => updatePrintStore({ currency: e.target.value })}
-                  >
-                    {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
-                    Used for prints and package sales.
-                  </p>
-                </Field>
-
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
-                    <ToggleSwitch on={!!ps.showPriceOnImage} onChange={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
-                  </div>
-                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-                    Displays “From $X” on photos that are for sale.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Payouts */}
-            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
-              <div style={sectionHeader}>Payouts</div>
-              <div style={{ marginTop: 12 }}>
-                {connectStatus === true ? (
-                  <>
-                    <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
-                    <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
-                      Earnings go to your Stripe account.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      disabled={connecting}
-                      onClick={handleConnect}
-                      style={{
-                        fontSize: 12,
-                        color: connecting ? 'var(--text-muted)' : 'var(--text-secondary)',
-                        border: '1px solid rgba(160,140,110,0.32)',
-                        borderRadius: 4,
-                        padding: '5px 12px',
-                        background: 'transparent',
-                        cursor: connecting ? 'default' : 'pointer',
-                        transition: 'color 0.15s, border-color 0.15s',
-                      }}
-                      onMouseEnter={e => { if (!connecting) { e.currentTarget.style.color = '#2c2416'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.55)' } }}
-                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(160,140,110,0.32)' }}
-                    >
-                      {connecting ? 'Redirecting…' : 'Connect payouts'}
-                    </button>
-                    <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
-                      Get paid through Stripe. Required before you can sell.
-                    </p>
-                    {connectError && (
-                      <p style={{ fontSize: 11, color: '#b3261e', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
-                        {connectError}
-                      </p>
-                    )}
-                  </>
                 )}
-              </div>
-            </div>
+              </>
+            )}
+          </div>
+        </div>
 
-            {/* Orders */}
-            <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 14 }}>
-              <a href="/admin/orders" style={{ fontSize: 12.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                View orders →
-              </a>
-            </div>
-          </>
-        )}
+        {/* Orders */}
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 14 }}>
+          <a href="/admin/orders" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            View orders →
+          </a>
+        </div>
       </div>
     </PopoverShell>
   )
