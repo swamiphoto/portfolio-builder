@@ -6,12 +6,13 @@ import { saveOrder } from '../orders'
 import { sendMail } from '../email/mailer'
 import { photographerSaleEmail, fulfillmentFailedEmail, buyerOrderConfirmationEmail } from '../email/templates'
 
-export async function placeOrderForPaidOrder(order, { photographerEmail, siteName } = {}) {
+export async function placeOrderForPaidOrder(order, { photographerEmail, siteName, skipBuyerEmail = false } = {}) {
   if (order.fulfillment && order.fulfillment.labOrderId) return order // already placed
 
   // Confirm the purchase to the buyer up front — they've paid, so this should go
   // out regardless of whether lab placement below succeeds. Best-effort.
-  if (order.buyer?.email) {
+  // Skipped on a manual retry (the buyer was already emailed the first time).
+  if (order.buyer?.email && !skipBuyerEmail) {
     try {
       const msg = buyerOrderConfirmationEmail({ order, siteName: siteName || 'the shop' })
       await sendMail({ to: order.buyer.email, ...msg })

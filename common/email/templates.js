@@ -38,11 +38,11 @@ export function fulfillmentFailedEmail({ order, siteName }) {
   const subject = `Action needed: a print order couldn't be sent to the lab`
   const text = `A paid order from ${siteName} could not be placed with the print lab and needs attention.\n\n` +
     `Print: ${line}\nOrder: ${order.id}\n\n` +
-    `The buyer has paid. We'll retry, but please check your Orders view.`
+    `The buyer has paid. Open your Orders view to see the reason and retry the order.`
   const html = `<div style="font-family:-apple-system,sans-serif;max-width:560px;color:#1a1410;line-height:1.6;">` +
     `<p>A paid order from <strong>${esc(siteName)}</strong> could not be placed with the print lab and needs attention.</p>` +
     `<p><strong>Print:</strong> ${esc(line)}<br><strong>Order:</strong> ${esc(order.id)}</p>` +
-    `<p>The buyer has paid. We'll retry, but please check your Orders view.</p></div>`
+    `<p>The buyer has paid. Open your Orders view to see the reason and retry the order.</p></div>`
   return { subject, html, text }
 }
 
