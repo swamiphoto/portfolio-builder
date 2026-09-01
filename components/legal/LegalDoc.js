@@ -12,7 +12,7 @@ export default function LegalDoc({ title, lastUpdated, children }) {
       </Head>
       <div style={{ minHeight: '100vh', background: '#faf7f0', color: '#1a1410' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px 96px' }}>
-          <Link href="/" style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontSize: 22, color: '#1a1410', textDecoration: 'none' }}>
+          <Link href="/" style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: '#1a1410', textDecoration: 'none' }}>
             Sepia
           </Link>
           <h1 style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontSize: 34, fontWeight: 500, margin: '32px 0 6px', lineHeight: 1.15 }}>
