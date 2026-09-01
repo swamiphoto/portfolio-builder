@@ -1,5 +1,5 @@
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 
@@ -56,10 +56,13 @@ function Shell({ children }) {
   )
 }
 
+const STATUS_COLOR = { fulfillment_failed: '#b03030', shipped: '#2e7d32', placed: '#9a7b2e' }
+
 export default function OrdersPage() {
   const { status: authStatus } = useSession()
   const [orders, setOrders] = useState(null)
   const [error, setError] = useState(null)
+  const [retrying, setRetrying] = useState(null) // orderId currently retrying
 
   useEffect(() => {
     if (authStatus !== 'authenticated') return
@@ -68,6 +71,20 @@ export default function OrdersPage() {
       .then((d) => setOrders(d.orders || []))
       .catch(() => setError('Could not load orders.'))
   }, [authStatus])
+
+  async function handleRetry(orderId) {
+    setRetrying(orderId)
+    try {
+      const r = await fetch('/api/admin/print/orders/retry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId }),
+      })
+      const d = await r.json().catch(() => ({}))
+      // The endpoint returns the updated order on success and on repeat-failure.
+      if (d.order) setOrders((prev) => prev.map((o) => (o.id === orderId ? d.order : o)))
+    } finally {
+      setRetrying(null)
+    }
+  }
 
   if (authStatus === 'loading') return <Shell><p style={{ color: MUTED, fontSize: 14 }}>Loading…</p></Shell>
   if (authStatus !== 'authenticated') return <Shell><p style={{ color: MUTED, fontSize: 14 }}>Please sign in.</p></Shell>
@@ -98,15 +115,38 @@ export default function OrdersPage() {
           <tbody>
             {orders.map((o) => {
               const t = o.fulfillment?.tracking
+              const failed = o.status === 'fulfillment_failed'
+              const isRetrying = retrying === o.id
               return (
-                <tr key={o.id} style={{ borderBottom: `1px solid ${HAIRLINE_SOFT}` }}>
-                  <td style={td}>{(o.createdAt || '').slice(0, 10)}</td>
-                  <td style={td}>{o.spec?.size} {o.spec?.finish}{o.spec?.frame && o.spec.frame !== 'none' ? `, ${o.spec.frame}` : ''}</td>
-                  <td style={td}>{o.buyer?.name || o.buyer?.email || '—'}</td>
-                  <td style={td}>{STATUS_LABEL[o.status] || o.status}</td>
-                  <td style={{ ...td, color: INK }}>{money(o.amounts?.profit, o.amounts?.currency)}</td>
-                  <td style={td}>{t?.url ? <a href={t.url} target="_blank" rel="noreferrer" style={{ color: ACCENT }}>{t.number || 'Track'}</a> : t?.number || '—'}</td>
-                </tr>
+                <Fragment key={o.id}>
+                  <tr style={{ borderBottom: failed ? 'none' : `1px solid ${HAIRLINE_SOFT}` }}>
+                    <td style={td}>{(o.createdAt || '').slice(0, 10)}</td>
+                    <td style={td}>{o.spec?.size} {o.spec?.finish}{o.spec?.frame && o.spec.frame !== 'none' ? `, ${o.spec.frame}` : ''}</td>
+                    <td style={td}>{o.buyer?.name || o.buyer?.email || '—'}</td>
+                    <td style={{ ...td, color: STATUS_COLOR[o.status] || BODY }}>{STATUS_LABEL[o.status] || o.status}</td>
+                    <td style={{ ...td, color: INK }}>{money(o.amounts?.profit, o.amounts?.currency)}</td>
+                    <td style={td}>{t?.url ? <a href={t.url} target="_blank" rel="noreferrer" style={{ color: ACCENT }}>{t.number || 'Track'}</a> : t?.number || '—'}</td>
+                  </tr>
+                  {failed && (
+                    <tr style={{ borderBottom: `1px solid ${HAIRLINE_SOFT}` }}>
+                      <td colSpan={6} style={{ padding: '0 8px 12px' }}>
+                        <div style={{ background: 'rgba(176,48,48,0.05)', border: '1px solid rgba(176,48,48,0.22)', borderRadius: 6, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 12.5, color: '#b03030', lineHeight: 1.5, flex: 1, minWidth: 200 }}>
+                            The buyer paid, but the print lab rejected this order{o.fulfillment?.error ? `: ${o.fulfillment.error}` : '.'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRetry(o.id)}
+                            disabled={isRetrying}
+                            style={{ fontFamily: MONO, fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: isRetrying ? MUTED : '#2c2416', border: '1px solid rgba(160,140,110,0.4)', borderRadius: 5, padding: '7px 14px', background: 'rgba(255,253,248,0.7)', cursor: isRetrying ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            {isRetrying ? 'Retrying…' : 'Retry'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               )
             })}
           </tbody>
