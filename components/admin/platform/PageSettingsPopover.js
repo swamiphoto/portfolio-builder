@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { slugify } from '../../../common/pageUtils'
+import { slugify, effectivePageSlug, uniqueSlug } from '../../../common/pageUtils'
 import { getPagePhotos } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/imageUtils'
 import { buildPreviewSequence, MUSIC_POOL, musicIdToUrl, musicUrlToId, randomMusicUrl } from '../../../common/slideshowSync'
@@ -765,7 +765,11 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
             onBlur={() => {
               const sanitized = slugify(slugDraft ?? displaySlug)
               setSlugDraft(null)
-              update({ slug: sanitized })
+              // Don't let a hand-typed slug collide with another page's — that
+              // makes Preview open the wrong page (#102). Suffix it if taken.
+              const others = (siteConfig?.pages || []).filter(p => p.id !== page.id)
+              const taken = new Set(others.map(effectivePageSlug))
+              update({ slug: sanitized ? uniqueSlug(sanitized, taken) : sanitized })
             }}
             placeholder={autoSlug || 'page-url'}
             spellCheck={false}

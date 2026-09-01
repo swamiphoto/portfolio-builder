@@ -6,6 +6,7 @@ import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
 import { buildNavTree, buildHiddenTree, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink, titleForTemplate, generatePageId } from '../../../common/siteConfig'
+import { effectivePageSlug, uniqueSlug } from '../../../common/pageUtils'
 import { assignHomeOnCreate, resolveHomePage } from '../../../common/homePage'
 import { normalizeCustomDomain, subdomainHost, basePathFor } from '../../../common/domainUtils'
 import { pageDisplayThumbnail, pageThumbGradient } from '../../../common/assetRefs'
@@ -363,7 +364,11 @@ export default function PlatformSidebar({
         // Slug tracks the name (spaces → dashes) until the user overrides it.
         // It's "still auto" when it equals the slug derived from the old title.
         const prevDerived = generatePageId(p.title || '')
-        const slug = (p.slug && p.slug !== prevDerived) ? p.slug : generatePageId(trimmed)
+        const derived = (p.slug && p.slug !== prevDerived) ? p.slug : generatePageId(trimmed)
+        // Keep it unique: renaming a page to match another's name would
+        // otherwise duplicate the slug and make Preview open the wrong page (#102).
+        const taken = new Set(prev.pages.filter(o => o.id !== pageId).map(effectivePageSlug))
+        const slug = uniqueSlug(derived, taken)
         return { ...p, title: trimmed, slug }
       }),
     }))
