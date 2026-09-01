@@ -340,11 +340,15 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                   disabled={connecting}
                   onClick={handleConnect}
                   style={{
-                    fontSize: 12,
+                    fontFamily: MONO,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
                     color: connecting ? 'var(--text-muted)' : '#2c2416',
                     border: '1px solid rgba(160,140,110,0.4)',
                     borderRadius: 5,
-                    padding: '5px 12px',
+                    padding: '7px 14px',
                     background: 'rgba(255,253,248,0.7)',
                     cursor: connecting ? 'default' : 'pointer',
                     transition: 'background 0.15s, border-color 0.15s',
@@ -364,17 +368,20 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                     How do payouts work?
                   </button>
                 </p>
-                {showPayoutHelp && (
-                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, padding: '10px 12px', background: 'rgba(255,253,248,0.6)', border: DIVIDER_SOFT, borderRadius: 6 }}>
-                    <p style={{ margin: '0 0 6px' }}>Sepia pays you through Stripe, the same service that processes the payment.</p>
-                    <p style={{ margin: '0 0 6px' }}>Click <strong style={{ color: 'var(--text-secondary)' }}>Connect payouts</strong> and Stripe opens a short, secure form to confirm your details and bank account. It takes a couple of minutes.</p>
-                    <p style={{ margin: 0 }}>Once you’re connected, earnings from every print sale are deposited to your account automatically, minus Sepia’s commission.</p>
+                {/* One panel, one message: a Stripe error takes over the box and
+                    replaces the help copy — we never stack both. */}
+                {(connectError || showPayoutHelp) && (
+                  <div style={{ fontSize: 10.5, lineHeight: 1.55, marginTop: 8, padding: '10px 12px', background: connectError ? 'rgba(176,48,48,0.05)' : 'rgba(255,253,248,0.6)', border: `1px solid ${connectError ? 'rgba(176,48,48,0.28)' : 'rgba(160,140,110,0.12)'}`, borderRadius: 6, color: connectError ? '#b03030' : 'var(--text-muted)' }}>
+                    {connectError ? (
+                      <p style={{ margin: 0 }}>{withLinks(connectError)}</p>
+                    ) : (
+                      <>
+                        <p style={{ margin: '0 0 6px' }}>Sepia pays you through Stripe, the same service that processes the payment.</p>
+                        <p style={{ margin: '0 0 6px' }}>Click <strong style={{ color: 'var(--text-secondary)' }}>Connect payouts</strong> and Stripe opens a short, secure form to confirm your details and bank account. It takes a couple of minutes.</p>
+                        <p style={{ margin: 0 }}>Once you’re connected, earnings from every print sale are deposited to your account automatically, minus Sepia’s commission.</p>
+                      </>
+                    )}
                   </div>
-                )}
-                {connectError && (
-                  <p style={{ fontSize: 10.5, color: '#b03030', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
-                    {withLinks(connectError)}
-                  </p>
                 )}
               </>
             )}
