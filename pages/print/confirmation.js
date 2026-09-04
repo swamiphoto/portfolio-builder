@@ -1,10 +1,13 @@
 // pages/print/confirmation.js
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 const SERIF_DISPLAY = '"Cormorant Garamond", Georgia, serif'
-const SERIF_LABEL = '"Fraunces", Georgia, serif'
+const SANS = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif'
 
 export default function PrintConfirmation() {
+  const { home } = useRouter().query
+  const browseHref = typeof home === 'string' && home ? home : '/'
   return (
     <div
       style={{
@@ -44,10 +47,11 @@ export default function PrintConfirmation() {
 
         <p
           style={{
-            fontFamily: SERIF_LABEL,
+            fontFamily: SANS,
+            fontWeight: 500,
             textTransform: 'uppercase',
             letterSpacing: '0.18em',
-            fontSize: 11.5,
+            fontSize: 11,
             color: '#a8967a',
             margin: 0,
           }}
@@ -80,8 +84,8 @@ export default function PrintConfirmation() {
           style={{
             color: '#a8967a',
             fontSize: 12.5,
-            fontFamily: SERIF_LABEL,
-            letterSpacing: '0.04em',
+            fontFamily: SANS,
+            letterSpacing: '0.02em',
             margin: '18px auto 0',
           }}
         >
@@ -90,16 +94,17 @@ export default function PrintConfirmation() {
 
         <div style={{ marginTop: 30 }}>
           <a
-            href="/"
+            href={browseHref}
             style={{
               display: 'inline-block',
-              fontFamily: SERIF_LABEL,
+              fontFamily: SANS,
+              fontWeight: 500,
               textTransform: 'uppercase',
-              letterSpacing: '0.14em',
-              fontSize: 11.5,
+              letterSpacing: '0.12em',
+              fontSize: 11,
               color: '#3a2f1e',
               textDecoration: 'none',
-              padding: '11px 26px',
+              padding: '12px 26px',
               borderRadius: 999,
               border: '1px solid rgba(92,79,58,0.45)',
             }}

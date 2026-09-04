@@ -1,7 +1,8 @@
 // components/image-displays/print/CheckoutStep.js
 import React, { useState } from 'react'
 
-const input = { width: '100%', boxSizing: 'border-box', padding: '9px 11px', border: '1px solid rgba(160,140,110,0.35)', borderRadius: 5, background: '#faf7f1', fontSize: 14, color: '#2c2416', outline: 'none', marginTop: 4 }
+const SANS = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif'
+const input = { width: '100%', boxSizing: 'border-box', padding: '9px 11px', border: '1px solid rgba(160,140,110,0.35)', borderRadius: 5, background: '#faf7f1', fontFamily: SANS, fontSize: 14, color: '#2c2416', outline: 'none', marginTop: 4 }
 
 // Common Prodigi shipping destinations (worldwide list kept lean but broad).
 const COUNTRIES = [
@@ -32,7 +33,7 @@ export default function CheckoutStep({ onBack, onSubmit, quoting, amounts, error
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); if (ready) onSubmit(f) }}
-      style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#2c2416' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#2c2416', paddingBottom: 24 }}
     >
       <button type="button" onClick={onBack} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#7a6b55', fontSize: 12.5, cursor: 'pointer', padding: 0 }}>‹ Back to options</button>
       <input style={input} placeholder="Email" aria-label="Email" value={f.email} onChange={set('email')} />
@@ -53,7 +54,7 @@ export default function CheckoutStep({ onBack, onSubmit, quoting, amounts, error
         {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
       </select>
       {amounts && (
-        <div style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 13, color: '#5c4f3a', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: SANS, fontSize: 13, color: '#5c4f3a', display: 'flex', justifyContent: 'space-between' }}>
           <span>Shipping ${(amounts.shippingCost / 100).toFixed(2)}</span>
           <span>Total ${(amounts.total / 100).toFixed(2)}</span>
         </div>
@@ -62,7 +63,9 @@ export default function CheckoutStep({ onBack, onSubmit, quoting, amounts, error
       <button
         type="submit"
         disabled={!ready || quoting}
-        style={{ width: '100%', padding: '13px', borderRadius: 6, border: 'none', fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, background: '#2c2416', color: '#f4efe8', cursor: ready && !quoting ? 'pointer' : 'not-allowed', opacity: ready && !quoting ? 1 : 0.6 }}
+        style={{ width: '100%', padding: '13px 16px', borderRadius: 6, border: 'none', fontFamily: SANS, fontSize: 14, fontWeight: 500, letterSpacing: '0.01em', background: '#2c2416', color: '#f4efe8', cursor: ready && !quoting ? 'pointer' : 'not-allowed', opacity: ready && !quoting ? 1 : 0.6, transition: 'background 0.15s' }}
+        onMouseEnter={(e) => { if (ready && !quoting) e.currentTarget.style.background = '#3a2f22' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = '#2c2416' }}
       >
         {quoting ? 'Working…' : amounts ? `Pay $${(amounts.total / 100).toFixed(2)}` : 'Continue to payment'}
       </button>
