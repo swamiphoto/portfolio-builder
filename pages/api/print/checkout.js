@@ -10,6 +10,8 @@ import { newOrderId, saveOrder } from '../../../common/orders'
 import { getStripe } from '../../../common/stripe/client'
 import { buildCheckoutSessionParams } from '../../../common/stripe/checkout'
 import { siteUrlFor } from '../../../common/domainUtils'
+import { resolveHomePage } from '../../../common/homePage'
+import { effectivePageSlug } from '../../../common/pageUtils'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -60,9 +62,14 @@ export default async function handler(req, res) {
     // Return the buyer to wherever they were shopping — localhost in dev, the
     // published domain in prod — rather than a hardcoded configured site URL.
     const base = req.headers.origin || siteUrlFor(config, username, process.env.NEXT_PUBLIC_ROOT_DOMAIN)
+    // Send "Continue browsing" to the actual portfolio homepage, not the cover
+    // landing at "/". The homepage is a real page reachable at its own slug.
+    const home = resolveHomePage(config)
+    const homeSlug = home ? effectivePageSlug(home) : ''
+    const successUrl = `${base}/print/confirmation${homeSlug ? `?home=${encodeURIComponent('/' + homeSlug)}` : ''}`
     const stripe = getStripe()
     const session = await stripe.checkout.sessions.create(
-      buildCheckoutSessionParams({ order, successUrl: `${base}/print/confirmation`, cancelUrl: `${base}` }),
+      buildCheckoutSessionParams({ order, successUrl, cancelUrl: `${base}` }),
       { stripeAccount: ps.stripeConnectAccountId },
     )
 
