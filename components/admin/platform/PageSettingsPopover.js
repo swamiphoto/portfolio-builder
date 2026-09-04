@@ -344,7 +344,8 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
               <div className="space-y-0.5 overflow-y-auto -mr-1 pr-1" style={{ maxHeight: 268 }}>
                 {sequence.map((item, i) => {
                   const isText = item.type === 'text'
-                  const excluded = !isText && item.excluded
+                  const excluded = item.excluded
+                  const excludeTarget = isText ? item.excludeKey : item.url
                   const preview = isText ? (item.content || 'Text slide') : (item.caption || '')
                   return (
                     <div
@@ -379,10 +380,10 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
                         )}
                       </div>
 
-                      {/* Include / exclude toggle (images only) */}
-                      {!isText && (
+                      {/* Include / exclude toggle */}
+                      {excludeTarget && (
                         <button
-                          onClick={() => toggleExcluded(item.url)}
+                          onClick={() => toggleExcluded(excludeTarget)}
                           className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5"
                           style={{ color: excluded ? 'var(--text-muted)' : 'var(--sepia-accent)' }}
                           aria-label={excluded ? 'Include in slideshow' : 'Exclude from slideshow'}
