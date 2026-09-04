@@ -31,7 +31,7 @@ export default function MarkdownText({ content, variantClasses }) {
   const ast = parseMarkdown(content)
   const vc = variantClasses || {}
   return (
-    <div className="markdown-text space-y-5">
+    <div className="markdown-text space-y-2">
       {ast.map((b, i) => {
         if (b.type === 'heading') return <div key={i} className={vc.heading}>{renderInline(b.children)}</div>
         if (b.type === 'quote') return <div key={i} className={`${vc.quote || vc.body || ''} border-l-2 pl-4 opacity-90`}>{renderInline(b.children)}</div>
