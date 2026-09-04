@@ -37,12 +37,19 @@ export function musicLabelForUrl(url) {
 
 // Build the actual slide sequence for the public slideshow player.
 // Text blocks always included; images excluded if their URL is in the excluded set.
+// A text block has no stable id (blocks are positional), so — like images key
+// off their URL — a text slide keys off its content. Editing the text makes it
+// a "new" slide (re-shown); that mirrors the image-by-URL model and is fine.
+export function textSlideKey(content) {
+  return `text:${content}`
+}
+
 export function buildSlideSequence(blocks, excluded = []) {
   const excludedSet = new Set(excluded)
   const sequence = []
   for (const b of blocks || []) {
     if (b.type === 'text' && b.content) {
-      sequence.push({ type: 'text', content: b.content })
+      if (!excludedSet.has(textSlideKey(b.content))) sequence.push({ type: 'text', content: b.content })
     } else if (b.type === 'photo' && b.imageUrl) {
       if (!excludedSet.has(b.imageUrl)) sequence.push({ type: 'image', url: b.imageUrl, caption: b.caption || '' })
     } else if (b.type === 'photos' || b.type === 'stacked' || b.type === 'masonry') {
@@ -63,7 +70,7 @@ export function buildPreviewSequence(blocks, excluded = []) {
   const sequence = []
   for (const b of blocks || []) {
     if (b.type === 'text' && b.content) {
-      sequence.push({ type: 'text', content: b.content })
+      sequence.push({ type: 'text', content: b.content, excludeKey: textSlideKey(b.content), excluded: excludedSet.has(textSlideKey(b.content)) })
     } else if (b.type === 'photo' && b.imageUrl) {
       sequence.push({ type: 'image', url: b.imageUrl, caption: b.caption, excluded: excludedSet.has(b.imageUrl) })
     } else if (b.type === 'photos' || b.type === 'stacked' || b.type === 'masonry') {
