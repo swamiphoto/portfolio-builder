@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "./KenBurnsSlideshowLayout.module.css";
-import Text from "../../../text/Text";
 
 const KenBurnsSlideshowLayout = ({ slides, currentImageIndex, transitioning, aspectRatios = [] }) => {
   // Filter the slides to extract only the images for proper aspect ratio handling
@@ -11,14 +10,26 @@ const KenBurnsSlideshowLayout = ({ slides, currentImageIndex, transitioning, asp
     <div className={`${styles["kenburns-container"]} bg-black relative`}>
       {slides.map((slide, index) => {
         if (slide.type === "text") {
-          // Render text slide
+          // Render text slide — clean mono type (not the Muse display face), sized
+          // responsively and capped to the viewport so long passages scroll within
+          // the slide instead of bleeding off the top/bottom edges (#104, #126).
           return (
             <div key={index} className={`${styles["kenburns-text"]} bg-black text-white ${index === currentImageIndex ? (transitioning ? styles["kenburns-slide-out"] : styles["kenburns-visible"]) : styles["kenburns-hidden"]}`}>
-              <div className="flex justify-center items-center h-full">
-                <div className={`max-w-3xl px-4 ${styles["kenburns-zoom-text"]} font-serif2`}>
-                  <Text layout="layout2" color="white">
-                    <span className="drop-cap">{slide.content}</span>
-                  </Text>
+              <div className="flex justify-center items-center h-full px-6 py-14">
+                <div
+                  style={{
+                    fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace',
+                    fontSize: 'clamp(1rem, 2.2vw, 1.75rem)',
+                    lineHeight: 1.6,
+                    letterSpacing: '0.01em',
+                    textAlign: 'center',
+                    whiteSpace: 'pre-line',
+                    maxWidth: '46rem',
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {slide.content}
                 </div>
               </div>
             </div>
@@ -33,8 +44,19 @@ const KenBurnsSlideshowLayout = ({ slides, currentImageIndex, transitioning, asp
             <div key={index} className={`${styles["kenburns-image"]} ${isVertical ? styles["vertical"] : ""} ${isHorizontal ? styles["horizontal"] : ""} ${index === currentImageIndex ? (transitioning ? styles["kenburns-slide-out"] : styles["kenburns-visible"]) : styles["kenburns-hidden"]}`}>
               <img src={slide.url} alt={`Image ${index + 1}`} />
               {slide.caption && (
-                <div className="absolute bottom-10 left-0 right-0 flex justify-center">
-                  <div className="text-center text-gray-200 p-4 text-2xl max-w-3xl mx-4 leading-tight">{slide.caption}</div>
+                <div className="absolute bottom-10 left-0 right-0 flex justify-center px-4">
+                  <div
+                    className="text-center max-w-2xl leading-snug"
+                    style={{
+                      fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace',
+                      fontSize: 'clamp(0.8rem, 1.4vw, 1.05rem)',
+                      letterSpacing: '0.03em',
+                      color: '#f2efe9',
+                      textShadow: '0 1px 6px rgba(0,0,0,0.6)',
+                    }}
+                  >
+                    {slide.caption}
+                  </div>
                 </div>
               )}
             </div>
