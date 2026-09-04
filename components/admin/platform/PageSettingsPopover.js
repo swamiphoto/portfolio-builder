@@ -734,20 +734,6 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`} headerRight={themeToggle}>
 
-      {/* Hero title: the big title shown on the page itself. Blank = track the
-          page name (edited in the sidebar); type one to diverge them (#137). */}
-      <Section label="Hero title">
-        <input
-          className={INPUT}
-          placeholder={page.title || 'Same as page name'}
-          value={page.heroTitle || ''}
-          onChange={(e) => update({ heroTitle: e.target.value || undefined })}
-        />
-        <div className="text-[10px] leading-snug mt-1" style={{ color: 'var(--text-muted)' }}>
-          Shown as the page’s title. Leave blank to match the page name{page.title ? ` (“${page.title}”)` : ''}; the nav name is edited in the sidebar.
-        </div>
-      </Section>
-
       {/* Shown directly once a page is overridden; otherwise revealed from the "…"
           menu. Reverting to the site theme clears it; other pages are unaffected. */}
       {(overrideActive || showThemePicker) && (
