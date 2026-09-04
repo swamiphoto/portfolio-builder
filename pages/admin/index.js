@@ -206,7 +206,16 @@ export default function AdminIndex() {
         setLoading(false)
         const pages = config?.pages || []
         const firstReal = pages.find(p => p.type !== 'link')
-        if (!firstReal && config?.hasCoverPage !== false) {
+        // Restore the view from the URL so a refresh keeps you on the same page
+        // (#108). Falls back to the cover / first real page otherwise.
+        const q = router.query
+        if (q.view === 'library') {
+          setShowLibrary(true); setCoverSelected(false); setSelectedPageId(null)
+        } else if (q.view === 'cover' && config?.hasCoverPage !== false) {
+          setCoverSelected(true); setSelectedPageId(null)
+        } else if (q.page && pages.some(p => p.id === q.page)) {
+          setCoverSelected(false); setSelectedPageId(q.page)
+        } else if (!firstReal && config?.hasCoverPage !== false) {
           setCoverSelected(true)
           setSelectedPageId(null)
         } else {
@@ -408,6 +417,20 @@ export default function AdminIndex() {
     setSelectedPageId(pageId)
     setShowLibrary(false)
   }, [])
+
+  // Keep the URL in sync with the current view so a refresh lands on the same
+  // page instead of resetting to the first one (#108). Shallow-replace only —
+  // no navigation, no scroll.
+  useEffect(() => {
+    if (loading) return
+    const q = {}
+    if (showLibrary) q.view = 'library'
+    else if (coverSelected) q.view = 'cover'
+    else if (selectedPageId) q.page = selectedPageId
+    if (router.query.page === q.page && router.query.view === q.view) return
+    router.replace({ pathname: router.pathname, query: q }, undefined, { shallow: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPageId, coverSelected, showLibrary, loading])
 
   // Fires when a page is freshly created: { id, ts }. The block sidebar focuses +
   // selects that page's masthead title so the user can rename "Untitled" by
