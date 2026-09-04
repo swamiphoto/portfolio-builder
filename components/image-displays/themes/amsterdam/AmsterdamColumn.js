@@ -320,7 +320,9 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       // wall keeps its rounded-card-free look. The caption is Amsterdam's own,
       // rendered below (so VideoBlock's internal caption stays empty).
       const isFit = resolveVariant(block, TID) === 'centered'
-      const figW = isFit ? 'clamp(300px, 34vw, 520px)' : 'clamp(360px, 52vw, 860px)'
+      // A YouTube video on the poster wall should feel cinematic, not a small
+      // card. Fill runs nearly full-viewport; Fit stays matted but still large.
+      const figW = isFit ? 'clamp(320px, 52vw, 760px)' : 'clamp(360px, 82vw, 1280px)'
       return wrap('ams-col--media', null, (
         <figure className="m-0" style={{ width: figW }}>
           <VideoBlock url={block.url} caption="" variant={1} />

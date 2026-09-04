@@ -137,15 +137,42 @@ const PhotoBlock = ({ imageUrl, caption = "", variant = 1, widthPct = 72, onImag
       );
     }
 
+    // #120: a horizontal (landscape) image looks cropped and awkward when it runs
+    // edge-to-edge on a phone. On mobile only vertical (portrait) images stay
+    // full-bleed; a landscape one falls back to the centered treatment. Aspect is
+    // known after load, so this settles once the image measures (default holds
+    // full-bleed until then).
+    if (isMobile && variant === 1 && aspectRatio !== null && aspectRatio > 1) {
+      return (
+        <div className="relative group px-[10px]">
+          <img
+            ref={imgRef}
+            src={getSizedUrl(imageUrl, 'display')}
+            alt={caption || "Photo"}
+            className="w-full h-auto object-cover shadow-lg rounded-3xl cursor-pointer"
+            loading="lazy"
+            onClick={handleClick}
+            onLoad={handleImageLoad}
+            onError={(e) => { console.error("Failed to load image in PhotoBlock:", imageUrl); e.target.style.display = 'none'; }}
+          />
+          <WatermarkOverlay />
+          {buyOverlay}
+          {engagementOverlay}
+        </div>
+      );
+    }
+
     // variant 1 (default): full-bleed on desktop (mobile handled above).
     return (
       <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-hidden group">
         <img
+          ref={imgRef}
           src={getSizedUrl(imageUrl, 'display')}
           alt={caption || "Photo"}
           className="w-full h-auto object-cover cursor-pointer"
           loading="lazy"
           onClick={handleClick}
+          onLoad={handleImageLoad}
           onError={(e) => {
             console.error("Failed to load image in PhotoBlock:", imageUrl);
             e.target.style.display = 'none';
