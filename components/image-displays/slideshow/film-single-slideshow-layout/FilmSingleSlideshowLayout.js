@@ -56,7 +56,7 @@ const FilmSingleSlideshowLayout = ({ slides, currentImageIndex, transitioning })
               <img src={slide.url} alt={`Slide ${index + 1}`} />
               {slide.caption && (
                 <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-                  <div className="text-center text-gray-200 px-4 text-xl max-w-3xl leading-tight drop-shadow-lg">{slide.caption}</div>
+                  <div className="text-center text-gray-200 px-4 text-lg max-w-2xl leading-snug drop-shadow-lg" style={{ fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace', letterSpacing: '0.03em' }}>{slide.caption}</div>
                 </div>
               )}
             </div>
