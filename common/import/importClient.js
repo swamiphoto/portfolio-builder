@@ -1,4 +1,4 @@
-import { newImportBatchId, stableHash } from '@/common/import/importCore'
+import { newImportBatchId, stableHash, slugify } from '@/common/import/importCore'
 
 export { slugify } from '@/common/import/importCore'
 
@@ -73,10 +73,12 @@ export function applyImportToConfig(config, { imported, collections, importBatch
 
   const assets = { ...(config.assets || {}) }
   const sets = { ...(config.sets || {}) }
+  const galleries = { ...(config.galleries || {}) }
   // Tracks which setIds have already been cloned (or freshly created) in this
   // call, so we can safely mutate them in place without touching the
   // caller's original set objects (sets is only a shallow copy of config.sets).
   const owned = new Set()
+  const ownedGalleries = new Set()
   const ts = now || new Date().toISOString()
 
   const setForCollection = (cid) => {
@@ -95,6 +97,18 @@ export function applyImportToConfig(config, { imported, collections, importBatch
     return setId
   }
 
+  // Mirror each imported collection into config.galleries — the hyphen-slugged
+  // map the Library UI actually renders as "Sets". Falls back to the setId when
+  // a name slugifies to empty (e.g. a title with no alphanumerics).
+  const galleryKeyForCollection = (cid, setId) => {
+    const key = slugify(nameById[cid] || cid) || setId
+    if (!ownedGalleries.has(key)) {
+      galleries[key] = [...(galleries[key] || [])]
+      ownedGalleries.add(key)
+    }
+    return key
+  }
+
   for (const asset of imported || []) {
     const prev = config.assets?.[asset.assetId] || {}
     const merged = { ...prev, ...asset }
@@ -105,9 +119,14 @@ export function applyImportToConfig(config, { imported, collections, importBatch
       if (!set.assetIds.includes(asset.assetId)) set.assetIds = [...set.assetIds, asset.assetId]
       set.updatedAt = ts
       merged.setIds = [...new Set([...(prev.setIds || []), setId])]
+
+      const galleryKey = galleryKeyForCollection(cid, setId)
+      if (asset.publicUrl && !galleries[galleryKey].includes(asset.publicUrl)) {
+        galleries[galleryKey].push(asset.publicUrl)
+      }
     }
     assets[asset.assetId] = merged
   }
 
-  return { ...config, assets, sets }
+  return { ...config, assets, sets, galleries }
 }
