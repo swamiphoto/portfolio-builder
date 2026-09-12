@@ -50,20 +50,41 @@ describe('importSelected', () => {
 })
 
 describe('applyImportToConfig', () => {
-  it('groups imported assets into library sets, not galleries', () => {
+  it('groups imported assets into library sets AND a hyphen-slugged gallery', () => {
     const config = { assets: {}, sets: {}, savedViews: [{ id: 'v1' }], galleries: { keep: ['x'] } }
     const imported = [
       { assetId: 'a1', publicUrl: 'https://gcs/1.jpg', source: { externalCollectionId: 'c1' } },
       { assetId: 'a2', publicUrl: 'https://gcs/2.jpg', source: { externalCollectionId: 'c1' } },
     ]
-    const collections = [{ id: 'c1', name: 'Portraits' }]
+    const collections = [{ id: 'c1', name: 'Beach Portraits 2024' }]
     const next = applyImportToConfig(config, { imported, collections, importBatchId: 'imp_1', now: '2026-08-16T00:00:00.000Z' })
     const sets = Object.values(next.sets)
     expect(sets).toHaveLength(1)
-    expect(sets[0]).toMatchObject({ name: 'Portraits', kind: 'manual', assetIds: ['a1', 'a2'] })
+    expect(sets[0]).toMatchObject({ name: 'Beach Portraits 2024', kind: 'manual', assetIds: ['a1', 'a2'] })
     expect(next.assets.a1.setIds).toEqual([sets[0].setId])
-    expect(next.galleries).toEqual({ keep: ['x'] })      // untouched
+    // The Library UI renders galleries, so imports must also land there under a
+    // hyphen-slugged key — pre-existing galleries are preserved.
+    expect(next.galleries.keep).toEqual(['x'])
+    expect(next.galleries['beach-portraits-2024']).toEqual(['https://gcs/1.jpg', 'https://gcs/2.jpg'])
     expect(next.savedViews).toEqual([{ id: 'v1' }])      // preserved, not dropped
+  })
+
+  it('merges into an existing gallery of the same slug without duplicating urls', () => {
+    const config = { assets: {}, sets: {}, galleries: { 'big-sur': ['https://gcs/1.jpg'] } }
+    const imported = [
+      { assetId: 'a1', publicUrl: 'https://gcs/1.jpg', source: { externalCollectionId: 'c1' } }, // already present
+      { assetId: 'a2', publicUrl: 'https://gcs/2.jpg', source: { externalCollectionId: 'c1' } },
+    ]
+    const next = applyImportToConfig(config, { imported, collections: [{ id: 'c1', name: 'Big Sur' }], importBatchId: 'imp_2', now: 'T' })
+    expect(next.galleries['big-sur']).toEqual(['https://gcs/1.jpg', 'https://gcs/2.jpg'])
+  })
+
+  it('falls back to the setId as gallery key when the name slugifies to empty', () => {
+    const config = { assets: {}, sets: {}, galleries: {} }
+    const imported = [{ assetId: 'a1', publicUrl: 'u', source: { externalCollectionId: 'c1' } }]
+    const next = applyImportToConfig(config, { imported, collections: [{ id: 'c1', name: '!!!' }], importBatchId: 'imp_3', now: 'T' })
+    const setId = Object.values(next.sets)[0].setId
+    expect(next.galleries[setId]).toEqual(['u'])
   })
 
   it('merges into an existing set with the same name', () => {
