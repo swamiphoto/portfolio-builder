@@ -54,7 +54,16 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
       if (e.target.closest('[data-photo-picker]')) return
       const outsidePopover = ref.current && !ref.current.contains(e.target)
       const outsideAnchor = !anchorEl || !anchorEl.contains(e.target)
-      if (outsidePopover && outsideAnchor) onClose()
+      if (outsidePopover && outsideAnchor) {
+        // Flush any field that commits on blur (e.g. the URL/slug input) BEFORE we
+        // unmount — otherwise an outside mousedown closes the popover before the
+        // input's blur fires and the edit is lost (#… URL not saving).
+        const active = document.activeElement
+        if (active && ref.current && ref.current.contains(active) && typeof active.blur === 'function') {
+          active.blur()
+        }
+        onClose()
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
