@@ -1,6 +1,6 @@
 import { signOut } from 'next-auth/react'
 
-// Shown in place of the full studio when someone opens /admin on a phone. The
+// Shown in place of the full studio when someone opens /studio on a phone. The
 // editor is a wide, three-column workspace (pages + blocks + live preview) that
 // can't be used on a small screen, so rather than let them poke at a broken
 // layout we send them to a desktop. Onboarding (paste URL → import → reveal) is

@@ -36,7 +36,7 @@ export async function getServerSideProps(context) {
       if (hasPhotos) {
         return {
           redirect: {
-            destination: `${protocol}://${profile.username}.${rootDomain}/admin`,
+            destination: `${protocol}://${profile.username}.${rootDomain}/studio`,
             permanent: false,
           },
         }

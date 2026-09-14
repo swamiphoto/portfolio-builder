@@ -17,7 +17,7 @@ const SOCIAL_LABELS = { instagram: 'Instagram', facebook: 'Facebook', twitter: '
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 // Is this nav item the current page? Prefer an explicit id (preview mode where
-// the route is /admin), else match the URL path (published site). A parent is
+// the route is /studio), else match the URL path (published site). A parent is
 // also "active" when one of its subpages is the current page, so the top-level
 // item stays highlighted while you're inside its section.
 function navItemActive(item, ctx) {

@@ -209,7 +209,7 @@ export default function GalleryBuilder({ initialGallery, galleryIndex, allGaller
       setHasDraft(false);
       setAutosaveStatus("saved");
 
-      if (isNew) router.push(`/admin/galleries/${slug}`);
+      if (isNew) router.push(`/studio/galleries/${slug}`);
     } catch (err) {
       alert(`Error publishing: ${err.message}`);
     } finally {

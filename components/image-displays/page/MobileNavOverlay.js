@@ -8,7 +8,7 @@ import { useEffect } from 'react'
 import { TfiClose } from 'react-icons/tfi'
 
 // Is this nav item (or one of its children) the current page? Prefer an explicit
-// id (preview mode where the route is /admin), else match the URL path.
+// id (preview mode where the route is /studio), else match the URL path.
 function navItemActive(item, ctx) {
   if (item.type === 'link') return false
   const { currentPageId, currentPath, basePath } = ctx

@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const protocol = rootDomain.includes('localhost') || rootDomain.includes('lvh.me') ? 'http' : 'https'
 
     if (profile?.username) {
-      return res.redirect(302, `${protocol}://${profile.username}.${rootDomain}/admin`)
+      return res.redirect(302, `${protocol}://${profile.username}.${rootDomain}/studio`)
     }
 
     return res.redirect(302, '/onboarding')
