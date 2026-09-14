@@ -7,7 +7,7 @@ import { buildMultiImageFields, buildSingleImageFields, mergeImageRefs, pageDisp
 import { uploadFile } from '../UploadModal'
 import PageSettingsPanel from './PageSettingsPanel'
 import PageSettingsPopover from './PageSettingsPopover'
-import { heroTitleFor } from '../../../common/pageUtils'
+import { generatePageId } from '../../../common/siteConfig'
 import { amsterdamGroundPlan } from '../../../common/themes/variants'
 import { amsterdamInkColors, resolveAmsterdamInk } from '../../../common/themes/amsterdam'
 import { getPageTheme } from '../../../common/themes'
@@ -15,10 +15,10 @@ import { resolveHomePage } from '../../../common/homePage'
 
 function pageToGallery(page) {
   return {
-    // The on-canvas masthead edits the page's HERO (display) title, which defaults
-    // to and tracks the page name until the user diverges it. The nav name itself
-    // is renamed separately in the sidebar page list.
-    name: heroTitleFor(page),
+    // The masthead at the top of the block sidebar IS the page name (the admin /
+    // nav label — matches the page list). The hero title visitors see is edited
+    // separately in Page settings and can deviate from this name.
+    name: page.title,
     slug: page.id,
     description: page.description || '',
     blocks: page.blocks || [],
@@ -31,15 +31,9 @@ function pageToGallery(page) {
 }
 
 function galleryToPage(page, gallery) {
-  // The masthead edits the hero title, not the nav name. While it still matches the
-  // page name it's "tracking" — store nothing (undefined) so sidebar renames keep
-  // flowing through. Once it diverges we persist `heroTitle` and it stays
-  // independent of the name (and never touches the slug).
-  const nextHero = gallery.name || ''
-  const heroTitle = nextHero === (page.title || '') ? undefined : nextHero
   return {
     ...page,
-    heroTitle,
+    title: gallery.name || page.title,
     description: gallery.description || '',
     blocks: gallery.blocks || [],
     thumbnail: gallery.thumbnail || page.thumbnail || null,
@@ -119,10 +113,14 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
   const getAssetByUrl = useCallback(url => assetsByUrl[url] || null, [assetsByUrl])
 
   const handleGalleryChange = useCallback((updatedGallery) => {
-    // The masthead now edits the hero title (via galleryToPage → heroTitle), which
-    // is independent of the nav name and never derives the slug. The slug follows
-    // the page name, edited via the sidebar rename.
-    onPageChange(galleryToPage(page, updatedGallery))
+    const nextPage = galleryToPage(page, updatedGallery)
+    // The masthead is the page name — keep the slug in sync, re-deriving it from
+    // the name unless the user has set a custom slug.
+    if (updatedGallery.name !== page.title) {
+      const prevDerived = generatePageId(page.title || '')
+      nextPage.slug = (page.slug && page.slug !== prevDerived) ? page.slug : generatePageId(updatedGallery.name || '')
+    }
+    onPageChange(nextPage)
   }, [page, onPageChange])
 
   const fetchLibrary = useCallback(() => {
