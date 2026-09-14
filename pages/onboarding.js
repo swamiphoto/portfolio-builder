@@ -15,7 +15,7 @@ function goToAdmin(slug, { imported = false, rebuilt = false } = {}) {
   if (imported) params.set('imported', '1')
   if (rebuilt) params.set('rebuilt', '1')
   const query = params.toString() ? `?${params.toString()}` : ''
-  window.location.href = `${protocol}://${slug}.${rootDomain}/admin${query}`
+  window.location.href = `${protocol}://${slug}.${rootDomain}/studio${query}`
 }
 
 export default function Onboarding() {

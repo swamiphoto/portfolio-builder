@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { parseHost } from './common/domainUtils'
 
 const PASSTHROUGH = [
-  '/admin', '/api/', '/_next/', '/auth/', '/onboarding', '/sites/', '/fonts/', '/images/', '/print/',
+  '/studio', '/api/', '/_next/', '/auth/', '/onboarding', '/sites/', '/fonts/', '/images/', '/print/',
 ]
 
 function isPassthrough(pathname) {
@@ -31,6 +31,14 @@ export async function middleware(req) {
   const host = req.headers.get('host') || ''
   const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3005').replace(/^https?:\/\//, '')
   const { pathname } = req.nextUrl
+
+  // The studio moved from /admin to /studio — redirect legacy paths (any host),
+  // preserving subpath + query so old bookmarks and links keep working.
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const url = req.nextUrl.clone()
+    url.pathname = '/studio' + pathname.slice('/admin'.length)
+    return NextResponse.redirect(url)
+  }
 
   const parsed = parseHost(host, rootDomain)
   if (parsed.kind === 'root') return NextResponse.next()

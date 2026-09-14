@@ -1,4 +1,4 @@
-// pages/admin/index.js
+// pages/studio/index.js
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { DragProvider } from '../../common/dragContext'

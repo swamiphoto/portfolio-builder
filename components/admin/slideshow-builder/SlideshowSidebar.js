@@ -118,7 +118,7 @@ export default function SlideshowSidebar({
       {/* Header */}
       <div className="px-3 pt-3 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-stone-200">
         <Link
-          href={`/admin/galleries/${gallery.slug}`}
+          href={`/studio/galleries/${gallery.slug}`}
           className="text-xs text-stone-400 hover:text-stone-700 transition-colors leading-none"
         >
           ← Gallery

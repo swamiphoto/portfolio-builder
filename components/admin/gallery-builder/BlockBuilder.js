@@ -488,7 +488,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                   </div>
                   {gallery.enableSlideshow && gallery.slug && (
                     <Link
-                      href={`/admin/galleries/${gallery.slug}/slideshow`}
+                      href={`/studio/galleries/${gallery.slug}/slideshow`}
                       className="text-xs underline underline-offset-2 transition-colors" style={{ color: 'var(--text-muted)' }}
                     >
                       Customize →
