@@ -6,6 +6,7 @@ import { buildPreviewSequence, MUSIC_POOL, musicIdToUrl, musicUrlToId, randomMus
 import { resolveCaption } from '../../../common/captionResolver'
 import { THEME_LIST } from '../../../common/themes'
 import PopoverShell from './PopoverShell'
+import PageThemeControl from './PageThemeControl'
 import ToggleSwitch from '../common/ToggleSwitch'
 import { addPackage, updatePackage, removePackage, setFeatured, dollarsToCents, centsToDollars } from './purchasePackages'
 
@@ -88,17 +89,13 @@ function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, disabled,
   )
 }
 
-export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose, username, onPickThumbnail, assetsByUrl, siteConfig }) {
+export default function PageSettingsPopover({ page, anchorEl, onUpdate, onConfigChange, onClose, username, onPickThumbnail, assetsByUrl, siteConfig }) {
   const pagePhotos = getPagePhotos(page)
   const autoSlug = slugify(page.title || '')
   const displaySlug = page.slug || autoSlug
   const [slugDraft, setSlugDraft] = useState(null)
   const displayValue = slugDraft !== null ? slugDraft : displaySlug
   const [view, setView] = useState('main')
-  // Theme override is a secondary affordance: the "…" opens a small menu, and only
-  // its "Override theme" item reveals the picker.
-  const [themeMenuOpen, setThemeMenuOpen] = useState(false)
-  const [showThemePicker, setShowThemePicker] = useState(false)
 
   const slideshow = page.slideshow || {}
   const [excluded, setExcluded] = useState(slideshow.excluded || [])
@@ -691,70 +688,20 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose,
   const overrideActive = !!(page.themeOverride && THEME_LIST.some((t) => t.id === page.themeOverride) && page.themeOverride !== siteThemeId)
   const overrideName = overrideActive ? (THEME_LIST.find((t) => t.id === page.themeOverride) || {}).name : ''
 
-  // A "…" button beside the close opens a small menu; its item reveals the theme
-  // picker. The button carries a dot when an override is active.
-  const menuItemStyle = { display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '7px 9px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', borderRadius: 6, whiteSpace: 'nowrap' }
-  // The "…" menu only exists before a page is overridden — it's how the override is
-  // turned on. Once overridden, the Theme section shows directly (below), so there's
-  // nothing left for the menu to do.
-  const themeToggle = overrideActive ? null : (
-    <div style={{ position: 'relative' }}>
-      <button
-        type="button"
-        onClick={() => setThemeMenuOpen((v) => !v)}
-        className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-black/5 flex-shrink-0"
-        style={{ color: 'var(--text-muted)' }}
-        aria-label="Page options"
-        aria-expanded={themeMenuOpen}
-        title="Page options"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
-          <circle cx="3.5" cy="8" r="1.3" /><circle cx="8" cy="8" r="1.3" /><circle cx="12.5" cy="8" r="1.3" />
-        </svg>
-      </button>
-      {themeMenuOpen && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 15 }} onClick={() => setThemeMenuOpen(false)} />
-          <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 5, zIndex: 20, minWidth: 210, background: 'var(--popover)', border: '1px solid rgba(160,140,110,0.22)', borderRadius: 8, boxShadow: 'var(--popover-shadow)', padding: 4 }}>
-            <button
-              type="button"
-              style={menuItemStyle}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-              onClick={() => { setShowThemePicker(true); setThemeMenuOpen(false) }}
-            >
-              Override theme for this page
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  )
-
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`} headerRight={themeToggle}>
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
 
-      {/* Shown directly once a page is overridden; otherwise revealed from the "…"
-          menu. Reverting to the site theme clears it; other pages are unaffected. */}
-      {(overrideActive || showThemePicker) && (
-        <Section label={overrideActive ? 'Theme (overridden)' : 'Theme override'}>
-          {overrideActive && (
-            <p style={{ fontSize: 11, lineHeight: 1.4, color: 'var(--text-muted)', margin: '0 0 7px' }}>
-              The site theme is <strong style={{ color: 'var(--text-secondary)' }}>{siteThemeName}</strong>, but this page has been overridden to render in <strong style={{ color: 'var(--text-secondary)' }}>{overrideName}</strong>.
-            </p>
-          )}
-          <select
-            style={selectStyle}
-            value={overrideActive ? page.themeOverride : ''}
-            onChange={(e) => update({ themeOverride: e.target.value || null })}
-          >
-            <option value="">{siteThemeName} (site theme)</option>
-            {THEME_LIST.filter((t) => t.id !== siteThemeId && (!t.hidden || t.id === page.themeOverride)).map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-        </Section>
-      )}
+      {/* Theme override — always visible (out of the "…" menu). Same page-aware
+          control as the studio toolbar: change or clear the override, and tune the
+          effective theme via the brush. */}
+      <Section label="Theme override">
+        <PageThemeControl siteConfig={siteConfig} page={page} onConfigChange={onConfigChange} onPageChange={onUpdate} />
+        {overrideActive && (
+          <p style={{ fontSize: 11, lineHeight: 1.4, color: 'var(--text-muted)', margin: '7px 0 0' }}>
+            The site theme is <strong style={{ color: 'var(--text-secondary)' }}>{siteThemeName}</strong>; this page renders in <strong style={{ color: 'var(--text-secondary)' }}>{overrideName}</strong>.
+          </p>
+        )}
+      </Section>
 
       <Section label="URL">
         <div className="flex items-center gap-1">
