@@ -1,15 +1,13 @@
 // Preview-toolbar indicator shown beside the site-theme pill when the open page
-// overrides the site theme. It explains why the preview renders a different theme
-// and gives two actions right here:
-//   • the underlined name opens a small "Page theme" popover to change or clear
-//     the override (the same control that lives in Page settings), and
-//   • the brush opens that overridden theme's design settings (which the
-//     site-theme brush can't reach — it only edits the site theme).
+// overrides the site theme. It explains why the preview renders a different theme;
+// its tooltip links to the existing Page settings popover (where the override is
+// changed), and the brush opens that overridden theme's design settings (which the
+// site-theme brush can't reach — it only edits the site theme).
 // Design settings are site-level and keyed by theme, so we point the controls at
-// the overridden theme but strip design.theme back to the real site theme on
-// every write, so tuning never flips the whole site.
+// the overridden theme but strip design.theme back to the real site theme on every
+// write, so tuning never flips the whole site.
 import { useState, useRef } from 'react'
-import { pageThemeOverrideInfo, THEME_LIST } from '../../../common/themes'
+import { pageThemeOverrideInfo } from '../../../common/themes'
 import PopoverShell from './PopoverShell'
 import DesignControlsBody from './DesignControlsBody'
 import Tip from '../Tip'
@@ -24,10 +22,6 @@ const SEG = {
   display: 'flex', alignItems: 'center', gap: 5, padding: '0 9px', fontFamily: 'monospace',
   fontSize: 10, letterSpacing: '0.06em', color: '#8a5326', background: 'transparent', border: 'none', whiteSpace: 'nowrap',
 }
-const SELECT = {
-  width: '100%', fontSize: 13, color: '#1d1b17', background: 'transparent',
-  padding: '5px 2px', border: 'none', borderBottom: '1px solid rgba(26,18,10,0.14)', outline: 'none', cursor: 'pointer',
-}
 
 function Brush() {
   return (
@@ -37,10 +31,15 @@ function Brush() {
   )
 }
 
-export default function PageThemeOverrideChip({ siteConfig, page, onConfigChange, onPageChange }) {
-  const [themeOpen, setThemeOpen] = useState(false)
+// Open the existing Page settings popover by triggering its gear button (the
+// override control lives there). The gear is the only [data-tour="page-settings"].
+function openPageSettings() {
+  if (typeof document === 'undefined') return
+  document.querySelector('[data-tour="page-settings"]')?.click()
+}
+
+export default function PageThemeOverrideChip({ siteConfig, page, onConfigChange }) {
   const [designOpen, setDesignOpen] = useState(false)
-  const nameRef = useRef(null)
   const brushRef = useRef(null)
   if (!page) return null
   const info = pageThemeOverrideInfo(siteConfig, page)
@@ -56,25 +55,29 @@ export default function PageThemeOverrideChip({ siteConfig, page, onConfigChange
     onConfigChange?.(prev => ({ ...prev, ...next }))
   }
 
+  const tip = (
+    <span>
+      This page overrides the site theme ({info.siteThemeName}).{' '}
+      <button
+        type="button"
+        onClick={openPageSettings}
+        style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#e8c98a', textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer' }}
+      >
+        Change in Page settings
+      </button>
+    </span>
+  )
+
   return (
     <div style={PILL} data-page-theme-override>
-      <Tip label="Change the theme for this page">
-        <button
-          ref={nameRef}
-          type="button"
-          onClick={() => { setDesignOpen(false); setThemeOpen(o => !o) }}
-          aria-haspopup="listbox"
-          aria-expanded={themeOpen}
-          style={{ ...SEG, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(138,83,38,0.45)', textUnderlineOffset: 2 }}
-        >
-          This page: {info.pageThemeName}
-        </button>
+      <Tip label={tip}>
+        <span style={{ ...SEG, cursor: 'default' }}>This page: {info.pageThemeName}</span>
       </Tip>
       <Tip label={`${info.pageThemeName} settings`} side="bottom">
         <button
           ref={brushRef}
           type="button"
-          onClick={() => { setThemeOpen(false); setDesignOpen(o => !o) }}
+          onClick={() => setDesignOpen(o => !o)}
           aria-label={`${info.pageThemeName} settings`}
           aria-expanded={designOpen}
           style={{ ...SEG, cursor: 'pointer', borderLeft: '1px solid rgba(176,106,52,0.30)', color: designOpen ? '#6f3f1c' : '#8a5326' }}
@@ -82,26 +85,6 @@ export default function PageThemeOverrideChip({ siteConfig, page, onConfigChange
           <Brush />
         </button>
       </Tip>
-
-      {themeOpen && (
-        <PopoverShell anchorEl={nameRef.current} onClose={() => setThemeOpen(false)} width="max-content" minWidth={240} title="Page theme">
-          <div style={{ padding: '10px 12px' }}>
-            <p style={{ fontSize: 11, lineHeight: 1.4, color: 'var(--text-muted)', margin: '0 0 8px' }}>
-              The site theme is <strong style={{ color: 'var(--text-secondary)' }}>{info.siteThemeName}</strong>. Pick another to override it for this page only, or choose the site theme to revert.
-            </p>
-            <select
-              style={SELECT}
-              value={page.themeOverride || ''}
-              onChange={(e) => { onPageChange?.({ ...page, themeOverride: e.target.value || null }); setThemeOpen(false) }}
-            >
-              <option value="">{info.siteThemeName} (site theme)</option>
-              {THEME_LIST.filter((t) => t.id !== info.siteThemeId && (!t.hidden || t.id === page.themeOverride)).map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
-        </PopoverShell>
-      )}
 
       {designOpen && (
         <PopoverShell anchorEl={brushRef.current} onClose={() => setDesignOpen(false)} width="max-content" minWidth={300} maxWidth="calc(100vw - 24px)" title={`${info.pageThemeName} settings`}>
