@@ -653,7 +653,7 @@ export default function AdminIndex() {
               onChange={(patch) => updateConfig(prev => ({ ...prev, ...patch }))}
             />
             {!showLibrary && !coverSelected && (
-              <PageThemeOverrideChip siteConfig={siteConfig} page={selectedPage} onConfigChange={updateConfig} />
+              <PageThemeOverrideChip siteConfig={siteConfig} page={selectedPage} onConfigChange={updateConfig} onPageChange={(updated) => updatePage(selectedPage.id, updated)} />
             )}
           </div>
         ) : null}
