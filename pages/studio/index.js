@@ -523,7 +523,6 @@ export default function AdminIndex() {
       saveStatus={saveStatus}
       onPageChange={(updated) => updatePage(selectedPage.id, updated)}
       onUpdatePage={updatePage}
-      onConfigChange={updateConfig}
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
       onUpdateLibraryCaption={handleUpdateLibraryCaption}

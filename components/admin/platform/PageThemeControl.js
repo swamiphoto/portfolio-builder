@@ -1,13 +1,13 @@
 // components/admin/platform/PageThemeControl.js
-// Page-aware theme selector, used in both the studio toolbar and Page settings.
-// It shows the page's EFFECTIVE theme (its override, else the site theme), marks
-// it "(overridden)" when the page overrides the site, and lets you change it:
-// the theme marked "(site theme)" reverts the override, any other sets it. With
-// no page (Library/Cover view) it controls the site theme instead. The brush
-// opens the effective theme's design settings — design settings are site-level
-// and keyed by theme, so we point the controls at the effective theme but strip
-// design.theme back to the real site theme on every write, so tuning the look
-// never flips the site's active theme.
+// The single theme selector (studio toolbar) that controls both the site theme
+// and per-page overrides. It shows the page's EFFECTIVE theme (its override, else
+// the site theme) and marks it "(overridden)". Picking a theme opens a scope step:
+//   • This page only            → set this page's override
+//   • All pages without an override → set the site theme (overrides preserved)
+//   • All pages                 → set the site theme AND clear every override
+// With no page selected (Library/Cover) only the two site-wide scopes show. The
+// brush opens the effective theme's design settings — pointed at that theme but
+// never changing the site's active theme.
 import { useState, useRef } from 'react'
 import { THEME_LIST, pageThemeOverrideInfo } from '../../../common/themes'
 import PopoverShell from './PopoverShell'
@@ -16,6 +16,7 @@ import Tip from '../Tip'
 
 const PILL = { display: 'flex', height: 22, borderRadius: 5, border: '1px solid rgba(26,18,10,0.11)', background: '#e8e2d9', overflow: 'hidden' }
 const SEG = { display: 'flex', alignItems: 'center', gap: 4, padding: '0 9px', fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.06em', color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'all 0.15s' }
+const HEADER = { padding: '7px 14px 4px', fontFamily: 'monospace', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }
 
 function Caret({ open }) {
   return (
@@ -36,6 +37,7 @@ function Brush() {
 export default function PageThemeControl({ siteConfig, page, onConfigChange, onPageChange }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [scopeFor, setScopeFor] = useState(null) // theme id awaiting a scope choice
   const [hover, setHover] = useState(null)
   const nameRef = useRef(null)
   const brushRef = useRef(null)
@@ -43,15 +45,24 @@ export default function PageThemeControl({ siteConfig, page, onConfigChange, onP
   const info = pageThemeOverrideInfo(siteConfig, page)
   const pageScoped = !!(page && onPageChange)
   const options = THEME_LIST.filter(t => !t.hidden || t.id === info.pageThemeId)
+  const nameOf = (id) => (THEME_LIST.find(t => t.id === id) || {}).name || id
 
-  const pickTheme = (id) => {
-    setMenuOpen(false)
-    if (pageScoped) {
-      // The site theme option clears the override; anything else sets it.
-      onPageChange({ ...page, themeOverride: id === info.siteThemeId ? null : id })
-    } else {
+  const closeMenu = () => { setMenuOpen(false); setScopeFor(null) }
+
+  const applyScope = (id, scope) => {
+    if (scope === 'page') {
+      // Picking the site theme for "this page" just clears the override.
+      onPageChange?.({ ...page, themeOverride: id === info.siteThemeId ? null : id })
+    } else if (scope === 'all') {
+      onConfigChange?.(prev => ({
+        ...prev,
+        design: { ...(prev?.design || {}), theme: id },
+        pages: (prev?.pages || []).map(p => ({ ...p, themeOverride: null })),
+      }))
+    } else { // 'site' — all pages that don't already override
       onConfigChange?.(prev => ({ ...prev, design: { ...(prev?.design || {}), theme: id } }))
     }
+    closeMenu()
   }
 
   // Point the design controls at the effective theme, but keep the site's active
@@ -63,12 +74,20 @@ export default function PageThemeControl({ siteConfig, page, onConfigChange, onP
     onConfigChange?.(prev => ({ ...prev, ...next }))
   }
 
+  const rowStyle = (key, opts = {}) => ({
+    display: 'block', width: '100%', textAlign: 'left', padding: '7px 14px', border: 'none', cursor: 'pointer',
+    fontFamily: 'monospace', fontSize: 11.5, letterSpacing: '0.03em', whiteSpace: 'nowrap',
+    background: hover === key ? 'var(--surface-hover, #ede8e0)' : 'transparent',
+    color: opts.destructive ? '#b23b3b' : (opts.active ? 'var(--sepia-accent, #8b6f47)' : 'var(--text-primary)'),
+    fontWeight: opts.active ? 600 : 400,
+  })
+
   return (
     <div style={PILL} data-page-theme-control>
       <button
         ref={nameRef}
         type="button"
-        onClick={() => { setSettingsOpen(false); setMenuOpen(o => !o) }}
+        onClick={() => { setSettingsOpen(false); setScopeFor(null); setMenuOpen(o => !o) }}
         aria-haspopup="listbox"
         aria-expanded={menuOpen}
         style={{ ...SEG, borderRight: '1px solid rgba(26,18,10,0.11)' }}
@@ -91,35 +110,48 @@ export default function PageThemeControl({ siteConfig, page, onConfigChange, onP
       </Tip>
 
       {menuOpen && (
-        <PopoverShell anchorEl={nameRef.current} onClose={() => setMenuOpen(false)} width="max-content" minWidth={170} title="Theme">
-          <div role="listbox" style={{ padding: '4px 0' }}>
-            {options.map(o => {
-              const active = o.id === info.pageThemeId
-              const isSite = o.id === info.siteThemeId
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => pickTheme(o.id)}
-                  onMouseEnter={() => setHover(o.id)}
-                  onMouseLeave={() => setHover(null)}
-                  style={{
-                    display: 'block', width: '100%', textAlign: 'left',
-                    padding: '7px 14px', border: 'none', cursor: 'pointer',
-                    fontFamily: 'monospace', fontSize: 11.5, letterSpacing: '0.03em',
-                    background: hover === o.id ? 'var(--surface-hover, #ede8e0)' : 'transparent',
-                    color: active ? 'var(--sepia-accent, #8b6f47)' : 'var(--text-primary)',
-                    fontWeight: active ? 600 : 400,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {o.name}{isSite && <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> (site theme)</span>}
+        <PopoverShell anchorEl={nameRef.current} onClose={closeMenu} width="max-content" minWidth={190} title="Theme">
+          {scopeFor == null ? (
+            <div role="listbox" style={{ padding: '4px 0' }}>
+              {options.map(o => {
+                const active = o.id === info.pageThemeId
+                const isSite = o.id === info.siteThemeId
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => setScopeFor(o.id)}
+                    onMouseEnter={() => setHover(o.id)}
+                    onMouseLeave={() => setHover(null)}
+                    style={rowStyle(o.id, { active })}
+                  >
+                    {o.name}{isSite && <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> (site theme)</span>}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div style={{ padding: '4px 0' }}>
+              <div style={HEADER}>Apply {nameOf(scopeFor)} to</div>
+              {pageScoped && (
+                <button type="button" onClick={() => applyScope(scopeFor, 'page')} onMouseEnter={() => setHover('s:page')} onMouseLeave={() => setHover(null)} style={rowStyle('s:page')}>
+                  This page only
                 </button>
-              )
-            })}
-          </div>
+              )}
+              <button type="button" onClick={() => applyScope(scopeFor, 'site')} onMouseEnter={() => setHover('s:site')} onMouseLeave={() => setHover(null)} style={rowStyle('s:site')}>
+                All pages without an override
+              </button>
+              <button type="button" onClick={() => applyScope(scopeFor, 'all')} onMouseEnter={() => setHover('s:all')} onMouseLeave={() => setHover(null)} style={rowStyle('s:all', { destructive: true })}>
+                All pages
+              </button>
+              <div style={{ height: 1, background: 'rgba(26,18,10,0.08)', margin: '4px 8px' }} />
+              <button type="button" onClick={() => setScopeFor(null)} onMouseEnter={() => setHover('s:back')} onMouseLeave={() => setHover(null)} style={{ ...rowStyle('s:back'), color: 'var(--text-muted)' }}>
+                ← Back
+              </button>
+            </div>
+          )}
         </PopoverShell>
       )}
 
