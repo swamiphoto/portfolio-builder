@@ -4,9 +4,7 @@ import { getPagePhotos } from '../../../common/assetRefs'
 import { getSizedUrl } from '../../../common/imageUtils'
 import { buildPreviewSequence, MUSIC_POOL, musicIdToUrl, musicUrlToId, randomMusicUrl } from '../../../common/slideshowSync'
 import { resolveCaption } from '../../../common/captionResolver'
-import { THEME_LIST } from '../../../common/themes'
 import PopoverShell from './PopoverShell'
-import PageThemeControl from './PageThemeControl'
 import ToggleSwitch from '../common/ToggleSwitch'
 import { addPackage, updatePackage, removePackage, setFeatured, dollarsToCents, centsToDollars } from './purchasePackages'
 
@@ -89,7 +87,7 @@ function ToggleRow({ checked, onToggle, label, actionLabel, onDrillIn, disabled,
   )
 }
 
-export default function PageSettingsPopover({ page, anchorEl, onUpdate, onConfigChange, onClose, username, onPickThumbnail, assetsByUrl, siteConfig }) {
+export default function PageSettingsPopover({ page, anchorEl, onUpdate, onClose, username, onPickThumbnail, assetsByUrl, siteConfig }) {
   const pagePhotos = getPagePhotos(page)
   const autoSlug = slugify(page.title || '')
   const displaySlug = page.slug || autoSlug
@@ -681,27 +679,10 @@ export default function PageSettingsPopover({ page, anchorEl, onUpdate, onConfig
   }
 
   // ── Main view ─────────────────────────────────────────────────────────────
-  const siteThemeId = siteConfig?.design?.theme || 'kyoto'
-  const siteThemeName = (THEME_LIST.find((t) => t.id === siteThemeId) || {}).name || siteThemeId
-  // Active only when the page genuinely differs from the site theme — so if the
-  // site later switches to the same theme, the override quietly folds away.
-  const overrideActive = !!(page.themeOverride && THEME_LIST.some((t) => t.id === page.themeOverride) && page.themeOverride !== siteThemeId)
-  const overrideName = overrideActive ? (THEME_LIST.find((t) => t.id === page.themeOverride) || {}).name : ''
-
+  // The page's theme (site theme + per-page override) is set from the single
+  // theme selector in the studio toolbar, so it's intentionally not duplicated here.
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={300} title={`${page.title || 'Page'} Settings`}>
-
-      {/* Theme override — always visible (out of the "…" menu). Same page-aware
-          control as the studio toolbar: change or clear the override, and tune the
-          effective theme via the brush. */}
-      <Section label="Theme override">
-        <PageThemeControl siteConfig={siteConfig} page={page} onConfigChange={onConfigChange} onPageChange={onUpdate} />
-        {overrideActive && (
-          <p style={{ fontSize: 11, lineHeight: 1.4, color: 'var(--text-muted)', margin: '7px 0 0' }}>
-            The site theme is <strong style={{ color: 'var(--text-secondary)' }}>{siteThemeName}</strong>; this page renders in <strong style={{ color: 'var(--text-secondary)' }}>{overrideName}</strong>.
-          </p>
-        )}
-      </Section>
 
       <Section label="URL">
         <div className="flex items-center gap-1">

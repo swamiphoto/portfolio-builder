@@ -43,7 +43,7 @@ function galleryToPage(page, gallery) {
   }
 }
 
-export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onUpdatePage, onConfigChange, onBack, onMoveBlockToPage, onUpdateLibraryCaption, onPrintChange, username, blockBuilderRef, onScrollPreviewToBlock, highlightedBlockIndex, onBlockHover, onToggleSidebarCollapse, titleFocusTs }) {
+export default function PageEditorSidebar({ page, siteConfig, libraryConfig, saveStatus, onPageChange, onUpdatePage, onBack, onMoveBlockToPage, onUpdateLibraryCaption, onPrintChange, username, blockBuilderRef, onScrollPreviewToBlock, highlightedBlockIndex, onBlockHover, onToggleSidebarCollapse, titleFocusTs }) {
   const [libraryData, setLibraryData] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
@@ -340,7 +340,6 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
           page={page}
           anchorEl={pageSettingsAnchorEl}
           onUpdate={onPageChange}
-          onConfigChange={onConfigChange}
           onClose={() => setPageSettingsAnchorEl(null)}
           username={username}
           onPickThumbnail={() => { setPageSettingsAnchorEl(null); handlePickThumbnail() }}
