@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import Tip from '../Tip'
 import { useDrag } from '../../../common/dragContext'
 import SidebarSection from './SidebarSection'
+import { addMenuPosition } from './addMenuPosition'
 import { buildNavTree, buildHiddenTree, movePage, isDescendantOf } from '../../../common/pagesTree'
 import { defaultPage, defaultLink, titleForTemplate, generatePageId } from '../../../common/siteConfig'
 import { effectivePageSlug, uniqueSlug } from '../../../common/pageUtils'
@@ -1239,15 +1240,17 @@ export default function PlatformSidebar({
       {navAddMenuOpen && navAddBtnRef.current && typeof document !== 'undefined' && (() => {
         const rect = navAddBtnRef.current.getBoundingClientRect()
         const MENU_W = 240
-        const left = Math.min(Math.max(8, rect.left), window.innerWidth - MENU_W - 8)
+        const pos = addMenuPosition({ rect, menuW: MENU_W, viewportW: window.innerWidth, viewportH: window.innerHeight })
         return createPortal(
           <div
             ref={navAddMenuRef}
             className="rounded-md overflow-hidden whitespace-nowrap"
             style={{
               position: 'fixed',
-              top: rect.bottom + 4,
-              left,
+              left: pos.left,
+              ...(pos.placement === 'down' ? { top: pos.top } : { bottom: pos.bottom }),
+              maxHeight: pos.maxHeight,
+              overflowY: 'auto',
               minWidth: MENU_W,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
@@ -1265,15 +1268,17 @@ export default function PlatformSidebar({
       {hiddenAddMenuOpen && hiddenAddBtnRef.current && typeof document !== 'undefined' && (() => {
         const rect = hiddenAddBtnRef.current.getBoundingClientRect()
         const MENU_W = 240
-        const left = Math.min(Math.max(8, rect.left), window.innerWidth - MENU_W - 8)
+        const pos = addMenuPosition({ rect, menuW: MENU_W, viewportW: window.innerWidth, viewportH: window.innerHeight })
         return createPortal(
           <div
             ref={hiddenAddMenuRef}
             className="rounded-md overflow-hidden whitespace-nowrap"
             style={{
               position: 'fixed',
-              top: rect.bottom + 4,
-              left,
+              left: pos.left,
+              ...(pos.placement === 'down' ? { top: pos.top } : { bottom: pos.bottom }),
+              maxHeight: pos.maxHeight,
+              overflowY: 'auto',
               minWidth: MENU_W,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
@@ -1291,15 +1296,17 @@ export default function PlatformSidebar({
       {addMenuOpen && addBtnRef.current && typeof document !== 'undefined' && (() => {
         const rect = addBtnRef.current.getBoundingClientRect()
         const MENU_W = Math.max(rect.width, 240)
-        const left = Math.min(Math.max(8, rect.left), window.innerWidth - MENU_W - 8)
+        const pos = addMenuPosition({ rect, menuW: MENU_W, viewportW: window.innerWidth, viewportH: window.innerHeight })
         return createPortal(
           <div
             ref={addMenuRef}
             className="rounded-md overflow-hidden whitespace-nowrap"
             style={{
               position: 'fixed',
-              bottom: window.innerHeight - rect.top + 4,
-              left,
+              left: pos.left,
+              ...(pos.placement === 'down' ? { top: pos.top } : { bottom: pos.bottom }),
+              maxHeight: pos.maxHeight,
+              overflowY: 'auto',
               minWidth: MENU_W,
               background: 'var(--popover)',
               boxShadow: '0 0 0 1px rgba(26,18,10,0.10), 0 4px 12px rgba(26,18,10,0.12), 0 16px 32px -8px rgba(26,18,10,0.16)',
