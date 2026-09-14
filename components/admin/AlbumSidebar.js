@@ -575,6 +575,7 @@ export default function AlbumSidebar({
   orientationCounts,
   usageCounts,
   printCounts,
+  setCounts,
   captureYearCounts,
   uploadedCounts,
   apertureCounts,
@@ -757,6 +758,21 @@ export default function AlbumSidebar({
             label="In Use"
             count={usageCounts.used}
             onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("usage", filters.usage === "used" ? "all" : "used"); }}
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Sets" openOverride={sectionsOpen}>
+          <SidebarItem
+            active={filters.set === "notin"}
+            label="Not in a set"
+            count={setCounts?.notin ?? 0}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("set", filters.set === "notin" ? "all" : "notin"); }}
+          />
+          <SidebarItem
+            active={filters.set === "in"}
+            label="In a set"
+            count={setCounts?.in ?? 0}
+            onClick={() => { onSelect({ type: "all", key: "all" }); onFilterChange("set", filters.set === "in" ? "all" : "in"); }}
           />
         </SidebarSection>
 

@@ -29,6 +29,26 @@ export function getPageTheme(siteConfig, page) {
   return getTheme(resolvePageThemeId(siteConfig, page))
 }
 
+// Describes whether a page overrides the site theme, plus the human names — for
+// the editor's override control (sidebar) and indicator (preview chip). Mirrors
+// resolvePageThemeId's rule: overridden only when it's a real theme id that
+// differs from the current site theme (so it quietly folds away if the site
+// later switches to the same theme).
+export function pageThemeOverrideInfo(siteConfig, page) {
+  const siteThemeId = siteConfig?.design?.theme || DEFAULT_THEME_ID
+  const ov = page?.themeOverride
+  const overridden = !!(ov && THEMES[ov] && ov !== siteThemeId)
+  const nameOf = (id) => (THEME_LIST.find((t) => t.id === id) || {}).name || id
+  const pageThemeId = overridden ? ov : siteThemeId
+  return {
+    overridden,
+    siteThemeId,
+    siteThemeName: nameOf(siteThemeId),
+    pageThemeId,
+    pageThemeName: nameOf(pageThemeId),
+  }
+}
+
 export function getBlockSpec(themeId, blockType) {
   const base = baseBlocks[blockType]
   if (!base) return null

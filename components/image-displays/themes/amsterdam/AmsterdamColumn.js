@@ -8,7 +8,7 @@
 //                  auto-flows into balanced columns when it would overrun the height.
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../../../common/assetRefs'
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, focalPointToObjectPosition } from '../../../../common/assetRefs'
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveButtonStyle, resolveSize, resolveQuoteStyle, resolveAmsterdamFrame } from '../../../../common/themes/variants'
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
@@ -370,15 +370,44 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
     case 'page-gallery': {
       const linked = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
       if (!linked.length) return null
+      const size = resolveSize(block, TID)
+      const isMosaic = resolveVariant(block, TID) === 'mosaic'
+      const hrefFor = (p) => `${basePath}/${p.slug || p.id}`
+      const objPos = (p) => focalPointToObjectPosition(p.thumbnail?.focalPoint)
+
+      // Mosaic: a scrapbook scatter of linked covers, grouped 1/2/3 into stacked
+      // columns — mirrors the photos Mosaic so the two layouts read as a set. The
+      // page title rides each cover as an overlay plaque (like a photo caption).
+      if (isMosaic) {
+        const mH = MOSAIC_HEIGHT[size] || MOSAIC_HEIGHT.medium
+        return wrap('ams-col--pagelinks ams-col--mosaic', null, (
+          <div className="ams-mosaic" style={{ height: mH }}>
+            {mosaicGroups(linked).map((grp, gi) => (
+              <div key={gi} className="ams-mosaic__group" style={{ width: MOSAIC_GROUP_WIDTHS[gi % MOSAIC_GROUP_WIDTHS.length] }}>
+                {grp.map((p) => {
+                  const thumb = pageDisplayThumbnail(p)
+                  return (
+                    <a key={p.id} className="ams-mosaic__cell" href={hrefFor(p)} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                      {thumb && <img src={getSizedUrl(thumb, 'display')} alt={p.title || ''} loading="lazy" style={{ objectPosition: objPos(p) }} />}
+                      {p.title && <figcaption className="ams-mosaic__cap"><span>{p.title}</span></figcaption>}
+                    </a>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        ))
+      }
+
+      // List: a single line of cover cards, sized by the Size control.
       return wrap('ams-col--pagelinks', null, (
-        <div className="ams-row" style={{ height: ROW_HEIGHT.medium }}>
+        <div className="ams-row" style={{ height: ROW_HEIGHT[size] || ROW_HEIGHT.medium }}>
           {linked.map((p) => {
             const thumb = pageDisplayThumbnail(p)
-            const href = `${basePath}/${p.slug || p.id}`
             return (
-              <a key={p.id} className="ams-pagelink" href={href}>
+              <a key={p.id} className="ams-pagelink" href={hrefFor(p)}>
                 <div className="ams-pagelink__frame">
-                  {thumb && <img src={getSizedUrl(thumb, 'display')} alt={p.title || ''} loading="lazy" />}
+                  {thumb && <img src={getSizedUrl(thumb, 'display')} alt={p.title || ''} loading="lazy" style={{ objectPosition: objPos(p) }} />}
                 </div>
                 <span className="ams-pagelink__title">{p.title}</span>
               </a>
