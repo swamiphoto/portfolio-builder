@@ -1,6 +1,7 @@
 // components/admin/platform/PageSettingsPanel.js
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import { generatePageId } from '../../../common/siteConfig'
+import { THEME_LIST, pageThemeOverrideInfo } from '../../../common/themes'
 import PageDesignPopover from './PageDesignPopover'
 import Tip from '../Tip'
 import { EditableInput, EditableTextarea } from './EditableText'
@@ -29,7 +30,7 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   );
 }
 
-export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto', onScrollToHero }) {
+export default function PageSettingsPanel({ page, onChange, onPageSettings, onAddBlockBelow, expandedOverride, themeId = 'kyoto', onScrollToHero, siteConfig }) {
   const [expanded, setExpanded] = useState(true)
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride])
   const [designOpen, setDesignOpen] = useState(false)
@@ -242,9 +243,9 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
 
       {expanded && (
         <div style={{ padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Title */}
+          {/* Name (nav label — drives the URL). The display/hero title is edited on the canvas. */}
           <div>
-            <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Title</div>
+            <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Name</div>
             <EditableInput
               className="bg-transparent outline-none w-full transition-colors placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
@@ -270,6 +271,32 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
               onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(26,18,10,0.10)' }}
             />
           </div>
+
+          {/* Theme — surfaced here (out of the buried gear popover) so the page's
+              theme is always visible. Defaults to the site theme; choosing another
+              overrides it for THIS page only (picking the site theme reverts). */}
+          {(() => {
+            const { overridden, siteThemeName, siteThemeId } = pageThemeOverrideInfo(siteConfig, page)
+            return (
+              <div>
+                <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>
+                  Theme
+                  {overridden && <span style={{ marginLeft: 6, color: '#b06a34', letterSpacing: 0, textTransform: 'none' }}>· overridden</span>}
+                </div>
+                <select
+                  className="bg-transparent outline-none w-full transition-colors cursor-pointer"
+                  style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
+                  value={overridden ? page.themeOverride : ''}
+                  onChange={(e) => onChange({ ...page, themeOverride: e.target.value || null })}
+                >
+                  <option value="">{siteThemeName} (site theme)</option>
+                  {THEME_LIST.filter((t) => t.id !== siteThemeId && (!t.hidden || t.id === page.themeOverride)).map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+            )
+          })()}
 
         </div>
       )}

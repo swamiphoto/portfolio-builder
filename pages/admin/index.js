@@ -5,6 +5,7 @@ import { DragProvider } from '../../common/dragContext'
 import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getPagePhotos } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
 import ThemeToolbarControl from '../../components/admin/platform/ThemeToolbarControl'
+import PageThemeOverrideChip from '../../components/admin/platform/PageThemeOverrideChip'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import StudioMobileGate from '../../components/admin/platform/StudioMobileGate'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -646,10 +647,15 @@ export default function AdminIndex() {
         username={session?.user?.username}
         pagePath={selectedPage ? `/${selectedPage.slug || selectedPage.id}` : ''}
         toolbarExtra={siteConfig ? (
-          <ThemeToolbarControl
-            config={siteConfig}
-            onChange={(patch) => updateConfig(prev => ({ ...prev, ...patch }))}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ThemeToolbarControl
+              config={siteConfig}
+              onChange={(patch) => updateConfig(prev => ({ ...prev, ...patch }))}
+            />
+            {!showLibrary && !coverSelected && (
+              <PageThemeOverrideChip siteConfig={siteConfig} page={selectedPage} />
+            )}
+          </div>
         ) : null}
       >
         {content}
