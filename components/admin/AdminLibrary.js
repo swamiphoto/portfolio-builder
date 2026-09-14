@@ -45,6 +45,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     focalLength: "all",
     iso: "all",
     source: "all",
+    set: "all",
   });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -146,9 +147,21 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     return getFallbackAsset(imageUrl);
   }, [libraryData, getFallbackAsset]);
 
+  // URLs that belong to at least one set (gallery) or portfolio — the sidebar's
+  // notion of "in a set". Drives the "Not in a set" filter.
+  const inSetUrls = useMemo(() => {
+    const s = new Set();
+    for (const urls of Object.values(libraryData?.galleries || {})) for (const u of (urls || [])) s.add(u);
+    for (const urls of Object.values(libraryData?.portfolios || {})) for (const u of (urls || [])) s.add(u);
+    return s;
+  }, [libraryData]);
+
   const applyFilters = useCallback((assets) => {
     return assets.filter((asset) => {
       if (filters.orientation !== "all" && asset.orientation !== filters.orientation) return false;
+
+      if (filters.set === "notin" && inSetUrls.has(asset.publicUrl)) return false;
+      if (filters.set === "in" && !inSetUrls.has(asset.publicUrl)) return false;
 
       if (filters.captureYear !== "all") {
         const capturedAt = asset.capture?.capturedAt;
@@ -230,7 +243,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
 
       return true;
     });
-  }, [filters]);
+  }, [filters, inSetUrls]);
 
   // Get assets for the currently selected album
   const currentAssets = () => {
@@ -742,6 +755,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     focalLength: v => ({ wide: '≤ 35mm', normal: '35–85mm', tele: '85–200mm', super: '> 200mm' }[v] || v),
     iso: v => ({ low: 'ISO ≤ 400', mid: 'ISO 400–1600', high: 'ISO > 1600' }[v] || v),
     source: v => sourceLabel(v),
+    set: v => v === 'in' ? 'In a set' : 'Not in a set',
   };
   const activeFilters = Object.entries(filters)
     .filter(([k, v]) => v !== 'all' && FILTER_LABELS[k])
@@ -762,6 +776,11 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     else acc.off += 1;
     return acc;
   }, { on: 0, off: 0 });
+  const setCounts = allAssets.reduce((acc, asset) => {
+    if (inSetUrls.has(asset.publicUrl)) acc.in += 1;
+    else acc.notin += 1;
+    return acc;
+  }, { in: 0, notin: 0 });
 
   const cameraCounts = allAssets.reduce((acc, asset) => {
     const cam = asset.capture?.cameraModel;
@@ -861,6 +880,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
         orientationCounts={orientationCounts}
         usageCounts={usageCounts}
         printCounts={printCounts}
+        setCounts={setCounts}
         captureYearCounts={captureYearCounts}
         uploadedCounts={uploadedCounts}
         apertureCounts={apertureCounts}
