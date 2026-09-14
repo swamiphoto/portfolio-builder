@@ -1,7 +1,5 @@
 // components/admin/platform/PageSettingsPanel.js
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
-import { generatePageId } from '../../../common/siteConfig'
-import { THEME_LIST, pageThemeOverrideInfo } from '../../../common/themes'
 import PageDesignPopover from './PageDesignPopover'
 import Tip from '../Tip'
 import { EditableInput, EditableTextarea } from './EditableText'
@@ -51,12 +49,6 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
 
   function update(patch) {
     onChange({ ...page, ...patch })
-  }
-
-  function updateTitle(title) {
-    const prevDerived = generatePageId(page.title || '')
-    const slug = (page.slug && page.slug !== prevDerived) ? page.slug : generatePageId(title || '')
-    update({ title, slug })
   }
 
   const isLink = page.type === 'link'
@@ -243,18 +235,21 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
 
       {expanded && (
         <div style={{ padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Name (nav label — drives the URL). The display/hero title is edited on the canvas. */}
+          {/* Title — the page's title, shown in the hero section of the content.
+              Independent of the page Name (edited at the top of the sidebar); blank
+              means it tracks the name. Can be a longer line than the name. */}
           <div>
-            <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Name</div>
+            <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Title</div>
             <EditableInput
               className="bg-transparent outline-none w-full transition-colors placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
-              placeholder="Untitled"
-              value={page.title || ''}
-              onChange={(e) => updateTitle(e.target.value)}
+              placeholder={page.title || 'Same as the page name'}
+              value={page.heroTitle || ''}
+              onChange={(e) => update({ heroTitle: e.target.value || undefined })}
               onFocus={e => { e.currentTarget.style.borderBottomColor = '#8b6f47' }}
               onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(26,18,10,0.10)' }}
             />
+            <div style={{ fontSize: 10.5, color: '#b0a490', marginTop: 3 }}>Shown in the hero. Leave blank to match the page name.</div>
           </div>
 
           {/* Description */}
@@ -271,32 +266,6 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
               onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(26,18,10,0.10)' }}
             />
           </div>
-
-          {/* Theme — surfaced here (out of the buried gear popover) so the page's
-              theme is always visible. Defaults to the site theme; choosing another
-              overrides it for THIS page only (picking the site theme reverts). */}
-          {(() => {
-            const { overridden, siteThemeName, siteThemeId } = pageThemeOverrideInfo(siteConfig, page)
-            return (
-              <div>
-                <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>
-                  Theme
-                  {overridden && <span style={{ marginLeft: 6, color: '#b06a34', letterSpacing: 0, textTransform: 'none' }}>· overridden</span>}
-                </div>
-                <select
-                  className="bg-transparent outline-none w-full transition-colors cursor-pointer"
-                  style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
-                  value={overridden ? page.themeOverride : ''}
-                  onChange={(e) => onChange({ ...page, themeOverride: e.target.value || null })}
-                >
-                  <option value="">{siteThemeName} (site theme)</option>
-                  {THEME_LIST.filter((t) => t.id !== siteThemeId && (!t.hidden || t.id === page.themeOverride)).map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-            )
-          })()}
 
         </div>
       )}
