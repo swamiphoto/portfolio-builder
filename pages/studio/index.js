@@ -4,8 +4,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { DragProvider } from '../../common/dragContext'
 import { buildMultiImageFields, buildSingleImageFields, normalizeImageRefs, getPagePhotos } from '../../common/assetRefs'
 import AdminLayout from '../../components/admin/platform/AdminLayout'
-import ThemeToolbarControl from '../../components/admin/platform/ThemeToolbarControl'
-import PageThemeOverrideChip from '../../components/admin/platform/PageThemeOverrideChip'
+import PageThemeControl from '../../components/admin/platform/PageThemeControl'
 import PlatformSidebar from '../../components/admin/platform/PlatformSidebar'
 import StudioMobileGate from '../../components/admin/platform/StudioMobileGate'
 import PageEditorSidebar from '../../components/admin/platform/PageEditorSidebar'
@@ -524,6 +523,7 @@ export default function AdminIndex() {
       saveStatus={saveStatus}
       onPageChange={(updated) => updatePage(selectedPage.id, updated)}
       onUpdatePage={updatePage}
+      onConfigChange={updateConfig}
       onBack={null}
       onMoveBlockToPage={handleMoveBlockToPage}
       onUpdateLibraryCaption={handleUpdateLibraryCaption}
@@ -647,15 +647,12 @@ export default function AdminIndex() {
         username={session?.user?.username}
         pagePath={selectedPage ? `/${selectedPage.slug || selectedPage.id}` : ''}
         toolbarExtra={siteConfig ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ThemeToolbarControl
-              config={siteConfig}
-              onChange={(patch) => updateConfig(prev => ({ ...prev, ...patch }))}
-            />
-            {!showLibrary && !coverSelected && (
-              <PageThemeOverrideChip siteConfig={siteConfig} page={selectedPage} onConfigChange={updateConfig} />
-            )}
-          </div>
+          <PageThemeControl
+            siteConfig={siteConfig}
+            page={(!showLibrary && !coverSelected && selectedPage?.type !== 'link') ? selectedPage : null}
+            onConfigChange={updateConfig}
+            onPageChange={selectedPage ? (updated) => updatePage(selectedPage.id, updated) : undefined}
+          />
         ) : null}
       >
         {content}
