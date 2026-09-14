@@ -16,6 +16,7 @@ import { getPageTheme } from '../../../common/themes'
 import { PreviewPackagesProvider } from '../../image-displays/engagement/ClientEngagementContext'
 import { getPagePhotos } from '../../../common/assetRefs'
 import { resolveHomePage } from '../../../common/homePage'
+import { heroTitleFor } from '../../../common/pageUtils'
 import { useIsMobile } from '../../../common/useIsMobile'
 import { fontFamilyForSlot } from '../../../common/themes/variants'
 
@@ -77,11 +78,14 @@ function PagePreview({
 
   // Stable identity: only changes when the actual content changes, so a hover
   // highlight (or any other re-render) doesn't reset the preview's debounce.
+  // The hero shows the page's Title (heroTitle), which defaults to the page name
+  // until diverged — same as the published site (heroTitleFor).
+  const heroTitle = heroTitleFor(page)
   const gallery = useMemo(() => ({
-    name: page.title,
+    name: heroTitle,
     description: page.description || '',
     blocks: page.blocks || [],
-  }), [page.title, page.description, page.blocks])
+  }), [heroTitle, page.description, page.blocks])
 
   return (
     <ThemeProvider themeId={theme.id}>
@@ -91,7 +95,7 @@ function PagePreview({
         <div className="theme-content">
           <PageCover
             cover={page.cover}
-            title={page.title}
+            title={heroTitle}
             description={page.description}
             slideshowHref={slideshowHref}
             clientFeaturesEnabled={!!page.clientFeatures?.enabled}

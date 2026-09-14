@@ -235,21 +235,19 @@ export default function PageSettingsPanel({ page, onChange, onPageSettings, onAd
 
       {expanded && (
         <div style={{ padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Title — the page's title, shown in the hero section of the content.
-              Independent of the page Name (edited at the top of the sidebar); blank
-              means it tracks the name. Can be a longer line than the name. */}
+          {/* Title — shown in the hero. Defaults to the page name and can be edited
+              freely (independent of the Name at the top of the sidebar). */}
           <div>
             <div style={{ fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: 9.5, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#b0a490', fontWeight: 500, marginBottom: 4 }}>Title</div>
             <EditableInput
               className="bg-transparent outline-none w-full transition-colors placeholder:text-[#c4b49a]"
               style={{ fontSize: 13, color: '#1d1b17', paddingBottom: 4, borderBottom: '1px solid rgba(26,18,10,0.10)' }}
-              placeholder={page.title || 'Same as the page name'}
-              value={page.heroTitle || ''}
-              onChange={(e) => update({ heroTitle: e.target.value || undefined })}
+              placeholder="Untitled"
+              value={page.heroTitle ?? page.title ?? ''}
+              onChange={(e) => update({ heroTitle: e.target.value })}
               onFocus={e => { e.currentTarget.style.borderBottomColor = '#8b6f47' }}
               onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(26,18,10,0.10)' }}
             />
-            <div style={{ fontSize: 10.5, color: '#b0a490', marginTop: 3 }}>Shown in the hero. Leave blank to match the page name.</div>
           </div>
 
           {/* Description */}
