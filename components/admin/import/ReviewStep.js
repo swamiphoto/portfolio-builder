@@ -1,6 +1,7 @@
-import { useState, useCallback, memo } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import { MONO, monoLabel, primaryBtn, primaryBtnHoverOn, primaryBtnHoverOff } from './importFlowStyles'
 import { coverThumbUrl, onCoverError } from './coverThumb'
+import { existingSourceUrls } from '../../../common/import/importCore'
 
 function Check({ size = 12 }) {
   return (
@@ -28,7 +29,7 @@ const STACK_SLOTS = [
   { rot: 0,  x: 0,  y: -1 }, // top
 ]
 
-const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
+const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle, importedCount = 0 }) {
   const [broken, setBroken] = useState(() => new Set())
   const count = collection.assetRefs?.length || 0
   // Up to three source images, rendered as a small pile of prints. Prefer a small
@@ -112,6 +113,11 @@ const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
         </div>
         <div style={{ ...monoLabel, fontSize: 10, marginTop: 3, textTransform: 'none', letterSpacing: '0.02em' }}>
           {count} {count === 1 ? 'photo' : 'photos'}
+          {importedCount > 0 && (
+            <span style={{ color: '#9a8b6f' }}>
+              {importedCount >= count ? ' · already imported' : ` · ${importedCount} already imported`}
+            </span>
+          )}
         </div>
       </div>
 
@@ -132,18 +138,39 @@ const AlbumCard = memo(function AlbumCard({ collection, selected, onToggle }) {
   )
 })
 
-export default function ReviewStep({ discovery, onBack, onImport }) {
+export default function ReviewStep({ discovery, onBack, onImport, libraryConfig }) {
   const { collections = [], totalAssets, site } = discovery || {}
+
+  // How many of each gallery's photos are already in the library (matched by the
+  // original source URL — the same key the importer dedupes on). A gallery whose
+  // photos are ALL already imported drops into a separate "Already imported"
+  // section and starts deselected, so you don't bring the same ones over twice.
+  const importedByCollection = useMemo(() => {
+    const already = existingSourceUrls(libraryConfig)
+    const map = {}
+    for (const c of collections) {
+      map[c.id] = (c.assetRefs || []).filter((a) => a?.remoteUrl && already.has(a.remoteUrl)).length
+    }
+    return map
+  }, [collections, libraryConfig])
+
+  const isFullyImported = useCallback(
+    (c) => { const n = c.assetRefs?.length || 0; return n > 0 && importedByCollection[c.id] === n },
+    [importedByCollection],
+  )
+  const freshCollections = collections.filter((c) => !isFullyImported(c))
+  const doneCollections = collections.filter((c) => isFullyImported(c))
 
   const [checked, setChecked] = useState(() => {
     const init = {}
-    for (const c of collections) init[c.id] = true
+    for (const c of collections) init[c.id] = !isFullyImported(c)
     return init
   })
 
   const selectedCollections = collections.filter((c) => checked[c.id])
   const selectedCount = selectedCollections.reduce((n, c) => n + (c.assetRefs?.length || 0), 0)
-  const allSelected = collections.length > 0 && selectedCollections.length === collections.length
+  // Select-all acts on the fresh (not-already-imported) galleries.
+  const allSelected = freshCollections.length > 0 && freshCollections.every((c) => checked[c.id])
   const multi = collections.length > 1
 
   const toggle = useCallback((id) => {
@@ -151,13 +178,11 @@ export default function ReviewStep({ discovery, onBack, onImport }) {
   }, [])
 
   function toggleAll() {
-    if (allSelected) {
-      setChecked({})
-    } else {
-      const next = {}
-      for (const c of collections) next[c.id] = true
-      setChecked(next)
-    }
+    setChecked((prev) => {
+      const next = { ...prev }
+      for (const c of freshCollections) next[c.id] = !allSelected
+      return next
+    })
   }
 
   return (
@@ -195,10 +220,25 @@ export default function ReviewStep({ discovery, onBack, onImport }) {
 
       {/* album cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 12 }}>
-        {collections.map((c) => (
-          <AlbumCard key={c.id} collection={c} selected={!!checked[c.id]} onToggle={toggle} />
+        {freshCollections.map((c) => (
+          <AlbumCard key={c.id} collection={c} selected={!!checked[c.id]} onToggle={toggle} importedCount={importedByCollection[c.id] || 0} />
         ))}
       </div>
+
+      {/* Already-imported galleries — every photo is already in your library, so
+          they sit apart (and start deselected) to avoid re-importing the same ones. */}
+      {doneCollections.length > 0 && (
+        <div style={{ marginTop: 8, paddingBottom: 12 }}>
+          <div style={{ ...monoLabel, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a8967a', margin: '10px 2px 8px' }}>
+            Already imported
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, opacity: 0.6 }}>
+            {doneCollections.map((c) => (
+              <AlbumCard key={c.id} collection={c} selected={!!checked[c.id]} onToggle={toggle} importedCount={importedByCollection[c.id] || 0} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Pinned footer — the import action stays in view no matter how long the
           gallery list gets (the list scrolls under it). */}

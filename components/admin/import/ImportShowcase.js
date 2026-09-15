@@ -100,6 +100,7 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
   const pool = useMemo(() => photos.filter(Boolean), [photos])
   const [cards, setCards] = useState([])
   const [pitch, setPitch] = useState(0)
+  const [confirmSkip, setConfirmSkip] = useState(false)
   const nextId = useRef(0)
   const scaleRef = useRef(1)
   const viewRef = useRef({ vw: 1280, vh: 900 })
@@ -180,14 +181,46 @@ export default function ImportShowcase({ progress, photos = [], sourceLabel, onC
       <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 4, padding: '22px 28px' }}>
         <span style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: '#2c2416' }}>Sepia</span>
         {!ambient && onCancel && (
-          <button
-            onClick={onCancel}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#b3a184', padding: '4px 6px' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#2c2416')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#b3a184')}
-          >
-            Skip to my studio
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setConfirmSkip(true)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#b3a184', padding: '4px 6px' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#2c2416')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#b3a184')}
+            >
+              Skip to my studio
+            </button>
+            {confirmSkip && (
+              <div
+                style={{
+                  position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 6, width: 268,
+                  background: '#fffdf9', borderRadius: 12, border: '1px solid rgba(26,18,10,0.12)',
+                  boxShadow: '0 16px 40px rgba(26,18,10,0.24)', padding: 16, textAlign: 'left',
+                }}
+              >
+                <div style={{ fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", fontWeight: 600, fontSize: 14, color: '#2c2416', marginBottom: 6 }}>
+                  Stop the import?
+                </div>
+                <p style={{ fontSize: 12.5, color: '#6b5d47', lineHeight: 1.5, margin: '0 0 14px' }}>
+                  Photos already brought over stay in your library, but the rest of this import won't finish. You can re-run it later.
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => setConfirmSkip(false)}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b5d47', padding: '7px 10px', borderRadius: 7 }}
+                  >
+                    Keep importing
+                  </button>
+                  <button
+                    onClick={onCancel}
+                    style={{ background: '#b23b3b', border: 'none', cursor: 'pointer', color: '#fff', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '7px 12px', borderRadius: 7 }}
+                  >
+                    Skip anyway
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
