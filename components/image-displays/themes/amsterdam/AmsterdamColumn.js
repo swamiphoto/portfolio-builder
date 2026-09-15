@@ -8,7 +8,7 @@
 //                  auto-flows into balanced columns when it would overrun the height.
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, focalPointToObjectPosition } from '../../../../common/assetRefs'
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, focalPointToObjectPosition, getNestedGalleries } from '../../../../common/assetRefs'
 import { heroTitleFor } from '../../../../common/pageUtils'
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveButtonStyle, resolveSize, resolveQuoteStyle, resolveAmsterdamFrame } from '../../../../common/themes/variants'
 import { formatCaptureMeta } from '../../../../common/photoMeta'
@@ -369,7 +369,11 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
     }
 
     case 'page-gallery': {
-      const linked = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
+      // 'auto' listings re-resolve from current pages (hidden pages drop out via
+      // nulled parentId); manual blocks keep their stored order. See Gallery.js.
+      const linked = block.source === 'auto'
+        ? getNestedGalleries(block.parentPageId, pages)
+        : (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
       if (!linked.length) return null
       const size = resolveSize(block, TID)
       const isMosaic = resolveVariant(block, TID) === 'mosaic'

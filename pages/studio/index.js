@@ -108,8 +108,12 @@ export default function AdminIndex() {
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null)
   // First-time nudge when a photo is marked for sale but the print store is off.
   const [printNudge, setPrintNudge] = useState(false)
-  const printNudgeShownRef = useRef(false)
   const printStoreEnabledRef = useRef(false)
+  // Auto-enable prints once, on the first for-sale mark. Backed by the persisted
+  // config.printStore.autoEnabled (mirrored here + updateConfig via ref so the
+  // handler — declared before updateConfig — can read/write both synchronously).
+  const autoEnabledRef = useRef(false)
+  const updateConfigRef = useRef(null)
   // Warn when the site theme changes while the open page has an override (its
   // preview won't reflect the change). selOverrideRef is set during render below.
   const [siteThemeToast, setSiteThemeToast] = useState('')
@@ -181,10 +185,15 @@ export default function AdminIndex() {
   // library cache so the block re-renders and the toggle survives close/reopen.
   const handleUpdateLibraryPrint = useCallback((assetId, print) => {
     if (!assetId) return
-    // Marking a photo for sale does nothing until the print store is turned on in
-    // Site Settings — let the photographer know the first time it happens.
-    if (print?.sellable && !printStoreEnabledRef.current && !printNudgeShownRef.current) {
-      printNudgeShownRef.current = true
+    // First time a photo is marked for sale, turn prints on automatically (once).
+    // After that the photographer owns the toggle in Site Settings → Prints; we
+    // never auto-re-enable, so turning prints off sticks. autoEnabled is persisted.
+    if (print?.sellable && !printStoreEnabledRef.current && !autoEnabledRef.current) {
+      autoEnabledRef.current = true
+      updateConfigRef.current?.(prev => ({
+        ...prev,
+        printStore: { ...(prev.printStore || {}), enabled: true, autoEnabled: true },
+      }))
       setPrintNudge(true)
       setTimeout(() => setPrintNudge(false), 7000)
     }
@@ -771,6 +780,8 @@ export default function AdminIndex() {
     !blockSidebarCollapsed
 
   printStoreEnabledRef.current = !!siteConfig?.printStore?.enabled
+  autoEnabledRef.current = !!siteConfig?.printStore?.autoEnabled
+  updateConfigRef.current = updateConfig
 
   return (
     <DragProvider>
@@ -801,7 +812,7 @@ export default function AdminIndex() {
       </EditorFeedbackProvider>
 
       {[
-        printNudge && { key: 'print', node: <>Marked for sale. Turn on your print store in <strong>Site Settings</strong> to start selling prints.</>, dismiss: () => setPrintNudge(false) },
+        printNudge && { key: 'print', node: <>Prints are on — buyers can now purchase this photo. Manage them in <strong>Site Settings → Prints</strong>.</>, dismiss: () => setPrintNudge(false) },
         siteThemeToast && { key: 'theme', node: siteThemeToast, dismiss: () => setSiteThemeToast(''), undo: undoEditor },
       ].filter(Boolean).map((t, i) => (
         <div

@@ -427,7 +427,7 @@ export default function PickerFilterRail({
         )}
 
         {setSlugs.length > 0 && (
-          <FilterSection title="Sets" defaultOpen={false}>
+          <FilterSection title="Sets" defaultOpen={true}>
             {setSlugs.map(key => (
               <FilterRow
                 key={key}
@@ -441,7 +441,7 @@ export default function PickerFilterRail({
         )}
 
         {pages?.length > 0 && (
-          <FilterSection title="Pages" defaultOpen={true}>
+          <FilterSection title="Pages" defaultOpen={false}>
             {pages.map(p => (
               <FilterRow
                 key={p.id}

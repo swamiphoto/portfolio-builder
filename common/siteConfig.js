@@ -204,6 +204,9 @@ export function normalizePrintStore(config = {}) {
     ...config,
     printStore: {
       enabled: ps.enabled ?? false,
+      // One-shot: set the first time a photo is marked for sale so prints auto-enable
+      // once, then never fight the photographer's manual toggle afterward.
+      autoEnabled: ps.autoEnabled ?? false,
       markup: typeof ps.markup === 'number' && ps.markup > 0 ? ps.markup : 3,
       showPriceOnImage: ps.showPriceOnImage ?? false,
       currency: ps.currency || 'USD',

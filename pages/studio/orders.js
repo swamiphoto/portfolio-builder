@@ -43,11 +43,10 @@ function Shell({ children }) {
       </Head>
       <div style={{ minHeight: '100vh', background: '#faf7f0', color: INK }}>
         <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 96px' }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 30 }}>
+          <div className="flex items-center" style={{ marginBottom: 30 }}>
             <Link href="/studio" style={{ fontFamily: "'Italianno', cursive", fontSize: 30, lineHeight: 1, color: INK, textDecoration: 'none' }}>
               Sepia
             </Link>
-            <Link href="/studio" style={{ fontSize: 12.5, color: ACCENT, textDecoration: 'none' }}>← Back to editor</Link>
           </div>
           {children}
         </div>

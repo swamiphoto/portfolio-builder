@@ -8,7 +8,7 @@ import WiggleLine from "components/wiggle-line/WiggleLine";
 import VideoBlock from "./video-block/VideoBlock";
 import PhotoBlock from "./photo-block/PhotoBlock";
 import PhotoLightbox from "../PhotoLightbox";
-import { getImageRefUrl, normalizeImageRefs } from "../../../common/assetRefs";
+import { getImageRefUrl, normalizeImageRefs, getNestedGalleries } from "../../../common/assetRefs";
 import { getSizedUrl } from "../../../common/imageUtils";
 import ContactDisplay from "components/contact/ContactDisplay";
 import { PrintStoreProvider } from "../print/PrintStoreContext";
@@ -654,9 +654,17 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             }
 
             case "page-gallery": {
-              const linkedPages = (block.pageIds || [])
-                .map(id => (pages || []).find(p => p.id === id))
-                .filter(Boolean);
+              // An 'auto' listing must reflect the CURRENT visible child galleries,
+              // not a stored pageIds snapshot — that snapshot is recomputed lazily
+              // in the editor, so publish can freeze a stale list (hidden pages linger
+              // on the live site). Re-resolve auto blocks here; hidden pages drop out
+              // because moving a page to hidden nulls its parentId. Manual blocks keep
+              // their curated stored order.
+              const linkedPages = block.source === 'auto'
+                ? getNestedGalleries(block.parentPageId, pages)
+                : (block.pageIds || [])
+                    .map(id => (pages || []).find(p => p.id === id))
+                    .filter(Boolean);
               if (linkedPages.length === 0) return null;
               const variantId = resolveVariant(block, themeId);
               return (
