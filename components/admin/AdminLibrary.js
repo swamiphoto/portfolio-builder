@@ -603,7 +603,8 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages, onHi
           // PUT site-config directly, same as before.
           try {
             const scRes = await fetch('/api/admin/site-config')
-            const currentSiteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+            const scBody = scRes.ok ? await scRes.json() : null
+            const currentSiteConfig = scBody?.config ?? scBody ?? { pages: [] }
             const { pages } = composeSite({ ...composeArgs, existingPages: currentSiteConfig.pages || [] })
             if (pages.length) {
               await fetch('/api/admin/site-config', {

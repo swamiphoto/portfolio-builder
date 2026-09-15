@@ -3,10 +3,12 @@ import {
   readSiteConfig,
   writeSiteConfig,
   createDefaultSiteConfig,
+  readPublishedSiteConfig,
+  computeHasUnpublishedChanges,
 } from '../../../common/siteConfig'
 import { readUserProfile } from '../../../common/userProfile'
 
-async function handler(req, res, user) {
+export async function handler(req, res, user) {
   if (req.method === 'GET') {
     try {
       let config = await readSiteConfig(user.id)
@@ -19,8 +21,14 @@ async function handler(req, res, user) {
           bio: profile?.bio,
         })
         await writeSiteConfig(user.id, config)
+        config = await readSiteConfig(user.id) // re-read so it carries the stamped updatedAt
       }
-      return res.status(200).json(config)
+      const published = await readPublishedSiteConfig(user.id) // seeds if absent
+      return res.status(200).json({
+        config,
+        hasUnpublishedChanges: computeHasUnpublishedChanges(config, published),
+        lastPublishedAt: published?.publishedAt ?? null,
+      })
     } catch (err) {
       console.error('GET /api/admin/site-config error:', err)
       return res.status(500).json({ error: err.message })
