@@ -220,8 +220,11 @@ export default function AdminIndex() {
     if (status !== 'authenticated') return
     fetch('/api/admin/site-config')
       .then(r => r.json())
-      .then(config => {
+      .then(payload => {
+        const config = payload.config ?? payload // tolerate old shape during rollout
         setSiteConfig(config)
+        setHasUnpublishedChanges(!!payload.hasUnpublishedChanges)
+        setLastPublishedAt(payload.lastPublishedAt ?? null)
         setLoading(false)
         const pages = config?.pages || []
         const firstReal = pages.find(p => p.type !== 'link')
@@ -610,7 +613,27 @@ export default function AdminIndex() {
       onReplayTour={resetOnboarding}
       onSelectCover={handleViewCover}
       onShowLibrary={() => { setShowLibrary(true); setSelectedPageId(null); setCoverSelected(false) }}
-      onPublish={() => { setHasUnpublishedChanges(false); setLastPublishedAt(Date.now()) }}
+      onPublish={async () => {
+        // Cancel any pending autosave so a late debounced write can't bump
+        // updatedAt past publishedAt and immediately re-dirty the freshly published state.
+        clearTimeout(autosaveTimer.current)
+        autosaveTimer.current = null
+        pendingConfigRef.current = null
+        firstPendingAt.current = null
+        try {
+          const res = await fetch('/api/admin/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(siteConfigRef.current),
+          })
+          if (!res.ok) throw new Error(`Publish failed: ${res.status}`)
+          const { publishedAt } = await res.json()
+          setHasUnpublishedChanges(false)
+          setLastPublishedAt(publishedAt)
+        } catch (err) {
+          console.error('Publish failed:', err)
+        }
+      }}
       hasUnpublishedChanges={hasUnpublishedChanges}
       libraryActive={showLibrary}
       username={session?.user?.username}
