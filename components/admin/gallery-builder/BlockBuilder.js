@@ -36,7 +36,34 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
   );
 }
 
-function InsertionZone({ onInsert }) {
+function InsertionZone({ onInsert, active, onDropPhoto }) {
+  const [over, setOver] = useState(false);
+  if (active) {
+    return (
+      <div
+        className="relative flex items-center justify-center"
+        style={{ height: 30, zIndex: 3 }}
+        onDragEnter={(e) => { e.preventDefault(); setOver(true); }}
+        onDragOver={(e) => { e.preventDefault(); if (!over) setOver(true); }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }}
+        onDrop={(e) => { setOver(false); onDropPhoto?.(e); }}
+      >
+        <div
+          className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded"
+          style={{
+            height: 24,
+            border: `1.5px dashed ${over ? '#8b6f47' : 'rgba(160,140,110,0.5)'}`,
+            background: over ? 'rgba(139,111,71,0.10)' : 'rgba(160,140,110,0.04)',
+            transition: 'all 0.1s', pointerEvents: 'none',
+          }}
+        >
+          <span style={{ fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: over ? '#6f5836' : '#a8967a' }}>
+            Drop for a new photo block
+          </span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className="group/zone relative flex items-center justify-center cursor-pointer"
@@ -124,7 +151,10 @@ const BlockBuilder = forwardRef(function BlockBuilder({
 
   const blocksContainerRef = useRef(null);
 
-  const { startDrag, endDrag, dropTargetPageId } = useDrag()
+  const { startDrag, endDrag, dropTargetPageId, drag } = useDrag()
+  // A photo being dragged from THIS page — turns the between-block insertion
+  // zones into drop targets that create a single-photo block.
+  const draggingPhotoHere = drag?.type === 'images' && drag?.sourcePageId === sourcePageId
 
   // BlockCard is memoized and its comparator ignores these callback props, so a
   // card can hold a handler closed over a STALE gallery/onChange (e.g. the drop
@@ -289,6 +319,43 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       }
     }
     emit({ ...galleryRef.current, blocks });
+  };
+
+  // Drag a photo out to a between-block insertion zone → a new single-photo block
+  // at that spot, removed from its source block.
+  const insertPhotoBlockAt = (insertIndex, droppedRef, srcBlockIndex, srcRefs) => {
+    const blocks = [...(galleryRef.current.blocks || [])];
+    // Strip from the source first (in-place, same length, so insertIndex holds).
+    if (srcBlockIndex != null && srcRefs) {
+      const src = blocks[srcBlockIndex];
+      if (src) {
+        const urls = new Set(srcRefs.map((r) => r.url));
+        if (src.type === 'photo') {
+          if (urls.has(src.imageUrl)) blocks[srcBlockIndex] = { ...src, imageUrl: '', image: null };
+        } else {
+          const remaining = normalizeImageRefs(src.images || src.imageUrls || []).filter((r) => !urls.has(r.url));
+          blocks[srcBlockIndex] = { ...src, ...buildMultiImageFields(remaining) };
+        }
+      }
+    }
+    const newBlock = { type: 'photo', ...buildSingleImageFields(droppedRef), caption: droppedRef.caption || '' };
+    blocks.splice(insertIndex, 0, newBlock);
+    emit({ ...galleryRef.current, blocks });
+    setTimeout(() => scrollSidebarToBlock(insertIndex), 60);
+    setTimeout(() => onScrollPreviewToBlock?.(insertIndex), 160);
+  };
+
+  const handleInsertPhotoDrop = (e, insertIndex) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData('application/x-photo-drag');
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const droppedRef = parsed.imageRefs?.[0] ?? null;
+      if (!droppedRef?.url) return;
+      insertPhotoBlockAt(insertIndex, droppedRef, parsed.sourceBlockIndex ?? null, parsed.imageRefs ?? null);
+    } catch { /* ignore */ }
+    endDrag();
   };
 
   const handleDragEnd = (result) => {
@@ -574,6 +641,8 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                     data-block-index={index}
                   >
                     <InsertionZone
+                      active={draggingPhotoHere}
+                      onDropPhoto={(e) => handleInsertPhotoDrop(e, index)}
                       onInsert={(e) => {
                         setMenuAnchorRect(e.currentTarget.getBoundingClientRect());
                         setInsertAtIndex(index);
