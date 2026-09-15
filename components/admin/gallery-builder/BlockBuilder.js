@@ -39,27 +39,32 @@ function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, 
 function InsertionZone({ onInsert, active, onDropPhoto }) {
   const [over, setOver] = useState(false);
   if (active) {
+    // Drop target while a photo is being dragged. CRITICAL: the visible layout
+    // height stays tiny (6px) so turning drop mode on does NOT shift the block
+    // list — the old 30px band grew every gap at drag-start and shoved the
+    // grabbed photo out from under the cursor (only bottom-edge grabs survived).
+    // The hit area is an absolutely-positioned overlay (no layout impact) that
+    // extends a little into the neighbouring blocks so it's easy to catch while
+    // travelling, and the "Drop here" line shows ONLY for the gap under the
+    // cursor, not every gap at once.
     return (
-      <div
-        className="relative flex items-center justify-center"
-        style={{ height: 30, zIndex: 3 }}
-        onDragEnter={(e) => { e.preventDefault(); setOver(true); }}
-        onDragOver={(e) => { e.preventDefault(); if (!over) setOver(true); }}
-        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }}
-        onDrop={(e) => { setOver(false); onDropPhoto?.(e); }}
-      >
+      <div className="relative" style={{ height: 6, zIndex: 4 }}>
         <div
-          className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded"
-          style={{
-            height: 24,
-            border: `1.5px dashed ${over ? '#8b6f47' : 'rgba(160,140,110,0.5)'}`,
-            background: over ? 'rgba(139,111,71,0.10)' : 'rgba(160,140,110,0.04)',
-            transition: 'all 0.1s', pointerEvents: 'none',
-          }}
+          className="absolute inset-x-0"
+          style={{ top: -10, bottom: -10, zIndex: 4 }}
+          onDragEnter={(e) => { e.preventDefault(); setOver(true); }}
+          onDragOver={(e) => { e.preventDefault(); if (!over) setOver(true); }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }}
+          onDrop={(e) => { setOver(false); onDropPhoto?.(e); }}
         >
-          <span style={{ fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: over ? '#6f5836' : '#a8967a' }}>
-            Drop for a new photo block
-          </span>
+          {over && (
+            <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-center" style={{ pointerEvents: 'none' }}>
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2" style={{ height: 2, borderRadius: 2, background: '#8b6f47' }} />
+              <span style={{ position: 'relative', background: '#8b6f47', color: '#fff', fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 3 }}>
+                Drop here
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
