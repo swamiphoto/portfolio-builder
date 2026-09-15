@@ -320,7 +320,18 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
     let result = applyFilters(pageFilteredAssets, filters, { pageUrls: currentPageUrls });
     if (search.trim()) {
       const q = search.toLowerCase();
+      // A query that matches a SET's name should surface that set's photos. Set
+      // membership lives in libraryConfig.galleries (slug → [publicUrl]), which the
+      // per-asset `hay` below never sees — so searching a set name used to match
+      // nothing even though the rail/autocomplete offer set names. Expand here.
+      const setMemberUrls = new Set();
+      if (libraryConfig?.galleries) {
+        for (const [slug, urls] of Object.entries(libraryConfig.galleries)) {
+          if (slug.toLowerCase().includes(q)) (urls || []).forEach((u) => setMemberUrls.add(u));
+        }
+      }
       result = result.filter((a) => {
+        if (setMemberUrls.has(a.publicUrl)) return true;
         const hay = [
           a.originalFilename, a.caption, a.publicUrl,
           a.source?.provider,
@@ -335,7 +346,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
       const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bt - at;
     });
-  }, [pageFilteredAssets, filters, search, currentPageUrls]);
+  }, [pageFilteredAssets, filters, search, currentPageUrls, libraryConfig]);
 
   const { positions, totalHeight } = useMemo(
     () => computePickerLayout(filtered, containerSize.width),
