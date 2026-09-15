@@ -26,6 +26,8 @@ import { buildTourSteps, WELCOME, BLOCKS_TOUR_STEPS } from '../../components/adm
 import { fontFamilyForSlot } from '../../common/themes/variants'
 import { THEME_LIST } from '../../common/themes'
 import { useIsPhone } from '../../common/useIsPhone'
+import { useHistory } from '../../common/useHistory'
+import { useUndoRedoKeys } from '../../common/useUndoRedoKeys'
 
 const AUTOSAVE_DELAY = 1500
 const themeName = (id) => (THEME_LIST.find((t) => t.id === id) || {}).name || id
@@ -81,6 +83,13 @@ export default function AdminIndex() {
   const [lastPublishedAt, setLastPublishedAt] = useState(null)
   const [previewViewport, setPreviewViewport] = useState('desktop') // 'desktop' | 'mobile'
   const autosaveTimer = useRef(null)
+  // Undo/redo for the editor surface (siteConfig). siteConfigRef mirrors the
+  // latest state so capture/restore can read it synchronously.
+  const siteConfigRef = useRef(siteConfig)
+  useEffect(() => { siteConfigRef.current = siteConfig }, [siteConfig])
+  const editorHistory = useHistory(50)
+  const coalesceElRef = useRef(null)      // text element currently coalescing
+  const restoringRef = useRef(false)      // true while applying an undo/redo (skip capture)
   // Real device width (not the preview toggle): the studio editor is a wide,
   // three-column workspace, so on a phone we show a gate instead. See below.
   const isPhone = useIsPhone()
@@ -249,6 +258,17 @@ export default function AdminIndex() {
   }, [])
 
   const updateConfig = useCallback((updater) => {
+    if (!restoringRef.current) {
+      const el = typeof document !== 'undefined' ? document.activeElement : null
+      const isText = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+      // Coalesce consecutive edits to the SAME focused text field into one step.
+      if (isText && el === coalesceElRef.current) {
+        // same field, keep the existing history entry
+      } else {
+        editorHistory.capture(siteConfigRef.current)
+        coalesceElRef.current = isText ? el : null
+      }
+    }
     setHasUnpublishedChanges(true)
     setSiteConfig(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
@@ -256,7 +276,45 @@ export default function AdminIndex() {
       autosaveTimer.current = setTimeout(() => save(next), AUTOSAVE_DELAY)
       return next
     })
+  }, [save, editorHistory])
+
+  // Re-focusing a text field starts a fresh history step.
+  useEffect(() => {
+    const onFocusOut = (e) => { if (e.target === coalesceElRef.current) coalesceElRef.current = null }
+    // A structural action starts with a pointer press; clearing the coalescing key
+    // makes the next updateConfig capture a fresh entry instead of folding into the
+    // focused text field's step. Keyboard typing (no pointerdown between keystrokes)
+    // keeps coalescing into one step.
+    const onPointerDown = () => { coalesceElRef.current = null }
+    document.addEventListener('focusout', onFocusOut)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      document.removeEventListener('focusout', onFocusOut)
+      document.removeEventListener('pointerdown', onPointerDown)
+    }
+  }, [])
+
+  const applyEditorSnapshot = useCallback((snapshot) => {
+    if (snapshot == null) return
+    restoringRef.current = true
+    clearTimeout(autosaveTimer.current)     // cancel the pending save of the pre-undo state
+    coalesceElRef.current = null
+    setSiteConfig(snapshot)
+    siteConfigRef.current = snapshot
+    setHasUnpublishedChanges(true)
+    save(snapshot)                          // persist the restored state now
+    restoringRef.current = false
   }, [save])
+
+  const undoEditor = useCallback(() => { applyEditorSnapshot(editorHistory.takeUndo(siteConfigRef.current)) }, [applyEditorSnapshot, editorHistory])
+  const redoEditor = useCallback(() => { applyEditorSnapshot(editorHistory.takeRedo(siteConfigRef.current)) }, [applyEditorSnapshot, editorHistory])
+
+  const libraryHistoryRef = useRef(null)   // set by AdminLibrary's onHistoryReady
+  useUndoRedoKeys(useCallback(() => (
+    showLibrary
+      ? libraryHistoryRef.current
+      : { undo: undoEditor, redo: redoEditor }
+  ), [showLibrary, undoEditor, redoEditor]))
 
   const updatePage = useCallback((pageId, updatedPage) => {
     updateConfig(prev => ({
@@ -660,7 +718,7 @@ export default function AdminIndex() {
 
       {[
         printNudge && { key: 'print', node: <>Marked for sale. Turn on your print store in <strong>Site Settings</strong> to start selling prints.</>, dismiss: () => setPrintNudge(false) },
-        siteThemeToast && { key: 'theme', node: siteThemeToast, dismiss: () => setSiteThemeToast('') },
+        siteThemeToast && { key: 'theme', node: siteThemeToast, dismiss: () => setSiteThemeToast(''), undo: undoEditor },
       ].filter(Boolean).map((t, i) => (
         <div
           key={t.key}
@@ -669,6 +727,15 @@ export default function AdminIndex() {
           role="status"
         >
           <span style={{ lineHeight: 1.45 }}>{t.node}</span>
+          {t.undo && (
+            <button
+              type="button"
+              onClick={() => { t.undo(); t.dismiss?.() }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#e8c98a', textDecoration: 'underline', textUnderlineOffset: 2, font: 'inherit', marginLeft: 10, flexShrink: 0 }}
+            >
+              Undo
+            </button>
+          )}
           <button
             type="button"
             onClick={t.dismiss}
@@ -694,7 +761,7 @@ export default function AdminIndex() {
               boxShadow: '0 0 0 1px rgba(26,18,10,0.1), 0 32px 80px rgba(26,18,10,0.35)',
             }}
           >
-            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} onComposedPages={handleComposedPagesFromImport} />
+            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} onComposedPages={handleComposedPagesFromImport} onHistoryReady={(h) => { libraryHistoryRef.current = h }} />
           </div>
 
         </div>
