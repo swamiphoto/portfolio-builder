@@ -27,6 +27,7 @@ import { fontFamilyForSlot } from '../../common/themes/variants'
 import { THEME_LIST } from '../../common/themes'
 import { useIsPhone } from '../../common/useIsPhone'
 import { useHistory } from '../../common/useHistory'
+import { useUndoRedoKeys } from '../../common/useUndoRedoKeys'
 
 const AUTOSAVE_DELAY = 1500
 const themeName = (id) => (THEME_LIST.find((t) => t.id === id) || {}).name || id
@@ -298,6 +299,13 @@ export default function AdminIndex() {
 
   const undoEditor = useCallback(() => { applyEditorSnapshot(editorHistory.takeUndo(siteConfigRef.current)) }, [applyEditorSnapshot, editorHistory])
   const redoEditor = useCallback(() => { applyEditorSnapshot(editorHistory.takeRedo(siteConfigRef.current)) }, [applyEditorSnapshot, editorHistory])
+
+  const libraryHistoryRef = useRef(null)   // set by AdminLibrary's onHistoryReady
+  useUndoRedoKeys(useCallback(() => (
+    showLibrary
+      ? libraryHistoryRef.current
+      : { undo: undoEditor, redo: redoEditor }
+  ), [showLibrary, undoEditor, redoEditor]))
 
   const updatePage = useCallback((pageId, updatedPage) => {
     updateConfig(prev => ({
@@ -735,7 +743,7 @@ export default function AdminIndex() {
               boxShadow: '0 0 0 1px rgba(26,18,10,0.1), 0 32px 80px rgba(26,18,10,0.35)',
             }}
           >
-            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} onComposedPages={handleComposedPagesFromImport} />
+            <AdminLibrary onBack={() => setShowLibrary(false)} siteConfig={siteConfig} onComposedPages={handleComposedPagesFromImport} onHistoryReady={(h) => { libraryHistoryRef.current = h }} />
           </div>
 
         </div>
