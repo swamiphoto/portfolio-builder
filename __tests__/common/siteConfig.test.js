@@ -186,7 +186,23 @@ describe('writeSiteConfig', () => {
     const config = { userId: 'user-123', pages: [] }
 
     await writeSiteConfig('user-123', config)
-    expect(uploadJSON).toHaveBeenCalledWith('users/user-123/site-config.json', config)
+    expect(uploadJSON).toHaveBeenCalledWith('users/user-123/site-config.json', expect.objectContaining(config))
+  })
+})
+
+describe('writeSiteConfig timestamps', () => {
+  beforeEach(() => { uploadJSON.mockReset() })
+
+  it('stamps server updatedAt, overwriting any incoming value', async () => {
+    const spy = jest.spyOn(Date, 'now').mockReturnValue(111)
+    await writeSiteConfig('u1', { pages: [], updatedAt: 999 })
+    expect(uploadJSON).toHaveBeenCalledWith('users/u1/site-config.json', expect.objectContaining({ updatedAt: 111 }))
+    spy.mockRestore()
+  })
+
+  it('honors an explicit updatedAt override (used by publish)', async () => {
+    await writeSiteConfig('u1', { pages: [] }, { updatedAt: 222 })
+    expect(uploadJSON).toHaveBeenCalledWith('users/u1/site-config.json', expect.objectContaining({ updatedAt: 222 }))
   })
 })
 

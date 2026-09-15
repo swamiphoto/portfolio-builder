@@ -254,9 +254,10 @@ export async function readSiteConfig(userId) {
  * @param {string} userId
  * @param {SiteConfig} config
  */
-export async function writeSiteConfig(userId, config) {
+export async function writeSiteConfig(userId, config, { updatedAt } = {}) {
   await uploadJSON(getUserSiteConfigPath(userId), {
     ...config,
+    updatedAt: updatedAt ?? Date.now(),
     pages: (config.pages || []).map((page) => normalizePageEntity(page)),
   })
 }
