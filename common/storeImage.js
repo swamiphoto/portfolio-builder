@@ -4,11 +4,15 @@
 // Used by upload-file.js (manual upload) and fetch-batch (web import).
 
 import crypto from 'crypto'
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 import { s3, BUCKET, PUBLIC_URL, downloadBuffer, deleteFile } from './gcsClient'
 import { getUserPhotoPath, getUserPhotosPrefix } from './gcsUser'
 import { extractCapture } from './exifCapture'
+import { MAX_UPLOAD_BYTES, ACCEPTED_SHARP_FORMATS } from './uploadLimits'
+
+// Re-export so existing importers of storeImage keep working.
+export { MAX_UPLOAD_BYTES, ACCEPTED_UPLOAD_TYPES, isAcceptedUploadType } from './uploadLimits'
 
 /**
  * Resolve the R2 object key for an upload.
@@ -128,6 +132,29 @@ export async function finalizeStoredImage(userId, { objectPath, contentType }) {
     err.code = 'PROCESS_FAILED'
     throw err
   }
+  // Reject-and-clean: an oversized or unsupported file is deleted from R2 and
+  // surfaced with a clear message (distinct from the retryable PROCESS_FAILED).
+  const reject = async (code, message) => {
+    await deleteFile(objectPath).catch(() => {})
+    const err = new Error(message)
+    err.code = code
+    throw err
+  }
+
+  // Size guard FIRST, via HeadObject (metadata only) — so an oversized file is
+  // rejected and deleted without ever downloading it into the function. R2's
+  // presigned PUT can't enforce a content-length limit, so this is where the cap
+  // is actually applied.
+  try {
+    const head = await s3.send(new HeadObjectCommand({ Bucket: BUCKET, Key: objectPath }))
+    if ((head?.ContentLength || 0) > MAX_UPLOAD_BYTES) {
+      return reject('TOO_LARGE', `That image is over the ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB limit. Please upload a JPEG under ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB.`)
+    }
+  } catch (e) {
+    if (e?.code === 'TOO_LARGE') throw e
+    // HEAD failed for another reason (e.g. read-after-write lag) — fall through;
+    // the download + decode below still guard size and format.
+  }
 
   let buffer = null
   let lastErr = null
@@ -140,6 +167,22 @@ export async function finalizeStoredImage(userId, { objectPath, contentType }) {
     }
   }
   if (!buffer) return fail(lastErr?.message || 'download failed')
+
+  // Backstop size check (in case HEAD was skipped/lagged).
+  if (buffer.length > MAX_UPLOAD_BYTES) {
+    return reject('TOO_LARGE', `That image is over the ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB limit. Please upload a JPEG under ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB.`)
+  }
+  // Format check on the ACTUAL bytes: sharp throws on RAW/PSD (undecodable), and
+  // reports tiff/gif/svg as their real format so we can reject non-web formats.
+  let fmt = null
+  try {
+    fmt = (await sharp(buffer).metadata())?.format || null
+  } catch {
+    fmt = null
+  }
+  if (!fmt || !ACCEPTED_SHARP_FORMATS.has(fmt)) {
+    return reject('UNSUPPORTED', 'That file isn’t a supported image. Upload a JPEG, PNG, WebP, or HEIC — RAW, TIFF and PSD aren’t supported (export as JPEG first).')
+  }
 
   try {
     const hash = crypto.createHash('md5').update(buffer).digest('hex')
