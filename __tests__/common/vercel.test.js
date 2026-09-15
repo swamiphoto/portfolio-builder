@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { addDomain, checkAvailability, getPrice, removeDomain } from '../../common/vercel'
+import { addDomain, addWwwRedirect, checkAvailability, getPrice, removeDomain } from '../../common/vercel'
 
 const OLD_ENV = process.env
 beforeEach(() => {
@@ -22,11 +22,42 @@ describe('addDomain', () => {
     expect(JSON.parse(opts.body)).toEqual({ name: 'a.com' })
   })
 
+  it('includes redirect + redirectStatusCode in the body when given', async () => {
+    global.fetch.mockReturnValue(ok({ name: 'www.a.com', verified: true }))
+    await addDomain('www.a.com', { redirect: 'a.com', redirectStatusCode: 308 })
+    const [, opts] = global.fetch.mock.calls[0]
+    expect(JSON.parse(opts.body)).toEqual({ name: 'www.a.com', redirect: 'a.com', redirectStatusCode: 308 })
+  })
+
   it('throws an error carrying status and code on failure', async () => {
     global.fetch.mockReturnValue(Promise.resolve({
       ok: false, status: 409, json: () => Promise.resolve({ error: { code: 'domain_already_in_use', message: 'taken' } }),
     }))
     await expect(addDomain('a.com')).rejects.toMatchObject({ status: 409, code: 'domain_already_in_use', message: 'taken' })
+  })
+})
+
+describe('addWwwRedirect', () => {
+  it('adds www.<apex> as a 308 redirect to the apex', async () => {
+    global.fetch.mockReturnValue(ok({ name: 'www.a.com', verified: true }))
+    await expect(addWwwRedirect('a.com')).resolves.toBe(true)
+    const [url, opts] = global.fetch.mock.calls[0]
+    expect(url).toBe('https://api.vercel.com/v10/projects/proj/domains?teamId=team')
+    expect(JSON.parse(opts.body)).toEqual({ name: 'www.a.com', redirect: 'a.com', redirectStatusCode: 308 })
+  })
+
+  it('treats an already-in-use www as success', async () => {
+    global.fetch.mockReturnValue(Promise.resolve({
+      ok: false, status: 409, json: () => Promise.resolve({ error: { code: 'domain_already_in_use', message: 'taken' } }),
+    }))
+    await expect(addWwwRedirect('a.com')).resolves.toBe(true)
+  })
+
+  it('returns false (non-fatal) on any other error', async () => {
+    global.fetch.mockReturnValue(Promise.resolve({
+      ok: false, status: 500, json: () => Promise.resolve({ error: { message: 'boom' } }),
+    }))
+    await expect(addWwwRedirect('a.com')).resolves.toBe(false)
   })
 })
 
