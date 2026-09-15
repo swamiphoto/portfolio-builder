@@ -451,6 +451,79 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   )
 }
 
+function formatVersionDate(ts) {
+  try {
+    return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  } catch {
+    return String(ts)
+  }
+}
+
+function HistoryView({ anchorEl, onClose, onBack, onRestore }) {
+  const [versions, setVersions] = useState(null)
+  const [restoring, setRestoring] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/admin/history')
+      .then(r => r.ok ? r.json() : { versions: [] })
+      .then(d => setVersions(d.versions || []))
+      .catch(() => setVersions([]))
+  }, [])
+
+  async function restore(ts) {
+    setRestoring(ts)
+    try {
+      const res = await fetch(`/api/admin/history/${ts}`)
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.config) {
+        onRestore(data.config) // loads into the draft (marks dirty); user then Publishes
+        onClose()
+      }
+    } finally {
+      setRestoring(null)
+    }
+  }
+
+  return (
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Version history" onBack={onBack}>
+      <div style={{ padding: '4px 0 8px' }}>
+        <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0, padding: '8px 16px 10px' }}>
+          A snapshot is saved each time you Publish. Restoring loads that version into your editor — Publish to make it live. Your newer versions stay here.
+        </p>
+        {versions === null ? (
+          <p style={{ padding: '6px 16px', fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Loading…</p>
+        ) : versions.length === 0 ? (
+          <p style={{ padding: '6px 16px', fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>No published versions yet.</p>
+        ) : (
+          versions.map((v, i) => (
+            <div
+              key={v.ts}
+              className="group"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 16px', borderTop: DIVIDER_SOFT }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.06)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <span style={{ fontSize: 12.5, color: '#2c2416', minWidth: 0 }}>
+                {formatVersionDate(v.ts)}
+                {i === 0 && <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 6 }}>Latest</span>}
+              </span>
+              <button
+                type="button"
+                disabled={restoring === v.ts}
+                onClick={() => restore(v.ts)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ fontSize: 11, color: '#8b6f47', background: 'none', border: 'none', padding: 0, cursor: restoring === v.ts ? 'default' : 'pointer', textDecoration: 'underline', flexShrink: 0, marginLeft: 10 }}
+              >
+                {restoring === v.ts ? 'Restoring…' : 'Restore this version'}
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </PopoverShell>
+  )
+}
+
 export default function SiteSettingsPopover({ siteConfig, username, anchorEl, onUpdate, onClose, onPickLogo, onPickFavicon, onPickCoverImage, onViewCover, onDisableCover, onPickShareLarge, onPickShareSquare, onEditHandles, initialView = 'main' }) {
   const config = siteConfig || {}
   const [view, setView] = useState(initialView) // 'main' | 'cover' | 'domain' | 'analytics' | 'print' | 'sharing'
@@ -726,6 +799,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   }
 
   // ── Print store drill-in ──────────────────────────────────────────────────
+  if (view === 'history') {
+    return <HistoryView anchorEl={anchorEl} onClose={onClose} onBack={() => setView('main')} onRestore={onUpdate} />
+  }
+
   if (view === 'print') {
     const ps = config.printStore || {}
     return <PrintView anchorEl={anchorEl} onClose={onClose} ps={ps} updatePrintStore={updatePrintStore} onBack={() => setView('main')} />
@@ -942,6 +1019,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       <DrillRow
         label="Social sharing"
         onDrillIn={() => setView('sharing')}
+      />
+      <DrillRow
+        label="Version history"
+        onDrillIn={() => setView('history')}
       />
 
       {designOpen && (
