@@ -488,6 +488,31 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             {!saved && (
               <p style={{ fontFamily: MONO, fontSize: 9.5, color: '#b0a490', margin: 0 }}>Enter or click away to save</p>
             )}
+            {isOverride?.(index) ? (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <span style={{ fontFamily: MONO, fontSize: 9.5, color: '#b0a490', letterSpacing: '0.04em' }}>
+                  Overridden for this block — the shared caption isn’t shown here.
+                </span>
+                <div style={{ display: 'flex', gap: 14 }}>
+                  <button type="button" style={noteLinkStyle}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}
+                    onClick={() => onRevertToLibrary?.(index)}>
+                    Use shared caption
+                  </button>
+                  <button type="button" style={noteLinkStyle}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}
+                    onClick={() => { onCaptionChangeToLibrary?.(index, caption); onRevertToLibrary?.(index); }}>
+                    Make this the shared caption
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" style={{ ...noteLinkStyle, marginTop: 8 }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}
+                onClick={() => onToggleOverride?.(index, true)}>
+                Use a different caption just here
+              </button>
+            )}
           </Section>
 
           {/* File — metadata + the high-res version that powers downloads & larger prints */}
