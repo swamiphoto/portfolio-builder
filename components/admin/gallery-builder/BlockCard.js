@@ -211,7 +211,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onSplit
   const caption = imageRef.caption || ''
   const menuItems = [
     ...(onReposition ? [{ label: 'Reposition', icon: <RepositionIcon />, onClick: (el) => onReposition(el) }] : []),
-    ...(onSplit ? [{ label: 'Split here', desc: 'Break this gallery into two blocks, starting a new one at this photo', icon: <SplitIcon />, onClick: () => onSplit() }] : []),
+    ...(onSplit ? [{ label: 'Split here', desc: 'This photo becomes its own single-photo block; the photos before and after it split into separate blocks', icon: <SplitIcon />, onClick: () => onSplit() }] : []),
     { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onRemove() },
   ]
 
@@ -304,6 +304,11 @@ function BlockCard({
     _setLiveRefs(next);
   }, []);
   const blockKeyRef = useRef(Math.random().toString(36).slice(2));
+  // True while THIS single-photo block is the source of an in-flight photo drag.
+  // Used to stop its own container from acting as a drop target for its own drag —
+  // otherwise the small source block sits under the cursor and silently swallows
+  // the drop (self-drop is a no-op), making the photo feel undraggable.
+  const isPhotoDragSourceRef = useRef(false);
   const { startDrag, endDrag } = useDrag()
   const hasDesign = block.type === "photo" || block.type === "photos" || block.type === "stacked" || block.type === "masonry" || block.type === "text" || block.type === "video" || block.type === "contact" || block.type === "testimonial" || block.type === "page-gallery";
 
@@ -834,8 +839,8 @@ function BlockCard({
             <>
               <div
                 style={{ position: 'relative' }}
-                onDragEnter={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
-                onDragOver={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
+                onDragEnter={(e) => { if (isPhotoDragSourceRef.current) return; e.preventDefault(); setPhotoDropHover(true); }}
+                onDragOver={(e) => { if (isPhotoDragSourceRef.current) return; e.preventDefault(); setPhotoDropHover(true); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setPhotoDropHover(false); }}
                 onDrop={(e) => {
                   setPhotoDropHover(false);
@@ -913,6 +918,8 @@ function BlockCard({
                     }}
                     draggable
                     onDragStart={(e) => {
+                      e.stopPropagation();
+                      isPhotoDragSourceRef.current = true;
                       e.dataTransfer.effectAllowed = 'move';
                       const ref = { url: block.imageUrl, assetId: null };
                       if (block.caption !== undefined) ref.caption = block.caption;
@@ -921,7 +928,7 @@ function BlockCard({
                       e.dataTransfer.setData('text/plain', block.imageUrl);
                       if (sourcePageId) startDrag({ type: 'images', imageRefs: [ref], sourceBlockType: block.type, sourcePageId, sourceBlockIndex: blockIndex });
                     }}
-                    onDragEnd={() => { endDrag(); }}
+                    onDragEnd={() => { isPhotoDragSourceRef.current = false; setPhotoDropHover(false); endDrag(); }}
                     onClick={() => setLightboxIndex(0)}
                   >
                     <img
