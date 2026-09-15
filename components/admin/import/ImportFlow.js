@@ -23,7 +23,7 @@ function hostOf(input) {
   }
 }
 
-export default function ImportFlow({ variant = 'modal', initialInput = '', onClose, onComplete }) {
+export default function ImportFlow({ variant = 'modal', initialInput = '', onClose, onComplete, libraryConfig }) {
   const [step, setStep] = useState('source')
   const [input, setInput] = useState(initialInput)
   const [error, setError] = useState(null)
@@ -150,6 +150,7 @@ export default function ImportFlow({ variant = 'modal', initialInput = '', onClo
           discovery={discovery}
           onBack={() => setStep('source')}
           onImport={handleImport}
+          libraryConfig={libraryConfig}
         />
       )}
 

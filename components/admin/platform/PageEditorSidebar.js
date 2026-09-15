@@ -358,6 +358,7 @@ export default function PageEditorSidebar({ page, siteConfig, libraryConfig, sav
           onClose={() => { setPhotoPickerOpen(false); setPhotoPickerBlockIndex(null) }}
           pages={pagesData}
           defaultPageId={photoPickerBlockIndex === 'thumbnail' ? thumbnailDefaultPageId : null}
+          currentPageId={page.id}
         />
       )}
     </>

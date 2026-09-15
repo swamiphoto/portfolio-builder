@@ -170,6 +170,7 @@ export default function PickerFilterRail({
   selectedPage,
   onSelectPage,
   pageCounts,
+  hasCurrentPage,
 }) {
   const activeCount = [
     filters.orientation !== 'all',
@@ -253,9 +254,17 @@ export default function PickerFilterRail({
       {/* Sections */}
       <div className="flex-1 overflow-y-auto scroll-quiet" style={{ paddingBottom: 16 }}>
         <FilterSection title="Usage">
+          {hasCurrentPage && (
+            <FilterRow
+              active={filters.usage === 'notonpage'}
+              label="Not on this page"
+              count={counts.usage?.notonpage}
+              onClick={() => onFilterChange('usage', filters.usage === 'notonpage' ? 'all' : 'notonpage')}
+            />
+          )}
           <FilterRow
             active={filters.usage === 'unused'}
-            label="Unused"
+            label="Not on any page"
             count={counts.usage?.unused}
             onClick={() => onFilterChange('usage', filters.usage === 'unused' ? 'all' : 'unused')}
           />

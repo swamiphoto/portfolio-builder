@@ -244,11 +244,16 @@ const DEFAULT_FILTERS = {
   iso: "all",
 };
 
-function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, railCollapsed, onToggleRail, onPreview, pages, defaultPageId }) {
+function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, railCollapsed, onToggleRail, onPreview, pages, defaultPageId, currentPageId }) {
   const [search, setSearch] = useState("");
   const [selectedSet, setSelectedSet] = useState("all");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [selectedPage, setSelectedPage] = useState(defaultPageId || null);
+  // urls already on the page being edited — powers the "Not on this page" filter.
+  const currentPageUrls = useMemo(() => {
+    const p = pages?.find(pg => pg.id === currentPageId);
+    return p ? new Set(p.imageUrls || []) : null;
+  }, [pages, currentPageId]);
   const [selected, setSelected] = useState([]);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchBoxRef = useRef(null);
@@ -264,7 +269,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
   );
 
   // Counts over all assets — sidebar shows full options regardless of current filters
-  const counts = useMemo(() => computeFilterCounts(allAssets), [allAssets]);
+  const counts = useMemo(() => computeFilterCounts(allAssets, { pageUrls: currentPageUrls }), [allAssets, currentPageUrls]);
 
   // Set counts: { all: total, "<gallery key>": count }
   const countsBySet = useMemo(() => {
@@ -312,7 +317,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
 
   // Apply attribute filters + search
   const filtered = useMemo(() => {
-    let result = applyFilters(pageFilteredAssets, filters);
+    let result = applyFilters(pageFilteredAssets, filters, { pageUrls: currentPageUrls });
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((a) => {
@@ -330,7 +335,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
       const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bt - at;
     });
-  }, [pageFilteredAssets, filters, search]);
+  }, [pageFilteredAssets, filters, search, currentPageUrls]);
 
   const { positions, totalHeight } = useMemo(
     () => computePickerLayout(filtered, containerSize.width),
@@ -580,6 +585,7 @@ function LibraryTab({ images, loading, blockType, onConfirm, libraryConfig, rail
         selectedPage={selectedPage}
         onSelectPage={setSelectedPage}
         pageCounts={pageCounts}
+        hasCurrentPage={!!currentPageUrls}
       />
     </div>
   );
@@ -812,7 +818,7 @@ function UploadTab({ onUploaded, libraryConfig }) {
 const ANCHOR_GAP = 16;
 
 // ── Modal shell ─────────────────────────────────────────────────────────────
-export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, libraryConfig, pages, defaultPageId, anchorRight }) {
+export default function PhotoPickerModal({ images, loading, blockType, onConfirm, onClose, libraryConfig, pages, defaultPageId, currentPageId, anchorRight }) {
   const [tab, setTab] = useState("library");
   const [railCollapsed, setRailCollapsed] = useState(true);
   const [previewAsset, setPreviewAsset] = useState(null);
@@ -954,6 +960,7 @@ export default function PhotoPickerModal({ images, loading, blockType, onConfirm
             onPreview={setPreviewAsset}
             pages={pages}
             defaultPageId={defaultPageId}
+            currentPageId={currentPageId}
           />
         ) : (
           <UploadTab onUploaded={onConfirm} libraryConfig={libraryConfig} />
