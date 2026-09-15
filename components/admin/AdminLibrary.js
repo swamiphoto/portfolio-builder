@@ -12,8 +12,9 @@ import { composeSite, applyComposedPages, resolveComposableAssets } from '@/comm
 import { seedUploadedAsset } from '@/common/import/uploadedAsset';
 import { resolveSellableAsset } from "../../common/print/sellAsset";
 import { SEED_CATALOG } from "../../common/fulfillment/seedCatalog";
+import { useHistory } from "../../common/useHistory";
 
-export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
+export default function AdminLibrary({ onBack, siteConfig, onComposedPages, onHistoryReady }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [libraryData, setLibraryData] = useState(null);
@@ -59,6 +60,9 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
   // addLibraryTarget: null (add to current album) | { imageUrl } (add single image to album)
   const [printStore, setPrintStore] = useState(null);
 
+  const libraryHistory = useHistory(50);
+  const libRestoringRef = useRef(false);
+
   const fetchLibrary = useCallback(async ({ quiet = false } = {}) => {
     try {
       if (!quiet) setLoading(true);
@@ -102,17 +106,6 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
       .then(data => { if (data?.printStore) setPrintStore(data.printStore); })
       .catch(() => {});
   }, []);
-
-  const saveConfig = useCallback(async (newConfig) => {
-    const res = await fetch("/api/admin/library", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newConfig),
-    });
-    if (!res.ok) throw new Error(`Save failed ${res.status}`);
-    // Refresh counts without blanking the whole library (keeps sidebar context).
-    await fetchLibrary({ quiet: true });
-  }, [fetchLibrary]);
 
   const getFallbackAsset = useCallback((imageUrl) => {
     if (!imageUrl) return null;
@@ -318,6 +311,39 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     sets: libraryData?.sets || {},
     savedViews: libraryData?.savedViews || {},
   }), [libraryData]);
+
+  const saveConfig = useCallback(async (newConfig) => {
+    // Library actions are never free-typed, so every saveConfig is one undo step.
+    if (!libRestoringRef.current) libraryHistory.capture(currentConfig());
+    const res = await fetch("/api/admin/library", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newConfig),
+    });
+    if (!res.ok) throw new Error(`Save failed ${res.status}`);
+    // Refresh counts without blanking the whole library (keeps sidebar context).
+    await fetchLibrary({ quiet: true });
+  }, [fetchLibrary, libraryHistory, currentConfig]);
+
+  const applyLibrarySnapshot = useCallback(async (snapshot) => {
+    if (snapshot == null) return;
+    libRestoringRef.current = true;
+    try {
+      const res = await fetch("/api/admin/library", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(snapshot),
+      });
+      if (res.ok) await fetchLibrary({ quiet: true });
+    } finally {
+      libRestoringRef.current = false;
+    }
+  }, [fetchLibrary]);
+
+  const undoLibrary = useCallback(() => applyLibrarySnapshot(libraryHistory.takeUndo(currentConfig())), [applyLibrarySnapshot, libraryHistory, currentConfig]);
+  const redoLibrary = useCallback(() => applyLibrarySnapshot(libraryHistory.takeRedo(currentConfig())), [applyLibrarySnapshot, libraryHistory, currentConfig]);
+
+  useEffect(() => { onHistoryReady?.({ undo: undoLibrary, redo: redoLibrary }); }, [onHistoryReady, undoLibrary, redoLibrary]);
 
   const handleToggleSet = useCallback(async (imageUrl, slug, type, add) => {
     const section = type === 'portfolio' ? 'portfolios' : 'galleries';
