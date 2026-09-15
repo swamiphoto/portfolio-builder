@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import AlbumSidebar from "./AlbumSidebar";
 import PhotoGrid from "./PhotoGrid";
 import UploadModal, { uploadFile } from "./UploadModal";
@@ -277,6 +277,15 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     return applyFilters(base);
   };
 
+  // Memoized so a stable reference survives selection changes — otherwise a fresh
+  // array every render makes PhotoGrid's processedAssets recompute and reset the
+  // scroll to the top on every photo you select.
+  const assetsMemo = useMemo(
+    () => currentAssets(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [libraryData, selectedAlbum, selectedPage, pagesData, applyFilters, getAssetByUrl],
+  );
+
   const allSets = useMemo(() => {
     const galleries = Object.keys(libraryData?.galleries || {}).map(slug => ({ slug, type: 'gallery' }));
     const portfolios = Object.keys(libraryData?.portfolios || {}).map(slug => ({ slug, type: 'portfolio' }));
@@ -387,6 +396,17 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
   const clearSelection = useCallback(() => setSelectedUrls(new Set()), []);
   // Drop the selection whenever the viewed album/filter changes.
   useEffect(() => { setSelectedUrls(new Set()); }, [selectedAlbum]);
+  // "Add to set" popover on the selection bar.
+  const [addToSetOpen, setAddToSetOpen] = useState(false);
+  const [newSetName, setNewSetName] = useState("");
+  const addToSetRef = useRef(null);
+  useEffect(() => { if (!selectionActive) { setAddToSetOpen(false); setNewSetName(""); } }, [selectionActive]);
+  useEffect(() => {
+    if (!addToSetOpen) return;
+    const h = (e) => { if (addToSetRef.current && !addToSetRef.current.contains(e.target)) setAddToSetOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [addToSetOpen]);
 
   const handleRemoveSelected = useCallback(async () => {
     if (selectedAlbum.type === "all" || selectedUrls.size === 0) return;
@@ -436,6 +456,18 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     await saveConfig({ ...config, galleries });
     clearSelection();
   }, [selectedAlbum, currentConfig, saveConfig, clearSelection]);
+
+  // Add the selected photos to a set (union — a photo can live in many sets, so we
+  // don't remove it from anywhere). `key` may be a brand-new slug, which creates
+  // the set. Selection is kept so you can add to several sets in a row.
+  const handleAddSelectedToSet = useCallback(async (rawName, { isSlug = false } = {}) => {
+    const key = isSlug ? rawName : rawName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    if (!key || selectedUrls.size === 0) return;
+    const urls = [...selectedUrls];
+    const config = currentConfig();
+    const galleries = { ...config.galleries, [key]: [...new Set([...(config.galleries[key] || []), ...urls])] };
+    await saveConfig({ ...config, galleries });
+  }, [selectedUrls, currentConfig, saveConfig]);
 
   const handleUploaded = useCallback(async (uploadedAssets, selectedSets = []) => {
     // uploadedAssets: [{ url, width, height, hash, capture }], selectedSets: string[]
@@ -506,11 +538,19 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     // to render, and the modal just vanished with no feedback.
     try {
       let next = currentConfig()
-      if (summary.imported?.length) {
-        next = applyImportToConfig(next, { imported: summary.imported, collections: summary.collections, importBatchId: summary.importBatchId })
-        const urls = summary.imported.map((a) => a.publicUrl)
-        setHighlightedUrls(new Set(urls))
-        setTimeout(() => setHighlightedUrls(null), 2500)
+      // Build sets from EVERY photo in the imported galleries — including the ones
+      // dedupe skipped because they were already in the library. Resolving skipped
+      // remoteUrls back to their library assets means a re-import (all photos
+      // skipped) still creates the sets and applies them to those photos, instead
+      // of doing nothing.
+      const resolved = resolveComposableAssets({ imported: summary.imported, skipped: summary.skipped, libraryAssets: next.assets })
+      if (resolved.length) {
+        next = applyImportToConfig(next, { imported: resolved, collections: summary.collections, importBatchId: summary.importBatchId })
+        const urls = (summary.imported || []).map((a) => a.publicUrl)
+        if (urls.length) {
+          setHighlightedUrls(new Set(urls))
+          setTimeout(() => setHighlightedUrls(null), 2500)
+        }
         setSelectedAlbum({ type: 'all', key: 'all' })
         await saveConfig(next)
       }
@@ -647,8 +687,11 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     if (config.galleries[key]) return
     const updated = { ...config, galleries: { ...config.galleries, [key]: [] } }
     await saveConfig(updated)
-    setSelectedAlbum({ type: "gallery", key })
-  }, [saveConfig, currentConfig]);
+    // With photos selected, the user is likely making a set to drag them into —
+    // keep the current view + selection and just add the set to the sidebar. With
+    // nothing selected, jump into the new (empty) set as before.
+    if (selectedUrls.size === 0) setSelectedAlbum({ type: "gallery", key })
+  }, [saveConfig, currentConfig, selectedUrls]);
 
   const handleDeleteSet = useCallback(async (key) => {
     const config = currentConfig()
@@ -739,7 +782,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
     );
   }
 
-  const assets = currentAssets();
+  const assets = assetsMemo;
   const allAssets = (libraryData?.images || []).map((asset) => asset || null).filter(Boolean);
 
   const FILTER_LABELS = {
@@ -975,7 +1018,7 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
       )}
 
       {importOpen && (
-        <ImportFlow variant="modal" onClose={() => setImportOpen(false)} onComplete={handleImportComplete} />
+        <ImportFlow variant="modal" onClose={() => setImportOpen(false)} onComplete={handleImportComplete} libraryConfig={libraryData} />
       )}
 
       {dedupeOpen && libraryData && (
@@ -1046,6 +1089,60 @@ export default function AdminLibrary({ onBack, siteConfig, onComposedPages }) {
           }}
         >
           <span style={{ marginRight: 8 }}>{selectedUrls.size} selected</span>
+
+          <div ref={addToSetRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setAddToSetOpen(o => !o)}
+              className="transition-colors"
+              style={{ padding: '6px 10px', borderRadius: 6, color: '#f6f3ec', background: addToSetOpen ? 'rgba(255,255,255,0.12)' : 'transparent' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.10)'}
+              onMouseLeave={e => e.currentTarget.style.background = addToSetOpen ? 'rgba(255,255,255,0.12)' : 'transparent'}
+            >
+              Add to set
+            </button>
+            {addToSetOpen && (
+              <div
+                style={{
+                  position: 'absolute', bottom: 'calc(100% + 10px)', left: 0,
+                  width: 244, maxHeight: 340, overflowY: 'auto',
+                  background: '#fbf8f2', color: '#2c2416', borderRadius: 10,
+                  boxShadow: '0 12px 34px rgba(26,18,10,0.28)', border: '1px solid rgba(26,18,10,0.10)',
+                  padding: 6, fontFamily: 'ui-sans-serif, system-ui, sans-serif', letterSpacing: 0,
+                }}
+              >
+                <input
+                  value={newSetName}
+                  onChange={e => setNewSetName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && newSetName.trim()) { handleAddSelectedToSet(newSetName); setNewSetName(''); } }}
+                  placeholder="New set…  (Enter to add)"
+                  autoFocus
+                  style={{ width: '100%', boxSizing: 'border-box', fontSize: 13, padding: '7px 9px', border: '1px solid rgba(26,18,10,0.14)', borderRadius: 7, outline: 'none', marginBottom: 4 }}
+                />
+                {Object.keys(libraryData?.galleries || {}).sort().map(key => {
+                  const g = new Set(libraryData.galleries[key] || []);
+                  const allIn = selectedUrls.size > 0 && [...selectedUrls].every(u => g.has(u));
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleAddSelectedToSet(key, { isSlug: true })}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 9px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#2c2416' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,18,10,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span style={{ width: 12, flexShrink: 0, color: '#6f8f4f' }}>{allIn ? '✓' : ''}</span>
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{key}</span>
+                    </button>
+                  );
+                })}
+                {Object.keys(libraryData?.galleries || {}).length === 0 && (
+                  <div style={{ padding: '8px 9px', fontSize: 12, color: '#a8967a' }}>No sets yet — type a name above.</div>
+                )}
+              </div>
+            )}
+          </div>
+
           {selectedAlbum.type === 'gallery' && (
             <button
               type="button"
