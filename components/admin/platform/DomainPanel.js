@@ -39,6 +39,15 @@ function InfoRow({ field, value, mono, children }) {
   )
 }
 
+// Which DNS record a copyable group is for, so a user staring at two rows knows
+// the first serves the bare domain and the second makes www redirect to it.
+function recordCaption(r) {
+  if (r.name === '@') return 'Root domain'
+  if (r.name === 'www') return 'www → root domain'
+  if (r.type === 'TXT') return 'Ownership check'
+  return null
+}
+
 function formatDate(iso) {
   if (!iso) return null
   try {
@@ -137,16 +146,27 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
     return () => { alive = false }
   }, [cd?.name, cd?.status])
 
-  // Poll status until active.
+  // Reconcile with Vercel on mount — once even for an already-active domain, so
+  // the server can backfill the www redirect for apex domains connected before
+  // that existed — then keep polling only while still pending. Persist only on a
+  // real change, so re-opening Settings on a stable domain doesn't churn autosave.
   useEffect(() => {
-    if (!cd || cd.status === 'active') return
-    pollRef.current = setInterval(async () => {
+    if (!cd) return
+    let alive = true
+    const sync = async () => {
       const res = await fetch('/api/admin/domain/status')
       if (!res.ok) return
       const data = await res.json()
-      if (data.customDomain) persist(data.customDomain)
-    }, 5000)
-    return () => clearInterval(pollRef.current)
+      if (!alive || !data.customDomain) return
+      // Persist only on a real change so re-opening Settings on a stable domain
+      // doesn't churn autosave. Compare against the cd this effect was set up with.
+      if (JSON.stringify(cd) === JSON.stringify(data.customDomain)) return
+      onUpdate({ ...config, customDomain: data.customDomain })
+      setCd(data.customDomain)
+    }
+    sync()
+    if (cd.status !== 'active') pollRef.current = setInterval(sync, 5000)
+    return () => { alive = false; clearInterval(pollRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cd?.name, cd?.status])
 
@@ -219,11 +239,16 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
             </div>
 
             {/* Where to go — provider-specific when we can detect it */}
-            <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              {provider?.name
-                ? <>Looks like <strong>{cd.name}</strong> is on <strong>{provider.name}</strong>. Add this record there:</>
-                : <>Add this record at your domain’s DNS provider:</>}
-            </p>
+            {(() => {
+              const recordsWord = (cd.verification || []).length > 1 ? 'these records' : 'this record'
+              return (
+                <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  {provider?.name
+                    ? <>Looks like <strong>{cd.name}</strong> is on <strong>{provider.name}</strong>. Add {recordsWord} there:</>
+                    : <>Add {recordsWord} at your domain’s DNS provider:</>}
+                </p>
+              )
+            })()}
             {provider?.dnsUrl && (
               <a href={provider.dnsUrl} target="_blank" rel="noreferrer"
                 style={{ display: 'inline-block', fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>
@@ -231,15 +256,21 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
               </a>
             )}
 
-            {/* The record, broken into copyable fields */}
+            {/* Each record, broken into copyable fields and captioned by purpose */}
             <div style={{ borderTop: '1px solid rgba(160,140,110,0.14)' }}>
-              {(cd.verification || []).map((r, i) => (
-                <div key={i}>
-                  <CopyRow field="Type"  value={r.type} />
-                  <CopyRow field="Name"  value={r.name} />
-                  <CopyRow field="Value" value={r.value} />
-                </div>
-              ))}
+              {(cd.verification || []).map((r, i) => {
+                const caption = recordCaption(r)
+                return (
+                  <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
+                    {caption && (
+                      <div style={{ ...label, paddingTop: i > 0 ? 4 : 0 }}>{caption}</div>
+                    )}
+                    <CopyRow field="Type"  value={r.type} />
+                    <CopyRow field="Name"  value={r.name} />
+                    <CopyRow field="Value" value={r.value} />
+                  </div>
+                )
+              })}
             </div>
 
             {removeBtn}
