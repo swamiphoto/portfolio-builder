@@ -281,8 +281,17 @@ export default function AdminIndex() {
   // Re-focusing a text field starts a fresh history step.
   useEffect(() => {
     const onFocusOut = (e) => { if (e.target === coalesceElRef.current) coalesceElRef.current = null }
+    // A structural action starts with a pointer press; clearing the coalescing key
+    // makes the next updateConfig capture a fresh entry instead of folding into the
+    // focused text field's step. Keyboard typing (no pointerdown between keystrokes)
+    // keeps coalescing into one step.
+    const onPointerDown = () => { coalesceElRef.current = null }
     document.addEventListener('focusout', onFocusOut)
-    return () => document.removeEventListener('focusout', onFocusOut)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      document.removeEventListener('focusout', onFocusOut)
+      document.removeEventListener('pointerdown', onPointerDown)
+    }
   }, [])
 
   const applyEditorSnapshot = useCallback((snapshot) => {
