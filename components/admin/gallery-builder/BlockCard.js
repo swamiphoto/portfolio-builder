@@ -173,14 +173,22 @@ function ThumbMenu({ items, tone = 'dark', size = 20 }) {
             <button
               key={i}
               type="button"
+              title={it.desc || undefined}
               onClick={(e) => { e.stopPropagation(); setOpen(false); it.onClick(btnRef.current) }}
-              className="w-full text-left flex items-center gap-2 transition-colors"
+              className="w-full text-left flex items-start gap-2 transition-colors"
               style={{ padding: '7px 12px', fontSize: 12.5, color: it.danger ? '#c14a4a' : 'var(--text-secondary)', fontWeight: 500, background: 'transparent', border: 'none', cursor: 'pointer' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = it.danger ? 'rgba(193,74,74,0.08)' : 'rgba(160,140,110,0.10)' }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
-              {it.icon}
-              {it.label}
+              <span className="shrink-0 flex items-center" style={{ height: 17 }}>{it.icon}</span>
+              <span className="flex flex-col">
+                <span>{it.label}</span>
+                {it.desc && (
+                  <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-tertiary, #9a8f7f)', marginTop: 1, whiteSpace: 'normal', maxWidth: 190, lineHeight: 1.3 }}>
+                    {it.desc}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </div>
@@ -199,11 +207,11 @@ function SplitIcon() {
   )
 }
 
-function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onSplit, onPreview, selected, isDragging }) {
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onSplit, onPreview, selected, isDragging, order }) {
   const caption = imageRef.caption || ''
   const menuItems = [
     ...(onReposition ? [{ label: 'Reposition', icon: <RepositionIcon />, onClick: (el) => onReposition(el) }] : []),
-    ...(onSplit ? [{ label: 'Split here', icon: <SplitIcon />, onClick: () => onSplit() }] : []),
+    ...(onSplit ? [{ label: 'Split here', desc: 'Break this gallery into two blocks, starting a new one at this photo', icon: <SplitIcon />, onClick: () => onSplit() }] : []),
     { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onRemove() },
   ]
 
@@ -216,6 +224,7 @@ function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onSplit
         borderRadius: 2,
         opacity: isDragging ? 0.5 : 1,
         transition: 'opacity 0.1s ease',
+        order: order,
       }}
       onClick={onPreview}
     >
@@ -978,7 +987,15 @@ function BlockCard({
                   style={{ gap: 1, background: '#e8dfcd', borderRadius: 2, overflow: 'hidden' }}
                 >
                   {(() => {
-                    const thumbRefs = (liveRefs ?? blockImageRefs).map(r => ({
+                    // Render thumbs in STABLE (original) DOM order and express the
+                    // live drag-reorder purely through CSS `order`. Moving the dragged
+                    // node's DOM position mid-drag (what array reordering did) makes the
+                    // browser abort the native drag, so pulling a photo out to the
+                    // between-block band was flaky. `order` reflows visually without
+                    // touching the DOM, so the drag survives. See onDragOver below.
+                    const orderArr = liveRefs ?? blockImageRefs;
+                    const visualByUrl = new Map(orderArr.map((r, idx) => [r.url, idx]));
+                    const thumbRefs = blockImageRefs.map(r => ({
                       ...r,
                       caption: resolveCaption(r, assetsByUrl || {}),
                     }));
@@ -991,6 +1008,7 @@ function BlockCard({
                           <PhotoThumb
                             key={ref.url}
                             imageRef={ref}
+                            order={visualByUrl.get(ref.url) ?? i}
                             selected={selectedIndices.has(i)}
                             isDragging={liveRefs !== null && ref.url === draggedUrlRef.current}
                             onPreview={(e) => {
@@ -1025,13 +1043,18 @@ function BlockCard({
                                 e.preventDefault();
                                 e.stopPropagation();
                                 if (!draggedUrlRef.current) return;
+                                // Move the dragged item to wherever THIS thumb currently
+                                // sits in the live order. Derived from `prev` (not the
+                                // render index `i`) because the DOM order is now stable
+                                // and only the CSS `order` shifts.
                                 setLiveRefs(prev => {
                                   if (!prev) return prev;
                                   const from = prev.findIndex(r => r.url === draggedUrlRef.current);
-                                  if (from === i || from === -1) return prev;
+                                  const to = prev.findIndex(r => r.url === ref.url);
+                                  if (from === -1 || to === -1 || from === to) return prev;
                                   const next = [...prev];
                                   const [moved] = next.splice(from, 1);
-                                  next.splice(i, 0, moved);
+                                  next.splice(to, 0, moved);
                                   return next;
                                 });
                               },
@@ -1079,7 +1102,7 @@ function BlockCard({
                             <div
                               key={`ph-${i}`}
                               className="aspect-square cursor-pointer transition-opacity"
-                              style={{ background: baseColor, opacity: 0.85 }}
+                              style={{ background: baseColor, opacity: 0.85, order: 10000 + i }}
                               onClick={() => { onTitleClick?.(); onAddPhotos(); }}
                               onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
                               onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.85' }}
