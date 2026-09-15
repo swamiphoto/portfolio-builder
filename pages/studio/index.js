@@ -709,7 +709,7 @@ export default function AdminIndex() {
 
       {[
         printNudge && { key: 'print', node: <>Marked for sale. Turn on your print store in <strong>Site Settings</strong> to start selling prints.</>, dismiss: () => setPrintNudge(false) },
-        siteThemeToast && { key: 'theme', node: siteThemeToast, dismiss: () => setSiteThemeToast('') },
+        siteThemeToast && { key: 'theme', node: siteThemeToast, dismiss: () => setSiteThemeToast(''), undo: undoEditor },
       ].filter(Boolean).map((t, i) => (
         <div
           key={t.key}
@@ -718,6 +718,15 @@ export default function AdminIndex() {
           role="status"
         >
           <span style={{ lineHeight: 1.45 }}>{t.node}</span>
+          {t.undo && (
+            <button
+              type="button"
+              onClick={() => { t.undo(); t.dismiss?.() }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#e8c98a', textDecoration: 'underline', textUnderlineOffset: 2, font: 'inherit', marginLeft: 10, flexShrink: 0 }}
+            >
+              Undo
+            </button>
+          )}
           <button
             type="button"
             onClick={t.dismiss}
