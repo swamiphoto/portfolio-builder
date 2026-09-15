@@ -255,6 +255,26 @@ const BlockBuilder = forwardRef(function BlockBuilder({
     setTimeout(() => onScrollPreviewToBlock?.(singleIdx), 160);
   };
 
+  // Swap two photos across blocks: the target single-photo block takes the
+  // dropped photo, and the source block gets this block's old photo in the
+  // dropped photo's place.
+  const swapPhotos = (sourceBlockIndex, droppedRef, targetBlockIndex, oldRef) => {
+    const blocks = [...(galleryRef.current.blocks || [])];
+    const target = blocks[targetBlockIndex];
+    if (!target) return;
+    blocks[targetBlockIndex] = { ...target, imageUrl: droppedRef.url, image: null };
+    const src = blocks[sourceBlockIndex];
+    if (src && oldRef) {
+      if (src.type === 'photo') {
+        blocks[sourceBlockIndex] = { ...src, imageUrl: oldRef.url, image: null };
+      } else {
+        const refs = normalizeImageRefs(src.images || src.imageUrls || []).map((r) => (r.url === droppedRef.url ? oldRef : r));
+        blocks[sourceBlockIndex] = { ...src, ...buildMultiImageFields(refs) };
+      }
+    }
+    emit({ ...galleryRef.current, blocks });
+  };
+
   const moveImagesBetweenBlocks = (sourceBlockIndex, imageRefs, targetBlockIndex, updatedTargetBlock) => {
     const blocks = [...(galleryRef.current.blocks || [])];
     blocks[targetBlockIndex] = updatedTargetBlock;
@@ -585,6 +605,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             blockIndex={index}
                             onRemoveImagesFromBlock={(srcIdx, refs) => removeImagesFromBlock(srcIdx, refs)}
                             onMoveImagesAcrossBlocks={(srcIdx, refs, tgtIdx, updatedTgt) => moveImagesBetweenBlocks(srcIdx, refs, tgtIdx, updatedTgt)}
+                            onSwapAcrossBlocks={(srcIdx, droppedRef, tgtIdx, oldRef) => swapPhotos(srcIdx, droppedRef, tgtIdx, oldRef)}
                             assetsByUrl={assetsByUrl}
                             onUpdateLibraryCaption={onUpdateLibraryCaption}
                             onPrintChange={onPrintChange}

@@ -266,6 +266,7 @@ function BlockCard({
   blockIndex,
   onRemoveImagesFromBlock,
   onMoveImagesAcrossBlocks,
+  onSwapAcrossBlocks,
   assetsByUrl,
   onUpdateLibraryCaption,
   onPrintChange,
@@ -303,6 +304,26 @@ function BlockCard({
   useEffect(() => { if (expandedOverride != null) setExpanded(expandedOverride.value) }, [expandedOverride]);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPos, setMenuPos] = useState(null);
+  // A photo dropped onto a non-empty single-photo block, awaiting a Replace /
+  // Combine / Swap choice: { droppedRef, srcIdx, srcRefs }.
+  const [pendingDrop, setPendingDrop] = useState(null);
+
+  const applyDrop = (mode) => {
+    if (!pendingDrop) return;
+    const { droppedRef, srcIdx, srcRefs } = pendingDrop;
+    const oldRef = block.image || (block.imageUrl ? { url: block.imageUrl, caption: block.caption || '' } : null);
+    const strip = srcIdx !== null && srcRefs && onMoveImagesAcrossBlocks;
+    if (mode === 'replace') {
+      const updatedTarget = { ...block, imageUrl: droppedRef.url, image: null };
+      strip ? onMoveImagesAcrossBlocks(srcIdx, srcRefs, blockIndex, updatedTarget) : onUpdate(updatedTarget);
+    } else if (mode === 'combine') {
+      const updatedTarget = { type: 'photos', ...buildMultiImageFields([oldRef, droppedRef].filter(Boolean)), layout: 'stacked' };
+      strip ? onMoveImagesAcrossBlocks(srcIdx, srcRefs, blockIndex, updatedTarget) : onUpdate(updatedTarget);
+    } else if (mode === 'swap' && srcIdx !== null && onSwapAcrossBlocks) {
+      onSwapAcrossBlocks(srcIdx, droppedRef, blockIndex, oldRef);
+    }
+    setPendingDrop(null);
+  };
   const [showDesign, setShowDesign] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [selectedIndices, setSelectedIndices] = useState(new Set());
@@ -803,6 +824,7 @@ function BlockCard({
           {block.type === "photo" && (
             <>
               <div
+                style={{ position: 'relative' }}
                 onDragEnter={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
                 onDragOver={(e) => { e.preventDefault(); setPhotoDropHover(true); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setPhotoDropHover(false); }}
@@ -811,24 +833,27 @@ function BlockCard({
                   e.preventDefault();
                   if (consumeFileDrop(e)) return;
                   const raw = e.dataTransfer.getData('application/x-photo-drag');
-                  let url = null;
+                  let droppedRef = null;
                   let srcIdx = null;
                   let srcRefs = null;
                   if (raw) {
                     try {
                       const parsed = JSON.parse(raw);
                       if (parsed.sourceBlockKey === blockKeyRef.current) return;
-                      url = parsed.imageRefs?.[0]?.url ?? null;
+                      droppedRef = parsed.imageRefs?.[0] ?? null;
                       srcIdx = parsed.sourceBlockIndex ?? null;
                       srcRefs = parsed.imageRefs ?? null;
                     } catch {}
                   }
-                  if (!url) url = e.dataTransfer.getData('text/plain');
-                  if (url) {
-                    // Clear the normalized `image` object so the new imageUrl wins —
-                    // the renderer reads `block.image || block.imageUrl`, so a stale
-                    // `image` would otherwise shadow the replacement.
-                    const updatedTarget = { ...block, imageUrl: url, image: null };
+                  if (!droppedRef) { const u = e.dataTransfer.getData('text/plain'); if (u) droppedRef = { url: u }; }
+                  if (!droppedRef?.url) return;
+                  // Dropping onto an existing photo asks what to do; onto an empty
+                  // block it just places the photo. Clear `image` so the new
+                  // imageUrl wins (renderer reads `block.image || block.imageUrl`).
+                  if (block.imageUrl) {
+                    setPendingDrop({ droppedRef, srcIdx, srcRefs });
+                  } else {
+                    const updatedTarget = { ...block, imageUrl: droppedRef.url, image: null };
                     if (srcIdx !== null && srcRefs && onMoveImagesAcrossBlocks) {
                       onMoveImagesAcrossBlocks(srcIdx, srcRefs, blockIndex, updatedTarget);
                     } else {
@@ -837,6 +862,37 @@ function BlockCard({
                   }
                 }}
               >
+                {pendingDrop && (
+                  <div
+                    style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(26,18,10,0.34)', borderRadius: 3 }}
+                    onClick={() => setPendingDrop(null)}
+                  >
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ background: 'var(--popover, #fbf8f2)', borderRadius: 10, border: '1px solid rgba(26,18,10,0.12)', boxShadow: '0 12px 34px rgba(26,18,10,0.28)', padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 176 }}
+                    >
+                      <div style={{ fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#a8967a', padding: '4px 9px 4px' }}>
+                        Dropped photo
+                      </div>
+                      {[
+                        { mode: 'replace', label: 'Replace' },
+                        { mode: 'combine', label: 'Combine into photos block' },
+                        ...(pendingDrop.srcIdx !== null ? [{ mode: 'swap', label: 'Swap' }] : []),
+                      ].map((o) => (
+                        <button
+                          key={o.mode}
+                          type="button"
+                          onClick={() => applyDrop(o.mode)}
+                          style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 9px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#2c2416', borderRadius: 7 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(26,18,10,0.05)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {block.imageUrl ? (
                   <div
                     className={`relative group/img cursor-grab transition-opacity aspect-video flex items-center justify-center ${photoDropHover ? 'opacity-40' : ''}`}
