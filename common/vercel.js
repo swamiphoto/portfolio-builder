@@ -36,9 +36,31 @@ async function vfetch(path, { method = 'GET', body } = {}) {
   return json
 }
 
-export async function addDomain(name) {
+export async function addDomain(name, { redirect, redirectStatusCode } = {}) {
   const { projectId } = cfg()
-  return vfetch(`/v10/projects/${projectId}/domains`, { method: 'POST', body: { name } })
+  const body = { name }
+  if (redirect) {
+    body.redirect = redirect
+    body.redirectStatusCode = redirectStatusCode || 308
+  }
+  return vfetch(`/v10/projects/${projectId}/domains`, { method: 'POST', body })
+}
+
+/**
+ * Add the www.<apex> alias to the project as a 308 redirect to the apex, so
+ * visitors who type www land on the canonical bare domain (and www gets its own
+ * TLS cert). Best-effort: returns true if added or already present, false on any
+ * other error — a failed www add must never block the apex connection.
+ */
+export async function addWwwRedirect(apex) {
+  try {
+    await addDomain(`www.${apex}`, { redirect: apex, redirectStatusCode: 308 })
+    return true
+  } catch (err) {
+    if (err.status === 409 || err.code === 'domain_already_in_use') return true
+    console.error('addWwwRedirect error:', err)
+    return false
+  }
 }
 
 export async function getDomain(name) {
