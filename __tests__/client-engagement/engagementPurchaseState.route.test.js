@@ -1,5 +1,5 @@
 jest.mock('../../common/userProfile', () => ({ lookupUserByUsername: jest.fn(async () => ({ userId: 'u1' })) }))
-jest.mock('../../common/siteConfig', () => ({ readSiteConfig: jest.fn() }))
+jest.mock('../../common/siteConfig', () => ({ readPublishedSiteConfig: jest.fn() }))
 const readEngagement = jest.fn()
 jest.mock('../../common/clientEngagement', () => ({
   readEngagement: (...a) => readEngagement(...a),
@@ -8,13 +8,13 @@ jest.mock('../../common/clientEngagement', () => ({
 }))
 jest.mock('../../common/email/mailer', () => ({ sendMail: jest.fn() }))
 
-import { readSiteConfig } from '../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../common/siteConfig'
 import handler from '../../pages/api/client/engagement'
 
 function res() { return { statusCode: 200, body: null, status(c){this.statusCode=c;return this}, json(b){this.body=b;return this} } }
 
 it('returns the viewer purchase state and never leaks emails', async () => {
-  readSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: {
+  readPublishedSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: {
     enabled: true, downloads: { enabled: true }, purchase: { enabled: true, freeAllowance: 2, packages: [] },
   } }] })
   readEngagement.mockResolvedValue({
@@ -33,7 +33,7 @@ it('returns the viewer purchase state and never leaks emails', async () => {
 })
 
 it('omits purchase state when the feature is off', async () => {
-  readSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: { enabled: true, favorites: { enabled: true } } }] })
+  readPublishedSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: { enabled: true, favorites: { enabled: true } } }] })
   readEngagement.mockResolvedValue({ people: {}, favorites: [], comments: [], submissions: [], downloads: [], entitlements: {} })
   const r = res()
   await handler({ method: 'GET', query: { username: 'ada', pageId: 'p1', deviceId: 'd1' } }, r)

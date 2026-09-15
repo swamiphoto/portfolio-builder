@@ -3,7 +3,7 @@
 // writes for pages whose specific client feature is enabled, and never
 // returns client emails on GET.
 import { lookupUserByUsername } from '../../../common/userProfile'
-import { readSiteConfig } from '../../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../../common/siteConfig'
 import { readEngagement, writeEngagement, applyEngagementAction } from '../../../common/clientEngagement'
 import { viewerPurchaseState } from '../../../common/clientPurchase'
 import { sendMail } from '../../../common/email/mailer'
@@ -16,7 +16,7 @@ async function resolvePage(username, pageId) {
   if (!username || !pageId) return null
   const lookup = await lookupUserByUsername(String(username))
   if (!lookup) return null
-  const siteConfig = await readSiteConfig(lookup.userId)
+  const siteConfig = await readPublishedSiteConfig(lookup.userId)
   if (!siteConfig) return null
   const page = (siteConfig.pages || []).find(p => p.id === pageId || p.slug === pageId)
   if (!page || !page.clientFeatures?.enabled) return null

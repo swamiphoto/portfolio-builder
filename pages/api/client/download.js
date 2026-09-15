@@ -1,6 +1,6 @@
 // pages/api/client/download.js
 import { lookupUserByUsername } from '../../../common/userProfile'
-import { readSiteConfig } from '../../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../../common/siteConfig'
 import { getSizedUrl } from '../../../common/imageUtils'
 import { readEngagement, writeEngagement, applyEngagementAction } from '../../../common/clientEngagement'
 import { readLibraryConfig } from '../../../common/adminConfig'
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     // Resolve page + feature flag
     const lookup = await lookupUserByUsername(String(username))
     if (!lookup) return res.status(404).json({ error: 'Not found' })
-    const siteConfig = await readSiteConfig(lookup.userId)
+    const siteConfig = await readPublishedSiteConfig(lookup.userId)
     const page = (siteConfig?.pages || []).find(p => p.id === pageId || p.slug === pageId)
     if (!page?.clientFeatures?.enabled || !page?.clientFeatures?.downloads?.enabled) {
       return res.status(403).json({ error: 'Downloads not enabled' })

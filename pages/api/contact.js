@@ -1,6 +1,6 @@
 import { sendMail } from '../../common/email/mailer'
 import { lookupUserByUsername, readUserProfile } from '../../common/userProfile'
-import { readSiteConfig } from '../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../common/siteConfig'
 
 // Resolve the recipient SERVER-SIDE from the site's username. The client must not
 // be able to name an arbitrary recipient — trusting a client-supplied address
@@ -12,7 +12,7 @@ async function resolveRecipient(username) {
   const lookup = await lookupUserByUsername(username).catch(() => null)
   if (!lookup?.userId) return null
   const [siteConfig, profile] = await Promise.all([
-    readSiteConfig(lookup.userId).catch(() => null),
+    readPublishedSiteConfig(lookup.userId).catch(() => null),
     readUserProfile(lookup.userId).catch(() => null),
   ])
   const configured = siteConfig?.contact?.email
