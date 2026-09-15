@@ -1,7 +1,9 @@
 // Shared filter logic + count computation used by AdminLibrary and PhotoPickerModal.
 // Keeps the two surfaces in lockstep on what each filter means.
 
-export function applyFilters(assets, filters) {
+// `ctx.pageUrls` (a Set of publicUrls on the page being edited) enables the
+// page-relative "Not on this page" usage filter in the picker.
+export function applyFilters(assets, filters, ctx = {}) {
   return assets.filter((asset) => {
     if (filters.orientation && filters.orientation !== "all" && asset.orientation !== filters.orientation) return false
 
@@ -26,6 +28,7 @@ export function applyFilters(assets, filters) {
     const usageCount = asset.usage?.usageCount || 0
     if (filters.usage === "unused" && usageCount > 0) return false
     if (filters.usage === "used" && usageCount === 0) return false
+    if (filters.usage === "notonpage" && ctx.pageUrls && ctx.pageUrls.has(asset.publicUrl)) return false
 
     if (filters.aperture && filters.aperture !== "all") {
       const raw = asset.capture?.aperture || asset.capture?.fNumber
@@ -81,9 +84,9 @@ export function applyFilters(assets, filters) {
   })
 }
 
-export function computeFilterCounts(assets) {
+export function computeFilterCounts(assets, ctx = {}) {
   const orientation = {}
-  const usage = { used: 0, unused: 0 }
+  const usage = { used: 0, unused: 0, notonpage: 0 }
   const camera = {}
   const lens = {}
   const focalLength = {}
@@ -101,6 +104,7 @@ export function computeFilterCounts(assets) {
 
     if ((asset.usage?.usageCount || 0) > 0) usage.used += 1
     else usage.unused += 1
+    if (ctx.pageUrls && !ctx.pageUrls.has(asset.publicUrl)) usage.notonpage += 1
 
     const cam = asset.capture?.cameraModel
     if (cam) camera[cam] = (camera[cam] || 0) + 1
