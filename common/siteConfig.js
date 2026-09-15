@@ -1,7 +1,7 @@
 // Server-side only — never import from client components.
 import { downloadJSON, uploadJSON } from './gcsClient'
 import { normalizePageEntity } from './assetRefs'
-import { getUserSiteConfigPath } from './gcsUser'
+import { getUserSiteConfigPath, getUserPublishedConfigPath } from './gcsUser'
 import { slugify } from './pageUtils'
 import { defaultBlock } from './blocks'
 import { migrateSiteConfigThemes } from './themes/migrate'
@@ -229,6 +229,15 @@ export function dropSeededHomePage(config) {
   return { ...config, pages: pages.filter((_, idx) => idx !== i) }
 }
 
+// Same normalization pipeline readSiteConfig applies, factored out for reuse
+// by readPublishedSiteConfig so both stay in sync.
+function normalizeConfig(config) {
+  return migrateSiteConfigThemes(normalizePrintStore(dropSeededHomePage({
+    ...config,
+    pages: (config.pages || []).map((page) => normalizePageEntity(page)),
+  })))
+}
+
 /**
  * Read the site config for a user from R2.
  * Returns null if the config doesn't exist yet.
@@ -238,10 +247,7 @@ export function dropSeededHomePage(config) {
 export async function readSiteConfig(userId) {
   try {
     const config = await downloadJSON(getUserSiteConfigPath(userId))
-    return migrateSiteConfigThemes(normalizePrintStore(dropSeededHomePage({
-      ...config,
-      pages: (config.pages || []).map((page) => normalizePageEntity(page)),
-    })))
+    return normalizeConfig(config)
   } catch (err) {
     // Only treat "file doesn't exist yet" as a normal case
     if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') return null
@@ -260,4 +266,62 @@ export async function writeSiteConfig(userId, config, { updatedAt } = {}) {
     updatedAt: updatedAt ?? Date.now(),
     pages: (config.pages || []).map((page) => normalizePageEntity(page)),
   })
+}
+
+/**
+ * True when the draft has changes not yet reflected in the published config.
+ * @param {SiteConfig|null} draft
+ * @param {SiteConfig|null} published
+ * @returns {boolean}
+ */
+export function computeHasUnpublishedChanges(draft, published) {
+  if (!published) return true
+  return (draft?.updatedAt ?? 0) > (published?.publishedAt ?? 0)
+}
+
+/**
+ * Write the published site config for a user to R2.
+ * @param {string} userId
+ * @param {SiteConfig} config
+ * @param {number} publishedAt
+ */
+export async function writePublishedSiteConfig(userId, config, publishedAt) {
+  await uploadJSON(getUserPublishedConfigPath(userId), {
+    ...config,
+    publishedAt,
+    pages: (config.pages || []).map((page) => normalizePageEntity(page)),
+  })
+}
+
+/**
+ * Seed the published config from the current draft when the published file
+ * doesn't exist yet (e.g. sites created before publish/draft separation shipped).
+ * @param {string} userId
+ * @returns {Promise<SiteConfig|null>} the seeded config, or null if there's no draft either
+ */
+export async function ensurePublishedSeeded(userId) {
+  const draft = await readSiteConfig(userId)
+  if (!draft) return null
+  const publishedAt = draft.updatedAt ?? Date.now()
+  await writePublishedSiteConfig(userId, draft, publishedAt)
+  return { ...draft, publishedAt }
+}
+
+/**
+ * Read the published site config for a user from R2, seeding it from the
+ * draft on first read. Returns null if there is neither a published nor a
+ * draft config.
+ * @param {string} userId
+ * @returns {Promise<SiteConfig|null>}
+ */
+export async function readPublishedSiteConfig(userId) {
+  try {
+    const config = await downloadJSON(getUserPublishedConfigPath(userId))
+    return normalizeConfig(config)
+  } catch (err) {
+    if (err?.name === 'NoSuchKey' || err?.Code === 'NoSuchKey') {
+      return await ensurePublishedSeeded(userId)
+    }
+    throw err
+  }
 }

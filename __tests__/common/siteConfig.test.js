@@ -5,6 +5,7 @@ jest.mock('../../common/gcsClient', () => ({
 }))
 jest.mock('../../common/gcsUser', () => ({
   getUserSiteConfigPath: jest.fn(userId => `users/${userId}/site-config.json`),
+  getUserPublishedConfigPath: jest.fn(userId => `users/${userId}/site-config.published.json`),
 }))
 
 import { downloadJSON, uploadJSON } from '../../common/gcsClient'
@@ -18,7 +19,13 @@ import {
   readSiteConfig,
   seedBlocksForTemplate,
   writeSiteConfig,
+  writePublishedSiteConfig,
+  ensurePublishedSeeded,
+  readPublishedSiteConfig,
+  computeHasUnpublishedChanges,
 } from '../../common/siteConfig'
+
+const NoSuchKey = () => Object.assign(new Error('missing'), { name: 'NoSuchKey' })
 
 describe('createDefaultSiteConfig', () => {
   it('starts with zero pages — no hidden seeded page', () => {
@@ -339,5 +346,78 @@ describe('printStore.chargesEnabled', () => {
   it('normalizePrintStore backfills and preserves chargesEnabled', () => {
     expect(normalizePrintStore({}).printStore.chargesEnabled).toBe(false)
     expect(normalizePrintStore({ printStore: { chargesEnabled: true } }).printStore.chargesEnabled).toBe(true)
+  })
+})
+
+describe('computeHasUnpublishedChanges', () => {
+  it('is false when draft is not newer than published', () => {
+    expect(computeHasUnpublishedChanges({ updatedAt: 5 }, { publishedAt: 5 })).toBe(false)
+    expect(computeHasUnpublishedChanges({ updatedAt: 4 }, { publishedAt: 5 })).toBe(false)
+  })
+  it('is true when draft is newer', () => {
+    expect(computeHasUnpublishedChanges({ updatedAt: 6 }, { publishedAt: 5 })).toBe(true)
+  })
+  it('is true when there is no published file', () => {
+    expect(computeHasUnpublishedChanges({ updatedAt: 6 }, null)).toBe(true)
+  })
+})
+
+describe('ensurePublishedSeeded', () => {
+  beforeEach(() => { downloadJSON.mockReset(); uploadJSON.mockReset() })
+
+  it('seeds published from draft when published is absent', async () => {
+    // ensurePublishedSeeded itself only reads the draft (one downloadJSON call);
+    // the "published is absent" precondition is established by its caller,
+    // readPublishedSiteConfig, before it falls through here (see that describe
+    // block below for the two-call integration path).
+    downloadJSON.mockResolvedValueOnce({ pages: [], updatedAt: 42 })
+    const seeded = await ensurePublishedSeeded('u1')
+    expect(uploadJSON).toHaveBeenCalledWith('users/u1/site-config.published.json', expect.objectContaining({ publishedAt: 42 }))
+    expect(seeded.publishedAt).toBe(42)
+  })
+
+  it('returns null when there is no draft either', async () => {
+    downloadJSON.mockRejectedValue(NoSuchKey())
+    expect(await ensurePublishedSeeded('u1')).toBeNull()
+  })
+})
+
+describe('writePublishedSiteConfig', () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it('writes the config with publishedAt to the published path', async () => {
+    uploadJSON.mockResolvedValue(undefined)
+    await writePublishedSiteConfig('u1', { pages: [] }, 123)
+    expect(uploadJSON).toHaveBeenCalledWith('users/u1/site-config.published.json', expect.objectContaining({ publishedAt: 123 }))
+  })
+})
+
+describe('readPublishedSiteConfig', () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it('returns the normalized published config when it exists', async () => {
+    downloadJSON.mockResolvedValue({ pages: [], publishedAt: 55 })
+    const result = await readPublishedSiteConfig('u1')
+    expect(result.publishedAt).toBe(55)
+    expect(downloadJSON).toHaveBeenCalledWith('users/u1/site-config.published.json')
+  })
+
+  it('seeds from the draft when published is absent', async () => {
+    downloadJSON
+      .mockRejectedValueOnce(NoSuchKey())
+      .mockResolvedValueOnce({ pages: [], updatedAt: 77 })
+    const result = await readPublishedSiteConfig('u1')
+    expect(result.publishedAt).toBe(77)
+  })
+
+  it('returns null when neither published nor draft exist', async () => {
+    downloadJSON.mockRejectedValue(NoSuchKey())
+    expect(await readPublishedSiteConfig('u1')).toBeNull()
+  })
+
+  it('re-throws non-NoSuchKey errors', async () => {
+    const err = new Error('Network failure')
+    downloadJSON.mockRejectedValue(err)
+    await expect(readPublishedSiteConfig('u1')).rejects.toThrow('Network failure')
   })
 })
