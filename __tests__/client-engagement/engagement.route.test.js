@@ -3,7 +3,7 @@ const mockLookup = jest.fn()
 jest.mock('@/common/userProfile', () => ({ lookupUserByUsername: (...a) => mockLookup(...a) }))
 
 const mockReadSiteConfig = jest.fn()
-jest.mock('@/common/siteConfig', () => ({ readSiteConfig: (...a) => mockReadSiteConfig(...a) }))
+jest.mock('@/common/siteConfig', () => ({ readPublishedSiteConfig: (...a) => mockReadSiteConfig(...a) }))
 
 const mockRead = jest.fn()
 const mockWrite = jest.fn().mockResolvedValue(undefined)

@@ -1,6 +1,6 @@
 // pages/api/print/checkout.js
 import { lookupUserByUsername } from '../../../common/userProfile'
-import { readSiteConfig } from '../../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../../common/siteConfig'
 import { normalizePrintStore } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { publicPrintForAsset, printImageRef } from '../../../common/print/publicPrint'
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const lookup = await lookupUserByUsername(username)
     if (!lookup) return res.status(404).json({ error: 'not found' })
 
-    const rawConfig = await readSiteConfig(lookup.userId)
+    const rawConfig = await readPublishedSiteConfig(lookup.userId)
     const config = normalizePrintStore(rawConfig || {})
     const ps = config.printStore
     if (!ps.enabled || !ps.chargesEnabled || !ps.stripeConnectAccountId) {

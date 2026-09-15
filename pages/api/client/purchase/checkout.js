@@ -1,6 +1,6 @@
 // pages/api/client/purchase/checkout.js
 import { lookupUserByUsername } from '../../../../common/userProfile'
-import { readSiteConfig, normalizePrintStore } from '../../../../common/siteConfig'
+import { readPublishedSiteConfig, normalizePrintStore } from '../../../../common/siteConfig'
 import { newOrderId, saveOrder } from '../../../../common/orders'
 import { getStripe } from '../../../../common/stripe/client'
 import { buildDigitalAmounts } from '../../../../common/purchase/digitalAmounts'
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const lookup = await lookupUserByUsername(username)
     if (!lookup) return res.status(404).json({ error: 'not found' })
 
-    const config = normalizePrintStore((await readSiteConfig(lookup.userId)) || {})
+    const config = normalizePrintStore((await readPublishedSiteConfig(lookup.userId)) || {})
     const ps = config.printStore
     if (!ps.enabled || !ps.chargesEnabled || !ps.stripeConnectAccountId) {
       return res.status(403).json({ error: 'store not ready for checkout' })

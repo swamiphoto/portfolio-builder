@@ -229,7 +229,8 @@ export default function Onboarding() {
                   console.error('import page composition skipped: library fetch failed')
                 } else if (summary.replicate && summary.siteMap?.pages?.length) {
                   const scRes = await fetch('/api/admin/site-config')
-                  const siteConfig = scRes.ok ? await scRes.json() : { pages: [] }
+                  const scBody = scRes.ok ? await scRes.json() : null
+                  const siteConfig = scBody?.config ?? scBody ?? { pages: [] }
                   const { pages } = composeSite({
                     siteMap: summary.siteMap,
                     collections: summary.collections,

@@ -1,6 +1,6 @@
 // __tests__/api/download.paywall.test.js
 jest.mock('../../common/userProfile', () => ({ lookupUserByUsername: jest.fn(async () => ({ userId: 'u1' })) }))
-jest.mock('../../common/siteConfig', () => ({ readSiteConfig: jest.fn() }))
+jest.mock('../../common/siteConfig', () => ({ readPublishedSiteConfig: jest.fn() }))
 jest.mock('../../common/clientEngagement', () => ({
   readEngagement: jest.fn(),
   writeEngagement: jest.fn(async () => {}),
@@ -9,7 +9,7 @@ jest.mock('../../common/clientEngagement', () => ({
 jest.mock('../../common/adminConfig', () => ({ readLibraryConfig: jest.fn(async () => ({ assets: {} })) }))
 jest.mock('../../common/imageUtils', () => ({ getSizedUrl: (u) => u }))
 
-import { readSiteConfig } from '../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../common/siteConfig'
 import { readEngagement } from '../../common/clientEngagement'
 import handler from '../../pages/api/client/download'
 
@@ -27,7 +27,7 @@ beforeEach(() => {
 })
 
 it('returns 402 for a new photo past the ceiling when purchase is enabled', async () => {
-  readSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: {
+  readPublishedSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: {
     enabled: true, downloads: { enabled: true }, purchase: { enabled: true, freeAllowance: 0, packages: [] },
   } }] })
   readEngagement.mockResolvedValue({ people: { d1: { name: 'Mia', email: 'mia@x.com' } }, downloads: [], entitlements: {} })
@@ -37,7 +37,7 @@ it('returns 402 for a new photo past the ceiling when purchase is enabled', asyn
 })
 
 it('serves a re-download of an already-unlocked photo even past the ceiling', async () => {
-  readSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: {
+  readPublishedSiteConfig.mockResolvedValue({ pages: [{ id: 'p1', slug: 'p1', clientFeatures: {
     enabled: true, downloads: { enabled: true }, purchase: { enabled: true, freeAllowance: 0, packages: [] },
   } }] })
   readEngagement.mockResolvedValue({

@@ -1,11 +1,11 @@
 // __tests__/api/purchaseCheckout.test.js
 jest.mock('../../common/userProfile', () => ({ lookupUserByUsername: jest.fn(async () => ({ userId: 'u1' })) }))
-jest.mock('../../common/siteConfig', () => ({ readSiteConfig: jest.fn(), normalizePrintStore: (c) => c }))
+jest.mock('../../common/siteConfig', () => ({ readPublishedSiteConfig: jest.fn(), normalizePrintStore: (c) => c }))
 jest.mock('../../common/orders', () => ({ newOrderId: () => 'ord_test', saveOrder: jest.fn(async (_u, o) => o) }))
 const create = jest.fn(async () => ({ id: 'cs_1', url: 'https://stripe/checkout/cs_1' }))
 jest.mock('../../common/stripe/client', () => ({ getStripe: () => ({ checkout: { sessions: { create } } }) }))
 
-import { readSiteConfig } from '../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../common/siteConfig'
 import { saveOrder } from '../../common/orders'
 import handler from '../../pages/api/client/purchase/checkout'
 
@@ -27,7 +27,7 @@ const STORE = {
 beforeEach(() => { jest.clearAllMocks(); delete process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT; delete process.env.PLATFORM_FEE_PCT })
 
 it('creates a pending digital order and a Stripe session on the connected account', async () => {
-  readSiteConfig.mockResolvedValue(STORE)
+  readPublishedSiteConfig.mockResolvedValue(STORE)
   const r = res()
   await handler(req({ username: 'ada', pageId: 'p1', packageId: 'pkg_all', buyer: { email: 'mia@x.com', name: 'Mia' }, returnPath: '/gallery' }), r)
   expect(r.statusCode).toBe(200)
@@ -44,14 +44,14 @@ it('creates a pending digital order and a Stripe session on the connected accoun
 })
 
 it('rejects when the store is not ready for checkout', async () => {
-  readSiteConfig.mockResolvedValue({ ...STORE, printStore: { ...STORE.printStore, chargesEnabled: false } })
+  readPublishedSiteConfig.mockResolvedValue({ ...STORE, printStore: { ...STORE.printStore, chargesEnabled: false } })
   const r = res()
   await handler(req({ username: 'ada', pageId: 'p1', packageId: 'pkg_all', buyer: { email: 'mia@x.com' }, returnPath: '/gallery' }), r)
   expect(r.statusCode).toBe(403)
 })
 
 it('rejects an unknown package', async () => {
-  readSiteConfig.mockResolvedValue(STORE)
+  readPublishedSiteConfig.mockResolvedValue(STORE)
   const r = res()
   await handler(req({ username: 'ada', pageId: 'p1', packageId: 'nope', buyer: { email: 'mia@x.com' }, returnPath: '/gallery' }), r)
   expect(r.statusCode).toBe(400)

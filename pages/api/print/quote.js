@@ -1,5 +1,5 @@
 import { lookupUserByUsername } from '../../../common/userProfile'
-import { readSiteConfig } from '../../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { publicPrintStore, publicPrintForAsset } from '../../../common/print/publicPrint'
 import { getAdapterForCountry } from '../../../common/fulfillment/router'
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const lookup = await lookupUserByUsername(username)
     if (!lookup) return res.status(404).json({ error: 'not found' })
     const [siteConfig, libraryConfig] = await Promise.all([
-      readSiteConfig(lookup.userId),
+      readPublishedSiteConfig(lookup.userId),
       readLibraryConfig(lookup.userId).catch(() => ({ assets: {} })),
     ])
     const store = publicPrintStore(siteConfig)
