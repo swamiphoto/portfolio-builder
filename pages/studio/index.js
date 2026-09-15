@@ -28,6 +28,11 @@ import { THEME_LIST } from '../../common/themes'
 import { useIsPhone } from '../../common/useIsPhone'
 
 const AUTOSAVE_DELAY = 1500
+// Hard cap so a continuous burst of edits (which keeps resetting the debounce)
+// still gets flushed to the server at least this often. Without it, rapid-fire
+// edits — rename a gallery, then drag photos, all < AUTOSAVE_DELAY apart — never
+// trigger a save until the user pauses, and a refresh/close loses the whole batch.
+const AUTOSAVE_MAX_WAIT = 5000
 const themeName = (id) => (THEME_LIST.find((t) => t.id === id) || {}).name || id
 
 // Which page is being edited/previewed right now: the explicitly selected page,
@@ -81,6 +86,11 @@ export default function AdminIndex() {
   const [lastPublishedAt, setLastPublishedAt] = useState(null)
   const [previewViewport, setPreviewViewport] = useState('desktop') // 'desktop' | 'mobile'
   const autosaveTimer = useRef(null)
+  // The most recent config that has been scheduled but not yet persisted, plus the
+  // timestamp of the first still-unsaved edit. Both back the flush-on-exit and
+  // max-wait logic so no pending edit is dropped on refresh/close.
+  const pendingConfigRef = useRef(null)
+  const firstPendingAt = useRef(null)
   // Real device width (not the preview toggle): the studio editor is a wide,
   // three-column workspace, so on a phone we show a gate instead. See below.
   const isPhone = useIsPhone()
@@ -230,6 +240,12 @@ export default function AdminIndex() {
   }, [status])
 
   const save = useCallback(async (config) => {
+    // Clear the pending trackers up front: this config is now in flight, so a
+    // flush-on-exit shouldn't re-send it and the next edit starts a fresh window.
+    clearTimeout(autosaveTimer.current)
+    autosaveTimer.current = null
+    pendingConfigRef.current = null
+    firstPendingAt.current = null
     setSaveStatus('saving')
     try {
       const res = await fetch('/api/admin/site-config', {
@@ -248,15 +264,60 @@ export default function AdminIndex() {
     }
   }, [])
 
+  // Best-effort synchronous persist for when the page is going away (tab close,
+  // refresh, navigation). A normal async fetch is often killed mid-flight during
+  // unload, so use keepalive so the browser lets the PUT finish after the page dies.
+  const flushSave = useCallback(() => {
+    const pending = pendingConfigRef.current
+    if (!pending) return
+    clearTimeout(autosaveTimer.current)
+    autosaveTimer.current = null
+    pendingConfigRef.current = null
+    firstPendingAt.current = null
+    try {
+      fetch('/api/admin/site-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pending),
+        keepalive: true,
+      }).catch(() => {})
+    } catch {
+      // ignore — nothing more we can do as the page unloads
+    }
+  }, [])
+
   const updateConfig = useCallback((updater) => {
     setHasUnpublishedChanges(true)
     setSiteConfig(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
+      pendingConfigRef.current = next
+      const now = Date.now()
+      if (firstPendingAt.current == null) firstPendingAt.current = now
       clearTimeout(autosaveTimer.current)
-      autosaveTimer.current = setTimeout(() => save(next), AUTOSAVE_DELAY)
+      // Cap the debounce: if edits have been streaming in for longer than the max
+      // wait, save now instead of pushing the timer out yet again.
+      const waited = now - firstPendingAt.current
+      const delay = Math.min(AUTOSAVE_DELAY, Math.max(0, AUTOSAVE_MAX_WAIT - waited))
+      autosaveTimer.current = setTimeout(() => save(next), delay)
       return next
     })
   }, [save])
+
+  // Flush any pending edit when the page is hidden/closed or the component
+  // unmounts, so an edit made within the last AUTOSAVE_DELAY isn't lost. pagehide
+  // + visibilitychange('hidden') are the reliable "page is going away" signals
+  // across desktop and mobile (beforeunload alone is unreliable on mobile Safari).
+  useEffect(() => {
+    const onHide = () => flushSave()
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flushSave() }
+    window.addEventListener('pagehide', onHide)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', onHide)
+      document.removeEventListener('visibilitychange', onVisibility)
+      flushSave()
+    }
+  }, [flushSave])
 
   const updatePage = useCallback((pageId, updatedPage) => {
     updateConfig(prev => ({
