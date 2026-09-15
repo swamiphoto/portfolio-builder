@@ -9,7 +9,7 @@ import BlockCard from "./BlockCard";
 import BlockTypeMenu, { defaultBlock } from "./BlockTypeMenu";
 import MarkdownEditorPanel from "./MarkdownEditorPanel";
 import ToggleSwitch from "../common/ToggleSwitch";
-import { buildMultiImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
+import { buildMultiImageFields, buildSingleImageFields, removeImageRef, normalizeImageRefs } from "../../../common/assetRefs";
 import { useEditorFeedback } from './EditorFeedbackContext';
 
 function AutoGrowTextarea({ className, value, onChange, placeholder, maxHeight, style: styleProp, ...props }) {
@@ -230,6 +230,29 @@ const BlockBuilder = forwardRef(function BlockBuilder({
       blocks[blockIndex] = { ...block, ...buildMultiImageFields(remaining) };
     }
     emit({ ...galleryRef.current, blocks });
+  };
+
+  // Split a photos block at `photoIndex`: the photos before it become one photos
+  // block, that photo becomes a single photo block, and the photos after it
+  // become another photos block (any empty part is dropped).
+  const splitBlock = (index, photoIndex) => {
+    const blocks = [...(galleryRef.current.blocks || [])];
+    const block = blocks[index];
+    if (!block) return;
+    const refs = normalizeImageRefs(block.images || block.imageUrls || []);
+    if (photoIndex < 0 || photoIndex >= refs.length) return;
+    const before = refs.slice(0, photoIndex);
+    const single = refs[photoIndex];
+    const after = refs.slice(photoIndex + 1);
+    const parts = [];
+    if (before.length) parts.push({ ...block, ...buildMultiImageFields(before) });
+    parts.push({ type: 'photo', ...buildSingleImageFields(single), caption: single.caption || '' });
+    if (after.length) parts.push({ ...block, ...buildMultiImageFields(after) });
+    blocks.splice(index, 1, ...parts);
+    emit({ ...galleryRef.current, blocks });
+    const singleIdx = index + (before.length ? 1 : 0);
+    setTimeout(() => scrollSidebarToBlock(singleIdx), 60);
+    setTimeout(() => onScrollPreviewToBlock?.(singleIdx), 160);
   };
 
   const moveImagesBetweenBlocks = (sourceBlockIndex, imageRefs, targetBlockIndex, updatedTargetBlock) => {
@@ -551,6 +574,7 @@ const BlockBuilder = forwardRef(function BlockBuilder({
                             onAddBlockAbove={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index); setShowBlockMenu(true); }}
                             onAddBlockBelow={(rect) => { setMenuAnchorRect(rect); setInsertAtIndex(index + 1); setShowBlockMenu(true); }}
                             onRemovePhoto={(url) => removePhotoFromBlock(index, url)}
+                            onSplitPhotos={(photoIndex) => splitBlock(index, photoIndex)}
                             pages={pages}
                             onUpdatePage={onUpdatePage}
                             getAssetByUrl={getAssetByUrl}
