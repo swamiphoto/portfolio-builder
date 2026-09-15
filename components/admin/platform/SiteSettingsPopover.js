@@ -283,6 +283,17 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
           Sell prints of your photos. We print and ship worldwide. You set the markup and keep the difference.
         </p>
 
+        {/* Enable prints — the master on/off (auto-enables the first time you mark a photo for sale). */}
+        <div>
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: 13, color: '#2c2416' }}>Enable prints</span>
+            <ToggleSwitch on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
+          </div>
+          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+            Shows Buy buttons on photos you’ve marked for sale.
+          </p>
+        </div>
+
         {/* Pricing */}
         <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
           <div style={sectionHeader}>Pricing</div>
@@ -320,15 +331,6 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               </p>
             </Field>
 
-            <div>
-              <div className="flex items-center justify-between">
-                <span style={{ fontSize: 13, color: '#2c2416' }}>Show starting price on photos</span>
-                <ToggleSwitch on={!!ps.showPriceOnImage} onChange={() => updatePrintStore({ showPriceOnImage: !ps.showPriceOnImage })} />
-              </div>
-              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-                Displays “From $X” on photos that are for sale.
-              </p>
-            </div>
           </div>
         </div>
 
@@ -918,26 +920,9 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         )}
       </div>
 
-      {/* Print store toggle */}
-      <div className="flex items-center" style={{ padding: '11px 14px', borderBottom: DIVIDER_SOFT }}>
-        <ToggleSwitch
-          on={!!config.printStore?.enabled}
-          onChange={() => update({ printStore: { ...(config.printStore || {}), enabled: !config.printStore?.enabled } })}
-        />
-        <span style={{ marginLeft: 10, fontSize: 13, color: '#2c2416', flex: 1 }} className="select-none">Enable print store</span>
-        {config.printStore?.enabled && (
-          <button
-            type="button"
-            onClick={() => setView('print')}
-            className="flex items-center gap-1 flex-shrink-0 ml-2 transition-colors"
-            style={{ color: 'var(--text-muted)', fontSize: 11 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-          >
-            Configure <ChevronRight />
-          </button>
-        )}
-      </div>
+      {/* Prints — always reachable (the on/off toggle now lives inside, and prints
+          auto-enable the first time a photo is marked for sale). */}
+      <DrillRow label="Prints" onDrillIn={() => setView('print')} />
 
       {/* Drill rows */}
       {(() => {

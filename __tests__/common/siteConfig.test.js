@@ -347,6 +347,11 @@ describe('printStore.chargesEnabled', () => {
     expect(normalizePrintStore({}).printStore.chargesEnabled).toBe(false)
     expect(normalizePrintStore({ printStore: { chargesEnabled: true } }).printStore.chargesEnabled).toBe(true)
   })
+
+  it('normalizePrintStore defaults autoEnabled false and preserves it (one-shot auto-enable flag)', () => {
+    expect(normalizePrintStore({}).printStore.autoEnabled).toBe(false)
+    expect(normalizePrintStore({ printStore: { autoEnabled: true } }).printStore.autoEnabled).toBe(true)
+  })
 })
 
 describe('computeHasUnpublishedChanges', () => {
