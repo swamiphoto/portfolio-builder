@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import PageMeta from '../../../components/PageMeta'
 import { lookupUserByUsername } from '../../../common/userProfile'
-import { readPublishedSiteConfig } from '../../../common/siteConfig'
+import { resolvePublicSiteConfig } from '../../../common/serverPreview'
+import DraftPreviewRibbon from '../../../components/image-displays/DraftPreviewRibbon'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
 import { heroTitleFor } from '../../../common/pageUtils'
@@ -50,12 +51,12 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export async function getServerSideProps({ params, req }) {
+export async function getServerSideProps({ params, req, res, query }) {
   const { username, slug } = params
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
-  const [siteConfig, libraryConfig] = await Promise.all([
-    readPublishedSiteConfig(lookup.userId),
+  const [{ siteConfig, isPreview }, libraryConfig] = await Promise.all([
+    resolvePublicSiteConfig({ req, res, query, ownerUserId: lookup.userId }),
     readLibraryConfig(lookup.userId).catch(() => ({ assets: {} })),
   ])
   if (!siteConfig) return { notFound: true }
@@ -82,11 +83,12 @@ export async function getServerSideProps({ params, req }) {
       printStore,
       username,
       basePath,
+      isPreview,
     },
   }
 }
 
-export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, username, basePath }) {
+export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, username, basePath, isPreview }) {
   // Client-side gate only — not a security boundary. Real protection lives in clientFeatures.
   const [unlocked, setUnlocked] = useState(!page.password)
   if (!unlocked) {
@@ -142,6 +144,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
   return (
     <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative theme-shell">
+      {isPreview && <DraftPreviewRibbon />}
       <PageMeta
         title={browserTitle}
         ogTitle={ogTitle}

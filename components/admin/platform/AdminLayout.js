@@ -160,6 +160,29 @@ export default function AdminLayout({ sidebar, panel, children, panelCollapsed, 
               </div>
             )}
 
+            {/* Preview — opens the real page URL showing the UNPUBLISHED draft
+                (?preview=1). Same-origin so the studio auth cookie is sent and the
+                server confirms ownership before serving the draft. */}
+            {username && (
+              <a
+                href={`/sites/${username}${pagePath || ''}?preview=1`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 flex-shrink-0 transition-colors"
+                title="Preview your unpublished changes in a new tab"
+                style={{
+                  height: 22, padding: '0 10px', borderRadius: 5,
+                  background: '#e8e2d9', border: '1px solid rgba(26,18,10,0.11)',
+                  fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.06em',
+                  color: '#3a362f', textDecoration: 'none', whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#ded7cc' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#e8e2d9' }}
+              >
+                Preview
+              </a>
+            )}
+
             {/* Viewport toggle */}
             <div style={{ display: 'flex', height: 22, borderRadius: 5, border: '1px solid rgba(26,18,10,0.11)', background: '#e8e2d9', overflow: 'hidden' }}>
               <button

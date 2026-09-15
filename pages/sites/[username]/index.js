@@ -2,7 +2,8 @@ import { useState } from 'react'
 import PageMeta from '../../../components/PageMeta'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { resolveHomePage } from '../../../common/homePage'
-import { readPublishedSiteConfig } from '../../../common/siteConfig'
+import { resolvePublicSiteConfig } from '../../../common/serverPreview'
+import DraftPreviewRibbon from '../../../components/image-displays/DraftPreviewRibbon'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
 import { heroTitleFor } from '../../../common/pageUtils'
@@ -52,14 +53,14 @@ function resolveBlock(block, assetsByUrl) {
   return block
 }
 
-export async function getServerSideProps({ params, req }) {
+export async function getServerSideProps({ params, req, res, query }) {
   const { username } = params
 
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
 
-  const [siteConfig, libraryConfig] = await Promise.all([
-    readPublishedSiteConfig(lookup.userId),
+  const [{ siteConfig, isPreview }, libraryConfig] = await Promise.all([
+    resolvePublicSiteConfig({ req, res, query, ownerUserId: lookup.userId }),
     readLibraryConfig(lookup.userId).catch(() => ({ assets: {} })),
   ])
 
@@ -87,11 +88,12 @@ export async function getServerSideProps({ params, req }) {
       printStore,
       username,
       basePath,
+      isPreview,
     },
   }
 }
 
-export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, username, basePath }) {
+export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, username, basePath, isPreview }) {
   // Resized display variant (~250KB) so WhatsApp/iMessage show the large preview
   // instead of dropping the full-res original and falling back to the favicon.
   const ogImage = getSizedUrl(siteConfig.share?.largeImage || siteConfig.cover?.imageUrl || '', 'display')
@@ -118,6 +120,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   if (hasCoverPage) {
     return (
       <div className="min-h-screen bg-[#33261a] font-sans relative">
+        {isPreview && <DraftPreviewRibbon />}
         {metaTag}
         <SiteAnalytics analytics={siteConfig.analytics} />
         <PageCover
@@ -169,6 +172,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
   return (
     <ThemeProvider themeId={theme.id}>
     <div className="min-h-screen bg-white font-sans relative theme-shell" data-viewport={isMobile ? 'mobile' : 'desktop'}>
+      {isPreview && <DraftPreviewRibbon />}
       {metaTag}
       <SiteAnalytics analytics={siteConfig.analytics} />
       {/* On mobile every theme uses the shared hamburger nav. Provence keeps its
