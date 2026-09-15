@@ -10,6 +10,7 @@
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../../../common/assetRefs'
+import { heroTitleFor } from '../../../../common/pageUtils'
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveFlorenceAnchor, resolveButtonStyle, resolveSize, resolveFlorenceFrame } from '../../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
 
@@ -379,9 +380,9 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
             return (
               <a key={p.id} className="florence-pagelink" href={href}>
                 <div className="florence-pagelink__frame">
-                  {thumb && <img src={getSizedUrl(thumb, 'display')} alt={p.title || ''} loading="lazy" />}
+                  {thumb && <img src={getSizedUrl(thumb, 'display')} alt={heroTitleFor(p) || ''} loading="lazy" />}
                 </div>
-                <span className="florence-pagelink__title">{p.title}</span>
+                <span className="florence-pagelink__title">{heroTitleFor(p)}</span>
               </a>
             )
           })}
