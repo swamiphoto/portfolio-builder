@@ -9,7 +9,7 @@
 //   text         → Fraunces/Mono/Sans (Font), size from L/M/S, placed by Position.
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
-import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail } from '../../../../common/assetRefs'
+import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, getNestedGalleries } from '../../../../common/assetRefs'
 import { heroTitleFor } from '../../../../common/pageUtils'
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveFlorenceAnchor, resolveButtonStyle, resolveSize, resolveFlorenceFrame } from '../../../../common/themes/variants'
 import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
@@ -370,7 +370,11 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
     }
 
     case 'page-gallery': {
-      const linked = (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
+      // 'auto' listings re-resolve from current pages (hidden pages drop out via
+      // nulled parentId); manual blocks keep their stored order. See Gallery.js.
+      const linked = block.source === 'auto'
+        ? getNestedGalleries(block.parentPageId, pages)
+        : (block.pageIds || []).map(id => (pages || []).find(p => p.id === id)).filter(Boolean)
       if (!linked.length) return null
       return wrap('florence-col--pagelinks', { justifyContent: justify }, (
         <div className="florence-row" style={{ height: WALL_HEIGHT.medium }}>
