@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PageMeta from '../../../components/PageMeta'
 import { lookupUserByUsername } from '../../../common/userProfile'
 import { resolveHomePage } from '../../../common/homePage'
-import { readSiteConfig } from '../../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../../common/siteConfig'
 import { readLibraryConfig } from '../../../common/adminConfig'
 import { resolveCaption } from '../../../common/captionResolver'
 import { heroTitleFor } from '../../../common/pageUtils'
@@ -59,7 +59,7 @@ export async function getServerSideProps({ params, req }) {
   if (!lookup) return { notFound: true }
 
   const [siteConfig, libraryConfig] = await Promise.all([
-    readSiteConfig(lookup.userId),
+    readPublishedSiteConfig(lookup.userId),
     readLibraryConfig(lookup.userId).catch(() => ({ assets: {} })),
   ])
 

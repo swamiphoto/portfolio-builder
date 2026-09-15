@@ -1,6 +1,6 @@
 // pages/sites/[username]/[slug]/slideshow.js
 import { lookupUserByUsername } from '../../../../common/userProfile'
-import { readSiteConfig } from '../../../../common/siteConfig'
+import { readPublishedSiteConfig } from '../../../../common/siteConfig'
 import Slideshow from '../../../../components/image-displays/slideshow/Slideshow'
 import PageMeta from '../../../../components/PageMeta'
 import { pageDisplayThumbnail } from '../../../../common/assetRefs'
@@ -31,7 +31,7 @@ export async function getServerSideProps({ params }) {
   const { username, slug } = params
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
-  const siteConfig = await readSiteConfig(lookup.userId)
+  const siteConfig = await readPublishedSiteConfig(lookup.userId)
   if (!siteConfig) return { notFound: true }
   const page = (siteConfig.pages || []).find(p => p.slug === slug || p.id === slug)
   if (!page || !page.slideshow?.enabled) return { notFound: true }
