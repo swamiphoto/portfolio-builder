@@ -1,5 +1,6 @@
 import { withAuth } from '../../../common/withAuth'
 import { resolveUploadKey } from '../../../common/storeImage'
+import { isAcceptedUploadType } from '../../../common/uploadLimits'
 import { createPresignedPutUrl, PUBLIC_URL } from '../../../common/gcsClient'
 
 // Mints a short-lived presigned PUT URL so the browser can upload the original
@@ -13,6 +14,11 @@ export async function handler(req, res, user) {
   const { filename, contentType, folder } = src
   if (!filename || !contentType) {
     return res.status(400).json({ error: 'filename and contentType required' })
+  }
+  // Fast format gate before we mint a URL. Final enforcement (size + real decoded
+  // format) happens in upload-finalize, which sees the actual bytes.
+  if (!isAcceptedUploadType(contentType)) {
+    return res.status(415).json({ error: 'Unsupported file type. Upload a JPEG, PNG, WebP, or HEIC — RAW, TIFF and PSD aren’t supported (export as JPEG first).' })
   }
 
   try {
