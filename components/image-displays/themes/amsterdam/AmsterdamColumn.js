@@ -9,6 +9,7 @@
 //   video/testimonial/contact/page-gallery → their own columns.
 import { getSizedUrl } from '../../../../common/imageUtils'
 import { getImageRefUrl, normalizeImageRefs, pageDisplayThumbnail, focalPointToObjectPosition } from '../../../../common/assetRefs'
+import { heroTitleFor } from '../../../../common/pageUtils'
 import { resolveVariant, resolvePhotoSize, resolveFont, resolveButtonStyle, resolveSize, resolveQuoteStyle, resolveAmsterdamFrame } from '../../../../common/themes/variants'
 import { formatCaptureMeta } from '../../../../common/photoMeta'
 import { captionStyleCss, resolveCaptionStyle } from '../../../../common/captionStyles'
@@ -388,8 +389,8 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
                   const thumb = pageDisplayThumbnail(p)
                   return (
                     <a key={p.id} className="ams-mosaic__cell" href={hrefFor(p)} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
-                      {thumb && <img src={getSizedUrl(thumb, 'display')} alt={p.title || ''} loading="lazy" style={{ objectPosition: objPos(p) }} />}
-                      {p.title && <figcaption className="ams-mosaic__cap"><span>{p.title}</span></figcaption>}
+                      {thumb && <img src={getSizedUrl(thumb, 'display')} alt={heroTitleFor(p) || ''} loading="lazy" style={{ objectPosition: objPos(p) }} />}
+                      {heroTitleFor(p) && <figcaption className="ams-mosaic__cap"><span>{heroTitleFor(p)}</span></figcaption>}
                     </a>
                   )
                 })}
@@ -407,9 +408,9 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
             return (
               <a key={p.id} className="ams-pagelink" href={hrefFor(p)}>
                 <div className="ams-pagelink__frame">
-                  {thumb && <img src={getSizedUrl(thumb, 'display')} alt={p.title || ''} loading="lazy" style={{ objectPosition: objPos(p) }} />}
+                  {thumb && <img src={getSizedUrl(thumb, 'display')} alt={heroTitleFor(p) || ''} loading="lazy" style={{ objectPosition: objPos(p) }} />}
                 </div>
-                <span className="ams-pagelink__title">{p.title}</span>
+                <span className="ams-pagelink__title">{heroTitleFor(p)}</span>
               </a>
             )
           })}

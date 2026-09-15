@@ -1,5 +1,6 @@
 import React from "react";
 import { pageDisplayThumbnail, focalPointToObjectPosition, pageThumbGradient } from "../../../../common/assetRefs";
+import { heroTitleFor } from "../../../../common/pageUtils";
 import { useIsMobile } from "../../../../common/useIsMobile";
 
 // Overall image size for the block. `maxW` scales the container (both layouts);
@@ -49,7 +50,7 @@ function ManhattanRowLink({ page, linkBase, onChildPageClick }) {
           {thumb ? (
             <img
               src={thumb}
-              alt={page.title}
+              alt={heroTitleFor(page)}
               className={`w-full ${MANHATTAN_THUMB_H} object-cover`}
               style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
             />
@@ -60,7 +61,7 @@ function ManhattanRowLink({ page, linkBase, onChildPageClick }) {
       </div>
       <div className="w-full md:w-3/5 flex flex-col justify-center text-left">
         <h2 className="font-sans text-lg font-medium tracking-tight" style={{ color: "var(--theme-text, #141414)" }}>
-          {page.title}
+          {heroTitleFor(page)}
         </h2>
         {page.description && (
           <p className="font-sans text-sm mt-1" style={{ color: "var(--theme-text-muted, #6b6b6b)", lineHeight: 1.5 }}>
@@ -95,7 +96,7 @@ function RowLink({ page, index, linkBase, onChildPageClick, reverse, thumbH }) {
             {thumb ? (
               <img
                 src={thumb}
-                alt={page.title}
+                alt={heroTitleFor(page)}
                 className={`w-full ${thumbH} object-cover relative z-10 rounded-3xl`}
                 style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
               />
@@ -107,7 +108,7 @@ function RowLink({ page, index, linkBase, onChildPageClick, reverse, thumbH }) {
       </div>
       <div className="md:w-1/2 lg:w-5/12 space-y-3 py-2 flex flex-col justify-center text-left px-3 md:px-8">
         <h2 className="text-2xl md:text-4xl font-medium tracking-tight font-serif" style={{ color: "#1a1410", fontWeight: 400 }}>
-          {page.title}
+          {heroTitleFor(page)}
         </h2>
         {page.description && (
           <p className="font-serif" style={{ color: "#7a6b55", fontSize: "1.1rem", lineHeight: 1.6 }}>
@@ -158,7 +159,7 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan, mobile 
           {thumb ? (
             <img
               src={thumb}
-              alt={page.title}
+              alt={heroTitleFor(page)}
               className={`w-full ${aspect} object-cover`}
               style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
             />
@@ -167,7 +168,7 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan, mobile 
           )}
         </div>
         <h2 className="mt-2 font-sans text-sm text-left" style={{ color: "var(--theme-text, #141414)" }}>
-          {page.title}
+          {heroTitleFor(page)}
         </h2>
       </a>
     );
@@ -186,7 +187,7 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan, mobile 
           {thumb ? (
             <img
               src={thumb}
-              alt={page.title}
+              alt={heroTitleFor(page)}
               className={`w-full ${aspect} object-cover relative z-10 rounded-3xl`}
               style={{ objectPosition: focalPointToObjectPosition(page.thumbnail?.focalPoint) }}
             />
@@ -196,7 +197,7 @@ function MosaicCell({ page, linkBase, onChildPageClick, hero, manhattan, mobile 
         </div>
       </div>
       <h2 className="mt-3 text-center font-serif text-lg" style={{ color: "#1a1410", fontWeight: 400 }}>
-        {page.title}
+        {heroTitleFor(page)}
       </h2>
     </a>
   );
