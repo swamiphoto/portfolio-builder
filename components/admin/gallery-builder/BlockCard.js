@@ -189,10 +189,21 @@ function ThumbMenu({ items, tone = 'dark', size = 20 }) {
   )
 }
 
-function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onPreview, selected, isDragging }) {
+function SplitIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="4" y="3" width="16" height="6" rx="1.5" />
+      <rect x="4" y="15" width="16" height="6" rx="1.5" />
+      <path d="M3 12h4M17 12h4M11 12h2" />
+    </svg>
+  )
+}
+
+function PhotoThumb({ imageRef, dragHandleProps, onRemove, onReposition, onSplit, onPreview, selected, isDragging }) {
   const caption = imageRef.caption || ''
   const menuItems = [
     ...(onReposition ? [{ label: 'Reposition', icon: <RepositionIcon />, onClick: (el) => onReposition(el) }] : []),
+    ...(onSplit ? [{ label: 'Split here', icon: <SplitIcon />, onClick: () => onSplit() }] : []),
     { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => onRemove() },
   ]
 
@@ -244,6 +255,7 @@ function BlockCard({
   onRemove,
   onAddPhotos,
   onRemovePhoto,
+  onSplitPhotos,
   pages,
   onUpdatePage,
   getAssetByUrl,
@@ -1001,6 +1013,7 @@ function BlockCard({
                             }}
                             onRemove={() => onRemovePhoto(ref)}
                             onReposition={isSquare ? (el) => setImageFocal({ index: i, anchorEl: el }) : undefined}
+                            onSplit={blockImageRefs.length > 1 ? () => onSplitPhotos?.(i) : undefined}
                           />
                         ))}
                         {Array.from({ length: placeholderCount }).map((_, i) => {
