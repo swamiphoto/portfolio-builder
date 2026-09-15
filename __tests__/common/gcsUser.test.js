@@ -7,6 +7,9 @@ import {
   getUserPhotosPrefix,
   getUserPrintMasterPath,
   getDomainLookupPath,
+  getUserPublishedConfigPath,
+  getUserHistoryPrefix,
+  getUserHistoryPath,
 } from '../../common/gcsUser'
 
 describe('getUserPrefix', () => {
@@ -84,5 +87,20 @@ describe('order paths', () => {
   it('throws without an orderId', () => {
     const { getUserOrderPath } = require('../../common/gcsUser')
     expect(() => getUserOrderPath('u1', '')).toThrow('orderId is required')
+  })
+})
+
+describe('published + history paths', () => {
+  it('builds the published config path', () => {
+    expect(getUserPublishedConfigPath('u1')).toBe('users/u1/site-config.published.json')
+  })
+  it('builds the history prefix', () => {
+    expect(getUserHistoryPrefix('u1')).toBe('users/u1/history/')
+  })
+  it('builds a timestamped history path', () => {
+    expect(getUserHistoryPath('u1', 1757900000000)).toBe('users/u1/history/site-config-1757900000000.json')
+  })
+  it('throws without a userId', () => {
+    expect(() => getUserPublishedConfigPath()).toThrow()
   })
 })

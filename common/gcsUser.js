@@ -60,3 +60,16 @@ export function getUserOrderPath(userId, orderId) {
   if (!orderId) throw new Error('orderId is required')
   return `${getUserOrdersPrefix(userId)}${orderId}.json`
 }
+
+export function getUserPublishedConfigPath(userId) {
+  return `${getUserPrefix(userId)}site-config.published.json`
+}
+
+export function getUserHistoryPrefix(userId) {
+  return `${getUserPrefix(userId)}history/`
+}
+
+export function getUserHistoryPath(userId, ts) {
+  if (ts == null) throw new Error('ts is required')
+  return `${getUserHistoryPrefix(userId)}site-config-${ts}.json`
+}
