@@ -7,12 +7,6 @@ import { sendMail } from '../../../common/email/mailer'
 import { readSiteConfig } from '../../../common/siteConfig'
 import { buyerShippedEmail } from '../../../common/email/templates'
 
-function mapStage(stage) {
-  if (stage === 'Complete' || stage === 'Shipped') return 'shipped'
-  if (stage === 'Cancelled') return 'canceled'
-  return 'placed'
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -23,7 +17,10 @@ export default async function handler(req, res) {
   if (secret && req.query.token !== secret) return res.status(401).json({ error: 'unauthorized' })
 
   try {
-    const pOrder = req.body?.order || {}
+    // Prodigi sends CloudEvents callbacks, so the order lives at data.order.
+    // (Older/flat `body.order` kept as a fallback so nothing breaks if a payload
+    // ever arrives unwrapped.)
+    const pOrder = req.body?.data?.order || req.body?.order || {}
     const ref = pOrder.merchantReference || ''
     const [userId, orderId] = ref.split(':')
     if (!userId || !orderId) return res.status(200).json({ received: true, ignored: 'no merchantReference' })
@@ -33,12 +30,28 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true }) // unknown or terminal → idempotent no-op
     }
 
-    const status = mapStage(pOrder.status?.stage)
-    if (status !== 'shipped') {
-      return res.status(200).json({ received: true }) // not shipped yet
+    const stage = pOrder.status?.stage
+    const shipments = pOrder.shipments || []
+    // Prodigi reports dispatch as a stage change carrying an updated shipments
+    // array. A single-shipment order flips straight to 'Complete'; a multi-shipment
+    // order can still read 'InProgress' with a dispatched shipment — treat either
+    // as shipped so the status advances and the buyer gets their tracking email.
+    const dispatched = shipments.some((s) => s?.dispatchDate || s?.tracking?.number)
+    const isShipped = stage === 'Complete' || stage === 'Shipped' || dispatched
+    const isCanceled = stage === 'Cancelled'
+
+    if (isCanceled) {
+      order.status = 'canceled'
+      order.fulfillment = { ...(order.fulfillment || {}), status: 'canceled' }
+      await saveOrder(userId, order)
+      return res.status(200).json({ received: true })
     }
 
-    const shipment = (pOrder.shipments || [])[0]
+    if (!isShipped) {
+      return res.status(200).json({ received: true }) // still in production
+    }
+
+    const shipment = shipments[0]
     const tracking = shipment
       ? { carrier: shipment.carrier?.name || null, number: shipment.tracking?.number || null, url: shipment.tracking?.url || null }
       : null
