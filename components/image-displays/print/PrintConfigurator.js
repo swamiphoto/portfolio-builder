@@ -9,7 +9,9 @@ import PrintPurchasePanel from './PrintPurchasePanel'
 import CheckoutStep from './CheckoutStep'
 import { usePrintStore } from './PrintStoreContext'
 
-const SERIF = '"Cormorant Garamond", Georgia, serif'
+// Match the sans used across the rest of the purchase flow (PrintPurchasePanel,
+// CheckoutStep) — the configurator title used to be a serif (Cormorant Garamond).
+const SANS = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif'
 // Wide enough that the size toggles sit on one row (no ugly wrap).
 const PANEL_WIDTH = 560
 
@@ -101,10 +103,10 @@ export default function PrintConfigurator({ open, print, imageUrl, printStore, u
 
         {/* Intro — a little excitement + how it works. */}
         <div style={{ padding: '2px 20px 4px' }}>
-          <h3 style={{ margin: '0 0 6px', fontFamily: SERIF, fontSize: 23, fontWeight: 400, color: '#2c2416', lineHeight: 1.12 }}>
+          <h3 style={{ margin: '0 0 6px', fontFamily: SANS, fontSize: 22, fontWeight: 600, color: '#2c2416', lineHeight: 1.15, letterSpacing: '-0.01em' }}>
             Bring the photograph home
           </h3>
-          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: '#7a6b55' }}>
+          <p style={{ margin: 0, fontFamily: SANS, fontSize: 13, lineHeight: 1.55, color: '#7a6b55' }}>
             Professional fine-art labs will color-manage this photo and print it on
             high-quality photo paper. We pack it with care and ship worldwide, usually
             landing at your door in about a week. Every order also supports the

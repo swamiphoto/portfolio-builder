@@ -170,7 +170,7 @@ function ChevronRight() {
   )
 }
 
-function DrillRow({ label, hint, onDrillIn }) {
+function DrillRow({ label, hint, status, onDrillIn }) {
   return (
     <button
       type="button"
@@ -187,6 +187,7 @@ function DrillRow({ label, hint, onDrillIn }) {
         <div style={{ fontSize: 13, color: '#2c2416' }}>{label}</div>
         {hint && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, fontFamily: MONO, letterSpacing: '0.06em' }}>{hint}</div>}
       </div>
+      {status && <span style={{ color: 'var(--text-muted)', fontSize: 11, flexShrink: 0, marginLeft: 8 }}>{status}</span>}
       <span style={{ color: 'var(--text-muted)', flexShrink: 0, marginLeft: 8 }}><ChevronRight /></span>
     </button>
   )
@@ -233,6 +234,8 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState(null)
   const [showPayoutHelp, setShowPayoutHelp] = useState(false)
+  const [earnings, setEarnings] = useState(null) // { total (cents), count, currency }
+  const [openingDashboard, setOpeningDashboard] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/print/connect/status')
@@ -243,7 +246,24 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         detailsSubmitted: !!data.detailsSubmitted,
       }))
       .catch(() => setPayoutStatus({ connected: false, chargesEnabled: false, detailsSubmitted: false }))
+    fetch('/api/admin/print/earnings')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setEarnings(d) })
+      .catch(() => {})
   }, [])
+
+  const money = (cents, currency = 'USD') => new Intl.NumberFormat(undefined, { style: 'currency', currency }).format((cents || 0) / 100)
+
+  async function openDashboard() {
+    setOpeningDashboard(true)
+    try {
+      const res = await fetch('/api/admin/print/connect/login-link', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer')
+    } finally {
+      setOpeningDashboard(false)
+    }
+  }
 
   // Four states: still loading, active (charges live), pending (form submitted
   // but Stripe still verifying), and not-yet-connected.
@@ -342,10 +362,23 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0 }}>Checking payout status…</p>
             ) : payoutsActive ? (
               <>
-                <p style={{ fontSize: 13, color: '#2e7d32', margin: 0 }}>Connected ✓</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#2e7d32', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: '#2c2416' }}>Active</span>
+                </div>
                 <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 6, marginBottom: 0 }}>
-                  Earnings go to your Stripe account.
+                  {earnings && earnings.count > 0
+                    ? <>You’ve earned <strong style={{ color: 'var(--text-secondary)' }}>{money(earnings.total, earnings.currency)}</strong> across {earnings.count} {earnings.count === 1 ? 'sale' : 'sales'}. Stripe holds your balance.</>
+                    : 'Earnings go to your Stripe account.'}
                 </p>
+                <button
+                  type="button"
+                  onClick={openDashboard}
+                  disabled={openingDashboard}
+                  style={{ marginTop: 8, color: '#8b6f47', background: 'none', border: 'none', padding: 0, cursor: openingDashboard ? 'default' : 'pointer', textDecoration: 'underline', fontSize: 11.5 }}
+                >
+                  {openingDashboard ? 'Opening…' : 'View Stripe dashboard →'}
+                </button>
               </>
             ) : (
               <>
@@ -413,6 +446,79 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
             View orders →
           </a>
         </div>
+      </div>
+    </PopoverShell>
+  )
+}
+
+function formatVersionDate(ts) {
+  try {
+    return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  } catch {
+    return String(ts)
+  }
+}
+
+function HistoryView({ anchorEl, onClose, onBack, onRestore }) {
+  const [versions, setVersions] = useState(null)
+  const [restoring, setRestoring] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/admin/history')
+      .then(r => r.ok ? r.json() : { versions: [] })
+      .then(d => setVersions(d.versions || []))
+      .catch(() => setVersions([]))
+  }, [])
+
+  async function restore(ts) {
+    setRestoring(ts)
+    try {
+      const res = await fetch(`/api/admin/history/${ts}`)
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.config) {
+        onRestore(data.config) // loads into the draft (marks dirty); user then Publishes
+        onClose()
+      }
+    } finally {
+      setRestoring(null)
+    }
+  }
+
+  return (
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Version history" onBack={onBack}>
+      <div style={{ padding: '4px 0 8px' }}>
+        <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0, padding: '8px 16px 10px' }}>
+          A snapshot is saved each time you Publish. Restoring loads that version into your editor — Publish to make it live. Your newer versions stay here.
+        </p>
+        {versions === null ? (
+          <p style={{ padding: '6px 16px', fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Loading…</p>
+        ) : versions.length === 0 ? (
+          <p style={{ padding: '6px 16px', fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>No published versions yet.</p>
+        ) : (
+          versions.map((v, i) => (
+            <div
+              key={v.ts}
+              className="group"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 16px', borderTop: DIVIDER_SOFT }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(160,140,110,0.06)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <span style={{ fontSize: 12.5, color: '#2c2416', minWidth: 0 }}>
+                {formatVersionDate(v.ts)}
+                {i === 0 && <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 6 }}>Latest</span>}
+              </span>
+              <button
+                type="button"
+                disabled={restoring === v.ts}
+                onClick={() => restore(v.ts)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ fontSize: 11, color: '#8b6f47', background: 'none', border: 'none', padding: 0, cursor: restoring === v.ts ? 'default' : 'pointer', textDecoration: 'underline', flexShrink: 0, marginLeft: 10 }}
+              >
+                {restoring === v.ts ? 'Restoring…' : 'Restore this version'}
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </PopoverShell>
   )
@@ -693,6 +799,10 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
   }
 
   // ── Print store drill-in ──────────────────────────────────────────────────
+  if (view === 'history') {
+    return <HistoryView anchorEl={anchorEl} onClose={onClose} onBack={() => setView('main')} onRestore={onUpdate} />
+  }
+
   if (view === 'print') {
     const ps = config.printStore || {}
     return <PrintView anchorEl={anchorEl} onClose={onClose} ps={ps} updatePrintStore={updatePrintStore} onBack={() => setView('main')} />
@@ -887,58 +997,32 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
         />
       </div>
 
-      {/* Cover page toggle */}
-      <div className="flex items-center" style={{ padding: '11px 14px', borderBottom: DIVIDER_SOFT }}>
-        <ToggleSwitch
-          on={config.hasCoverPage !== false}
-          onChange={() => {
-            const enabling = config.hasCoverPage === false
-            update({ hasCoverPage: enabling })
-            if (!enabling) onDisableCover?.()
-          }}
-        />
-        <span style={{ marginLeft: 10, fontSize: 13, color: '#2c2416', flex: 1 }} className="select-none">Include a cover page</span>
-        {config.hasCoverPage !== false && (
-          <button
-            type="button"
-            onClick={() => {
-              const patch = {}
-              if (!config.cover?.heading) patch.heading = config.siteName || ''
-              if (!config.cover?.subheading) patch.subheading = config.tagline || ''
-              if (!config.cover?.buttonText) patch.buttonText = 'View my portfolio'
-              if (Object.keys(patch).length) update({ cover: { ...(config.cover || {}), ...patch } })
-              setView('cover')
-              onViewCover?.()
-            }}
-            className="flex items-center gap-1 flex-shrink-0 ml-2 transition-colors"
-            style={{ color: 'var(--text-muted)', fontSize: 11 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#2c2416'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-          >
-            Customize <ChevronRight />
-          </button>
-        )}
-      </div>
+      {/* Cover page lives in the sidebar now — not repeated here. */}
 
-      {/* Prints — always reachable (the on/off toggle now lives inside, and prints
-          auto-enable the first time a photo is marked for sale). */}
-      <DrillRow label="Prints" onDrillIn={() => setView('print')} />
-
-      {/* Drill rows */}
-      {(() => {
-        const cd = normalizeCustomDomain(config.customDomain)
-        const rowProps = !cd
-          ? { label: 'Set up custom domain' }
-          : { label: 'Custom domain' }
-        return <DrillRow {...rowProps} onDrillIn={() => setView('domain')} />
-      })()}
+      {/* Drill rows — each shows a right-side status: a state word when configured,
+          else "Set up". */}
       <DrillRow
-        label={hasAnalytics ? 'Analytics' : 'Setup analytics'}
+        label="Print store"
+        status={config.printStore?.enabled ? 'Enabled' : 'Set up'}
+        onDrillIn={() => setView('print')}
+      />
+      <DrillRow
+        label="Custom domain"
+        status={normalizeCustomDomain(config.customDomain) ? 'Connected' : 'Set up'}
+        onDrillIn={() => setView('domain')}
+      />
+      <DrillRow
+        label="Analytics"
+        status={hasAnalytics ? '' : 'Set up'}
         onDrillIn={() => setView('analytics')}
       />
       <DrillRow
         label="Social sharing"
         onDrillIn={() => setView('sharing')}
+      />
+      <DrillRow
+        label="Version history"
+        onDrillIn={() => setView('history')}
       />
 
       {designOpen && (

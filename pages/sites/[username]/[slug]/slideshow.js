@@ -1,6 +1,6 @@
 // pages/sites/[username]/[slug]/slideshow.js
 import { lookupUserByUsername } from '../../../../common/userProfile'
-import { readPublishedSiteConfig } from '../../../../common/siteConfig'
+import { resolvePublicSiteConfig } from '../../../../common/serverPreview'
 import Slideshow from '../../../../components/image-displays/slideshow/Slideshow'
 import PageMeta from '../../../../components/PageMeta'
 import { pageDisplayThumbnail } from '../../../../common/assetRefs'
@@ -27,11 +27,11 @@ async function resolveMusicCredit(musicUrl) {
   }
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, req, res, query }) {
   const { username, slug } = params
   const lookup = await lookupUserByUsername(username)
   if (!lookup) return { notFound: true }
-  const siteConfig = await readPublishedSiteConfig(lookup.userId)
+  const { siteConfig } = await resolvePublicSiteConfig({ req, res, query, ownerUserId: lookup.userId })
   if (!siteConfig) return { notFound: true }
   const page = (siteConfig.pages || []).find(p => p.slug === slug || p.id === slug)
   if (!page || !page.slideshow?.enabled) return { notFound: true }
