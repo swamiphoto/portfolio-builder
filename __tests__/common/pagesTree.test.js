@@ -1,4 +1,4 @@
-import { buildNavTree, buildHiddenTree, flattenForOtherPages, movePage } from '../../common/pagesTree'
+import { buildNavTree, buildHiddenTree, flattenForOtherPages, movePage, computeSubNav } from '../../common/pagesTree'
 
 const pages = [
   { id: 'home',  title: 'Home',    parentId: null, showInNav: true,  sortOrder: 0 },
@@ -65,6 +65,68 @@ describe('buildNavTree', () => {
     const orphan = [...pages, { id: 'x', title: 'Orphan', parentId: 'missing', showInNav: true, sortOrder: 99 }]
     const tree = buildNavTree(orphan)
     expect(tree.map(n => n.id)).toContain('x')
+  })
+})
+
+describe('computeSubNav', () => {
+  const byId = (list, id) => list.find(p => p.id === id)
+
+  it('on a section parent, lists its children ordered by sortOrder, none active', () => {
+    // Array order is deliberately scrambled vs sortOrder to prove it sorts.
+    const scrambled = [
+      { id: 'port', title: 'Portfolio', parentId: null, showInNav: true, sortOrder: 1 },
+      { id: 'port2', title: 'Portraits', parentId: 'port', showInNav: true, sortOrder: 1 },
+      { id: 'land',  title: 'Landscapes', parentId: 'port', showInNav: true, sortOrder: 0 },
+    ]
+    const { subNavPages, activeSubNavId } = computeSubNav(scrambled, byId(scrambled, 'port'))
+    expect(subNavPages.map(p => p.id)).toEqual(['land', 'port2'])
+    expect(activeSubNavId).toBeNull()
+  })
+
+  it('on a leaf child, lists its siblings with the current page active', () => {
+    const { subNavPages, activeSubNavId } = computeSubNav(pages, byId(pages, 'land'))
+    expect(subNavPages.map(p => p.id)).toEqual(['land', 'port2'])
+    expect(activeSubNavId).toBe('land')
+  })
+
+  it('on an intermediate page (child AND parent), lists its OWN children, none active', () => {
+    // sunflowers is a child of the hidden-children "collection" but itself has a child.
+    const tree = [
+      { id: 'collection', title: 'Galleries', parentId: null, showInNav: true, hideChildrenInNav: true, sortOrder: 0 },
+      { id: 'sunflowers', title: 'Naga Sunflowers', parentId: 'collection', showInNav: true, sortOrder: 0 },
+      { id: 'more', title: 'Some additional shots', parentId: 'sunflowers', showInNav: true, sortOrder: 0 },
+    ]
+    const parent = computeSubNav(tree, byId(tree, 'sunflowers'))
+    expect(parent.subNavPages.map(p => p.id)).toEqual(['more'])
+    expect(parent.activeSubNavId).toBeNull()
+
+    // And on the child itself, the same section shows with the child active.
+    const child = computeSubNav(tree, byId(tree, 'more'))
+    expect(child.subNavPages.map(p => p.id)).toEqual(['more'])
+    expect(child.activeSubNavId).toBe('more')
+  })
+
+  it('respects hideChildrenInNav on the section parent', () => {
+    const tree = [
+      { id: 'collection', title: 'Galleries', parentId: null, showInNav: true, hideChildrenInNav: true, sortOrder: 0 },
+      { id: 'a', title: 'A', parentId: 'collection', showInNav: true, sortOrder: 0 },
+    ]
+    // 'collection' hides its own children; a leaf child of it shows nothing.
+    expect(computeSubNav(tree, byId(tree, 'collection')).subNavPages).toEqual([])
+    expect(computeSubNav(tree, byId(tree, 'a')).subNavPages).toEqual([])
+  })
+
+  it('excludes pages hidden from nav (showInNav === false)', () => {
+    const tree = [
+      { id: 'port', title: 'Portfolio', parentId: null, showInNav: true, sortOrder: 0 },
+      { id: 'shown', title: 'Shown', parentId: 'port', showInNav: true, sortOrder: 0 },
+      { id: 'hidden', title: 'Hidden', parentId: 'port', showInNav: false, sortOrder: 1 },
+    ]
+    expect(computeSubNav(tree, byId(tree, 'port')).subNavPages.map(p => p.id)).toEqual(['shown'])
+  })
+
+  it('a top-level leaf with no children renders no sub-nav', () => {
+    expect(computeSubNav(pages, byId(pages, 'about')).subNavPages).toEqual([])
   })
 })
 

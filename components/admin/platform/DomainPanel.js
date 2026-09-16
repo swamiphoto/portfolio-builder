@@ -1,6 +1,6 @@
 // components/admin/platform/DomainPanel.js
 import { useState, useEffect, useRef } from 'react'
-import { normalizeCustomDomain } from '../../../common/domainUtils'
+import { normalizeCustomDomain, isApex, dnsRecordsFor } from '../../../common/domainUtils'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 const input = {
@@ -36,6 +36,26 @@ function InfoRow({ field, value, mono, children }) {
         {children ?? value}
       </span>
     </div>
+  )
+}
+
+// Which DNS record a copyable group is for, so a user staring at two rows knows
+// the first serves the bare domain and the second makes www redirect to it.
+function recordCaption(r) {
+  if (r.name === '@') return 'Root domain'
+  if (r.name === 'www') return 'www → root domain'
+  if (r.type === 'TXT') return 'Ownership check'
+  return null
+}
+
+// Cloudflare proxies records by default (orange cloud), which blocks Vercel's
+// cert issuance. Only shown when we detect Cloudflare nameservers.
+function CloudflareNote({ provider }) {
+  if (provider?.id !== 'cloudflare') return null
+  return (
+    <p style={{ fontSize: 10.5, color: '#9a7b2e', lineHeight: 1.5, margin: '5px 0 0' }}>
+      On Cloudflare: set the record to <strong>DNS only</strong> (grey cloud, not proxied), or the site won’t get a certificate.
+    </p>
   )
 }
 
@@ -137,18 +157,33 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
     return () => { alive = false }
   }, [cd?.name, cd?.status])
 
-  // Poll status until active.
+  // Reconcile with Vercel on mount — once even for an already-active domain, so
+  // the server can backfill the www redirect for apex domains connected before
+  // that existed — then keep polling only while still pending. Persist only on a
+  // real change, so re-opening Settings on a stable domain doesn't churn autosave.
   useEffect(() => {
-    if (!cd || cd.status === 'active') return
-    pollRef.current = setInterval(async () => {
+    if (!cd) return
+    let alive = true
+    const sync = async () => {
       const res = await fetch('/api/admin/domain/status')
       if (!res.ok) return
       const data = await res.json()
-      if (data.customDomain) persist(data.customDomain)
-    }, 5000)
-    return () => clearInterval(pollRef.current)
+      if (!alive || !data.customDomain) return
+      // Persist only on a real change so re-opening Settings on a stable domain
+      // doesn't churn autosave. Compare against the cd this effect was set up with.
+      if (JSON.stringify(cd) === JSON.stringify(data.customDomain)) return
+      onUpdate({ ...config, customDomain: data.customDomain })
+      setCd(data.customDomain)
+    }
+    sync()
+    // Keep polling until BOTH the apex is active and the www redirect has
+    // resolved — www's DNS/cert can lag the apex, and we don't want to stop
+    // watching while it's still finishing.
+    const wwwPending = isApex(cd.name) && cd.wwwStatus && cd.wwwStatus !== 'active'
+    if (cd.status !== 'active' || wwwPending) pollRef.current = setInterval(sync, 5000)
+    return () => { alive = false; clearInterval(pollRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cd?.name, cd?.status])
+  }, [cd?.name, cd?.status, cd?.wwwStatus])
 
   const removeBtn = (
     <button type="button" onClick={remove} disabled={busy}
@@ -206,6 +241,31 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
                 {connectedOn && <InfoRow field="Connected" value={connectedOn} />}
               </div>
 
+              {/* Apex is live, but www hasn't resolved yet — say so honestly and
+                  show the record still to add, rather than implying full success. */}
+              {isApex(cd.name) && cd.wwwStatus && cd.wwwStatus !== 'active' && (() => {
+                const wwwRec = dnsRecordsFor(cd.name).find((r) => r.name === 'www')
+                return (
+                  <div style={{ background: 'rgba(154,123,46,0.06)', borderRadius: 6, padding: '9px 10px' }}>
+                    <div style={{ fontSize: 11.5, color: '#9a7b2e', fontWeight: 500, marginBottom: 2 }}>
+                      www redirect — finishing setup
+                    </div>
+                    <p style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                      <strong>{cd.name}</strong> works. To make <strong>www.{cd.name}</strong> redirect to it,
+                      add this record at your DNS provider (may take a few minutes to verify):
+                    </p>
+                    <CloudflareNote provider={provider} />
+                    {wwwRec && (
+                      <div style={{ marginTop: 6 }}>
+                        <CopyRow field="Type"  value={wwwRec.type} />
+                        <CopyRow field="Name"  value={wwwRec.name} />
+                        <CopyRow field="Value" value={wwwRec.value} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {removeBtn}
             </div>
           )
@@ -219,27 +279,39 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
             </div>
 
             {/* Where to go — provider-specific when we can detect it */}
-            <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              {provider?.name
-                ? <>Looks like <strong>{cd.name}</strong> is on <strong>{provider.name}</strong>. Add this record there:</>
-                : <>Add this record at your domain’s DNS provider:</>}
-            </p>
+            {(() => {
+              const recordsWord = (cd.verification || []).length > 1 ? 'these records' : 'this record'
+              return (
+                <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  {provider?.name
+                    ? <>Looks like <strong>{cd.name}</strong> is on <strong>{provider.name}</strong>. Add {recordsWord} there:</>
+                    : <>Add {recordsWord} at your domain’s DNS provider:</>}
+                </p>
+              )
+            })()}
             {provider?.dnsUrl && (
               <a href={provider.dnsUrl} target="_blank" rel="noreferrer"
                 style={{ display: 'inline-block', fontSize: 11, color: '#5c4f3a', textDecoration: 'underline' }}>
                 Open {provider.name} DNS settings →
               </a>
             )}
+            <CloudflareNote provider={provider} />
 
-            {/* The record, broken into copyable fields */}
+            {/* Each record, broken into copyable fields and captioned by purpose */}
             <div style={{ borderTop: '1px solid rgba(160,140,110,0.14)' }}>
-              {(cd.verification || []).map((r, i) => (
-                <div key={i}>
-                  <CopyRow field="Type"  value={r.type} />
-                  <CopyRow field="Name"  value={r.name} />
-                  <CopyRow field="Value" value={r.value} />
-                </div>
-              ))}
+              {(cd.verification || []).map((r, i) => {
+                const caption = recordCaption(r)
+                return (
+                  <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
+                    {caption && (
+                      <div style={{ ...label, paddingTop: i > 0 ? 4 : 0 }}>{caption}</div>
+                    )}
+                    <CopyRow field="Type"  value={r.type} />
+                    <CopyRow field="Name"  value={r.name} />
+                    <CopyRow field="Value" value={r.value} />
+                  </div>
+                )
+              })}
             </div>
 
             {removeBtn}

@@ -352,11 +352,12 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
 
   const saveCaption = () => {
     if (caption === (image?.caption || '')) return;
-    if (isOverride?.(index)) {
-      onCaptionChange?.(index, caption);
-    } else {
-      onCaptionChangeToLibrary?.(index, caption);
-    }
+    // Per-block caption overrides are hidden for now — every edit updates the
+    // library caption, so the same caption shows everywhere the photo appears.
+    // (In the library grid, onCaptionChangeToLibrary isn't passed and
+    // onCaptionChange writes the asset caption directly — same effect.)
+    if (onCaptionChangeToLibrary) onCaptionChangeToLibrary(index, caption);
+    else onCaptionChange?.(index, caption);
     setSaved(true);
   };
 
@@ -488,31 +489,10 @@ export default function AdminPhotoLightbox({ images, index, onClose, onNavigate,
             {!saved && (
               <p style={{ fontFamily: MONO, fontSize: 9.5, color: '#b0a490', margin: 0 }}>Enter or click away to save</p>
             )}
-            {isOverride?.(index) ? (
-              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <span style={{ fontFamily: MONO, fontSize: 9.5, color: '#b0a490', letterSpacing: '0.04em' }}>
-                  Overridden for this block — the shared caption isn’t shown here.
-                </span>
-                <div style={{ display: 'flex', gap: 14 }}>
-                  <button type="button" style={noteLinkStyle}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}
-                    onClick={() => onRevertToLibrary?.(index)}>
-                    Use shared caption
-                  </button>
-                  <button type="button" style={noteLinkStyle}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}
-                    onClick={() => { onCaptionChangeToLibrary?.(index, caption); onRevertToLibrary?.(index); }}>
-                    Make this the shared caption
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button type="button" style={{ ...noteLinkStyle, marginTop: 8 }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#2c2416' }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit' }}
-                onClick={() => onToggleOverride?.(index, true)}>
-                Use a different caption just here
-              </button>
-            )}
+            {/* Per-block caption overrides are hidden for now — one library caption
+                is used everywhere the photo appears. The override handlers
+                (isOverride / onToggleOverride / onRevertToLibrary) are still wired
+                from BlockCard, so this UI can be restored later if needed. */}
           </Section>
 
           {/* File — metadata + the high-res version that powers downloads & larger prints */}

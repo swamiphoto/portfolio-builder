@@ -14,14 +14,23 @@ function mockRes() {
 const USER = { id: 'u1' }
 beforeEach(() => jest.clearAllMocks())
 
-it('removes from Vercel, deletes the pointer, and clears config', async () => {
+it('removes the apex + its www alias from Vercel, deletes the pointer, and clears config', async () => {
   readSiteConfig.mockResolvedValue({ userId: 'u1', customDomain: { name: 'a.com', status: 'active' }, pages: [] })
   const res = mockRes()
   await handler({ method: 'DELETE' }, res, USER)
   expect(removeDomain).toHaveBeenCalledWith('a.com')
+  expect(removeDomain).toHaveBeenCalledWith('www.a.com')
   expect(deleteFile).toHaveBeenCalledWith('domains/a.com.json')
   expect(writeSiteConfig).toHaveBeenCalledWith('u1', expect.objectContaining({ customDomain: null }))
   expect(res.body).toEqual({ ok: true })
+})
+
+it('does not remove a www alias for a subdomain', async () => {
+  readSiteConfig.mockResolvedValue({ userId: 'u1', customDomain: { name: 'photos.a.com', status: 'active' }, pages: [] })
+  const res = mockRes()
+  await handler({ method: 'DELETE' }, res, USER)
+  expect(removeDomain).toHaveBeenCalledWith('photos.a.com')
+  expect(removeDomain).toHaveBeenCalledTimes(1)
 })
 
 it('is a no-op success when no domain is set', async () => {

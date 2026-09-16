@@ -1,5 +1,6 @@
 import {
   isApex, dnsRecordsFor, deriveStatus, normalizeCustomDomain, siteUrlFor, parseHost, basePathFor, subdomainHost,
+  stripWww, wwwHostFor, ensureWwwRecord,
 } from '../../common/domainUtils'
 
 describe('subdomainHost', () => {
@@ -42,11 +43,42 @@ describe('isApex', () => {
 })
 
 describe('dnsRecordsFor', () => {
-  it('returns an A record for an apex domain', () => {
-    expect(dnsRecordsFor('janedoe.com')).toEqual([{ type: 'A', name: '@', value: '76.76.21.21' }])
+  it('returns an A record and a www CNAME for an apex domain', () => {
+    expect(dnsRecordsFor('janedoe.com')).toEqual([
+      { type: 'A', name: '@', value: '76.76.21.21' },
+      { type: 'CNAME', name: 'www', value: 'cname.vercel-dns.com' },
+    ])
   })
-  it('returns a CNAME for a subdomain using the leftmost label', () => {
+  it('returns a single CNAME for a subdomain using the leftmost label (no www)', () => {
     expect(dnsRecordsFor('photos.janedoe.com')).toEqual([{ type: 'CNAME', name: 'photos', value: 'cname.vercel-dns.com' }])
+  })
+})
+
+describe('stripWww', () => {
+  it('strips a leading www from an apex', () => expect(stripWww('www.janedoe.com')).toBe('janedoe.com'))
+  it('leaves a bare apex untouched', () => expect(stripWww('janedoe.com')).toBe('janedoe.com'))
+  it('only strips the leftmost www label', () => expect(stripWww('www.photos.janedoe.com')).toBe('photos.janedoe.com'))
+})
+
+describe('wwwHostFor', () => {
+  it('returns the www alias for an apex', () => expect(wwwHostFor('janedoe.com')).toBe('www.janedoe.com'))
+  it('returns null for a subdomain', () => expect(wwwHostFor('photos.janedoe.com')).toBeNull())
+})
+
+describe('ensureWwwRecord', () => {
+  it('appends the www CNAME to a legacy apex record set', () => {
+    expect(ensureWwwRecord('janedoe.com', [{ type: 'A', name: '@', value: '76.76.21.21' }])).toEqual([
+      { type: 'A', name: '@', value: '76.76.21.21' },
+      { type: 'CNAME', name: 'www', value: 'cname.vercel-dns.com' },
+    ])
+  })
+  it('is idempotent when the www CNAME already exists', () => {
+    const recs = dnsRecordsFor('janedoe.com')
+    expect(ensureWwwRecord('janedoe.com', recs)).toBe(recs)
+  })
+  it('leaves subdomain records untouched', () => {
+    const recs = [{ type: 'CNAME', name: 'photos', value: 'cname.vercel-dns.com' }]
+    expect(ensureWwwRecord('photos.janedoe.com', recs)).toBe(recs)
   })
 })
 
@@ -68,7 +100,7 @@ describe('normalizeCustomDomain', () => {
     expect(normalizeCustomDomain('photos.janedoe.com')).toEqual({
       name: 'photos.janedoe.com', status: 'pending',
       verification: [{ type: 'CNAME', name: 'photos', value: 'cname.vercel-dns.com' }],
-      addedAt: null, verifiedAt: null, lastError: null,
+      addedAt: null, verifiedAt: null, lastError: null, wwwAddedAt: null, wwwStatus: null,
     })
   })
   it('passes through an object, filling defaults', () => {

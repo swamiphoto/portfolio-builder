@@ -8,10 +8,48 @@ export function isApex(name) {
   return name.split('.').filter(Boolean).length <= 2
 }
 
+/**
+ * Strip a leading "www." so a user who types www.janedoe.com is treated as
+ * connecting the apex janedoe.com (with www redirecting to it). www is never a
+ * primary domain in this flow — it's always the redirect alias of the apex.
+ */
+export function stripWww(name) {
+  if (!name) return name
+  return name.replace(/^www\./, '')
+}
+
+/**
+ * The www alias hostname for an apex domain (e.g. www.janedoe.com), or null for
+ * subdomains (photos.janedoe.com has no www concept).
+ */
+export function wwwHostFor(name) {
+  if (!isApex(name)) return null
+  return `www.${name}`
+}
+
 export function dnsRecordsFor(name) {
   if (!name) return []
-  if (isApex(name)) return [{ type: 'A', name: '@', value: APEX_IP }]
+  // An apex needs two records: the A record that serves the site, and a CNAME
+  // for www so www.<domain> resolves (Vercel then 308-redirects it to the apex).
+  if (isApex(name)) {
+    return [
+      { type: 'A', name: '@', value: APEX_IP },
+      { type: 'CNAME', name: 'www', value: CNAME_TARGET },
+    ]
+  }
   return [{ type: 'CNAME', name: name.split('.')[0], value: CNAME_TARGET }]
+}
+
+/**
+ * Ensure an apex domain's stored DNS records include the www CNAME. Used to
+ * upgrade domains connected before www-redirect support without dropping any
+ * Vercel-issued ownership (TXT) records already present.
+ */
+export function ensureWwwRecord(name, records) {
+  const list = Array.isArray(records) ? records : []
+  if (!isApex(name)) return list
+  if (list.some((r) => r.type === 'CNAME' && r.name === 'www')) return list
+  return [...list, { type: 'CNAME', name: 'www', value: CNAME_TARGET }]
 }
 
 export function deriveStatus({ verified, misconfigured } = {}) {
@@ -23,7 +61,7 @@ export function normalizeCustomDomain(value) {
   if (typeof value === 'string') {
     return {
       name: value, status: 'pending', verification: dnsRecordsFor(value),
-      addedAt: null, verifiedAt: null, lastError: null,
+      addedAt: null, verifiedAt: null, lastError: null, wwwAddedAt: null, wwwStatus: null,
     }
   }
   return {
@@ -33,6 +71,8 @@ export function normalizeCustomDomain(value) {
     addedAt: value.addedAt || null,
     verifiedAt: value.verifiedAt || null,
     lastError: value.lastError || null,
+    wwwAddedAt: value.wwwAddedAt || null,
+    wwwStatus: value.wwwStatus || null,
   }
 }
 
