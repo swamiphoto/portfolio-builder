@@ -2,7 +2,8 @@ import { forwardRef, useEffect, useRef, useState } from 'react'
 import PhotoPickerModal from '@/components/admin/gallery-builder/PhotoPickerModal'
 import Tip from '@/components/admin/Tip'
 import { blockToMarkdownSeed } from '@/common/markdown'
-import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode } from '@/common/markdownDom'
+import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode, getImageAttrs, setImageAttr, removeImageWrapper, moveImageWrapper } from '@/common/markdownDom'
+import MarkdownImageControls from './MarkdownImageControls'
 
 // Article/paper width — wider than the library picker so prose has a
 // comfortable measure to write and read against.
@@ -84,6 +85,23 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   const blockRef = useRef(block)
   blockRef.current = block
   const [pickerOpen, setPickerOpen] = useState(false)
+  // Top-level block the caret was in when the picker opened. Opening
+  // PhotoPickerModal moves the selection out of the contentEditable, so by
+  // the time insertImages runs, currentBlockElement(el) would otherwise fall
+  // back to root.lastElementChild (the end of the article) instead of where
+  // the user actually was.
+  const savedAnchorRef = useRef(null)
+
+  // Selected image wrapper (if any) and its panel-relative bounding rect, so
+  // MarkdownImageControls can render as an overlay positioned right over the
+  // <img> the user clicked. selVersion isn't needed separately — selRect
+  // itself is recomputed (and re-renders the overlay) on every mutation.
+  const selectedImgRef = useRef(null)
+  const [selRect, setSelRect] = useState(null)
+  // Bumped on each new image selection so the overlay (and its uncontrolled
+  // caption input) remounts — clicking straight from one image to another
+  // would otherwise reuse the instance and show the prior image's caption.
+  const [selGen, setSelGen] = useState(0)
 
   // Floating, draggable panel (mirrors PhotoPickerModal). Opens beside the
   // block being edited — right of the site + block sidebars — clamped so a
@@ -133,6 +151,66 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   }, [open])
 
   if (!block || !open) return null
+
+  const openPicker = () => {
+    const el = editableRef.current
+    savedAnchorRef.current = el ? currentBlockElement(el) : null
+    setPickerOpen(true)
+  }
+
+  // Recomputes the overlay's panel-relative rect from the selected wrapper's
+  // live getBoundingClientRect. Called on select, after any mutation that
+  // could move/resize the wrapper, and on scroll.
+  const positionOverlay = () => {
+    const wrap = selectedImgRef.current
+    const panel = panelRef.current
+    if (!wrap || !panel) { setSelRect(null); return }
+    const w = wrap.getBoundingClientRect()
+    const p = panel.getBoundingClientRect()
+    setSelRect({ top: w.top - p.top, left: w.left - p.left, width: w.width, height: w.height })
+  }
+
+  const selectImageFromEvent = (e) => {
+    const wrap = e.target.closest?.('[data-md-image]')
+    const next = wrap && editableRef.current?.contains(wrap) ? wrap : null
+    selectedImgRef.current = next
+    if (next) setSelGen((g) => g + 1)
+    positionOverlay()
+  }
+
+  const imgAttrs = () => (selectedImgRef.current ? getImageAttrs(selectedImgRef.current) : null)
+  const onImgAttr = (k, v) => {
+    if (!selectedImgRef.current) return
+    setImageAttr(selectedImgRef.current, k, v)
+    emit()
+    positionOverlay()
+  }
+  const onImgCaption = (v) => {
+    if (!selectedImgRef.current) return
+    setImageAttr(selectedImgRef.current, 'caption', v)
+    emit()
+  }
+  const onImgMove = (dir) => {
+    if (selectedImgRef.current && moveImageWrapper(selectedImgRef.current, dir)) {
+      emit()
+      positionOverlay()
+    }
+  }
+  const onImgRemove = () => {
+    const wrap = selectedImgRef.current
+    if (!wrap) return
+    removeImageWrapper(wrap)
+    selectedImgRef.current = null
+    setSelRect(null)
+    // Rebuild block.images from what's still actually in the DOM, rather than
+    // filtering out every entry matching the removed url — the same photo can
+    // appear more than once in an article, and a plain url!==url filter would
+    // drop the bookkeeping entry for surviving copies too.
+    const el = editableRef.current
+    const remainingUrls = new Set(Array.from(el ? el.querySelectorAll('[data-md-image] img') : []).map((im) => im.getAttribute('src')))
+    const images = (block.images || []).filter((i) => remainingUrls.has(i.url))
+    emit({ images })
+  }
 
   const startDrag = (e) => {
     if (e.target.closest('button,input,select,textarea,img,[contenteditable]')) return
@@ -196,7 +274,12 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
       // nested in a <p> is silently dropped and the photo never reaches
       // `content` (vanishing from the preview and on reopen). Anchor off the
       // top-level block the caret sits in and splice the images in after it.
-      let after = currentBlockElement(el) // a direct child of el, or null when empty
+      // Prefer the block the caret was in when the picker opened; only fall
+      // back to the live selection if that saved anchor is stale (no longer
+      // a direct child of el, e.g. the block was removed/replaced meanwhile).
+      let after = (savedAnchorRef.current && savedAnchorRef.current.parentElement === el)
+        ? savedAnchorRef.current
+        : currentBlockElement(el) // a direct child of el, or null when empty
       refs.forEach((r) => {
         const node = createImageBlockNode(document, r.url, '')
         if (after && after.parentElement === el) {
@@ -223,6 +306,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         sel.addRange(range)
       }
     }
+    savedAnchorRef.current = null
     const seen = new Set((block.images || []).map((i) => i.assetId))
     const images = [...(block.images || []), ...refs.filter((r) => r.assetId && !seen.has(r.assetId)).map((r) => ({ assetId: r.assetId, url: r.url }))]
     emit({ images })
@@ -236,7 +320,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
       const isEmpty = target ? (target.textContent || '').trim() === '' : (el?.textContent || '').trim() === ''
       if (isEmpty) {
         e.preventDefault()
-        setPickerOpen(true)
+        openPicker()
       }
     }
   }
@@ -253,7 +337,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         { name: 'Heading', tip: 'Heading', act: () => setBlockElementTag('h3'), label: 'H' },
         { name: 'Quote', tip: 'Quote', act: () => setBlockElementTag('blockquote'), label: '"' },
         { name: 'Link', tip: 'Link', act: applyLink, label: '↗' },
-        { name: 'Image', tip: 'Insert photo', act: () => setPickerOpen(true), label: 'Img' },
+        { name: 'Image', tip: 'Insert photo', act: openPicker, label: 'Img' },
       ]
 
   return (
@@ -310,11 +394,30 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           className={`md-editable scroll-thin flex-1 resize-none text-[15px] leading-relaxed outline-none ${inlineOnly ? 'px-5 py-4' : 'px-8 py-6'}`}
           contentEditable
           suppressContentEditableWarning
-          onInput={() => emit()}
+          onInput={() => {
+            // Typing can happen while an image is selected (e.g. editing text
+            // right after it); only keep the selection if the caret is still
+            // actually inside that wrapper.
+            const wrap = selectedImgRef.current
+            if (wrap && !wrap.contains(window.getSelection?.()?.anchorNode)) {
+              selectedImgRef.current = null
+              setSelRect(null)
+            }
+            emit()
+          }}
           onKeyDown={onKeyDown}
+          onClick={selectImageFromEvent}
+          onScroll={positionOverlay}
           data-placeholder={inlineOnly ? 'Write your intro… select text, then Bold / Italic / Link.' : 'Write your story… Use bold, italics, headings — or type / on an empty line to add a photo.'}
           style={{ background: 'transparent', color: 'var(--text-primary)', overflowY: 'auto', ...(inlineOnly ? { minHeight: 120, maxHeight: 320 } : {}) }}
         />
+        {selRect && selectedImgRef.current && (
+          <div style={{ position: 'absolute', top: selRect.top, left: selRect.left, width: selRect.width, height: selRect.height, pointerEvents: 'none' }}>
+            <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
+              <MarkdownImageControls key={selGen} attrs={imgAttrs()} onAttr={onImgAttr} onCaption={onImgCaption} onRemove={onImgRemove} onMove={onImgMove} />
+            </div>
+          </div>
+        )}
         <div
           className="px-8 py-2 text-[11px] flex-shrink-0"
           style={{ borderTop: '1px solid rgba(160,140,110,0.18)', color: 'var(--text-muted)' }}

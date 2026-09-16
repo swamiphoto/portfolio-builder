@@ -1,4 +1,4 @@
-import { parseMarkdown, blockToMarkdownSeed } from '@/common/markdown'
+import { parseMarkdown, blockToMarkdownSeed, parseImageAttrs, formatImageAttrs } from '@/common/markdown'
 
 it('parses headings, paragraphs, quotes, lists, images', () => {
   const ast = parseMarkdown('# Title\n\nHello **bold** and *ital*.\n\n> a quote\n\n- one\n- two\n\n![Me at work](https://gcs/me.jpg)')
@@ -67,5 +67,50 @@ describe('blockToMarkdownSeed', () => {
   it('handles missing block / content gracefully', () => {
     expect(blockToMarkdownSeed(null)).toBe('')
     expect(blockToMarkdownSeed({ variant: 1 })).toBe('# ')
+  })
+})
+
+describe('image attribute suffix', () => {
+  it('parses layout/size/style from an image line', () => {
+    const [node] = parseMarkdown('![A cat](http://x/c.jpg){layout=side size=m style=serif}')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: 'A cat', layout: 'side', size: 'm', style: 'serif' })
+  })
+  it('leaves a bare image with no attrs (backward compatible)', () => {
+    const [node] = parseMarkdown('![](http://x/c.jpg)')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: '' })
+  })
+  it('drops unknown keys and invalid values', () => {
+    expect(parseImageAttrs('layout=bogus size=m foo=bar')).toEqual({ size: 'm' })
+  })
+  it('formatImageAttrs emits only set keys, empty when none', () => {
+    expect(formatImageAttrs({ layout: 'side', size: 'm' })).toBe('layout=side size=m')
+    expect(formatImageAttrs({})).toBe('')
+  })
+})
+
+describe('caption bracket escaping', () => {
+  it('parses an escaped ] inside the caption and unescapes it', () => {
+    // Only "]" (the alt-delimiter-confusable char) and "\" get escaped by the
+    // serializer — "[" is allowed unescaped since it doesn't end the alt group.
+    const [node] = parseMarkdown('![Portra 400 [expired\\]](http://x/c.jpg)')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: 'Portra 400 [expired]' })
+  })
+  it('does not stop the alt early at an escaped ] (would previously misparse)', () => {
+    // Without escaping support, a raw "]" inside the caption breaks IMAGE_LINE and
+    // the whole line falls back to a paragraph (image data loss). With escaping,
+    // callers are expected to write the caption pre-escaped, e.g. via the DOM
+    // serializer boundary tested in markdownDom.test.js.
+    const [node] = parseMarkdown('![Portra 400 [expired\\]](http://x/c.jpg){layout=side}')
+    expect(node.type).toBe('image')
+    expect(node.caption).toBe('Portra 400 [expired]')
+    expect(node.layout).toBe('side')
+  })
+  it('unescapes a literal backslash in the caption', () => {
+    const [node] = parseMarkdown('![C:\\\\photos](http://x/c.jpg)')
+    expect(node.caption).toBe('C:\\photos')
+  })
+  it('plain captions with no special characters still parse (control case)', () => {
+    const [node] = parseMarkdown('![A cat](http://x/c.jpg)')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: 'A cat' })
   })
 })

@@ -1,4 +1,5 @@
-import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode } from '@/common/markdownDom'
+import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode, getImageAttrs, setImageAttr, removeImageWrapper, moveImageWrapper } from '@/common/markdownDom'
+import { parseMarkdown } from '@/common/markdown'
 
 // Round trips: renderMarkdownToElement -> serializeDomToMarkdown should
 // return the exact input for markdown the serializer can reproduce
@@ -16,6 +17,7 @@ const ROUND_TRIP_SAMPLES = [
   '- one\n- two\n- three',
   '![](https://gcs/me.jpg)',
   '# Title\n\nHello **bold** and *ital*.\n\n> a quote\n\n- one\n- two\n\n![](https://gcs/me.jpg)',
+  '![Portra 400 [expired\\]](https://gcs/me.jpg)',
 ]
 
 describe('renderMarkdownToElement <-> serializeDomToMarkdown round trip', () => {
@@ -56,6 +58,18 @@ describe('serializeDomToMarkdown handles pasted rich text', () => {
     const host = document.createElement('div')
     host.innerHTML = '<b style="font-weight:normal"><h2>My Trip</h2><p>Shot in <span style="font-style:italic">Norway</span>.</p><p><img src="https://gcs/a.jpg"></p></b>'
     expect(serializeDomToMarkdown(host)).toBe('# My Trip\n\nShot in *Norway*.\n\n![](https://gcs/a.jpg)')
+  })
+
+  it('escapes a ] in a bare pasted <img alt> so the image is not lost on reparse', () => {
+    const host = document.createElement('div')
+    const img = document.createElement('img')
+    img.setAttribute('src', 'https://gcs/a.jpg')
+    img.setAttribute('alt', 'Portra 400 [expired]')
+    host.appendChild(img)
+    const md = serializeDomToMarkdown(host)
+    expect(md).toBe('![Portra 400 [expired\\]](https://gcs/a.jpg)')
+    const [node] = parseMarkdown(md)
+    expect(node).toMatchObject({ type: 'image', caption: 'Portra 400 [expired]' })
   })
 })
 
@@ -124,5 +138,68 @@ describe('serializeDomToMarkdown', () => {
     host.appendChild(p)
     host.appendChild(document.createElement('br'))
     expect(serializeDomToMarkdown(host)).toBe('hello')
+  })
+})
+
+describe('image wrapper attrs round-trip', () => {
+  it('createImageBlockNode stores attrs + caption and getImageAttrs reads them', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', 'A cat', { layout: 'side', size: 'm', style: 'serif' })
+    expect(getImageAttrs(w)).toEqual({ layout: 'side', size: 'm', style: 'serif', caption: 'A cat' })
+  })
+  it('serializes a wrapper back to markdown with caption + attrs', () => {
+    const root = document.createElement('div')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'A cat', { layout: 'side', size: 'm' }))
+    expect(serializeDomToMarkdown(root)).toBe('![A cat](http://x/c.jpg){layout=side size=m}')
+  })
+  it('a bare image round-trips unchanged', () => {
+    const root = document.createElement('div')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', '', {}))
+    expect(serializeDomToMarkdown(root)).toBe('![](http://x/c.jpg)')
+  })
+  it('a caption containing ] is escaped on serialize and not lost', () => {
+    const root = document.createElement('div')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'Portra 400 [expired]', {}))
+    const md = serializeDomToMarkdown(root)
+    expect(md).toBe('![Portra 400 [expired\\]](http://x/c.jpg)')
+    // And it must parse back into an image node (not fall back to a paragraph),
+    // with the exact original, unescaped caption.
+    const el = renderMarkdownToElement(md, document)
+    expect(el.children).toHaveLength(1)
+    expect(getImageAttrs(el.firstChild)).toMatchObject({ caption: 'Portra 400 [expired]' })
+  })
+  it('plain-caption wrapper still round-trips without spurious escaping', () => {
+    const root = document.createElement('div')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'A cat', {}))
+    expect(serializeDomToMarkdown(root)).toBe('![A cat](http://x/c.jpg)')
+  })
+  it('renderMarkdownToElement rebuilds a wrapper carrying the attrs', () => {
+    const el = renderMarkdownToElement('![A cat](http://x/c.jpg){layout=full-bleed}', document)
+    expect(getImageAttrs(el.firstChild)).toMatchObject({ layout: 'full-bleed', caption: 'A cat' })
+  })
+  it('setImageAttr sets and clears', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', '', {})
+    setImageAttr(w, 'layout', 'side'); expect(getImageAttrs(w).layout).toBe('side')
+    setImageAttr(w, 'layout', ''); expect(getImageAttrs(w).layout).toBeUndefined()
+  })
+})
+
+describe('image wrapper remove/move', () => {
+  function root() {
+    const r = document.createElement('div')
+    const p = document.createElement('p'); p.textContent = 'A'; r.appendChild(p)
+    r.appendChild(createImageBlockNode(document, 'http://x/c.jpg', '', {}))
+    const p2 = document.createElement('p'); p2.textContent = 'B'; r.appendChild(p2)
+    return r
+  }
+  it('removeImageWrapper detaches the node and returns its src', () => {
+    const r = root(); const w = r.querySelector('[data-md-image]')
+    expect(removeImageWrapper(w)).toBe('http://x/c.jpg')
+    expect(r.querySelector('[data-md-image]')).toBeNull()
+  })
+  it('moveImageWrapper reorders among top-level siblings', () => {
+    const r = root(); const w = r.querySelector('[data-md-image]')
+    expect(moveImageWrapper(w, -1)).toBe(true)
+    expect(r.firstElementChild.hasAttribute('data-md-image')).toBe(true)
+    expect(moveImageWrapper(r.querySelector('[data-md-image]'), -1)).toBe(false) // already first
   })
 })

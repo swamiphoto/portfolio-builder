@@ -3,7 +3,47 @@
 // literal text. Output is an AST; rendering builds React elements, so there
 // is no injection surface by construction.
 
-const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)\s]+)\)$/
+// Optional {key=value …} suffix after the image, e.g. ![c](u){layout=side size=m}
+// The alt/caption allows backslash-escaped characters (so a caption containing
+// a literal "]" doesn't terminate the alt early) — see imageNode's unescape.
+const IMAGE_LINE = /^!\[((?:\\.|[^\]\\])*)\]\(([^)\s]+)\)(?:\{([^}]*)\})?$/
+
+const IMAGE_ATTR_VALUES = {
+  layout: ['centered', 'full-bleed', 'side'],
+  size: ['l', 'm', 's'],
+  style: ['sans', 'serif', 'mono', 'accent'],
+}
+
+export function parseImageAttrs(attrStr) {
+  const out = {}
+  if (!attrStr) return out
+  for (const pair of String(attrStr).trim().split(/\s+/)) {
+    const eq = pair.indexOf('=')
+    if (eq < 1) continue
+    const key = pair.slice(0, eq)
+    const val = pair.slice(eq + 1)
+    if (IMAGE_ATTR_VALUES[key] && IMAGE_ATTR_VALUES[key].includes(val)) out[key] = val
+  }
+  return out
+}
+
+export function formatImageAttrs(attrs) {
+  if (!attrs) return ''
+  return Object.keys(IMAGE_ATTR_VALUES)
+    .filter((k) => attrs[k])
+    .map((k) => `${k}=${attrs[k]}`)
+    .join(' ')
+}
+
+// Build an image AST node, folding in any parsed attrs (absent keys omitted).
+// The caption comes from the markdown alt, where "]" and "\" are backslash-
+// escaped by the serializer (see markdownDom.js) so the alt delimiter can't
+// be confused with a literal bracket in the caption text — unescape here to
+// recover the original, raw caption.
+function imageNode(url, caption, attrStr) {
+  const unescaped = caption.replace(/\\([\\\]])/g, '$1')
+  return { type: 'image', url, caption: unescaped, ...parseImageAttrs(attrStr) }
+}
 
 // Sticky (/y) tokenizers: anchored at lastIndex, so we scan the source in
 // place — linear time, no per-character suffix slicing.
@@ -45,7 +85,7 @@ function pushMixedLines(blocks, lines) {
   }
   for (const line of lines) {
     const im = IMAGE_LINE.exec(line.trim())
-    if (im) { flushPara(); blocks.push({ type: 'image', url: im[2], caption: im[1] }) }
+    if (im) { flushPara(); blocks.push(imageNode(im[2], im[1], im[3])) }
     else para.push(line)
   }
   flushPara()
@@ -86,7 +126,7 @@ export function parseMarkdown(text) {
     } else if (lines.every((l) => /^[-*]\s+/.test(l.trim()))) {
       blocks.push({ type: 'list', items: lines.map((l) => parseInline(l.trim().replace(/^[-*]\s+/, ''))) })
     } else if ((m = IMAGE_LINE.exec(first)) && lines.length === 1) {
-      blocks.push({ type: 'image', url: m[2], caption: m[1] })
+      blocks.push(imageNode(m[2], m[1], m[3]))
     } else {
       pushMixedLines(blocks, lines)
     }

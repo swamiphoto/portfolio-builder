@@ -160,3 +160,18 @@ it('the footer hint is the single theme-dependent sentence', () => {
   expect(screen.getByText(/final look depends on your site/i)).toBeTruthy()
   expect(screen.queryByText(/formatting appears live in the preview/i)).toBeNull()
 })
+
+it('inserts the image after the block the caret was in, not at the end', () => {
+  const onChange = jest.fn()
+  const twoPara = { type: 'text', content: 'First para\n\nSecond para' }
+  const { container } = render(<MarkdownEditorPanel open block={twoPara} onChange={onChange} onClose={jest.fn()} libraryImages={[]} libraryConfig={{}} libraryLoading={false} />)
+  const el = getEditable(container)
+  const firstP = el.querySelectorAll('p')[0]
+  placeCaretIn(firstP.firstChild || firstP, 0)
+  fireEvent.click(screen.getByLabelText('Image'))   // opens picker — must capture the caret's block now
+  window.getSelection().removeAllRanges()             // real modal steals focus → selection lost
+  fireEvent.click(screen.getByTestId('picker'))       // mock confirms one photo
+  const last = onChange.mock.calls[onChange.mock.calls.length - 1][0]
+  expect(last.content).toMatch(/First para\n\n!\[\]\(https:\/\/gcs\/pic\.jpg\)[\s\S]*Second para/)
+  expect(last.content).not.toMatch(/Second para\n\n!\[\]\(https:\/\/gcs\/pic\.jpg\)/)
+})

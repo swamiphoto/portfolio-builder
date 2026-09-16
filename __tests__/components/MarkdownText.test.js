@@ -3,6 +3,9 @@ import MarkdownText from '@/components/image-displays/MarkdownText'
 
 const classes = { heading: 'h-cls', body: 'b-cls', quote: 'q-cls' }
 
+const imgOf = (c) => c.querySelector('img')
+const figOf = (c) => c.querySelector('figure')
+
 it('renders headings, emphasis, images and quotes with the given classes', () => {
   const { container } = render(
     <MarkdownText content={'# About Me\n\nI shoot **film** mostly.\n\n> light is everything\n\n![On location](https://gcs/x.jpg)'} variantClasses={classes} />
@@ -32,4 +35,24 @@ it('refuses protocol-relative links, rendering their text without an anchor', ()
   const { container } = render(<MarkdownText content={'[x](//evil.com)'} variantClasses={classes} />)
   expect(container.querySelector('a')).toBeNull()
   expect(screen.getByText('x')).toBeTruthy()
+})
+
+it('centered image at default (full width) — backward compatible', () => {
+  const { container } = render(<MarkdownText content={'![](http://x/c.jpg)'} />)
+  expect(imgOf(container)).toBeInTheDocument()
+  expect(figOf(container).className).not.toMatch(/float-left/)
+})
+it('side layout floats left and wraps text', () => {
+  const { container } = render(<MarkdownText content={'![Cat](http://x/c.jpg){layout=side size=m}'} />)
+  expect(figOf(container).className).toMatch(/float-left/)
+})
+it('full-bleed spans edge to edge', () => {
+  const { container } = render(<MarkdownText content={'![](http://x/c.jpg){layout=full-bleed}'} />)
+  expect(figOf(container).className).toMatch(/w-screen|w-full/)
+})
+it('caption style applies (serif figcaption)', () => {
+  const { container } = render(<MarkdownText content={'![Cat](http://x/c.jpg){style=serif}'} />)
+  const cap = container.querySelector('figcaption')
+  expect(cap).toHaveTextContent('Cat')
+  expect(cap.getAttribute('style') || '').toMatch(/Cormorant|italic/i)
 })
