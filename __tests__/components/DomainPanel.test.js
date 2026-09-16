@@ -48,6 +48,38 @@ it('shows a connected domain with a visit link, details, and no "Connected" badg
   expect(screen.getByRole('button', { name: /remove domain/i })).toBeInTheDocument()
 })
 
+it('nudges to finish the www record when the apex is active but www is pending', async () => {
+  mockFetch({})
+  render(<DomainPanel
+    siteConfig={{ customDomain: { name: 'janedoe.com', status: 'active', wwwAddedAt: '2026-01-01T00:00:00Z', wwwStatus: 'pending', verification: [] } }}
+    username="jane" onUpdate={() => {}} />)
+  expect(screen.getByText(/www redirect — finishing setup/i)).toBeInTheDocument()
+  // The www CNAME record is offered to copy.
+  expect(screen.getByText('cname.vercel-dns.com')).toBeInTheDocument()
+})
+
+it('does not nudge once the www redirect is active', () => {
+  mockFetch({})
+  render(<DomainPanel
+    siteConfig={{ customDomain: { name: 'janedoe.com', status: 'active', wwwAddedAt: '2026-01-01T00:00:00Z', wwwStatus: 'active', verification: [] } }}
+    username="jane" onUpdate={() => {}} />)
+  expect(screen.queryByText(/finishing setup/i)).not.toBeInTheDocument()
+})
+
+it('warns Cloudflare users to use DNS-only mode', async () => {
+  mockFetch({
+    '/connect': { customDomain: {
+      name: 'janedoe.com', status: 'pending',
+      verification: [{ type: 'A', name: '@', value: '76.76.21.21' }, { type: 'CNAME', name: 'www', value: 'cname.vercel-dns.com' }],
+    } },
+    '/provider': { provider: { id: 'cloudflare', name: 'Cloudflare', dnsUrl: 'https://dash.cloudflare.com' } },
+  })
+  render(<DomainPanel siteConfig={{ customDomain: null }} username="jane" onUpdate={() => {}} />)
+  fireEvent.change(screen.getByPlaceholderText('yourname.com'), { target: { value: 'janedoe.com' } })
+  fireEvent.click(screen.getByRole('button', { name: /connect/i }))
+  await waitFor(() => expect(screen.getByText(/DNS only/i)).toBeInTheDocument())
+})
+
 it('searches for a new domain and renders an available result with a registrar link', async () => {
   jest.useFakeTimers()
   mockFetch({ '/search': { results: [

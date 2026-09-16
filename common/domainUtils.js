@@ -61,7 +61,7 @@ export function normalizeCustomDomain(value) {
   if (typeof value === 'string') {
     return {
       name: value, status: 'pending', verification: dnsRecordsFor(value),
-      addedAt: null, verifiedAt: null, lastError: null, wwwAddedAt: null,
+      addedAt: null, verifiedAt: null, lastError: null, wwwAddedAt: null, wwwStatus: null,
     }
   }
   return {
@@ -72,6 +72,7 @@ export function normalizeCustomDomain(value) {
     verifiedAt: value.verifiedAt || null,
     lastError: value.lastError || null,
     wwwAddedAt: value.wwwAddedAt || null,
+    wwwStatus: value.wwwStatus || null,
   }
 }
 

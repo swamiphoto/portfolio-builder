@@ -58,6 +58,34 @@ it('does not re-add the www redirect once wwwAddedAt is set', async () => {
   expect(addWwwRedirect).not.toHaveBeenCalled()
 })
 
+it('sets wwwStatus to pending when the www redirect is misconfigured', async () => {
+  readSiteConfig.mockResolvedValue({ userId: 'u1', pages: [], customDomain: {
+    name: 'a.com', status: 'active', wwwAddedAt: '2026-02-02T00:00:00Z',
+  } })
+  // Apex resolves; www does not yet.
+  getDomain.mockImplementation((n) => Promise.resolve({ verified: !n.startsWith('www.') }))
+  getDomainConfig.mockImplementation((n) => Promise.resolve({ misconfigured: n.startsWith('www.') }))
+  const res = mockRes()
+  await handler({ method: 'GET' }, res, USER)
+  expect(getDomain).toHaveBeenCalledWith('www.a.com')
+  expect(res.body.customDomain.status).toBe('active')
+  expect(res.body.customDomain.wwwStatus).toBe('pending')
+})
+
+it('marks wwwStatus active and stops re-checking once www resolves', async () => {
+  readSiteConfig.mockResolvedValue({ userId: 'u1', pages: [], customDomain: {
+    name: 'a.com', status: 'active', wwwAddedAt: '2026-02-02T00:00:00Z', wwwStatus: 'active',
+  } })
+  getDomain.mockResolvedValue({ verified: true })
+  getDomainConfig.mockResolvedValue({ misconfigured: false })
+  const res = mockRes()
+  await handler({ method: 'GET' }, res, USER)
+  // Only the apex is queried — www is not re-checked once it's active.
+  expect(getDomain).toHaveBeenCalledTimes(1)
+  expect(getDomain).toHaveBeenCalledWith('a.com')
+  expect(res.body.customDomain.wwwStatus).toBe('active')
+})
+
 it('does not attempt a www redirect for a subdomain', async () => {
   readSiteConfig.mockResolvedValue({ userId: 'u1', pages: [], customDomain: {
     name: 'photos.a.com', status: 'active',

@@ -1,6 +1,6 @@
 // components/admin/platform/DomainPanel.js
 import { useState, useEffect, useRef } from 'react'
-import { normalizeCustomDomain } from '../../../common/domainUtils'
+import { normalizeCustomDomain, isApex, dnsRecordsFor } from '../../../common/domainUtils'
 
 const MONO = '"SF Mono", Menlo, Monaco, Consolas, monospace'
 const input = {
@@ -46,6 +46,17 @@ function recordCaption(r) {
   if (r.name === 'www') return 'www → root domain'
   if (r.type === 'TXT') return 'Ownership check'
   return null
+}
+
+// Cloudflare proxies records by default (orange cloud), which blocks Vercel's
+// cert issuance. Only shown when we detect Cloudflare nameservers.
+function CloudflareNote({ provider }) {
+  if (provider?.id !== 'cloudflare') return null
+  return (
+    <p style={{ fontSize: 10.5, color: '#9a7b2e', lineHeight: 1.5, margin: '5px 0 0' }}>
+      On Cloudflare: set the record to <strong>DNS only</strong> (grey cloud, not proxied), or the site won’t get a certificate.
+    </p>
+  )
 }
 
 function formatDate(iso) {
@@ -165,10 +176,14 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
       setCd(data.customDomain)
     }
     sync()
-    if (cd.status !== 'active') pollRef.current = setInterval(sync, 5000)
+    // Keep polling until BOTH the apex is active and the www redirect has
+    // resolved — www's DNS/cert can lag the apex, and we don't want to stop
+    // watching while it's still finishing.
+    const wwwPending = isApex(cd.name) && cd.wwwStatus && cd.wwwStatus !== 'active'
+    if (cd.status !== 'active' || wwwPending) pollRef.current = setInterval(sync, 5000)
     return () => { alive = false; clearInterval(pollRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cd?.name, cd?.status])
+  }, [cd?.name, cd?.status, cd?.wwwStatus])
 
   const removeBtn = (
     <button type="button" onClick={remove} disabled={busy}
@@ -226,6 +241,31 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
                 {connectedOn && <InfoRow field="Connected" value={connectedOn} />}
               </div>
 
+              {/* Apex is live, but www hasn't resolved yet — say so honestly and
+                  show the record still to add, rather than implying full success. */}
+              {isApex(cd.name) && cd.wwwStatus && cd.wwwStatus !== 'active' && (() => {
+                const wwwRec = dnsRecordsFor(cd.name).find((r) => r.name === 'www')
+                return (
+                  <div style={{ background: 'rgba(154,123,46,0.06)', borderRadius: 6, padding: '9px 10px' }}>
+                    <div style={{ fontSize: 11.5, color: '#9a7b2e', fontWeight: 500, marginBottom: 2 }}>
+                      www redirect — finishing setup
+                    </div>
+                    <p style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                      <strong>{cd.name}</strong> works. To make <strong>www.{cd.name}</strong> redirect to it,
+                      add this record at your DNS provider (may take a few minutes to verify):
+                    </p>
+                    <CloudflareNote provider={provider} />
+                    {wwwRec && (
+                      <div style={{ marginTop: 6 }}>
+                        <CopyRow field="Type"  value={wwwRec.type} />
+                        <CopyRow field="Name"  value={wwwRec.name} />
+                        <CopyRow field="Value" value={wwwRec.value} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {removeBtn}
             </div>
           )
@@ -255,6 +295,7 @@ export default function DomainPanel({ siteConfig, username, onUpdate }) {
                 Open {provider.name} DNS settings →
               </a>
             )}
+            <CloudflareNote provider={provider} />
 
             {/* Each record, broken into copyable fields and captioned by purpose */}
             <div style={{ borderTop: '1px solid rgba(160,140,110,0.14)' }}>

@@ -100,7 +100,7 @@ describe('normalizeCustomDomain', () => {
     expect(normalizeCustomDomain('photos.janedoe.com')).toEqual({
       name: 'photos.janedoe.com', status: 'pending',
       verification: [{ type: 'CNAME', name: 'photos', value: 'cname.vercel-dns.com' }],
-      addedAt: null, verifiedAt: null, lastError: null, wwwAddedAt: null,
+      addedAt: null, verifiedAt: null, lastError: null, wwwAddedAt: null, wwwStatus: null,
     })
   })
   it('passes through an object, filling defaults', () => {
