@@ -47,6 +47,34 @@ export function flattenForOtherPages(pages) {
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
 }
 
+// The in-body sub-nav (section nav) for a page: the set of pages in the page's
+// section, shown on BOTH the section parent and each of its children.
+//
+// - A page with visible children leads its own section → its children are listed,
+//   none active (you're on the parent). This holds even for an intermediate page
+//   that is itself a child of another section, so a mid-tree parent still lists
+//   its own children.
+// - A leaf page shows its siblings (its parent's children), with the current page
+//   marked active.
+//
+// Children are ordered by `sortOrder` to match the page tree + header nav, and the
+// section parent's `hideChildrenInNav` flag suppresses the list entirely.
+export function computeSubNav(pages, page) {
+  const all = pages || []
+  if (!page) return { subNavPages: [], activeSubNavId: null }
+  const childrenOf = (id) => all
+    .filter(p => p.parentId === id && p.showInNav !== false)
+    .slice()
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+
+  const hasChildren = childrenOf(page.id).length > 0
+  const sectionParentId = hasChildren ? page.id : (page.parentId ?? page.id)
+  const sectionParent = all.find(p => p.id === sectionParentId) || page
+  const subNavPages = sectionParent.hideChildrenInNav ? [] : childrenOf(sectionParentId)
+  const activeSubNavId = hasChildren ? null : page.id
+  return { subNavPages, activeSubNavId }
+}
+
 // Returns true if `maybeAncestorId` is `pageId` or any ancestor of pageId in the nav tree.
 export function isDescendantOf(pages, pageId, maybeAncestorId) {
   if (pageId === maybeAncestorId) return true

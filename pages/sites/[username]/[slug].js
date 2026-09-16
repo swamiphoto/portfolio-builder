@@ -10,6 +10,7 @@ import { heroTitleFor } from '../../../common/pageUtils'
 import { publicCaptureForAsset } from '../../../common/photoMeta'
 import { publicPrintForAsset, publicPrintStore, publicSiteConfig } from '../../../common/print/publicPrint'
 import { siteUrlFor, basePathFor } from '../../../common/domainUtils'
+import { computeSubNav } from '../../../common/pagesTree'
 import Gallery from '../../../components/image-displays/gallery/Gallery'
 import PageCover from '../../../components/image-displays/page/PageCover'
 import SiteNav from '../../../components/image-displays/page/SiteNav'
@@ -123,20 +124,10 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
     ? 'left-rail'
     : (page?.cover?.imageUrl ? undefined : 'header-dropdown')
   const slideshowHref = page.slideshow?.enabled ? `${basePath}/${page.slug || page.id}/slideshow` : null
-  // Sub-nav: if this page has a parent, show siblings. If it has children, show children.
+  // Section sub-nav: shown on the section parent (nothing active) and on each of
+  // its children (current page active), ordered by sortOrder. See computeSubNav.
   const allPages = siteConfig.pages || []
-  const isChildPage = !!page.parentId
-  // A page can hide its own nested pages from the sub-nav (they may be surfaced
-  // elsewhere, e.g. a page-links block). When on a child of such a parent, its
-  // sibling sub-nav is suppressed too.
-  const subNavParent = isChildPage ? allPages.find(p => p.id === page.parentId) : page
-  const childrenHidden = !!subNavParent?.hideChildrenInNav
-  const subNavPages = childrenHidden
-    ? []
-    : isChildPage
-    ? allPages.filter(p => p.parentId === page.parentId && p.showInNav !== false)
-    : allPages.filter(p => p.parentId === page.id && p.showInNav !== false)
-  const activeSubNavId = isChildPage ? page.id : null
+  const { subNavPages, activeSubNavId } = computeSubNav(allPages, page)
   const hasCover = !!page.cover?.imageUrl
   const coverNavLinks = hasCover
     ? subNavPages.map(p => ({ label: p.title, href: `${basePath}/${p.slug || p.id}` }))
