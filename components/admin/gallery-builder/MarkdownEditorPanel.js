@@ -98,6 +98,10 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   // itself is recomputed (and re-renders the overlay) on every mutation.
   const selectedImgRef = useRef(null)
   const [selRect, setSelRect] = useState(null)
+  // Bumped on each new image selection so the overlay (and its uncontrolled
+  // caption input) remounts — clicking straight from one image to another
+  // would otherwise reuse the instance and show the prior image's caption.
+  const [selGen, setSelGen] = useState(0)
 
   // Floating, draggable panel (mirrors PhotoPickerModal). Opens beside the
   // block being edited — right of the site + block sidebars — clamped so a
@@ -168,7 +172,9 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
 
   const selectImageFromEvent = (e) => {
     const wrap = e.target.closest?.('[data-md-image]')
-    selectedImgRef.current = wrap && editableRef.current?.contains(wrap) ? wrap : null
+    const next = wrap && editableRef.current?.contains(wrap) ? wrap : null
+    selectedImgRef.current = next
+    if (next) setSelGen((g) => g + 1)
     positionOverlay()
   }
 
@@ -402,7 +408,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         {selRect && selectedImgRef.current && (
           <div style={{ position: 'absolute', top: selRect.top, left: selRect.left, width: selRect.width, height: selRect.height, pointerEvents: 'none' }}>
             <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
-              <MarkdownImageControls attrs={imgAttrs()} onAttr={onImgAttr} onCaption={onImgCaption} onRemove={onImgRemove} onMove={onImgMove} />
+              <MarkdownImageControls key={selGen} attrs={imgAttrs()} onAttr={onImgAttr} onCaption={onImgCaption} onRemove={onImgRemove} onMove={onImgMove} />
             </div>
           </div>
         )}
