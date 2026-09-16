@@ -1,5 +1,7 @@
 import React from 'react'
 import { parseMarkdown } from '@/common/markdown'
+import { imageFigureClasses } from '@/common/markdownImageOptions'
+import { captionStyleCss } from '@/common/captionStyles'
 
 // Imported markdown can come from arbitrary external sites; never let a
 // javascript:/data: url become a clickable href on a published page. A
@@ -31,7 +33,7 @@ export default function MarkdownText({ content, variantClasses }) {
   const ast = parseMarkdown(content)
   const vc = variantClasses || {}
   return (
-    <div className="markdown-text space-y-2">
+    <div className="markdown-text space-y-2 after:clear-both after:block after:content-['']">
       {ast.map((b, i) => {
         if (b.type === 'heading') return <div key={i} className={vc.heading}>{renderInline(b.children)}</div>
         if (b.type === 'quote') return <div key={i} className={`${vc.quote || vc.body || ''} border-l-2 pl-4 opacity-90`}>{renderInline(b.children)}</div>
@@ -41,13 +43,15 @@ export default function MarkdownText({ content, variantClasses }) {
               {b.items.map((item, j) => <li key={j}>{renderInline(item)}</li>)}
             </ul>
           )
-        if (b.type === 'image')
+        if (b.type === 'image') {
+          const { figureClass, imgClass } = imageFigureClasses(b)
           return (
-            <figure key={i} className="my-6">
-              <img src={b.url} alt={b.caption || ''} className="w-full h-auto" loading="lazy" />
-              {b.caption ? <figcaption className="mt-2 text-sm opacity-60">{b.caption}</figcaption> : null}
+            <figure key={i} className={figureClass}>
+              <img src={b.url} alt={b.caption || ''} className={imgClass} loading="lazy" />
+              {b.caption ? <figcaption className="mt-2 text-sm opacity-60" style={captionStyleCss(b.style)}>{b.caption}</figcaption> : null}
             </figure>
           )
+        }
         return <div key={i} className={`${vc.body || ''} whitespace-pre-line`}>{renderInline(b.children)}</div>
       })}
     </div>
