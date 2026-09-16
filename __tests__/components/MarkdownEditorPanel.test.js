@@ -169,6 +169,7 @@ it('inserts the image after the block the caret was in, not at the end', () => {
   const firstP = el.querySelectorAll('p')[0]
   placeCaretIn(firstP.firstChild || firstP, 0)
   fireEvent.click(screen.getByLabelText('Image'))   // opens picker — must capture the caret's block now
+  window.getSelection().removeAllRanges()             // real modal steals focus → selection lost
   fireEvent.click(screen.getByTestId('picker'))       // mock confirms one photo
   const last = onChange.mock.calls[onChange.mock.calls.length - 1][0]
   expect(last.content).toMatch(/First para\n\n!\[\]\(https:\/\/gcs\/pic\.jpg\)[\s\S]*Second para/)
