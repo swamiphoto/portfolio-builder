@@ -824,7 +824,10 @@ export default function PlatformSidebar({
                 if (!username) return
                 const base = basePathFor(window.location.host, process.env.NEXT_PUBLIC_ROOT_DOMAIN, username)
                 const page = siteConfig?.pages?.find(p => p.id === selectedPageId)
-                const href = page?.slug ? `${base}/${page.slug}` : (base || '/')
+                const path = page?.slug ? `${base}/${page.slug}` : (base || '/')
+                // ?preview=1 opens the owner's unpublished draft (and sets the
+                // preview cookie so navigation inside stays on the draft).
+                const href = `${path}${path.includes('?') ? '&' : '?'}preview=1`
                 window.open(href, '_blank')
               }}
               style={{
