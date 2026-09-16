@@ -1,4 +1,4 @@
-import { parseMarkdown, blockToMarkdownSeed } from '@/common/markdown'
+import { parseMarkdown, blockToMarkdownSeed, parseImageAttrs, formatImageAttrs } from '@/common/markdown'
 
 it('parses headings, paragraphs, quotes, lists, images', () => {
   const ast = parseMarkdown('# Title\n\nHello **bold** and *ital*.\n\n> a quote\n\n- one\n- two\n\n![Me at work](https://gcs/me.jpg)')
@@ -67,5 +67,23 @@ describe('blockToMarkdownSeed', () => {
   it('handles missing block / content gracefully', () => {
     expect(blockToMarkdownSeed(null)).toBe('')
     expect(blockToMarkdownSeed({ variant: 1 })).toBe('# ')
+  })
+})
+
+describe('image attribute suffix', () => {
+  it('parses layout/size/style from an image line', () => {
+    const [node] = parseMarkdown('![A cat](http://x/c.jpg){layout=side size=m style=serif}')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: 'A cat', layout: 'side', size: 'm', style: 'serif' })
+  })
+  it('leaves a bare image with no attrs (backward compatible)', () => {
+    const [node] = parseMarkdown('![](http://x/c.jpg)')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: '' })
+  })
+  it('drops unknown keys and invalid values', () => {
+    expect(parseImageAttrs('layout=bogus size=m foo=bar')).toEqual({ size: 'm' })
+  })
+  it('formatImageAttrs emits only set keys, empty when none', () => {
+    expect(formatImageAttrs({ layout: 'side', size: 'm' })).toBe('layout=side size=m')
+    expect(formatImageAttrs({})).toBe('')
   })
 })
