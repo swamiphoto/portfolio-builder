@@ -45,6 +45,25 @@ export function setImageAttr(wrapper, key, value) {
   else wrapper.removeAttribute(`data-${key}`)
 }
 
+// removeImageWrapper(wrapper) -> assetUrl. Detaches the wrapper and returns
+// its <img> src so the caller can prune the matching entry from block.images.
+export function removeImageWrapper(wrapper) {
+  const img = wrapper.querySelector('img')
+  const src = img ? img.getAttribute('src') || '' : ''
+  wrapper.remove()
+  return src
+}
+
+// moveImageWrapper(wrapper, dir) -> boolean. Swaps the wrapper with its
+// previous (-1) or next (+1) top-level sibling; returns false at the edge.
+export function moveImageWrapper(wrapper, dir) {
+  const sib = dir < 0 ? wrapper.previousElementSibling : wrapper.nextElementSibling
+  if (!sib) return false
+  if (dir < 0) wrapper.parentElement.insertBefore(wrapper, sib)
+  else wrapper.parentElement.insertBefore(sib, wrapper)
+  return true
+}
+
 function appendInline(parent, node, doc) {
   switch (node.type) {
     case 'bold': {

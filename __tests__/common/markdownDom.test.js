@@ -1,4 +1,4 @@
-import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode, getImageAttrs, setImageAttr } from '@/common/markdownDom'
+import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode, getImageAttrs, setImageAttr, removeImageWrapper, moveImageWrapper } from '@/common/markdownDom'
 
 // Round trips: renderMarkdownToElement -> serializeDomToMarkdown should
 // return the exact input for markdown the serializer can reproduce
@@ -150,5 +150,26 @@ describe('image wrapper attrs round-trip', () => {
     const w = createImageBlockNode(document, 'http://x/c.jpg', '', {})
     setImageAttr(w, 'layout', 'side'); expect(getImageAttrs(w).layout).toBe('side')
     setImageAttr(w, 'layout', ''); expect(getImageAttrs(w).layout).toBeUndefined()
+  })
+})
+
+describe('image wrapper remove/move', () => {
+  function root() {
+    const r = document.createElement('div')
+    const p = document.createElement('p'); p.textContent = 'A'; r.appendChild(p)
+    r.appendChild(createImageBlockNode(document, 'http://x/c.jpg', '', {}))
+    const p2 = document.createElement('p'); p2.textContent = 'B'; r.appendChild(p2)
+    return r
+  }
+  it('removeImageWrapper detaches the node and returns its src', () => {
+    const r = root(); const w = r.querySelector('[data-md-image]')
+    expect(removeImageWrapper(w)).toBe('http://x/c.jpg')
+    expect(r.querySelector('[data-md-image]')).toBeNull()
+  })
+  it('moveImageWrapper reorders among top-level siblings', () => {
+    const r = root(); const w = r.querySelector('[data-md-image]')
+    expect(moveImageWrapper(w, -1)).toBe(true)
+    expect(r.firstElementChild.hasAttribute('data-md-image')).toBe(true)
+    expect(moveImageWrapper(r.querySelector('[data-md-image]'), -1)).toBe(false) // already first
   })
 })
