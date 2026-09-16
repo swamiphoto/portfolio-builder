@@ -84,6 +84,12 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   const blockRef = useRef(block)
   blockRef.current = block
   const [pickerOpen, setPickerOpen] = useState(false)
+  // Top-level block the caret was in when the picker opened. Opening
+  // PhotoPickerModal moves the selection out of the contentEditable, so by
+  // the time insertImages runs, currentBlockElement(el) would otherwise fall
+  // back to root.lastElementChild (the end of the article) instead of where
+  // the user actually was.
+  const savedAnchorRef = useRef(null)
 
   // Floating, draggable panel (mirrors PhotoPickerModal). Opens beside the
   // block being edited — right of the site + block sidebars — clamped so a
@@ -133,6 +139,12 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   }, [open])
 
   if (!block || !open) return null
+
+  const openPicker = () => {
+    const el = editableRef.current
+    savedAnchorRef.current = el ? currentBlockElement(el) : null
+    setPickerOpen(true)
+  }
 
   const startDrag = (e) => {
     if (e.target.closest('button,input,select,textarea,img,[contenteditable]')) return
@@ -196,7 +208,12 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
       // nested in a <p> is silently dropped and the photo never reaches
       // `content` (vanishing from the preview and on reopen). Anchor off the
       // top-level block the caret sits in and splice the images in after it.
-      let after = currentBlockElement(el) // a direct child of el, or null when empty
+      // Prefer the block the caret was in when the picker opened; only fall
+      // back to the live selection if that saved anchor is stale (no longer
+      // a direct child of el, e.g. the block was removed/replaced meanwhile).
+      let after = (savedAnchorRef.current && savedAnchorRef.current.parentElement === el)
+        ? savedAnchorRef.current
+        : currentBlockElement(el) // a direct child of el, or null when empty
       refs.forEach((r) => {
         const node = createImageBlockNode(document, r.url, '')
         if (after && after.parentElement === el) {
@@ -223,6 +240,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         sel.addRange(range)
       }
     }
+    savedAnchorRef.current = null
     const seen = new Set((block.images || []).map((i) => i.assetId))
     const images = [...(block.images || []), ...refs.filter((r) => r.assetId && !seen.has(r.assetId)).map((r) => ({ assetId: r.assetId, url: r.url }))]
     emit({ images })
@@ -236,7 +254,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
       const isEmpty = target ? (target.textContent || '').trim() === '' : (el?.textContent || '').trim() === ''
       if (isEmpty) {
         e.preventDefault()
-        setPickerOpen(true)
+        openPicker()
       }
     }
   }
@@ -253,7 +271,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         { name: 'Heading', tip: 'Heading', act: () => setBlockElementTag('h3'), label: 'H' },
         { name: 'Quote', tip: 'Quote', act: () => setBlockElementTag('blockquote'), label: '"' },
         { name: 'Link', tip: 'Link', act: applyLink, label: '↗' },
-        { name: 'Image', tip: 'Insert photo', act: () => setPickerOpen(true), label: 'Img' },
+        { name: 'Image', tip: 'Insert photo', act: openPicker, label: 'Img' },
       ]
 
   return (
