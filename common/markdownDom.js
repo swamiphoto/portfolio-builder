@@ -3,18 +3,20 @@
 // string-concatenated HTML — so there is no injection surface even when the
 // source markdown contains things that look like tags (they land as literal
 // text nodes, courtesy of parseMarkdown already treating raw HTML as text).
-import { parseMarkdown } from './markdown'
+import { parseMarkdown, formatImageAttrs } from './markdown'
 
 const IMAGE_WRAPPER_ATTR = 'data-md-image'
+const IMAGE_ATTR_KEYS = ['layout', 'size', 'style']
 
 // Builds the non-editable wrapper around an <img> preview. Exported so the
 // editor panel can reuse the exact same node shape when inserting a photo
 // picked mid-edit (keeps render and insert paths in sync).
-export function createImageBlockNode(doc, url, caption) {
+export function createImageBlockNode(doc, url, caption, attrs = {}) {
   const wrap = doc.createElement('div')
   wrap.setAttribute(IMAGE_WRAPPER_ATTR, '1')
   wrap.setAttribute('contenteditable', 'false')
   wrap.style.margin = '0.5em 0'
+  for (const k of IMAGE_ATTR_KEYS) if (attrs[k]) wrap.setAttribute(`data-${k}`, attrs[k])
   const img = doc.createElement('img')
   img.setAttribute('src', url || '')
   if (caption) img.setAttribute('alt', caption)
@@ -23,6 +25,24 @@ export function createImageBlockNode(doc, url, caption) {
   img.style.borderRadius = '8px'
   wrap.appendChild(img)
   return wrap
+}
+
+export function getImageAttrs(wrapper) {
+  const out = {}
+  for (const k of IMAGE_ATTR_KEYS) { const v = wrapper.getAttribute(`data-${k}`); if (v) out[k] = v }
+  const img = wrapper.querySelector('img')
+  out.caption = (img && img.getAttribute('alt')) || ''
+  return out
+}
+
+export function setImageAttr(wrapper, key, value) {
+  if (key === 'caption') {
+    const img = wrapper.querySelector('img')
+    if (img) { value ? img.setAttribute('alt', value) : img.removeAttribute('alt') }
+    return
+  }
+  if (value) wrapper.setAttribute(`data-${key}`, value)
+  else wrapper.removeAttribute(`data-${key}`)
 }
 
 function appendInline(parent, node, doc) {
@@ -97,7 +117,7 @@ export function renderMarkdownToElement(md, doc) {
         break
       }
       case 'image':
-        container.appendChild(createImageBlockNode(d, block.url, block.caption))
+        container.appendChild(createImageBlockNode(d, block.url, block.caption, { layout: block.layout, size: block.size, style: block.style }))
         break
       case 'paragraph':
       default: {
@@ -165,11 +185,14 @@ function blockElementToMarkdown(el) {
     return items.map((li) => `- ${serializeInline(li).trim()}`).join('\n')
   }
   if (tag === 'img') {
-    return `![](${el.getAttribute('src') || ''})`
+    const alt = el.getAttribute('alt') || ''
+    return `![${alt}](${el.getAttribute('src') || ''})`
   }
   if (el.hasAttribute(IMAGE_WRAPPER_ATTR)) {
+    const { caption, ...attrs } = getImageAttrs(el)
     const img = el.querySelector('img')
-    return `![](${img ? img.getAttribute('src') || '' : ''})`
+    const suffix = formatImageAttrs(attrs)
+    return `![${caption}](${img ? img.getAttribute('src') || '' : ''})${suffix ? `{${suffix}}` : ''}`
   }
   // p, div, or anything else a browser's contentEditable might insert
   // (Enter often produces a fresh <div>) — treat as a paragraph.

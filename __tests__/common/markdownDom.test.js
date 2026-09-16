@@ -1,4 +1,4 @@
-import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode } from '@/common/markdownDom'
+import { renderMarkdownToElement, serializeDomToMarkdown, createImageBlockNode, getImageAttrs, setImageAttr } from '@/common/markdownDom'
 
 // Round trips: renderMarkdownToElement -> serializeDomToMarkdown should
 // return the exact input for markdown the serializer can reproduce
@@ -124,5 +124,31 @@ describe('serializeDomToMarkdown', () => {
     host.appendChild(p)
     host.appendChild(document.createElement('br'))
     expect(serializeDomToMarkdown(host)).toBe('hello')
+  })
+})
+
+describe('image wrapper attrs round-trip', () => {
+  it('createImageBlockNode stores attrs + caption and getImageAttrs reads them', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', 'A cat', { layout: 'side', size: 'm', style: 'serif' })
+    expect(getImageAttrs(w)).toEqual({ layout: 'side', size: 'm', style: 'serif', caption: 'A cat' })
+  })
+  it('serializes a wrapper back to markdown with caption + attrs', () => {
+    const root = document.createElement('div')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'A cat', { layout: 'side', size: 'm' }))
+    expect(serializeDomToMarkdown(root)).toBe('![A cat](http://x/c.jpg){layout=side size=m}')
+  })
+  it('a bare image round-trips unchanged', () => {
+    const root = document.createElement('div')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', '', {}))
+    expect(serializeDomToMarkdown(root)).toBe('![](http://x/c.jpg)')
+  })
+  it('renderMarkdownToElement rebuilds a wrapper carrying the attrs', () => {
+    const el = renderMarkdownToElement('![A cat](http://x/c.jpg){layout=full-bleed}', document)
+    expect(getImageAttrs(el.firstChild)).toMatchObject({ layout: 'full-bleed', caption: 'A cat' })
+  })
+  it('setImageAttr sets and clears', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', '', {})
+    setImageAttr(w, 'layout', 'side'); expect(getImageAttrs(w).layout).toBe('side')
+    setImageAttr(w, 'layout', ''); expect(getImageAttrs(w).layout).toBeUndefined()
   })
 })
