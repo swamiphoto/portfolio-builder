@@ -4,7 +4,9 @@
 // is no injection surface by construction.
 
 // Optional {key=value …} suffix after the image, e.g. ![c](u){layout=side size=m}
-const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)\s]+)\)(?:\{([^}]*)\})?$/
+// The alt/caption allows backslash-escaped characters (so a caption containing
+// a literal "]" doesn't terminate the alt early) — see imageNode's unescape.
+const IMAGE_LINE = /^!\[((?:\\.|[^\]\\])*)\]\(([^)\s]+)\)(?:\{([^}]*)\})?$/
 
 const IMAGE_ATTR_VALUES = {
   layout: ['centered', 'full-bleed', 'side'],
@@ -34,8 +36,13 @@ export function formatImageAttrs(attrs) {
 }
 
 // Build an image AST node, folding in any parsed attrs (absent keys omitted).
+// The caption comes from the markdown alt, where "]" and "\" are backslash-
+// escaped by the serializer (see markdownDom.js) so the alt delimiter can't
+// be confused with a literal bracket in the caption text — unescape here to
+// recover the original, raw caption.
 function imageNode(url, caption, attrStr) {
-  return { type: 'image', url, caption, ...parseImageAttrs(attrStr) }
+  const unescaped = caption.replace(/\\([\\\]])/g, '$1')
+  return { type: 'image', url, caption: unescaped, ...parseImageAttrs(attrStr) }
 }
 
 // Sticky (/y) tokenizers: anchored at lastIndex, so we scan the source in

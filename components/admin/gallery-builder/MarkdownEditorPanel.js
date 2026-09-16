@@ -199,10 +199,16 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   const onImgRemove = () => {
     const wrap = selectedImgRef.current
     if (!wrap) return
-    const url = removeImageWrapper(wrap)
+    removeImageWrapper(wrap)
     selectedImgRef.current = null
     setSelRect(null)
-    const images = (block.images || []).filter((i) => i.url !== url)
+    // Rebuild block.images from what's still actually in the DOM, rather than
+    // filtering out every entry matching the removed url — the same photo can
+    // appear more than once in an article, and a plain url!==url filter would
+    // drop the bookkeeping entry for surviving copies too.
+    const el = editableRef.current
+    const remainingUrls = new Set(Array.from(el ? el.querySelectorAll('[data-md-image] img') : []).map((im) => im.getAttribute('src')))
+    const images = (block.images || []).filter((i) => remainingUrls.has(i.url))
     emit({ images })
   }
 

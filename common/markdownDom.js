@@ -191,6 +191,16 @@ function serializeInline(el) {
   return out
 }
 
+// Escape "]" and "\" in a caption before it goes into a markdown alt
+// (![caption](url)) — mirrors the unescape in markdown.js's imageNode, so a
+// caption containing "]" (e.g. "Portra 400 [expired]") round-trips instead
+// of terminating the alt early and losing the image on reparse. The DOM
+// attrs (img alt) always hold the raw, unescaped caption; escaping happens
+// only at this markdown-string boundary.
+function escapeCaption(caption) {
+  return String(caption || '').replace(/([\\\]])/g, '\\$1')
+}
+
 function blockElementToMarkdown(el) {
   const tag = el.tagName.toLowerCase()
   if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6') {
@@ -205,13 +215,13 @@ function blockElementToMarkdown(el) {
   }
   if (tag === 'img') {
     const alt = el.getAttribute('alt') || ''
-    return `![${alt}](${el.getAttribute('src') || ''})`
+    return `![${escapeCaption(alt)}](${el.getAttribute('src') || ''})`
   }
   if (el.hasAttribute(IMAGE_WRAPPER_ATTR)) {
     const { caption, ...attrs } = getImageAttrs(el)
     const img = el.querySelector('img')
     const suffix = formatImageAttrs(attrs)
-    return `![${caption}](${img ? img.getAttribute('src') || '' : ''})${suffix ? `{${suffix}}` : ''}`
+    return `![${escapeCaption(caption)}](${img ? img.getAttribute('src') || '' : ''})${suffix ? `{${suffix}}` : ''}`
   }
   // p, div, or anything else a browser's contentEditable might insert
   // (Enter often produces a fresh <div>) — treat as a paragraph.

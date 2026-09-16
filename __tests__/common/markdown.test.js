@@ -87,3 +87,30 @@ describe('image attribute suffix', () => {
     expect(formatImageAttrs({})).toBe('')
   })
 })
+
+describe('caption bracket escaping', () => {
+  it('parses an escaped ] inside the caption and unescapes it', () => {
+    // Only "]" (the alt-delimiter-confusable char) and "\" get escaped by the
+    // serializer — "[" is allowed unescaped since it doesn't end the alt group.
+    const [node] = parseMarkdown('![Portra 400 [expired\\]](http://x/c.jpg)')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: 'Portra 400 [expired]' })
+  })
+  it('does not stop the alt early at an escaped ] (would previously misparse)', () => {
+    // Without escaping support, a raw "]" inside the caption breaks IMAGE_LINE and
+    // the whole line falls back to a paragraph (image data loss). With escaping,
+    // callers are expected to write the caption pre-escaped, e.g. via the DOM
+    // serializer boundary tested in markdownDom.test.js.
+    const [node] = parseMarkdown('![Portra 400 [expired\\]](http://x/c.jpg){layout=side}')
+    expect(node.type).toBe('image')
+    expect(node.caption).toBe('Portra 400 [expired]')
+    expect(node.layout).toBe('side')
+  })
+  it('unescapes a literal backslash in the caption', () => {
+    const [node] = parseMarkdown('![C:\\\\photos](http://x/c.jpg)')
+    expect(node.caption).toBe('C:\\photos')
+  })
+  it('plain captions with no special characters still parse (control case)', () => {
+    const [node] = parseMarkdown('![A cat](http://x/c.jpg)')
+    expect(node).toEqual({ type: 'image', url: 'http://x/c.jpg', caption: 'A cat' })
+  })
+})
