@@ -5,7 +5,7 @@ jest.mock('../../common/siteConfig', () => ({
   readPublishedSiteConfig: jest.fn(async () => ({})),
   normalizePrintStore: jest.fn(() => ({
     printStore: {
-      enabled: false, chargesEnabled: true, stripeConnectAccountId: 'acct_1', markup: 3, currency: 'USD',
+      enabled: true, chargesEnabled: true, stripeConnectAccountId: 'acct_1', markup: 3, currency: 'USD',
       platformFeePct: 0, shippingMethod: 'budget', freeShipping: true, shippingBuffer: 900, priceRounding: 'charm9',
     },
   })),

@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const rawConfig = await readPublishedSiteConfig(lookup.userId)
     const config = normalizePrintStore(rawConfig || {})
     const ps = config.printStore
-    if (!ps.chargesEnabled || !ps.stripeConnectAccountId) {
+    if (!ps.enabled || !ps.chargesEnabled || !ps.stripeConnectAccountId) {
       return res.status(403).json({ error: 'store not ready for checkout' })
     }
 

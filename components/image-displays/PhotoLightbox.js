@@ -10,7 +10,7 @@ export default function PhotoLightbox({ images, index, onClose, onNavigate, prin
   const hasPrev = index > 0;
   const hasNext = index < images.length - 1;
 
-  const sellable = !!(printStore?.paymentsReady && image?.print?.sellable);
+  const sellable = !!(printStore?.enabled && printStore?.paymentsReady && image?.print?.sellable);
   const [hovering, setHovering] = useState(false);
   const [peek, setPeek] = useState(true);
   const isMobile = useIsMobile();

@@ -65,6 +65,17 @@ const sectionHeader = {
   textTransform: 'uppercase',
 }
 
+// A not-yet-available product in the store list: shown greyed with a "Coming
+// soon" tag instead of a toggle.
+function ComingSoonProduct({ label }) {
+  return (
+    <div className="flex items-center justify-between" style={{ opacity: 0.5 }}>
+      <span style={{ fontSize: 13, color: '#2c2416' }}>{label}</span>
+      <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Coming soon</span>
+    </div>
+  )
+}
+
 // Collapsible section header for the Print store panel — the only settings view
 // with multiple sections. Chevron points down when collapsed, flips up when open.
 // Muted-gray to match the drill-in chevrons on the main settings screen.
@@ -324,12 +335,27 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   const exampleProfit = exampleRetail - exampleCost - exampleCommission
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Products" onBack={onBack}>
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
       <div style={{ padding: '12px 14px 14px' }} className="space-y-3">
         {/* Intro */}
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-          Sell your photos as prints, framed and unframed. Mark a photo for sale and connect payouts, and the Buy button goes live. More products (mugs, books, albums) coming soon.
+          Choose what to sell. Turn a product on, mark photos for sale, and connect payouts — the Buy button goes live.
         </p>
+
+        {/* Products — one toggle per product type (only Prints for now). */}
+        <div className="space-y-2.5">
+          <div>
+            <div className="flex items-center justify-between">
+              <span style={{ fontSize: 13, color: '#2c2416' }}>Prints</span>
+              <ToggleSwitch ariaLabel="Prints" on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
+            </div>
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4, marginBottom: 0 }}>
+              Framed and unframed. Shows a Buy button on photos you mark for sale.
+            </p>
+          </div>
+          <ComingSoonProduct label="Mugs" />
+          <ComingSoonProduct label="Photo books" />
+        </div>
 
         {/* Pricing */}
         <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
@@ -1096,8 +1122,8 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       {/* Drill rows — each shows a right-side status: a state word when configured,
           else "Set up". */}
       <DrillRow
-        label="Products"
-        status={config.printStore?.chargesEnabled ? 'On' : 'Set up'}
+        label="Print store"
+        status={config.printStore?.enabled ? 'On' : 'Set up'}
         onDrillIn={() => setView('print')}
       />
       <DrillRow
