@@ -41,3 +41,17 @@ it('shows the plain price with no buffer when the store does not have free shipp
   render(<PrintPurchasePanel print={print} printStore={printStore} spec={baseSpec} onSpecChange={() => {}} onBuy={() => {}} />)
   expect(screen.getByRole('button', { name: /buy this print · \$20/i })).toBeInTheDocument()
 })
+
+it('applies the store price rounding to the buy price', () => {
+  const charm9Store = { markup: 3, currency: 'USD', priceRounding: 'charm9' }
+  render(<PrintPurchasePanel print={print} printStore={charm9Store} spec={baseSpec} onSpecChange={() => {}} onBuy={() => {}} />)
+  // 8x10 lustre, markup 3 => nearest5 would be $20; charm9 rounds to $19.
+  expect(screen.getByRole('button', { name: /buy this print · \$19/i })).toBeInTheDocument()
+})
+
+it('formats a fractional shipping buffer with two decimal places', () => {
+  const freeShippingStore = { markup: 3, currency: 'USD', freeShipping: true, shippingBuffer: 750 }
+  render(<PrintPurchasePanel print={print} printStore={freeShippingStore} spec={baseSpec} onSpecChange={() => {}} onBuy={() => {}} />)
+  // 8x10 lustre, markup 3 => optionPrice 20, plus a $7.50 buffer => $27.50, not $27.5.
+  expect(screen.getByRole('button', { name: /buy this print · \$27\.50$/i })).toBeInTheDocument()
+})
