@@ -291,7 +291,11 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   const markup = ps.markup ?? 3
   const feePct = Number(process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT || 0)
   const exampleCost = 20
-  const exampleRetail = Math.round(exampleCost * markup)
+  const bufferDollars = (ps.shippingBuffer || 0) / 100
+  const exampleRetailBase = Math.round(exampleCost * markup)
+  // With free shipping on, the buffer is folded into the sticker price rather
+  // than billed separately, so the walkthrough number should reflect that.
+  const exampleRetail = ps.freeShipping ? exampleRetailBase + bufferDollars : exampleRetailBase
   const exampleCommission = Math.round(exampleRetail * feePct / 100)
   const exampleProfit = exampleRetail - exampleCost - exampleCommission
 
@@ -330,8 +334,8 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                 onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
               />
               <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
-                You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
-                <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>, you keep{' '}
+                You charge {markup}× our lab cost{ps.freeShipping ? `, plus a $${bufferDollars} shipping buffer` : ''}. A print that costs $20 to make sells for{' '}
+                <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>{ps.freeShipping ? ' with free shipping' : ''}, you keep{' '}
                 <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>
                 {feePct > 0 ? ` after Sepia’s ${feePct}% commission` : ''}.
               </p>
@@ -349,6 +353,67 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
                 Used for prints and package sales.
               </p>
+            </Field>
+
+            <Field label="Shipping speed">
+              <div style={{ marginTop: 6 }}>
+                <DesignPillToggle
+                  value={ps.shippingMethod || 'standard'}
+                  onChange={(v) => updatePrintStore({ shippingMethod: v })}
+                  options={[
+                    { value: 'standard', label: 'Standard' },
+                    { value: 'budget', label: 'Budget' },
+                  ]}
+                />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
+                {(ps.shippingMethod || 'standard') === 'budget'
+                  ? 'Cheaper (~$5–8), slower, and may not be tracked.'
+                  : 'Tracked, faster (~3–7 days). ~$25 to the US.'}
+              </p>
+            </Field>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 13, color: '#2c2416' }}>Free shipping</span>
+                <ToggleSwitch ariaLabel="Free shipping" on={!!ps.freeShipping} onChange={() => updatePrintStore({ freeShipping: !ps.freeShipping })} />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+                Added to every print to cover shipping. Covers domestic; international may cost more and comes out of your margin.
+              </p>
+              {ps.freeShipping && (
+                <div style={{ marginTop: 10 }}>
+                  <Field label="Shipping buffer ($)">
+                    <input
+                      className={inputCls}
+                      style={inputStyle}
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="0"
+                      value={bufferDollars}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        const n = parseFloat(v || 0)
+                        updatePrintStore({ shippingBuffer: Number.isNaN(n) ? 0 : Math.round(n * 100) })
+                      }}
+                    />
+                  </Field>
+                </div>
+              )}
+            </div>
+
+            <Field label="Price rounding">
+              <div style={{ marginTop: 6 }}>
+                <DesignPillToggle
+                  value={ps.priceRounding || 'nearest5'}
+                  onChange={(v) => updatePrintStore({ priceRounding: v })}
+                  options={[
+                    { value: 'nearest5', label: 'Round to $5' },
+                    { value: 'charm9', label: 'End in $9' },
+                  ]}
+                />
+              </div>
             </Field>
 
           </div>
