@@ -1,5 +1,6 @@
 import {
   roundPrice,
+  roundCharm9,
   computeRetail,
   lineCost,
   buildPriceMatrix,
@@ -44,5 +45,20 @@ describe('buildPriceMatrix', () => {
     const noneRow = rows.find((r) => r.finish === 'lustre' && r.frame === 'none')
     expect(noneRow.labCost).toBe(6)
     expect(noneRow.retail).toBe(computeRetail(6, 3))
+  })
+})
+
+describe('charm-9 rounding', () => {
+  it('rounds up to the next dollar ending in 9', () => {
+    expect(roundCharm9(34)).toBe(39)
+    expect(roundCharm9(39)).toBe(39)
+    expect(roundCharm9(40)).toBe(49)
+    expect(roundCharm9(9)).toBe(9)
+    expect(roundCharm9(1)).toBe(9)
+  })
+  it('computeRetail honors the rounding mode; default is nearest5', () => {
+    expect(computeRetail(13, 3)).toBe(40)                       // 39 -> nearest5 -> 40
+    expect(computeRetail(13, 3, { rounding: 'charm9' })).toBe(39)
+    expect(computeRetail(13, 3, { rounding: 'nearest5' })).toBe(40)
   })
 })
