@@ -354,6 +354,22 @@ describe('printStore.chargesEnabled', () => {
   })
 })
 
+describe('printStore shipping options', () => {
+  it('defaults preserve current behavior', () => {
+    const ps = normalizePrintStore({}).printStore
+    expect(ps.shippingMethod).toBe('standard')
+    expect(ps.freeShipping).toBe(false)
+    expect(ps.shippingBuffer).toBe(800)
+    expect(ps.priceRounding).toBe('nearest5')
+  })
+  it('keeps valid values and clamps invalid ones', () => {
+    const ps = normalizePrintStore({ printStore: { shippingMethod: 'budget', freeShipping: true, shippingBuffer: 1200, priceRounding: 'charm9' } }).printStore
+    expect(ps).toMatchObject({ shippingMethod: 'budget', freeShipping: true, shippingBuffer: 1200, priceRounding: 'charm9' })
+    const bad = normalizePrintStore({ printStore: { shippingMethod: 'x', priceRounding: 'y', shippingBuffer: -5 } }).printStore
+    expect(bad).toMatchObject({ shippingMethod: 'standard', priceRounding: 'nearest5', shippingBuffer: 0 })
+  })
+})
+
 describe('computeHasUnpublishedChanges', () => {
   it('is false when draft is not newer than published', () => {
     expect(computeHasUnpublishedChanges({ updatedAt: 5 }, { publishedAt: 5 })).toBe(false)

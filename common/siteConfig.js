@@ -198,6 +198,9 @@ export function defaultLink(overrides = {}) {
   }
 }
 
+const SHIP_METHODS = ['standard', 'budget']
+const ROUNDINGS = ['nearest5', 'charm9']
+
 export function normalizePrintStore(config = {}) {
   const ps = (config && config.printStore) || {}
   return {
@@ -213,6 +216,10 @@ export function normalizePrintStore(config = {}) {
       stripeConnectAccountId: ps.stripeConnectAccountId ?? null,
       platformFeePct: typeof ps.platformFeePct === 'number' ? ps.platformFeePct : 0,
       chargesEnabled: ps.chargesEnabled ?? false,
+      shippingMethod: SHIP_METHODS.includes(ps.shippingMethod) ? ps.shippingMethod : 'standard',
+      freeShipping: !!ps.freeShipping,
+      shippingBuffer: Number.isFinite(ps.shippingBuffer) && ps.shippingBuffer >= 0 ? Math.round(ps.shippingBuffer) : (ps.shippingBuffer === undefined ? 800 : 0),
+      priceRounding: ROUNDINGS.includes(ps.priceRounding) ? ps.priceRounding : 'nearest5',
     },
   }
 }
