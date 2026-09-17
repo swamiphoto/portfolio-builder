@@ -55,7 +55,7 @@ export default function CheckoutStep({ onBack, onSubmit, quoting, amounts, error
       </select>
       {amounts && (
         <div style={{ fontFamily: SANS, fontSize: 13, color: '#5c4f3a', display: 'flex', justifyContent: 'space-between' }}>
-          <span>Shipping ${(amounts.shippingCost / 100).toFixed(2)}</span>
+          <span>Shipping {amounts.shippingFree ? 'Free' : `$${(amounts.shippingCost / 100).toFixed(2)}`}</span>
           <span>Total ${(amounts.total / 100).toFixed(2)}</span>
         </div>
       )}

@@ -29,3 +29,15 @@ it('renders an enabled Buy CTA that calls onBuy when clicked', () => {
   fireEvent.click(cta)
   expect(onBuy).toHaveBeenCalled()
 })
+
+it('folds the shipping buffer into the displayed price when the store has free shipping', () => {
+  const freeShippingStore = { markup: 3, currency: 'USD', freeShipping: true, shippingBuffer: 800 }
+  render(<PrintPurchasePanel print={print} printStore={freeShippingStore} spec={baseSpec} onSpecChange={() => {}} onBuy={() => {}} />)
+  // 8x10 lustre, markup 3 => optionPrice 20 (see buyerPricing.test.js), plus the $8 buffer.
+  expect(screen.getByRole('button', { name: /buy this print · \$28/i })).toBeInTheDocument()
+})
+
+it('shows the plain price with no buffer when the store does not have free shipping', () => {
+  render(<PrintPurchasePanel print={print} printStore={printStore} spec={baseSpec} onSpecChange={() => {}} onBuy={() => {}} />)
+  expect(screen.getByRole('button', { name: /buy this print · \$20/i })).toBeInTheDocument()
+})
