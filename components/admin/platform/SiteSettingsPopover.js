@@ -324,23 +324,12 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
   const exampleProfit = exampleRetail - exampleCost - exampleCommission
 
   return (
-    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
+    <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Products" onBack={onBack}>
       <div style={{ padding: '12px 14px 14px' }} className="space-y-3">
         {/* Intro */}
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-          Sell prints of your photos. We print and ship worldwide. You set the markup and keep the difference.
+          Sell your photos as prints, framed and unframed. Mark a photo for sale and connect payouts, and the Buy button goes live. More products (mugs, books, albums) coming soon.
         </p>
-
-        {/* Enable prints — the master on/off (auto-enables the first time you mark a photo for sale). */}
-        <div>
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize: 13, color: '#2c2416' }}>Enable prints</span>
-            <ToggleSwitch on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
-          </div>
-          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-            Shows Buy buttons on photos you’ve marked for sale.
-          </p>
-        </div>
 
         {/* Pricing */}
         <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
@@ -1107,8 +1096,8 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
       {/* Drill rows — each shows a right-side status: a state word when configured,
           else "Set up". */}
       <DrillRow
-        label="Print store"
-        status={config.printStore?.enabled ? 'Enabled' : 'Set up'}
+        label="Products"
+        status={config.printStore?.chargesEnabled ? 'On' : 'Set up'}
         onDrillIn={() => setView('print')}
       />
       <DrillRow
