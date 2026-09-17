@@ -325,7 +325,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
-      <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
+      <div style={{ padding: '12px 14px 14px' }} className="space-y-3">
         {/* Intro */}
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
           Sell prints of your photos. We print and ship worldwide. You set the markup and keep the difference.
@@ -343,7 +343,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         </div>
 
         {/* Pricing */}
-        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
           <AccordionHeader label="Pricing" open={openSection === 'pricing'} onClick={() => toggleSection('pricing')} />
           {openSection === 'pricing' && (
           <div className="space-y-4" style={{ marginTop: 13 }}>
@@ -399,7 +399,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         </div>
 
         {/* Shipping */}
-        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
           <AccordionHeader label="Shipping" open={openSection === 'shipping'} onClick={() => toggleSection('shipping')} />
           {openSection === 'shipping' && (
           <div className="space-y-4" style={{ marginTop: 13 }}>
@@ -458,7 +458,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
         </div>
 
         {/* Payouts */}
-        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
           <AccordionHeader label="Payouts" open={openSection === 'payouts'} onClick={() => toggleSection('payouts')} />
           {openSection === 'payouts' && (
           <div style={{ marginTop: 12 }}>
