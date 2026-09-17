@@ -66,7 +66,8 @@ const sectionHeader = {
 }
 
 // Collapsible section header for the Print store panel — the only settings view
-// with multiple sections. A chevron points right when collapsed, down when open.
+// with multiple sections. Chevron points down when collapsed, flips up when open.
+// Muted-gray to match the drill-in chevrons on the main settings screen.
 function AccordionHeader({ label, open, onClick }) {
   return (
     <button
@@ -76,9 +77,9 @@ function AccordionHeader({ label, open, onClick }) {
       style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
     >
       <span style={sectionHeader}>{label}</span>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8b6f47" strokeWidth={2.5}
-        style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth={2}
+        style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
       </svg>
     </button>
   )
@@ -379,6 +380,29 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               </p>
             </Field>
 
+            <div>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 13, color: '#2c2416' }}>End prices in $9</span>
+                <ToggleSwitch
+                  ariaLabel="End prices in $9"
+                  on={(ps.priceRounding || 'nearest5') === 'charm9'}
+                  onChange={() => updatePrintStore({ priceRounding: (ps.priceRounding || 'nearest5') === 'charm9' ? 'nearest5' : 'charm9' })}
+                />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+                Prices ending in 9 tend to sell better ($39 instead of $40).
+              </p>
+            </div>
+
+          </div>
+          )}
+        </div>
+
+        {/* Shipping */}
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
+          <AccordionHeader label="Shipping" open={openSection === 'shipping'} onClick={() => toggleSection('shipping')} />
+          {openSection === 'shipping' && (
+          <div className="space-y-4" style={{ marginTop: 13 }}>
             <Field label="Shipping speed">
               <div style={{ marginTop: 6 }}>
                 <DesignPillToggle
@@ -429,21 +453,6 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                 </div>
               )}
             </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <span style={{ fontSize: 13, color: '#2c2416' }}>End prices in $9</span>
-                <ToggleSwitch
-                  ariaLabel="End prices in $9"
-                  on={(ps.priceRounding || 'nearest5') === 'charm9'}
-                  onChange={() => updatePrintStore({ priceRounding: (ps.priceRounding || 'nearest5') === 'charm9' ? 'nearest5' : 'charm9' })}
-                />
-              </div>
-              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-                Prices ending in 9 tend to sell better ($39 instead of $40).
-              </p>
-            </div>
-
           </div>
           )}
         </div>

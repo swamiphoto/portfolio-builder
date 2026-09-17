@@ -34,6 +34,7 @@ afterEach(() => jest.resetAllMocks())
 it('choosing Budget shipping calls updatePrintStore with shippingMethod: budget', () => {
   const { onUpdate } = renderPrintSettings({ shippingMethod: 'standard' })
 
+  fireEvent.click(screen.getByText('Shipping'))   // expand the Shipping accordion
   fireEvent.click(screen.getByText('Budget'))
 
   expect(onUpdate).toHaveBeenCalledWith(
@@ -44,6 +45,7 @@ it('choosing Budget shipping calls updatePrintStore with shippingMethod: budget'
 it('toggling free shipping on calls updatePrintStore with freeShipping: true', () => {
   const { onUpdate, container } = renderPrintSettings({ freeShipping: false })
 
+  fireEvent.click(screen.getByText('Shipping'))
   fireEvent.click(container.querySelector('button[aria-label="Offer free shipping"]'))
 
   expect(onUpdate).toHaveBeenCalledWith(
@@ -54,6 +56,7 @@ it('toggling free shipping on calls updatePrintStore with freeShipping: true', (
 it('with free shipping on, typing a buffer calls updatePrintStore with shippingBuffer in cents', () => {
   const { onUpdate } = renderPrintSettings({ freeShipping: true, shippingBuffer: 0 })
 
+  fireEvent.click(screen.getByText('Shipping'))
   // The buffer input is the only number input with placeholder "0" — the
   // markup field (also type=number) uses placeholder "3", so this is unambiguous.
   const bufferInput = screen.getByPlaceholderText('0')
@@ -66,6 +69,7 @@ it('with free shipping on, typing a buffer calls updatePrintStore with shippingB
 
 it('does not show the buffer input when free shipping is off', () => {
   renderPrintSettings({ freeShipping: false })
+  fireEvent.click(screen.getByText('Shipping'))
   expect(screen.queryByPlaceholderText('0')).not.toBeInTheDocument()
 })
 
