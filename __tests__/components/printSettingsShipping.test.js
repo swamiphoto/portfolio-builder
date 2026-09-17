@@ -44,7 +44,7 @@ it('choosing Budget shipping calls updatePrintStore with shippingMethod: budget'
 it('toggling free shipping on calls updatePrintStore with freeShipping: true', () => {
   const { onUpdate, container } = renderPrintSettings({ freeShipping: false })
 
-  fireEvent.click(container.querySelector('button[aria-label="Free shipping"]'))
+  fireEvent.click(container.querySelector('button[aria-label="Offer free shipping"]'))
 
   expect(onUpdate).toHaveBeenCalledWith(
     expect.objectContaining({ printStore: expect.objectContaining({ freeShipping: true }) })
@@ -69,10 +69,10 @@ it('does not show the buffer input when free shipping is off', () => {
   expect(screen.queryByPlaceholderText('0')).not.toBeInTheDocument()
 })
 
-it('choosing "End in $9" calls updatePrintStore with priceRounding: charm9', () => {
-  const { onUpdate } = renderPrintSettings({ priceRounding: 'nearest5' })
+it('toggling "End prices in $9" on calls updatePrintStore with priceRounding: charm9', () => {
+  const { onUpdate, container } = renderPrintSettings({ priceRounding: 'nearest5' })
 
-  fireEvent.click(screen.getByText('End in $9'))
+  fireEvent.click(container.querySelector('button[aria-label="End prices in $9"]'))
 
   expect(onUpdate).toHaveBeenCalledWith(
     expect.objectContaining({ printStore: expect.objectContaining({ priceRounding: 'charm9' }) })

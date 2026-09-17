@@ -97,7 +97,7 @@ export default function PopoverShell({ anchorEl, anchorRect: anchorRectProp, onC
   return (
     <div
       ref={ref}
-      className="fixed z-[9999] overflow-auto rounded-xl"
+      className="fixed z-[9999] overflow-auto rounded-xl scroll-thin"
       style={{
         width,
         minWidth,
