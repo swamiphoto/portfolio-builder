@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
 import PhotoPickerModal from '@/components/admin/gallery-builder/PhotoPickerModal'
 import Tip from '@/components/admin/Tip'
 import { blockToMarkdownSeed } from '@/common/markdown'
@@ -98,9 +98,9 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   // itself is recomputed (and re-renders the overlay) on every mutation.
   const selectedImgRef = useRef(null)
   const [selRect, setSelRect] = useState(null)
-  // Bumped on each new image selection so the overlay (and its uncontrolled
-  // caption input) remounts — clicking straight from one image to another
-  // would otherwise reuse the instance and show the prior image's caption.
+  // Bumped on each new image selection so the overlay controls remount —
+  // clicking straight from one image to another would otherwise reuse the
+  // instance and show stale attrs from the prior image.
   const [selGen, setSelGen] = useState(0)
 
   // Floating, draggable panel (mirrors PhotoPickerModal). Opens beside the
@@ -112,6 +112,18 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     if (typeof window === 'undefined') return { x: 526, y: 80 }
     return { x: Math.max(16, Math.min(526, window.innerWidth - PANEL_WIDTH - 16)), y: 80 }
   })
+
+  const captionByUrl = useMemo(() => {
+    const map = {}
+    for (const a of Object.values(libraryConfig?.assets || {})) {
+      if (a?.publicUrl) map[a.publicUrl] = a.caption || ''
+    }
+    return map
+  }, [libraryConfig])
+  // Keep the latest map readable from the seed effect / insert path without
+  // re-seeding the editable DOM on every library change (that would jump the caret).
+  const captionByUrlRef = useRef({})
+  captionByUrlRef.current = captionByUrl
 
   useEffect(() => {
     const onMove = (e) => {
@@ -144,7 +156,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     const b = blockRef.current
     if (!el || !b) return undefined
     const seedMd = blockToMarkdownSeed(b)
-    const rendered = renderMarkdownToElement(seedMd, document)
+    const rendered = renderMarkdownToElement(seedMd, document, captionByUrlRef.current)
     el.replaceChildren(...rendered.childNodes)
     return undefined
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -184,11 +196,6 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     setImageAttr(selectedImgRef.current, k, v)
     emit()
     positionOverlay()
-  }
-  const onImgCaption = (v) => {
-    if (!selectedImgRef.current) return
-    setImageAttr(selectedImgRef.current, 'caption', v)
-    emit()
   }
   const onImgMove = (dir) => {
     if (selectedImgRef.current && moveImageWrapper(selectedImgRef.current, dir)) {
@@ -281,7 +288,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         ? savedAnchorRef.current
         : currentBlockElement(el) // a direct child of el, or null when empty
       refs.forEach((r) => {
-        const node = createImageBlockNode(document, r.url, '')
+        const node = createImageBlockNode(document, r.url, {}, captionByUrlRef.current[r.url] || '')
         if (after && after.parentElement === el) {
           el.insertBefore(node, after.nextSibling)
         } else {
@@ -414,7 +421,7 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
         {selRect && selectedImgRef.current && (
           <div style={{ position: 'absolute', top: selRect.top, left: selRect.left, width: selRect.width, height: selRect.height, pointerEvents: 'none' }}>
             <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
-              <MarkdownImageControls key={selGen} attrs={imgAttrs()} onAttr={onImgAttr} onCaption={onImgCaption} onRemove={onImgRemove} onMove={onImgMove} />
+              <MarkdownImageControls key={selGen} attrs={imgAttrs()} onAttr={onImgAttr} onRemove={onImgRemove} onMove={onImgMove} />
             </div>
           </div>
         )}
