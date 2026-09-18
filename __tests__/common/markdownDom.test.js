@@ -184,6 +184,30 @@ describe('image wrapper — editor styling + library caption', () => {
     setImageAttr(w, 'layout', 'side'); expect(getImageAttrs(w).layout).toBe('side')
     setImageAttr(w, 'layout', ''); expect(getImageAttrs(w).layout).toBeUndefined()
   })
+  it('setImageAttr(style) clears stale caption CSS from the previous style instead of blending', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', { style: 'accent' }, 'A cat')
+    const cap = w.querySelector('[data-md-caption]')
+    // sanity: accent's distinguishing properties are present before the switch
+    expect(cap.style.color).toBe('rgb(220, 38, 38)')
+    expect(cap.style.textTransform).toBe('uppercase')
+    setImageAttr(w, 'style', 'sans')
+    // sans contributes no overrides, so none of accent's properties should survive
+    expect(cap.style.color).toBe('')
+    expect(cap.style.textTransform).toBe('')
+    expect(cap.style.fontFamily).toBe('')
+    expect(cap.style.fontWeight).toBe('')
+    // base caption style is still applied
+    expect(cap.style.marginTop).toBe('6px')
+    expect(cap.style.fontSize).toBe('13px')
+    expect(cap.style.opacity).toBe('0.6')
+  })
+  it('setImageAttr(style) drops serif italic when switching to sans', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', { style: 'serif' }, 'A cat')
+    const cap = w.querySelector('[data-md-caption]')
+    expect(cap.style.fontStyle).toBe('italic')
+    setImageAttr(w, 'style', 'sans')
+    expect(cap.style.fontStyle).not.toBe('italic')
+  })
 })
 
 describe('image wrapper remove/move', () => {

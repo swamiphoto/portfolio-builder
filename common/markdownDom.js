@@ -9,6 +9,7 @@ import { captionStyleCss } from './captionStyles'
 
 const IMAGE_WRAPPER_ATTR = 'data-md-image'
 const IMAGE_ATTR_KEYS = ['layout', 'size', 'style']
+const CAPTION_BASE_STYLE = { marginTop: '6px', fontSize: '13px', opacity: '0.6' }
 
 // Builds the non-editable wrapper around an <img> preview. Exported so the
 // editor panel can reuse the exact same node shape when inserting a photo
@@ -43,7 +44,12 @@ function applyCaption(doc, wrap, caption, style) {
     wrap.appendChild(cap)
   }
   cap.textContent = caption
-  Object.assign(cap.style, { marginTop: '6px', fontSize: '13px', opacity: '0.6' }, captionStyleCss(style))
+  // Reset first — each caption style only sets a disjoint subset of
+  // properties, so a bare Object.assign would let a previous style's
+  // properties (e.g. serif's italic, accent's red/uppercase) survive a
+  // switch to a style that doesn't override them.
+  cap.style.cssText = ''
+  Object.assign(cap.style, CAPTION_BASE_STYLE, captionStyleCss(style))
 }
 
 export function getImageAttrs(wrapper) {
@@ -58,7 +64,10 @@ export function setImageAttr(wrapper, key, value) {
   if (key === 'layout' || key === 'size') Object.assign(wrapper.style, imageEditorStyle(getImageAttrs(wrapper)))
   if (key === 'style') {
     const cap = wrapper.querySelector('[data-md-caption]')
-    if (cap) Object.assign(cap.style, captionStyleCss(value))
+    // Route through applyCaption so the reset-then-reapply logic above
+    // (cssText = '' before Object.assign) runs here too — a bare
+    // Object.assign would leave the previous style's properties in place.
+    if (cap) applyCaption(wrapper.ownerDocument, wrapper, cap.textContent, value)
   }
 }
 

@@ -15,7 +15,7 @@ const sizePillOptions = SIZE_OPTIONS.map((o) => ({ value: o.id, label: o.label }
 const captionStylePillOptions = CAPTION_STYLE_OPTIONS.map((o) => ({ value: o.id, label: o.label }))
 
 // Overlay control cluster for one image inside the Markdown editor. `attrs` is
-// { layout, size, style, caption }. Callers wire the handlers to DOM mutations.
+// { layout, size, style }. Callers wire the handlers to DOM mutations.
 // Caption text itself is edited elsewhere; this overlay only handles layout/
 // design and ordering/removal.
 export default function MarkdownImageControls({ attrs, onAttr, onRemove, onMove }) {
