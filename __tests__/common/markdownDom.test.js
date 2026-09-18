@@ -17,7 +17,6 @@ const ROUND_TRIP_SAMPLES = [
   '- one\n- two\n- three',
   '![](https://gcs/me.jpg)',
   '# Title\n\nHello **bold** and *ital*.\n\n> a quote\n\n- one\n- two\n\n![](https://gcs/me.jpg)',
-  '![Portra 400 [expired\\]](https://gcs/me.jpg)',
 ]
 
 describe('renderMarkdownToElement <-> serializeDomToMarkdown round trip', () => {
@@ -126,7 +125,7 @@ describe('serializeDomToMarkdown', () => {
 
   it('serializes an inserted image wrapper node built via createImageBlockNode', () => {
     const host = document.createElement('div')
-    host.appendChild(createImageBlockNode(document, 'https://gcs/pic.jpg', ''))
+    host.appendChild(createImageBlockNode(document, 'https://gcs/pic.jpg'))
     expect(serializeDomToMarkdown(host)).toBe('![](https://gcs/pic.jpg)')
   })
 
@@ -141,43 +140,47 @@ describe('serializeDomToMarkdown', () => {
   })
 })
 
-describe('image wrapper attrs round-trip', () => {
-  it('createImageBlockNode stores attrs + caption and getImageAttrs reads them', () => {
-    const w = createImageBlockNode(document, 'http://x/c.jpg', 'A cat', { layout: 'side', size: 'm', style: 'serif' })
-    expect(getImageAttrs(w)).toEqual({ layout: 'side', size: 'm', style: 'serif', caption: 'A cat' })
+describe('image wrapper — editor styling + library caption', () => {
+  it('applies layout/size inline styles and previews the library caption', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', { layout: 'side', size: 'm', style: 'serif' }, 'A cat')
+    expect(w.style.float).toBe('left')
+    expect(w.style.width).toBe('40%')
+    expect(getImageAttrs(w)).toEqual({ layout: 'side', size: 'm', style: 'serif' })
+    const cap = w.querySelector('[data-md-caption]')
+    expect(cap).toBeTruthy()
+    expect(cap.textContent).toBe('A cat')
   })
-  it('serializes a wrapper back to markdown with caption + attrs', () => {
+  it('serializes to ![](url){…} with no caption text', () => {
     const root = document.createElement('div')
-    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'A cat', { layout: 'side', size: 'm' }))
-    expect(serializeDomToMarkdown(root)).toBe('![A cat](http://x/c.jpg){layout=side size=m}')
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', { layout: 'side', size: 'm' }, 'A cat'))
+    expect(serializeDomToMarkdown(root)).toBe('![](http://x/c.jpg){layout=side size=m}')
   })
-  it('a bare image round-trips unchanged', () => {
+  it('setImageAttr re-applies layout styling', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', { layout: 'centered', size: 'l' }, '')
+    expect(w.style.float).toBe('none')
+    setImageAttr(w, 'layout', 'side')
+    expect(w.style.float).toBe('left')
+  })
+  it('renderMarkdownToElement supplies captions from captionByUrl', () => {
+    const el = renderMarkdownToElement('![](http://x/c.jpg){layout=centered}', document, { 'http://x/c.jpg': 'From library' })
+    expect(el.querySelector('[data-md-caption]').textContent).toBe('From library')
+  })
+  it('a bare image still round-trips', () => {
     const root = document.createElement('div')
-    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', '', {}))
+    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', {}, ''))
     expect(serializeDomToMarkdown(root)).toBe('![](http://x/c.jpg)')
   })
-  it('a caption containing ] is escaped on serialize and not lost', () => {
-    const root = document.createElement('div')
-    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'Portra 400 [expired]', {}))
-    const md = serializeDomToMarkdown(root)
-    expect(md).toBe('![Portra 400 [expired\\]](http://x/c.jpg)')
-    // And it must parse back into an image node (not fall back to a paragraph),
-    // with the exact original, unescaped caption.
-    const el = renderMarkdownToElement(md, document)
-    expect(el.children).toHaveLength(1)
-    expect(getImageAttrs(el.firstChild)).toMatchObject({ caption: 'Portra 400 [expired]' })
+  it('a wrapper with no caption renders no [data-md-caption] node', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg', {}, '')
+    expect(w.querySelector('[data-md-caption]')).toBeNull()
   })
-  it('plain-caption wrapper still round-trips without spurious escaping', () => {
-    const root = document.createElement('div')
-    root.appendChild(createImageBlockNode(document, 'http://x/c.jpg', 'A cat', {}))
-    expect(serializeDomToMarkdown(root)).toBe('![A cat](http://x/c.jpg)')
-  })
-  it('renderMarkdownToElement rebuilds a wrapper carrying the attrs', () => {
+  it('renderMarkdownToElement rebuilds a wrapper carrying the attrs (no caption from markdown alt)', () => {
     const el = renderMarkdownToElement('![A cat](http://x/c.jpg){layout=full-bleed}', document)
-    expect(getImageAttrs(el.firstChild)).toMatchObject({ layout: 'full-bleed', caption: 'A cat' })
+    expect(getImageAttrs(el.firstChild)).toMatchObject({ layout: 'full-bleed' })
+    expect(el.firstChild.querySelector('[data-md-caption]')).toBeNull()
   })
-  it('setImageAttr sets and clears', () => {
-    const w = createImageBlockNode(document, 'http://x/c.jpg', '', {})
+  it('setImageAttr sets and clears data attrs', () => {
+    const w = createImageBlockNode(document, 'http://x/c.jpg')
     setImageAttr(w, 'layout', 'side'); expect(getImageAttrs(w).layout).toBe('side')
     setImageAttr(w, 'layout', ''); expect(getImageAttrs(w).layout).toBeUndefined()
   })
@@ -187,7 +190,7 @@ describe('image wrapper remove/move', () => {
   function root() {
     const r = document.createElement('div')
     const p = document.createElement('p'); p.textContent = 'A'; r.appendChild(p)
-    r.appendChild(createImageBlockNode(document, 'http://x/c.jpg', '', {}))
+    r.appendChild(createImageBlockNode(document, 'http://x/c.jpg'))
     const p2 = document.createElement('p'); p2.textContent = 'B'; r.appendChild(p2)
     return r
   }

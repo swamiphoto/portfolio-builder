@@ -4,45 +4,62 @@
 // source markdown contains things that look like tags (they land as literal
 // text nodes, courtesy of parseMarkdown already treating raw HTML as text).
 import { parseMarkdown, formatImageAttrs } from './markdown'
+import { imageEditorStyle } from './markdownImageOptions'
+import { captionStyleCss } from './captionStyles'
 
 const IMAGE_WRAPPER_ATTR = 'data-md-image'
 const IMAGE_ATTR_KEYS = ['layout', 'size', 'style']
 
 // Builds the non-editable wrapper around an <img> preview. Exported so the
 // editor panel can reuse the exact same node shape when inserting a photo
-// picked mid-edit (keeps render and insert paths in sync).
-export function createImageBlockNode(doc, url, caption, attrs = {}) {
+// picked mid-edit (keeps render and insert paths in sync). `caption` is the
+// resolved library caption to PREVIEW beneath the image — it is never
+// written to the img's alt and never round-trips through markdown.
+export function createImageBlockNode(doc, url, attrs = {}, caption = '') {
   const wrap = doc.createElement('div')
   wrap.setAttribute(IMAGE_WRAPPER_ATTR, '1')
   wrap.setAttribute('contenteditable', 'false')
-  wrap.style.margin = '0.5em 0'
+  Object.assign(wrap.style, imageEditorStyle(attrs))
   for (const k of IMAGE_ATTR_KEYS) if (attrs[k]) wrap.setAttribute(`data-${k}`, attrs[k])
   const img = doc.createElement('img')
   img.setAttribute('src', url || '')
-  if (caption) img.setAttribute('alt', caption)
   img.style.display = 'block'
-  img.style.maxHeight = '120px'
-  img.style.borderRadius = '8px'
+  img.style.width = '100%'
+  img.style.height = 'auto'
+  img.style.borderRadius = '6px'
   wrap.appendChild(img)
+  applyCaption(doc, wrap, caption, attrs.style)
   return wrap
+}
+
+// Render/refresh the library-caption preview beneath the image (non-editable).
+function applyCaption(doc, wrap, caption, style) {
+  let cap = wrap.querySelector('[data-md-caption]')
+  if (!caption) { if (cap) cap.remove(); return }
+  if (!cap) {
+    cap = doc.createElement('div')
+    cap.setAttribute('data-md-caption', '1')
+    cap.setAttribute('contenteditable', 'false')
+    wrap.appendChild(cap)
+  }
+  cap.textContent = caption
+  Object.assign(cap.style, { marginTop: '6px', fontSize: '13px', opacity: '0.6' }, captionStyleCss(style))
 }
 
 export function getImageAttrs(wrapper) {
   const out = {}
   for (const k of IMAGE_ATTR_KEYS) { const v = wrapper.getAttribute(`data-${k}`); if (v) out[k] = v }
-  const img = wrapper.querySelector('img')
-  out.caption = (img && img.getAttribute('alt')) || ''
   return out
 }
 
 export function setImageAttr(wrapper, key, value) {
-  if (key === 'caption') {
-    const img = wrapper.querySelector('img')
-    if (img) { value ? img.setAttribute('alt', value) : img.removeAttribute('alt') }
-    return
-  }
   if (value) wrapper.setAttribute(`data-${key}`, value)
   else wrapper.removeAttribute(`data-${key}`)
+  if (key === 'layout' || key === 'size') Object.assign(wrapper.style, imageEditorStyle(getImageAttrs(wrapper)))
+  if (key === 'style') {
+    const cap = wrapper.querySelector('[data-md-caption]')
+    if (cap) Object.assign(cap.style, captionStyleCss(value))
+  }
 }
 
 // removeImageWrapper(wrapper) -> assetUrl. Detaches the wrapper and returns
@@ -103,7 +120,7 @@ function appendInlineChildren(parent, children, doc) {
 // Returns a container element whose children are the top-level blocks
 // (p / h3 / blockquote / ul / image-wrapper div). Callers typically move
 // those children into the real contentEditable host via replaceChildren.
-export function renderMarkdownToElement(md, doc) {
+export function renderMarkdownToElement(md, doc, captionByUrl = {}) {
   const d = doc || (typeof document !== 'undefined' ? document : null)
   if (!d) throw new Error('renderMarkdownToElement requires a document')
   const container = d.createElement('div')
@@ -136,7 +153,7 @@ export function renderMarkdownToElement(md, doc) {
         break
       }
       case 'image':
-        container.appendChild(createImageBlockNode(d, block.url, block.caption, { layout: block.layout, size: block.size, style: block.style }))
+        container.appendChild(createImageBlockNode(d, block.url, { layout: block.layout, size: block.size, style: block.style }, captionByUrl[block.url] || ''))
         break
       case 'paragraph':
       default: {
@@ -218,10 +235,10 @@ function blockElementToMarkdown(el) {
     return `![${escapeCaption(alt)}](${el.getAttribute('src') || ''})`
   }
   if (el.hasAttribute(IMAGE_WRAPPER_ATTR)) {
-    const { caption, ...attrs } = getImageAttrs(el)
+    const attrs = getImageAttrs(el)
     const img = el.querySelector('img')
     const suffix = formatImageAttrs(attrs)
-    return `![${escapeCaption(caption)}](${img ? img.getAttribute('src') || '' : ''})${suffix ? `{${suffix}}` : ''}`
+    return `![](${img ? img.getAttribute('src') || '' : ''})${suffix ? `{${suffix}}` : ''}`
   }
   // p, div, or anything else a browser's contentEditable might insert
   // (Enter often produces a fresh <div>) — treat as a paragraph.
