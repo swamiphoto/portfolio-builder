@@ -217,9 +217,13 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     else scheduleHide()
   }
   const onOverlayLock = (v) => {
+    const was = lockedRef.current
     lockedRef.current = v
     if (v) cancelHide()
-    else scheduleHide()
+    // Only a genuine unlock (a control menu closing) should arm a hide. The
+    // controls fire onLockChange(false) on mount too; treating that as "hide"
+    // would vanish the overlay ~90ms after a still cursor first reveals it.
+    else if (was) scheduleHide()
   }
   const selectImageFromEvent = (e) => {
     const wrap = e.target.closest?.('[data-md-image]')

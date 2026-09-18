@@ -15,6 +15,15 @@ it('the ⋯ menu fires move and remove', () => {
   fireEvent.click(screen.getByRole('button', { name: /more|menu|options/i }))
   fireEvent.click(screen.getByRole('button', { name: /remove/i })); expect(onRemove).toHaveBeenCalled()
 })
+it('reports lock state: false on mount, true when the design popover opens', () => {
+  // The panel relies on this: onLockChange(false) fires on mount and must NOT be
+  // read as "hide the overlay"; a real lock only starts when a menu opens.
+  const onLockChange = jest.fn()
+  render(<MarkdownImageControls {...base} onAttr={()=>{}} onRemove={()=>{}} onMove={()=>{}} onLockChange={onLockChange} />)
+  expect(onLockChange).toHaveBeenLastCalledWith(false)
+  fireEvent.click(screen.getByRole('button', { name: /design|brush/i }))
+  expect(onLockChange).toHaveBeenLastCalledWith(true)
+})
 it('the brush opens layout options and picking Side fires onAttr', () => {
   const onAttr = jest.fn()
   render(<MarkdownImageControls {...base} onAttr={onAttr} onRemove={()=>{}} onMove={()=>{}} />)
