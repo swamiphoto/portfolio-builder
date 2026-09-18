@@ -65,17 +65,6 @@ const sectionHeader = {
   textTransform: 'uppercase',
 }
 
-// A not-yet-available product in the store list: shown greyed with a "Coming
-// soon" tag instead of a toggle.
-function ComingSoonProduct({ label }) {
-  return (
-    <div className="flex items-center justify-between" style={{ opacity: 0.5 }}>
-      <span style={{ fontSize: 13, color: '#2c2416' }}>{label}</span>
-      <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Coming soon</span>
-    </div>
-  )
-}
-
 // Collapsible section header for the Print store panel — the only settings view
 // with multiple sections. Chevron points down when collapsed, flips up when open.
 // Muted-gray to match the drill-in chevrons on the main settings screen.
@@ -319,8 +308,8 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
     }
   }
 
-  // Accordion: one section open at a time. Pricing open by default.
-  const [openSection, setOpenSection] = useState('pricing')
+  // Accordion: one section open at a time. Products open by default.
+  const [openSection, setOpenSection] = useState('products')
   const toggleSection = (name) => setOpenSection((s) => (s === name ? null : name))
 
   const markup = ps.markup ?? 3
@@ -339,22 +328,28 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
       <div style={{ padding: '12px 14px 14px' }} className="space-y-3">
         {/* Intro */}
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-          Choose what to sell. Turn a product on, mark photos for sale, and connect payouts — the Buy button goes live.
+          Choose what to sell. Turn a product on, mark photos for sale, and connect payouts to make the Buy button go live.
         </p>
 
         {/* Products — one toggle per product type (only Prints for now). */}
-        <div className="space-y-2.5">
-          <div>
-            <div className="flex items-center justify-between">
-              <span style={{ fontSize: 13, color: '#2c2416' }}>Prints</span>
-              <ToggleSwitch ariaLabel="Prints" on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
+          <AccordionHeader label="Products" open={openSection === 'products'} onClick={() => toggleSection('products')} />
+          {openSection === 'products' && (
+          <div className="space-y-2.5" style={{ marginTop: 13 }}>
+            <div>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 13, color: '#2c2416' }}>Prints</span>
+                <ToggleSwitch ariaLabel="Prints" on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4, marginBottom: 0 }}>
+                Framed and unframed. Shows a Buy button on photos you mark for sale.
+              </p>
             </div>
-            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4, marginBottom: 0 }}>
-              Framed and unframed. Shows a Buy button on photos you mark for sale.
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
+              More product types coming soon.
             </p>
           </div>
-          <ComingSoonProduct label="Mugs" />
-          <ComingSoonProduct label="Photo books" />
+          )}
         </div>
 
         {/* Pricing */}
