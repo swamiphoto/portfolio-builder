@@ -1,38 +1,22 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import MarkdownImageControls from '../../components/admin/gallery-builder/MarkdownImageControls'
+const base = { attrs: { layout: 'centered', size: 'l', style: 'sans' } }
 
-const base = { attrs: { layout: 'centered', size: 'l', style: 'sans', caption: '' } }
-it('remove fires onRemove', () => {
-  const onRemove = jest.fn()
-  render(<MarkdownImageControls {...base} onRemove={onRemove} onAttr={()=>{}} onCaption={()=>{}} onMove={()=>{}} />)
-  fireEvent.click(screen.getByRole('button', { name: /remove/i }))
-  expect(onRemove).toHaveBeenCalled()
+it('no caption input exists', () => {
+  render(<MarkdownImageControls {...base} onAttr={()=>{}} onRemove={()=>{}} onMove={()=>{}} />)
+  expect(screen.queryByPlaceholderText(/caption/i)).toBeNull()
 })
-it('opening the brush shows layout options and picking one fires onAttr', () => {
+it('the ⋯ menu fires move and remove', () => {
+  const onMove = jest.fn(), onRemove = jest.fn()
+  render(<MarkdownImageControls {...base} onAttr={()=>{}} onRemove={onRemove} onMove={onMove} />)
+  fireEvent.click(screen.getByRole('button', { name: /more|menu|options/i }))
+  fireEvent.click(screen.getByRole('button', { name: /move up/i })); expect(onMove).toHaveBeenCalledWith(-1)
+  fireEvent.click(screen.getByRole('button', { name: /remove/i })); expect(onRemove).toHaveBeenCalled()
+})
+it('the brush opens layout options and picking Side fires onAttr', () => {
   const onAttr = jest.fn()
-  render(<MarkdownImageControls {...base} onRemove={()=>{}} onAttr={onAttr} onCaption={()=>{}} onMove={()=>{}} />)
-  fireEvent.click(screen.getByRole('button', { name: /design/i }))
+  render(<MarkdownImageControls {...base} onAttr={onAttr} onRemove={()=>{}} onMove={()=>{}} />)
+  fireEvent.click(screen.getByRole('button', { name: /design|brush/i }))
   fireEvent.click(screen.getByText('Side'))
   expect(onAttr).toHaveBeenCalledWith('layout', 'side')
-})
-it('editing the caption fires onCaption', () => {
-  const onCaption = jest.fn()
-  render(<MarkdownImageControls {...base} onRemove={()=>{}} onAttr={()=>{}} onCaption={onCaption} onMove={()=>{}} />)
-  fireEvent.change(screen.getByPlaceholderText(/caption/i), { target: { value: 'Hi' } })
-  expect(onCaption).toHaveBeenCalledWith('Hi')
-})
-
-it('remounting with a new key re-reads the caption (no stale value across selections)', () => {
-  // The caption input is uncontrolled (defaultValue); the panel gives the
-  // overlay a per-selection key so clicking image A then image B shows B's
-  // caption, not A's. Simulate that remount via key.
-  const noop = () => {}
-  const { rerender } = render(
-    <MarkdownImageControls key={1} attrs={{ layout: 'centered', size: 'l', style: 'sans', caption: 'A' }} onRemove={noop} onAttr={noop} onCaption={noop} onMove={noop} />
-  )
-  expect(screen.getByPlaceholderText(/caption/i).value).toBe('A')
-  rerender(
-    <MarkdownImageControls key={2} attrs={{ layout: 'centered', size: 'l', style: 'sans', caption: 'B' }} onRemove={noop} onAttr={noop} onCaption={noop} onMove={noop} />
-  )
-  expect(screen.getByPlaceholderText(/caption/i).value).toBe('B')
 })

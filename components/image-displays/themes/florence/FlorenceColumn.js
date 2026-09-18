@@ -50,7 +50,7 @@ const TEXT_GAP = 'clamp(1.6rem, 2.4vw, 2.8rem)'
 // Florence text: one column for short copy; copy long enough to overrun the column
 // height auto-flows into N balanced columns so it never runs past the viewport and
 // never leaves a lonely stub column.
-function FlorenceText({ block, fontFamily, fontSize }) {
+function FlorenceText({ block, fontFamily, fontSize, assetsByUrl }) {
   const content = String(block.content)
   const isMd = block.format === 'markdown'
   const { ref, cols, columnStyle } = useBalancedColumns([content, fontFamily, fontSize], { colWidth: TEXT_COL_W, gap: TEXT_GAP })
@@ -59,7 +59,7 @@ function FlorenceText({ block, fontFamily, fontSize }) {
   if (isMd) {
     return (
       <div ref={ref} className={cls} style={style}>
-        <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} />
+        <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} assetsByUrl={assetsByUrl} />
       </div>
     )
   }
@@ -81,7 +81,7 @@ function mosaicGroups(refs) {
   return groups
 }
 
-export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', username, showPlaceholders = false }) {
+export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', username, showPlaceholders = false, assetsByUrl }) {
   const anchor = resolveFlorenceAnchor(block)
   const justify = ANCHOR_JUSTIFY[anchor]
   const metaFor = (o) => formatCaptureMeta(o?.capture, photoMeta, o?.uploadedAt)
@@ -284,7 +284,7 @@ export default function FlorenceColumn({ block, blockIndex, onImageClick, hoverP
       // lists) is what matters here, not new art direction. Long copy (plain or
       // markdown) auto-flows into balanced columns via FlorenceText.
       return wrap('florence-col--text', { justifyContent: 'center' }, (
-        <FlorenceText block={block} fontFamily={fontFamily} fontSize={fontSize} />
+        <FlorenceText block={block} fontFamily={fontFamily} fontSize={fontSize} assetsByUrl={assetsByUrl} />
       ))
     }
 

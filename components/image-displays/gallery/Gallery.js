@@ -299,7 +299,7 @@ function PlaceholderVideo({ variant = 2, caption, captionStyle = 'sans', themeId
   )
 }
 
-const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, currentPageId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, onPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title' }) => {
+const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView, pages, childPages, activeChildId, currentPageId, username, basePath, onBackClick, onSlideshowClick, onClientLoginClick, onChildPageClick, onPageClick, showPlaceholders, onBlockHover, onBlockClick, siteConfig, printStore, themeId = 'kyoto', hasCover = false, coverHeight = 'partial', coverButtonStyle = 'solid', cover = null, opener = 'title', assetsByUrl }) => {
   const linkBase = basePath != null ? basePath : (username ? `/sites/${username}` : '')
   // Manhattan moves its section divider into the left rail (see SiteNav); Blantyre
   // separates sections with air alone. Other themes keep the wiggles.
@@ -407,6 +407,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             onPageClick={onPageClick || onChildPageClick}
             showPlaceholders={showPlaceholders}
             cover={cover}
+            assetsByUrl={assetsByUrl}
           />
         </div>
         {lightboxIndex !== null && (
@@ -449,6 +450,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
             cover={cover}
             opener={opener}
             showPlaceholders={showPlaceholders}
+            assetsByUrl={assetsByUrl}
           />
         </div>
         {lightboxIndex !== null && (
@@ -589,6 +591,7 @@ const Gallery = ({ name, description, blocks, enableSlideshow, enableClientView,
                     <MarkdownText
                       content={block.content}
                       variantClasses={{ heading: classForV(1), body: classForV(v), quote: classForV(4) }}
+                      assetsByUrl={assetsByUrl}
                     />
                   </div>
                 );

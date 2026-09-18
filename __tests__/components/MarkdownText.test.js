@@ -8,14 +8,18 @@ const figOf = (c) => c.querySelector('figure')
 
 it('renders headings, emphasis, images and quotes with the given classes', () => {
   const { container } = render(
-    <MarkdownText content={'# About Me\n\nI shoot **film** mostly.\n\n> light is everything\n\n![On location](https://gcs/x.jpg)'} variantClasses={classes} />
+    <MarkdownText
+      content={'# About Me\n\nI shoot **film** mostly.\n\n> light is everything\n\n![On location](https://gcs/x.jpg)'}
+      variantClasses={classes}
+      assetsByUrl={{ 'https://gcs/x.jpg': { caption: 'On location' } }}
+    />
   )
   expect(screen.getByText('About Me').className).toContain('h-cls')
   expect(screen.getByText('film').tagName).toBe('STRONG')
   expect(screen.getByText('light is everything').className).toContain('q-cls')
   const img = container.querySelector('img')
   expect(img.getAttribute('src')).toBe('https://gcs/x.jpg')
-  expect(screen.getByText('On location')).toBeTruthy() // caption
+  expect(screen.getByText('On location')).toBeTruthy() // caption resolved from the library
 })
 
 it('never renders raw HTML from content', () => {
@@ -42,17 +46,26 @@ it('centered image at default (full width) — backward compatible', () => {
   expect(imgOf(container)).toBeInTheDocument()
   expect(figOf(container).className).not.toMatch(/float-left/)
 })
-it('side layout floats left and wraps text', () => {
-  const { container } = render(<MarkdownText content={'![Cat](http://x/c.jpg){layout=side size=m}'} />)
-  expect(figOf(container).className).toMatch(/float-left/)
+it('side layout still floats (unchanged)', () => {
+  const { container } = render(<MarkdownText content={'![](http://x/c.jpg){layout=side size=m}'} assetsByUrl={{}} />)
+  expect(container.querySelector('figure').className).toMatch(/float-left/)
 })
 it('full-bleed spans edge to edge', () => {
   const { container } = render(<MarkdownText content={'![](http://x/c.jpg){layout=full-bleed}'} />)
   expect(figOf(container).className).toMatch(/w-screen|w-full/)
 })
 it('caption style applies (serif figcaption)', () => {
-  const { container } = render(<MarkdownText content={'![Cat](http://x/c.jpg){style=serif}'} />)
+  const { container } = render(<MarkdownText content={'![](http://x/c.jpg){style=serif}'} assetsByUrl={{ 'http://x/c.jpg': { caption: 'Cat' } }} />)
   const cap = container.querySelector('figcaption')
   expect(cap).toHaveTextContent('Cat')
   expect(cap.getAttribute('style') || '').toMatch(/Cormorant|italic/i)
+})
+it('renders the library caption for an image (from assetsByUrl)', () => {
+  const { container } = render(<MarkdownText content={'![](http://x/c.jpg){style=serif}'} assetsByUrl={{ 'http://x/c.jpg': { caption: 'Library cap' } }} />)
+  const cap = container.querySelector('figcaption')
+  expect(cap).toHaveTextContent('Library cap')
+})
+it('renders no caption when the asset has none', () => {
+  const { container } = render(<MarkdownText content={'![](http://x/c.jpg)'} assetsByUrl={{}} />)
+  expect(container.querySelector('figcaption')).toBeNull()
 })
