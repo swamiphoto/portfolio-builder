@@ -5,6 +5,8 @@ import { CAPTION_STYLE_OPTIONS } from '@/common/captionStyles'
 
 const btn = { background: '#fff', border: '1px solid rgba(160,140,110,0.4)', borderRadius: 5, width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 12, color: '#2c2416' }
 
+const menuItemBtn = { display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '6px 10px', fontSize: 12, cursor: 'pointer', color: '#2c2416', borderRadius: 4 }
+
 // PillToggle destructures its options as { value, label }, but our option
 // lists (and CAPTION_STYLE_OPTIONS) use { id, label } — map id -> value so
 // the pills actually track the active state and emit the id, not undefined.
@@ -14,17 +16,47 @@ const captionStylePillOptions = CAPTION_STYLE_OPTIONS.map((o) => ({ value: o.id,
 
 // Overlay control cluster for one image inside the Markdown editor. `attrs` is
 // { layout, size, style, caption }. Callers wire the handlers to DOM mutations.
-export default function MarkdownImageControls({ attrs, onAttr, onCaption, onRemove, onMove }) {
+// Caption text itself is edited elsewhere; this overlay only handles layout/
+// design and ordering/removal.
+export default function MarkdownImageControls({ attrs, onAttr, onRemove, onMove }) {
   const [showDesign, setShowDesign] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
   const sizeDisabled = attrs.layout === 'full-bleed'
   return (
     <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
       <div style={{ display: 'flex', gap: 4 }}>
-        <button type="button" aria-label="Move up" title="Move up" style={btn} onClick={() => onMove(-1)}>↑</button>
-        <button type="button" aria-label="Move down" title="Move down" style={btn} onClick={() => onMove(1)}>↓</button>
-        <button type="button" aria-label="Design" title="Design" style={btn} onClick={() => setShowDesign((v) => !v)}>✎</button>
-        <button type="button" aria-label="Remove" title="Remove" style={{ ...btn, color: '#b03030' }} onClick={onRemove}>✕</button>
+        <button
+          type="button"
+          aria-label="Design"
+          title="Design"
+          style={btn}
+          onClick={() => {
+            setShowDesign((v) => !v)
+            setShowMenu(false)
+          }}
+        >
+          🖌
+        </button>
+        <button
+          type="button"
+          aria-label="More options"
+          title="More"
+          style={btn}
+          onClick={() => {
+            setShowMenu((v) => !v)
+            setShowDesign(false)
+          }}
+        >
+          ⋯
+        </button>
       </div>
+      {showMenu && (
+        <div style={{ background: 'var(--popover)', boxShadow: 'var(--popover-shadow)', borderRadius: 8, padding: 4, width: 140 }}>
+          <button type="button" aria-label="Move up" style={menuItemBtn} onClick={() => onMove(-1)}>Move up</button>
+          <button type="button" aria-label="Move down" style={menuItemBtn} onClick={() => onMove(1)}>Move down</button>
+          <button type="button" aria-label="Remove" style={{ ...menuItemBtn, color: '#b03030' }} onClick={onRemove}>Remove</button>
+        </div>
+      )}
       {showDesign && (
         <div style={{ background: 'var(--popover)', boxShadow: 'var(--popover-shadow)', borderRadius: 8, padding: 10, width: 220 }} className="space-y-2">
           <DesignSection label="Layout">
@@ -40,12 +72,6 @@ export default function MarkdownImageControls({ attrs, onAttr, onCaption, onRemo
           </DesignSection>
         </div>
       )}
-      <input
-        defaultValue={attrs.caption || ''}
-        placeholder="Caption…"
-        onChange={(e) => onCaption(e.target.value)}
-        style={{ width: 200, fontSize: 12, padding: '3px 6px', borderRadius: 4, border: '1px solid rgba(160,140,110,0.4)', background: 'rgba(255,253,248,0.9)' }}
-      />
     </div>
   )
 }
