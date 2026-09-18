@@ -76,6 +76,7 @@ it('does not show the buffer input when free shipping is off', () => {
 it('toggling "End prices in $9" on calls updatePrintStore with priceRounding: charm9', () => {
   const { onUpdate, container } = renderPrintSettings({ priceRounding: 'nearest5' })
 
+  fireEvent.click(screen.getByText('Pricing'))   // expand Pricing (Products is open by default)
   fireEvent.click(container.querySelector('button[aria-label="End prices in $9"]'))
 
   expect(onUpdate).toHaveBeenCalledWith(
