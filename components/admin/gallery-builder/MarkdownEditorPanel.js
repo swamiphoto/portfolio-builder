@@ -102,6 +102,11 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
   // clicking straight from one image to another would otherwise reuse the
   // instance and show stale attrs from the prior image.
   const [selGen, setSelGen] = useState(0)
+  // Hover-reveal bookkeeping: a delayed-hide timer and a lock (held while an
+  // image control menu is open) so the overlay survives the pointer's trip to
+  // the buttons/menus. Refs (not state) — mutating them must not re-render.
+  const hideTimer = useRef(null)
+  const lockedRef = useRef(false)
 
   // Floating, draggable panel (mirrors PhotoPickerModal). Opens beside the
   // block being edited — right of the site + block sidebars — clamped so a
@@ -162,6 +167,9 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  // Clear any pending hide timer on unmount.
+  useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current) }, [])
+
   if (!block || !open) return null
 
   const openPicker = () => {
@@ -182,12 +190,41 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
     setSelRect({ top: w.top - p.top, left: w.left - p.left, width: w.width, height: w.height })
   }
 
+  // Controls reveal on HOVER over an image (like the block-sidebar thumbnails),
+  // not on click. A short hide delay + a lock (set while a control menu is open)
+  // keep the overlay from vanishing as the pointer travels to the buttons/menus.
+  const cancelHide = () => { if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null } }
+  const scheduleHide = () => {
+    if (lockedRef.current) return
+    cancelHide()
+    hideTimer.current = setTimeout(() => {
+      if (lockedRef.current) return
+      selectedImgRef.current = null
+      setSelRect(null)
+    }, 90)
+  }
+  const showOverlayFor = (wrap) => {
+    cancelHide()
+    if (selectedImgRef.current !== wrap) { selectedImgRef.current = wrap; setSelGen((g) => g + 1) }
+    positionOverlay()
+  }
+
+  const hoverImageFromEvent = (e) => {
+    if (lockedRef.current) return
+    const wrap = e.target.closest?.('[data-md-image]')
+    const next = wrap && editableRef.current?.contains(wrap) ? wrap : null
+    if (next) showOverlayFor(next)
+    else scheduleHide()
+  }
+  const onOverlayLock = (v) => {
+    lockedRef.current = v
+    if (v) cancelHide()
+    else scheduleHide()
+  }
   const selectImageFromEvent = (e) => {
     const wrap = e.target.closest?.('[data-md-image]')
     const next = wrap && editableRef.current?.contains(wrap) ? wrap : null
-    selectedImgRef.current = next
-    if (next) setSelGen((g) => g + 1)
-    positionOverlay()
+    if (next) showOverlayFor(next)
   }
 
   const imgAttrs = () => (selectedImgRef.current ? getImageAttrs(selectedImgRef.current) : null)
@@ -414,14 +451,23 @@ export default function MarkdownEditorPanel({ open, block, onChange, onClose, li
           }}
           onKeyDown={onKeyDown}
           onClick={selectImageFromEvent}
+          onMouseOver={hoverImageFromEvent}
+          onMouseLeave={scheduleHide}
           onScroll={positionOverlay}
           data-placeholder={inlineOnly ? 'Write your intro… select text, then Bold / Italic / Link.' : 'Write your story… Use bold, italics, headings — or type / on an empty line to add a photo.'}
           style={{ background: 'transparent', color: 'var(--text-primary)', overflowY: 'auto', ...(inlineOnly ? { minHeight: 120, maxHeight: 320 } : {}) }}
         />
         {selRect && selectedImgRef.current && (
+          // Full-image rect is pointer-transparent so the photo underneath stays
+          // hoverable; only the small top-right control cluster catches events and
+          // holds the overlay open (onMouseEnter/Leave) as the pointer reaches it.
           <div style={{ position: 'absolute', top: selRect.top, left: selRect.left, width: selRect.width, height: selRect.height, pointerEvents: 'none' }}>
-            <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
-              <MarkdownImageControls key={selGen} attrs={imgAttrs()} onAttr={onImgAttr} onRemove={onImgRemove} onMove={onImgMove} />
+            <div
+              style={{ position: 'absolute', top: 6, right: 6, pointerEvents: 'auto' }}
+              onMouseEnter={cancelHide}
+              onMouseLeave={scheduleHide}
+            >
+              <MarkdownImageControls key={selGen} attrs={imgAttrs()} onAttr={onImgAttr} onRemove={onImgRemove} onMove={onImgMove} onLockChange={onOverlayLock} />
             </div>
           </div>
         )}

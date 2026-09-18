@@ -45,7 +45,7 @@ function AutoGrowTextarea({ maxHeight, style: styleProp, ...props }) {
   );
 }
 
-function PaintbrushIcon() {
+export function PaintbrushIcon() {
   return (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
@@ -53,7 +53,7 @@ function PaintbrushIcon() {
   );
 }
 
-function TrashIcon() {
+export function TrashIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
@@ -89,11 +89,15 @@ function PlainTextIcon() {
 // photo thumb can offer just Remove while a croppable one also offers Reposition.
 // Each item's onClick receives the trigger element, so Reposition can anchor its
 // popover to the button. The dropdown flips up when it would fall off-screen.
-function ThumbMenu({ items, tone = 'dark', size = 20 }) {
+export function ThumbMenu({ items, tone = 'dark', size = 20, onOpenChange }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState(null)
   const btnRef = useRef(null)
   const menuRef = useRef(null)
+
+  // Let a parent keep an overlay pinned while the menu is open (hover-reveal
+  // controls would otherwise vanish the moment the pointer leaves the image).
+  useEffect(() => { onOpenChange?.(open) }, [open, onOpenChange])
 
   useEffect(() => {
     if (!open) return

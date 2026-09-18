@@ -1,64 +1,75 @@
-import { useState } from 'react'
-import { PillToggle, DesignSection } from '../platform/designControls'
+import { useState, useRef, useEffect } from 'react'
+import PopoverShell from '../platform/PopoverShell'
+import { DesignSection, PillToggle } from '../platform/designControls'
+import { ThumbMenu, PaintbrushIcon, TrashIcon } from './BlockCard'
 import { LAYOUT_OPTIONS, SIZE_OPTIONS } from '@/common/markdownImageOptions'
 import { CAPTION_STYLE_OPTIONS } from '@/common/captionStyles'
 
-const btn = { background: '#fff', border: '1px solid rgba(160,140,110,0.4)', borderRadius: 5, width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 12, color: '#2c2416' }
-
-const menuItemBtn = { display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '6px 10px', fontSize: 12, cursor: 'pointer', color: '#2c2416', borderRadius: 4 }
-
-// PillToggle destructures its options as { value, label }, but our option
-// lists (and CAPTION_STYLE_OPTIONS) use { id, label } — map id -> value so
-// the pills actually track the active state and emit the id, not undefined.
+// PillToggle destructures its options as { value, label }, but our option lists
+// use { id, label } — map id -> value so the pills track state and emit the id.
 const layoutPillOptions = LAYOUT_OPTIONS.map((o) => ({ value: o.id, label: o.label }))
 const sizePillOptions = SIZE_OPTIONS.map((o) => ({ value: o.id, label: o.label }))
 const captionStylePillOptions = CAPTION_STYLE_OPTIONS.map((o) => ({ value: o.id, label: o.label }))
 
-// Overlay control cluster for one image inside the Markdown editor. `attrs` is
-// { layout, size, style }. Callers wire the handlers to DOM mutations.
-// Caption text itself is edited elsewhere; this overlay only handles layout/
-// design and ordering/removal.
-export default function MarkdownImageControls({ attrs, onAttr, onRemove, onMove }) {
-  const [showDesign, setShowDesign] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
+// A small light chip that reads on top of a photo — same look as the block
+// thumbnail's ThumbMenu button (light tone), so the on-image brush matches.
+const CHIP = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 22, height: 18, borderRadius: 3, border: 'none', cursor: 'pointer',
+  background: 'rgba(255,255,255,0.9)', color: '#3a362f',
+  boxShadow: '0 1px 2px rgba(0,0,0,0.15)', transition: 'background 120ms', padding: 0,
+}
+
+function ChevronUp() {
+  return <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M4 10l4-4 4 4" /></svg>
+}
+function ChevronDown() {
+  return <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6l4 4 4-4" /></svg>
+}
+
+// Overlay controls for one image inside the Markdown editor, styled to match the
+// block sidebar: a brush chip (Design popover) + a "⋯" ThumbMenu (Move / Remove).
+// `attrs` is { layout, size, style }. `onLockChange(bool)` fires while either menu
+// is open so the panel keeps the hover-revealed overlay pinned during interaction.
+export default function MarkdownImageControls({ attrs, onAttr, onRemove, onMove, onLockChange }) {
+  const [designOpen, setDesignOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const brushRef = useRef(null)
   const sizeDisabled = attrs.layout === 'full-bleed'
+
+  useEffect(() => { onLockChange?.(designOpen || menuOpen) }, [designOpen, menuOpen, onLockChange])
+
+  const menuItems = [
+    { label: 'Move up', icon: <ChevronUp />, onClick: () => onMove(-1) },
+    { label: 'Move down', icon: <ChevronDown />, onClick: () => onMove(1) },
+    { label: 'Remove', icon: <TrashIcon />, danger: true, onClick: () => onRemove() },
+  ]
+
   return (
-    <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-      <div style={{ display: 'flex', gap: 4 }}>
-        <button
-          type="button"
-          aria-label="Design"
+    <div style={{ display: 'flex', gap: 4 }}>
+      <button
+        ref={brushRef}
+        type="button"
+        aria-label="Design"
+        title="Design"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); setDesignOpen((v) => !v) }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = '#fff' }}
+        onMouseLeave={(e) => { if (!designOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.9)' }}
+        style={{ ...CHIP, ...(designOpen ? { background: '#fff' } : {}) }}
+      >
+        <PaintbrushIcon />
+      </button>
+      <ThumbMenu tone="light" size={22} items={menuItems} onOpenChange={setMenuOpen} />
+      {designOpen && (
+        <PopoverShell
+          anchorEl={brushRef.current}
+          onClose={() => setDesignOpen(false)}
+          width="max-content"
+          minWidth={272}
+          maxWidth="calc(100vw - 24px)"
           title="Design"
-          style={btn}
-          onClick={() => {
-            setShowDesign((v) => !v)
-            setShowMenu(false)
-          }}
         >
-          🖌
-        </button>
-        <button
-          type="button"
-          aria-label="More options"
-          title="More"
-          style={btn}
-          onClick={() => {
-            setShowMenu((v) => !v)
-            setShowDesign(false)
-          }}
-        >
-          ⋯
-        </button>
-      </div>
-      {showMenu && (
-        <div style={{ background: 'var(--popover)', boxShadow: 'var(--popover-shadow)', borderRadius: 8, padding: 4, width: 140 }}>
-          <button type="button" aria-label="Move up" style={menuItemBtn} onClick={() => onMove(-1)}>Move up</button>
-          <button type="button" aria-label="Move down" style={menuItemBtn} onClick={() => onMove(1)}>Move down</button>
-          <button type="button" aria-label="Remove" style={{ ...menuItemBtn, color: '#b03030' }} onClick={onRemove}>Remove</button>
-        </div>
-      )}
-      {showDesign && (
-        <div style={{ background: 'var(--popover)', boxShadow: 'var(--popover-shadow)', borderRadius: 8, padding: 10, width: 220 }} className="space-y-2">
           <DesignSection label="Layout">
             <PillToggle value={attrs.layout || 'centered'} onChange={(v) => onAttr('layout', v)} options={layoutPillOptions} />
           </DesignSection>
@@ -70,7 +81,7 @@ export default function MarkdownImageControls({ attrs, onAttr, onRemove, onMove 
           <DesignSection label="Caption">
             <PillToggle value={attrs.style || 'sans'} onChange={(v) => onAttr('style', v)} options={captionStylePillOptions} />
           </DesignSection>
-        </div>
+        </PopoverShell>
       )}
     </div>
   )

@@ -47,7 +47,11 @@
 }
 .md-editable ul { margin: 0 0 0.75em; padding-left: 1.25em; }
 .md-editable li { margin-bottom: 0.25em; }
-.md-editable img { display: block; max-height: 120px; border-radius: 8px; margin: 0 0 0.75em; }
+/* The in-article image wrapper sets its own display/width/height/border-radius
+   inline (see markdownDom.createImageBlockNode) so the editor previews the real
+   layout + size. Only guard against overflow here — never cap height, or a
+   full-width image gets clamped short and stretches (aspect ratio must hold). */
+.md-editable img { max-width: 100%; }
 /* Emphasis + links need to READ as formatted while editing — bold/italic show
    plainly, and a link is always underlined (not just on hover), with a warm hover
    colour so applying a link is visibly confirmed. */

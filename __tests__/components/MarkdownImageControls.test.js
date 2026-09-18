@@ -9,8 +9,10 @@ it('no caption input exists', () => {
 it('the ⋯ menu fires move and remove', () => {
   const onMove = jest.fn(), onRemove = jest.fn()
   render(<MarkdownImageControls {...base} onAttr={()=>{}} onRemove={onRemove} onMove={onMove} />)
+  // The menu closes after each action (standard menu UX), so reopen it between clicks.
   fireEvent.click(screen.getByRole('button', { name: /more|menu|options/i }))
   fireEvent.click(screen.getByRole('button', { name: /move up/i })); expect(onMove).toHaveBeenCalledWith(-1)
+  fireEvent.click(screen.getByRole('button', { name: /more|menu|options/i }))
   fireEvent.click(screen.getByRole('button', { name: /remove/i })); expect(onRemove).toHaveBeenCalled()
 })
 it('the brush opens layout options and picking Side fires onAttr', () => {
