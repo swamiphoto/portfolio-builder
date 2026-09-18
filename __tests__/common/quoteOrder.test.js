@@ -3,6 +3,9 @@ import { SEED_CATALOG } from '../../common/fulfillment/seedCatalog'
 import { computeRetail, lineCost } from '../../common/print/pricing'
 import { mockLabAdapter } from '../../common/fulfillment/mockLabAdapter'
 
+const adapter = { getQuote: jest.fn(async (_spec, _addr, method) => ({ cost: 20, shipping: 7, currency: 'USD', shippingMethod: method || 'Standard' })) }
+beforeEach(() => adapter.getQuote.mockClear())
+
 it('assembles amounts in cents from a live-style getQuote (seed-backed)', async () => {
   const spec = { size: '16x24', finish: 'lustre', frame: 'none', matte: false }
   const a = await quoteOrder({ spec, markup: 3, platformFeePct: 0, currency: 'USD', adapter: mockLabAdapter, address: { country: 'US' } })
@@ -24,4 +27,18 @@ it('derives retail and print cost from the adapter quote, and applies the platfo
   expect(a.platformFee).toBe(Math.round(a.retail * 0.15))
   // Sepia's application fee = printCost + shipping + platformFee
   expect(a.applicationFee).toBe(a.printCost + a.shippingCost + a.platformFee)
+})
+
+it('passes the shipping method to the adapter and echoes it back', async () => {
+  const a = await quoteOrder({ spec: {}, markup: 3, platformFeePct: 0, adapter, address: {}, shippingMethod: 'budget' })
+  expect(adapter.getQuote).toHaveBeenCalledWith({}, {}, 'budget')
+  expect(a.shippingMethod).toBe('budget')
+})
+
+it('free shipping folds the buffer and honors charm rounding', async () => {
+  const a = await quoteOrder({ spec: {}, markup: 3, platformFeePct: 0, adapter, address: {}, freeShipping: true, shippingBuffer: 900, rounding: 'charm9' })
+  // retail = computeRetail(20,3,charm9) = roundCharm9(60) = 69 -> 6900c; total = 6900 + 900
+  expect(a.total).toBe(6900 + 900)
+  expect(a.shippingCost).toBe(0)
+  expect(a.shippingFree).toBe(true)
 })

@@ -65,6 +65,37 @@ const sectionHeader = {
   textTransform: 'uppercase',
 }
 
+// A not-yet-available product in the store list: shown greyed with a "Coming
+// soon" tag instead of a toggle.
+function ComingSoonProduct({ label }) {
+  return (
+    <div className="flex items-center justify-between" style={{ opacity: 0.5 }}>
+      <span style={{ fontSize: 13, color: '#2c2416' }}>{label}</span>
+      <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: MONO, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Coming soon</span>
+    </div>
+  )
+}
+
+// Collapsible section header for the Print store panel — the only settings view
+// with multiple sections. Chevron points down when collapsed, flips up when open.
+// Muted-gray to match the drill-in chevrons on the main settings screen.
+function AccordionHeader({ label, open, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center justify-between w-full"
+      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+    >
+      <span style={sectionHeader}>{label}</span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth={2}
+        style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+      </svg>
+    </button>
+  )
+}
+
 function Field({ label, children }) {
   return (
     <div>
@@ -288,35 +319,48 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
     }
   }
 
+  // Accordion: one section open at a time. Pricing open by default.
+  const [openSection, setOpenSection] = useState('pricing')
+  const toggleSection = (name) => setOpenSection((s) => (s === name ? null : name))
+
   const markup = ps.markup ?? 3
   const feePct = Number(process.env.NEXT_PUBLIC_PLATFORM_FEE_PCT || 0)
   const exampleCost = 20
-  const exampleRetail = Math.round(exampleCost * markup)
+  const bufferDollars = (ps.shippingBuffer || 0) / 100
+  const exampleRetailBase = Math.round(exampleCost * markup)
+  // With free shipping on, the buffer is folded into the sticker price rather
+  // than billed separately, so the walkthrough number should reflect that.
+  const exampleRetail = ps.freeShipping ? exampleRetailBase + bufferDollars : exampleRetailBase
   const exampleCommission = Math.round(exampleRetail * feePct / 100)
   const exampleProfit = exampleRetail - exampleCost - exampleCommission
 
   return (
     <PopoverShell anchorEl={anchorEl} onClose={onClose} width={320} title="Print store" onBack={onBack}>
-      <div style={{ padding: '14px 14px 16px' }} className="space-y-5">
+      <div style={{ padding: '12px 14px 14px' }} className="space-y-3">
         {/* Intro */}
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-          Sell prints of your photos. We print and ship worldwide. You set the markup and keep the difference.
+          Choose what to sell. Turn a product on, mark photos for sale, and connect payouts — the Buy button goes live.
         </p>
 
-        {/* Enable prints — the master on/off (auto-enables the first time you mark a photo for sale). */}
-        <div>
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize: 13, color: '#2c2416' }}>Enable prints</span>
-            <ToggleSwitch on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
+        {/* Products — one toggle per product type (only Prints for now). */}
+        <div className="space-y-2.5">
+          <div>
+            <div className="flex items-center justify-between">
+              <span style={{ fontSize: 13, color: '#2c2416' }}>Prints</span>
+              <ToggleSwitch ariaLabel="Prints" on={!!ps.enabled} onChange={() => updatePrintStore({ enabled: !ps.enabled })} />
+            </div>
+            <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4, marginBottom: 0 }}>
+              Framed and unframed. Shows a Buy button on photos you mark for sale.
+            </p>
           </div>
-          <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
-            Shows Buy buttons on photos you’ve marked for sale.
-          </p>
+          <ComingSoonProduct label="Mugs" />
+          <ComingSoonProduct label="Photo books" />
         </div>
 
         {/* Pricing */}
-        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
-          <div style={sectionHeader}>Pricing</div>
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
+          <AccordionHeader label="Pricing" open={openSection === 'pricing'} onClick={() => toggleSection('pricing')} />
+          {openSection === 'pricing' && (
           <div className="space-y-4" style={{ marginTop: 13 }}>
             <Field label="Your markup (× lab cost)">
               <input
@@ -330,8 +374,8 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
                 onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n) && n > 0) updatePrintStore({ markup: n }) }}
               />
               <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
-                You charge {markup}× our lab cost. A print that costs $20 to make sells for{' '}
-                <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>, you keep{' '}
+                You charge {markup}× our lab cost{ps.freeShipping ? `, plus a $${bufferDollars} shipping buffer` : ''}. A print that costs $20 to make sells for{' '}
+                <strong style={{ color: 'var(--text-secondary)' }}>${exampleRetail}</strong>{ps.freeShipping ? ' with free shipping' : ''}, you keep{' '}
                 <strong style={{ color: 'var(--text-secondary)' }}>${exampleProfit}</strong>
                 {feePct > 0 ? ` after Sepia’s ${feePct}% commission` : ''}.
               </p>
@@ -351,12 +395,87 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               </p>
             </Field>
 
+            <div>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 13, color: '#2c2416' }}>End prices in $9</span>
+                <ToggleSwitch
+                  ariaLabel="End prices in $9"
+                  on={(ps.priceRounding || 'nearest5') === 'charm9'}
+                  onChange={() => updatePrintStore({ priceRounding: (ps.priceRounding || 'nearest5') === 'charm9' ? 'nearest5' : 'charm9' })}
+                />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+                Prices ending in 9 tend to sell better ($39 instead of $40).
+              </p>
+            </div>
+
           </div>
+          )}
+        </div>
+
+        {/* Shipping */}
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
+          <AccordionHeader label="Shipping" open={openSection === 'shipping'} onClick={() => toggleSection('shipping')} />
+          {openSection === 'shipping' && (
+          <div className="space-y-4" style={{ marginTop: 13 }}>
+            <Field label="Shipping speed">
+              <div style={{ marginTop: 6 }}>
+                <DesignPillToggle
+                  value={ps.shippingMethod || 'standard'}
+                  onChange={(v) => updatePrintStore({ shippingMethod: v })}
+                  options={[
+                    { value: 'standard', label: 'Standard' },
+                    { value: 'budget', label: 'Budget' },
+                  ]}
+                />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8, marginBottom: 0 }}>
+                {(ps.shippingMethod || 'standard') === 'budget'
+                  ? 'Cheaper (~$5–8), slower, and may not be tracked.'
+                  : 'Tracked, faster (~3–7 days). ~$25 to the US.'}
+              </p>
+            </Field>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 13, color: '#2c2416' }}>Offer free shipping</span>
+                <ToggleSwitch ariaLabel="Offer free shipping" on={!!ps.freeShipping} onChange={() => updatePrintStore({ freeShipping: !ps.freeShipping })} />
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>
+                Fold shipping into the print price so customers see “Free shipping” at checkout.
+              </p>
+              {ps.freeShipping && (
+                <div style={{ marginTop: 10 }}>
+                  <Field label="Shipping buffer ($)">
+                    <input
+                      className={inputCls}
+                      style={inputStyle}
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="0"
+                      value={bufferDollars}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        const n = parseFloat(v || 0)
+                        updatePrintStore({ shippingBuffer: Number.isNaN(n) ? 0 : Math.round(n * 100) })
+                      }}
+                    />
+                    <p style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.55, marginTop: 8, marginBottom: 0 }}>
+                      Added to every print to cover shipping. Covers domestic; international may cost more and comes out of your margin.
+                    </p>
+                  </Field>
+                </div>
+              )}
+            </div>
+          </div>
+          )}
         </div>
 
         {/* Payouts */}
-        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 16 }}>
-          <div style={sectionHeader}>Payouts</div>
+        <div style={{ borderTop: DIVIDER_SOFT, paddingTop: 11 }}>
+          <AccordionHeader label="Payouts" open={openSection === 'payouts'} onClick={() => toggleSection('payouts')} />
+          {openSection === 'payouts' && (
           <div style={{ marginTop: 12 }}>
             {payoutStatus === null ? (
               <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0 }}>Checking payout status…</p>
@@ -438,6 +557,7 @@ function PrintView({ anchorEl, onClose, ps, updatePrintStore, onBack }) {
               </>
             )}
           </div>
+          )}
         </div>
 
         {/* Orders */}
@@ -1003,7 +1123,7 @@ export default function SiteSettingsPopover({ siteConfig, username, anchorEl, on
           else "Set up". */}
       <DrillRow
         label="Print store"
-        status={config.printStore?.enabled ? 'Enabled' : 'Set up'}
+        status={config.printStore?.enabled ? 'On' : 'Set up'}
         onDrillIn={() => setView('print')}
       />
       <DrillRow

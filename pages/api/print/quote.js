@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       readLibraryConfig(lookup.userId).catch(() => ({ assets: {} })),
     ])
     const store = publicPrintStore(siteConfig)
-    if (!store.enabled) return res.status(403).json({ error: 'store not enabled' })
+    if (!store.enabled || !store.paymentsReady) return res.status(403).json({ error: 'store not ready for checkout' })
 
     const asset = Object.values(libraryConfig?.assets || {}).find((a) => a.assetId === assetId)
     const print = publicPrintForAsset(asset)

@@ -26,3 +26,16 @@ it('shows shipping and total when amounts are provided', () => {
   expect(screen.getByText(/shipping \$6\.00/i)).toBeInTheDocument()
   expect(screen.getByText(/total \$30\.00/i)).toBeInTheDocument()
 })
+
+it('shows "Shipping Free" with no dollar amount when amounts.shippingFree is true', () => {
+  render(<CheckoutStep onBack={() => {}} onSubmit={() => {}} amounts={{ shippingCost: 600, shippingFree: true, total: 2400 }} />)
+  expect(screen.getByText(/shipping free/i)).toBeInTheDocument()
+  expect(screen.queryByText(/shipping \$/i)).not.toBeInTheDocument()
+  expect(screen.getByText(/total \$24\.00/i)).toBeInTheDocument()
+})
+
+it('shows "Shipping $X.XX" as before when amounts.shippingFree is false', () => {
+  render(<CheckoutStep onBack={() => {}} onSubmit={() => {}} amounts={{ shippingCost: 600, shippingFree: false, total: 3000 }} />)
+  expect(screen.getByText(/shipping \$6\.00/i)).toBeInTheDocument()
+  expect(screen.queryByText(/shipping free/i)).not.toBeInTheDocument()
+})

@@ -59,7 +59,11 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
   const sizes = print?.availableSizes || []
   const frame = SEED_CATALOG.frames.find((f) => f.id === spec.frame) || SEED_CATALOG.frames[0]
   const framed = spec.frame !== 'none'
-  const price = optionPrice(SEED_CATALOG, { size: spec.size, finish: spec.finish, frame: spec.frame, matte: spec.matte }, markup)
+  const rounding = printStore?.priceRounding || 'nearest5'
+  const price = optionPrice(SEED_CATALOG, { size: spec.size, finish: spec.finish, frame: spec.frame, matte: spec.matte }, markup, rounding)
+  // When shipping is folded into the price (free-shipping stores), show the buyer
+  // the same total they'll see at checkout — retail + the shipping buffer (cents).
+  const displayPrice = (printStore?.freeShipping ? price + (printStore.shippingBuffer || 0) / 100 : price).toFixed(2)
 
   // Catalog sizes are stored portrait (wIn < hIn); show them oriented to the image.
   const landscape = print?.orientation === 'landscape'
@@ -144,7 +148,7 @@ export default function PrintPurchasePanel({ print, printStore, spec, onSpecChan
           onMouseEnter={(e) => { e.currentTarget.style.background = '#3a2f22' }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#2c2416' }}
         >
-          Buy this print · ${price}
+          Buy this print · ${displayPrice}
         </button>
       </div>
     </div>

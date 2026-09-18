@@ -13,30 +13,35 @@ function renderInStore(ui, printStore) {
   return render(<PrintStoreProvider printStore={printStore}>{ui}</PrintStoreProvider>)
 }
 
-it('shows the Buy a Print button for a sellable image when the store is enabled', () => {
-  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, markup: 3 }} />, { enabled: true, markup: 3 })
+it('shows the Buy a Print button for a sellable image when payouts are connected', () => {
+  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, paymentsReady: true, markup: 3 }} />, { enabled: true, paymentsReady: true, markup: 3 })
   expect(screen.getByRole('button', { name: /buy a print/i })).toBeInTheDocument()
 })
 
-it('hides the Buy a Print button when the store is disabled', () => {
-  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: false, markup: 3 }} />, { enabled: false, markup: 3 })
+it('hides the Buy a Print button when payouts are not connected', () => {
+  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, paymentsReady: false, markup: 3 }} />, { enabled: true, paymentsReady: false, markup: 3 })
+  expect(screen.queryByRole('button', { name: /buy a print/i })).toBeNull()
+})
+
+it('hides the Buy a Print button when the Prints product is off', () => {
+  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: false, paymentsReady: true, markup: 3 }} />, { enabled: false, paymentsReady: true, markup: 3 })
   expect(screen.queryByRole('button', { name: /buy a print/i })).toBeNull()
 })
 
 it('hides the Buy a Print button for a non-sellable image', () => {
-  renderInStore(<PhotoLightbox images={[plain]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, markup: 3 }} />, { enabled: true, markup: 3 })
+  renderInStore(<PhotoLightbox images={[plain]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, paymentsReady: true, markup: 3 }} />, { enabled: true, paymentsReady: true, markup: 3 })
   expect(screen.queryByRole('button', { name: /buy a print/i })).toBeNull()
 })
 
 it('opens the configurator drawer when the Buy a Print button is clicked', () => {
-  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, markup: 3 }} />, { enabled: true, markup: 3 })
+  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, paymentsReady: true, markup: 3 }} />, { enabled: true, paymentsReady: true, markup: 3 })
   expect(screen.queryByRole('button', { name: /buy this print/i })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /buy a print/i }))
   expect(screen.getByRole('button', { name: /buy this print/i })).toBeInTheDocument()
 })
 
 it('closes the configurator drawer via its close control', () => {
-  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, markup: 3 }} />, { enabled: true, markup: 3 })
+  renderInStore(<PhotoLightbox images={[sellable]} index={0} onClose={() => {}} onNavigate={() => {}} printStore={{ enabled: true, paymentsReady: true, markup: 3 }} />, { enabled: true, paymentsReady: true, markup: 3 })
   fireEvent.click(screen.getByRole('button', { name: /buy a print/i }))
   expect(screen.getByRole('button', { name: /buy this print/i })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: /close print options/i }))

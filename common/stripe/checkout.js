@@ -3,12 +3,19 @@
 export function buildCheckoutSessionParams({ order, successUrl, cancelUrl }) {
   const { amounts, spec, id, userId, buyer } = order
   const currency = (amounts.currency || 'USD').toLowerCase()
+  // Free shipping: charge retail + buffer as a single print line (no shipping
+  // line) so the amount actually charged equals amounts.total.
+  const line_items = amounts.shippingFree
+    ? [
+        { price_data: { currency, unit_amount: amounts.total, product_data: { name: `Fine art print — ${spec.size}` } }, quantity: 1 },
+      ]
+    : [
+        { price_data: { currency, unit_amount: amounts.retail, product_data: { name: `Fine art print — ${spec.size}` } }, quantity: 1 },
+        { price_data: { currency, unit_amount: amounts.shippingCost, product_data: { name: 'Shipping' } }, quantity: 1 },
+      ]
   return {
     mode: 'payment',
-    line_items: [
-      { price_data: { currency, unit_amount: amounts.retail, product_data: { name: `Fine art print — ${spec.size}` } }, quantity: 1 },
-      { price_data: { currency, unit_amount: amounts.shippingCost, product_data: { name: 'Shipping' } }, quantity: 1 },
-    ],
+    line_items,
     payment_intent_data: { application_fee_amount: amounts.applicationFee },
     customer_email: buyer?.email,
     metadata: { orderId: id, userId },

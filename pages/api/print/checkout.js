@@ -43,6 +43,7 @@ export default async function handler(req, res) {
     ) || 0
     const amounts = await quoteOrder({
       spec, markup: ps.markup, platformFeePct, currency: ps.currency, adapter, address: buyer.address,
+      shippingMethod: ps.shippingMethod, freeShipping: ps.freeShipping, shippingBuffer: ps.shippingBuffer, rounding: ps.priceRounding,
     })
 
     const order = {
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
       buyer,
       amounts,
       stripe: { sessionId: null, paymentIntentId: null, connectedAccountId: ps.stripeConnectAccountId },
-      fulfillment: { lab: 'prodigi', labOrderId: null, status: 'none', tracking: null },
+      fulfillment: { lab: 'prodigi', labOrderId: null, status: 'none', tracking: null, shippingMethod: amounts.shippingMethod || 'standard' },
       createdAt: new Date().toISOString(),
     }
 

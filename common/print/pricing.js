@@ -4,8 +4,14 @@ export function roundPrice(n) {
   return Math.ceil(n / 5) * 5
 }
 
-export function computeRetail(labCost, markup) {
-  return roundPrice(labCost * markup)
+// Round up to the next whole dollar ending in 9 (…,9,19,29,39,…).
+export function roundCharm9(n) {
+  return Math.ceil((n + 1) / 10) * 10 - 1
+}
+
+export function computeRetail(labCost, markup, { rounding = 'nearest5' } = {}) {
+  const raw = labCost * markup
+  return rounding === 'charm9' ? roundCharm9(raw) : roundPrice(raw)
 }
 
 export function lineCost(catalog, spec) {

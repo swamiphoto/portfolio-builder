@@ -10,8 +10,11 @@ export default function BuyPrintButton({ print, imageUrl, className = '', style 
   const ctx = usePrintStore()
   const theme = useTheme()
   const manhattan = theme?.id === 'manhattan'
-  // Hide for images with no printable sizes (e.g. too small for any catalog size).
-  if (!ctx?.printStore?.enabled || !print?.sellable || !(print.availableSizes && print.availableSizes.length)) return null
+  // Buyable when the Prints product is on (printStore.enabled), the photo is
+  // marked for sale, and payouts are connected (paymentsReady) — that combo is
+  // the only one that actually checks out. Also hidden when the image is too
+  // small for any catalog size.
+  if (!ctx?.printStore?.enabled || !ctx?.printStore?.paymentsReady || !print?.sellable || !(print.availableSizes && print.availableSizes.length)) return null
 
   const open = (e) => {
     e.stopPropagation()

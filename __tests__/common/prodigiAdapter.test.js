@@ -90,7 +90,7 @@ describe('prodigiAdapter.getQuote', () => {
   it('returns cost + shipping + currency from a Prodigi quote for the SKU + destination', async () => {
     prodigiFetch.mockResolvedValue({ quotes: [{ costSummary: { items: { amount: '15.00', currency: 'USD' }, shipping: { amount: '7.10', currency: 'USD' } } }] })
     const out = await prodigiAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' })
-    expect(out).toEqual({ cost: 15, shipping: 7.1, currency: 'USD' })
+    expect(out).toEqual({ cost: 15, shipping: 7.1, currency: 'USD', shippingMethod: 'standard' })
     const [path, opts] = prodigiFetch.mock.calls[0]
     expect(path).toBe('/v4.0/quotes')
     expect(opts.body.destinationCountryCode).toBe('US')
@@ -100,7 +100,35 @@ describe('prodigiAdapter.getQuote', () => {
   it('falls back to seed pricing when the Prodigi quote fails', async () => {
     prodigiFetch.mockRejectedValue(new Error('prodigi 500'))
     const out = await prodigiAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' })
-    expect(out).toEqual(mockLabAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' }))
+    expect(out).toEqual({ ...mockLabAdapter.getQuote({ size: '16x20', finish: 'matte', frame: 'none' }, { country: 'US' }), shippingMethod: 'standard' })
+  })
+})
+
+describe('prodigiAdapter shipping method', () => {
+  beforeEach(() => prodigiFetch.mockReset())
+  const okQuote = { quotes: [{ costSummary: { items: { amount: 20, currency: 'USD' }, shipping: { amount: 7 } } }] }
+
+  it('getQuote sends the mapped Budget method and echoes back budget', async () => {
+    prodigiFetch.mockResolvedValueOnce(okQuote)
+    const q = await prodigiAdapter.getQuote(sampleOrder.spec, sampleOrder.buyer.address, 'budget')
+    expect(prodigiFetch.mock.calls[0][1].body.shippingMethod).toBe('Budget')
+    expect(q.shippingMethod).toBe('budget')
+    expect(q).toMatchObject({ cost: 20, shipping: 7, currency: 'USD' })
+  })
+
+  it('falls back to Standard when the Budget quote is unusable', async () => {
+    prodigiFetch.mockResolvedValueOnce({ quotes: [] })   // budget → incomplete → throws internally
+    prodigiFetch.mockResolvedValueOnce(okQuote)           // standard retry succeeds
+    const q = await prodigiAdapter.getQuote(sampleOrder.spec, sampleOrder.buyer.address, 'budget')
+    expect(prodigiFetch).toHaveBeenCalledTimes(2)
+    expect(prodigiFetch.mock.calls[1][1].body.shippingMethod).toBe('Standard')
+    expect(q.shippingMethod).toBe('standard')
+  })
+
+  it('placeOrder uses the order\'s persisted shipping method', async () => {
+    prodigiFetch.mockResolvedValueOnce({ order: { id: 'p_1' } })
+    await prodigiAdapter.placeOrder({ ...sampleOrder, fulfillment: { shippingMethod: 'budget' } })
+    expect(prodigiFetch.mock.calls[0][1].body.shippingMethod).toBe('Budget')
   })
 })
 

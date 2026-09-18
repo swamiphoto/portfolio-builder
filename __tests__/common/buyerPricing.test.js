@@ -25,3 +25,22 @@ describe('startingPrice', () => {
     expect(startingPrice(SEED_CATALOG, [], 3)).toBe(null)
   })
 })
+
+describe('rounding pass-through', () => {
+  const spec = { size: '8x10', finish: 'lustre', frame: 'none', matte: false }
+
+  it('optionPrice defaults to nearest5 rounding', () => {
+    // lineCost 6 * markup 3 = 18 -> nearest5 rounds up to 20
+    expect(optionPrice(SEED_CATALOG, spec, 3)).toBe(20)
+  })
+
+  it('optionPrice applies charm9 rounding when requested', () => {
+    // lineCost 6 * markup 3 = 18 -> charm9 rounds up to 19
+    expect(optionPrice(SEED_CATALOG, spec, 3, 'charm9')).toBe(19)
+  })
+
+  it('startingPrice passes rounding through to each optionPrice call', () => {
+    expect(startingPrice(SEED_CATALOG, ['8x10'], 3, 'charm9')).toBe(19)
+    expect(startingPrice(SEED_CATALOG, ['8x10'], 3, 'nearest5')).toBe(20)
+  })
+})
