@@ -229,6 +229,7 @@ export default function PublicPortfolio({ siteConfig, assetsByUrl, printStore, u
               coverButtonStyle={homePage?.cover?.buttonStyle || 'solid'}
               cover={homePage?.cover}
               opener="hero"
+              assetsByUrl={assetsByUrl}
             />
           </ClientEngagementProvider>
         ) : (

@@ -199,6 +199,7 @@ export default function PublicPage({ siteConfig, page, assetsByUrl, printStore, 
             hasCover={hasCover}
             cover={page.cover}
             opener="title"
+            assetsByUrl={assetsByUrl}
           />
         </ClientEngagementProvider>
         <SiteFooter siteConfig={siteConfig} />

@@ -46,7 +46,7 @@ const TEXT_GAP = 'clamp(1.6rem, 2.4vw, 2.8rem)'
 // The quiet museum label. Short copy sets in one centered column (with a fancy drop
 // cap); copy long enough to overrun the column height auto-flows into N balanced
 // columns so it stays within the top/bottom margins and reads evenly.
-function AmsterdamText({ block, fontFamily, fontSize }) {
+function AmsterdamText({ block, fontFamily, fontSize, assetsByUrl }) {
   const content = String(block.content)
   const isMd = block.format === 'markdown'
   const { ref, cols, columnStyle } = useBalancedColumns([content, fontFamily, fontSize], { colWidth: TEXT_COL_W, gap: TEXT_GAP })
@@ -56,7 +56,7 @@ function AmsterdamText({ block, fontFamily, fontSize }) {
   if (isMd) {
     return (
       <div ref={ref} className={cls} style={style}>
-        <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} />
+        <MarkdownText content={content} variantClasses={{ heading: '', body: '', quote: '' }} assetsByUrl={assetsByUrl} />
       </div>
     )
   }
@@ -84,7 +84,7 @@ function mosaicGroups(refs) {
   return groups
 }
 
-export default function AmsterdamColumn({ block, blockIndex, ground = 'light', onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', username, showPlaceholders = false }) {
+export default function AmsterdamColumn({ block, blockIndex, ground = 'light', onImageClick, hoverProps = {}, photoMeta = 'off', siteConfig = {}, pages = [], basePath = '', username, showPlaceholders = false, assetsByUrl }) {
   // A photo box that renders a placeholder when the image is a placeholder marker,
   // so empty blocks preview the wall layout before any photos are added.
   const photoBox = (img, i, fitClass = 'ams-fit') => (
@@ -310,7 +310,7 @@ export default function AmsterdamColumn({ block, blockIndex, ground = 'light', o
       }
       const fontSize = TEXT_SIZE[variant] || TEXT_SIZE.body
       return wrap('ams-col--quiet', null, (
-        <AmsterdamText block={block} fontFamily={fontFamily} fontSize={fontSize} />
+        <AmsterdamText block={block} fontFamily={fontFamily} fontSize={fontSize} assetsByUrl={assetsByUrl} />
       ))
     }
 

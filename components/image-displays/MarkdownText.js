@@ -29,7 +29,7 @@ export function renderInline(nodes, keyPrefix = 'i') {
 
 // Layout-agnostic markdown body. The theme decides what heading/body/quote
 // look like via variantClasses; this component only supplies structure.
-export default function MarkdownText({ content, variantClasses }) {
+export default function MarkdownText({ content, variantClasses, assetsByUrl }) {
   const ast = parseMarkdown(content)
   const vc = variantClasses || {}
   return (
@@ -45,10 +45,11 @@ export default function MarkdownText({ content, variantClasses }) {
           )
         if (b.type === 'image') {
           const { figureClass, imgClass } = imageFigureClasses(b)
+          const caption = assetsByUrl?.[b.url]?.caption || ''
           return (
             <figure key={i} className={figureClass}>
-              <img src={b.url} alt={b.caption || ''} className={imgClass} loading="lazy" />
-              {b.caption ? <figcaption className="mt-2 text-sm opacity-60" style={captionStyleCss(b.style)}>{b.caption}</figcaption> : null}
+              <img src={b.url} alt={caption} className={imgClass} loading="lazy" />
+              {caption ? <figcaption className="mt-2 text-sm opacity-60" style={captionStyleCss(b.style)}>{caption}</figcaption> : null}
             </figure>
           )
         }

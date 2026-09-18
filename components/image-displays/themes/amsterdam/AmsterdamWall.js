@@ -42,7 +42,7 @@ export default function AmsterdamWall({
   onBlockHover, onBlockClick, mobile = false, actions = [],
   currentPageId, onPageClick, currentPath = '', photoMeta = 'off', pages = [],
   childPages = [], activeChildId = null, onChildPageClick,
-  cover = null, opener = 'title', showPlaceholders = false, username,
+  cover = null, opener = 'title', showPlaceholders = false, username, assetsByUrl,
 }) {
   const wallRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -224,6 +224,7 @@ export default function AmsterdamWall({
               ...(onBlockHover ? { onMouseEnter: () => onBlockHover(index), onMouseLeave: () => onBlockHover(null) } : {}),
               ...(onBlockClick ? { onClick: () => onBlockClick(index), style: { cursor: 'pointer' } } : {}),
             }}
+            assetsByUrl={assetsByUrl}
           />
         ))}
       </div>
